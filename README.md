@@ -58,10 +58,8 @@ Turbo-Mailer PRO es una solución de escritorio/PWA de alto rendimiento diseñad
 Para enviar correos desde esta aplicación usando tu cuenta de Gmail, necesitas una contraseña de aplicación (App Password) de 16 dígitos:
 
 1. **Activar Verificación en 2 Pasos**: Ve a tu [Cuenta de Google > Seguridad](https://myaccount.google.com/security) y asegúrate de que la "Verificación en 2 pasos" esté **Activada**.
-2. **Acceder a Contraseñas de Aplicaciones**:
-   - Dentro de la configuración de "Verificación en 2 pasos", baja hasta el final de la página.
-   - Haz clic en **Contraseñas de aplicaciones**.
-3. **Generar Contraseña**:
+2. **Generar Contraseña**: Accede directamente a **[https://myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)**.
+3. **Configurar**: 
    - Escribe un nombre descriptivo (ejemplo: `Turbo Mailer PRO`).
    - Haz clic en **Crear**.
 4. **Copiar Código**: Copia el código de 16 caracteres generado (sin espacios) y pégalo en el campo `GMAIL_APP_PASSWORD` de tu archivo `.env`.
