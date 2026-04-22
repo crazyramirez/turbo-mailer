@@ -1,5 +1,5 @@
 export const iframeEditorStyles = `
-  html, body { background-color: #ffffff; overflow-x: hidden !important; margin: 0; padding:0; min-height: 100vh; box-sizing: border-box; }
+  html, body { background-color: #ffffff; overflow-x: hidden !important; margin: 0; padding: 20px 0 40px 0 !important; min-height: 100vh; box-sizing: border-box; }
   .main-card { max-width: 820px !important; margin: 0 auto !important; box-sizing: border-box !important; }
   .editable-block { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
   .editable-block:hover { outline: 2px solid #6366f1 !important; outline-offset: -2px; cursor: pointer; }
@@ -108,6 +108,9 @@ export const iframeEditorStyles = `
     70% { background: rgba(99, 102, 241, 0.12); transform: scale(1.01); box-shadow: 0 0 25px rgba(99, 102, 241, 0.2); }
     100% { background: rgba(99, 102, 241, 0.06); transform: scale(1); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
   }
+  [contenteditable="true"]:hover {
+    cursor: text !important;
+  }
   [contenteditable="true"]:focus {
     outline: none;
     background: rgba(99, 102, 241, 0.06);
@@ -116,7 +119,7 @@ export const iframeEditorStyles = `
     position: relative;
     z-index: 50;
   }
-  img { max-width: 100% !important; height: auto !important; }
+  img { max-width: 100% !important; height: auto !important; cursor: pointer !important; }
   #floating-toolbar {
     position: fixed;
     display: none;

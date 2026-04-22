@@ -88,7 +88,7 @@ function switchToEditPanel() {
       if (targetElement) {
         const block = targetElement.closest('.editable-block') as HTMLElement
         const sub = targetElement.closest(
-          '[data-toggle="title"], [data-toggle="subtitle"], [data-toggle="badge"], [data-toggle="image"], [data-toggle="button"]',
+          '[data-toggle="title"], [data-toggle="subtitle"], [data-toggle="badge"], [data-toggle="image"], [data-toggle="button"], [data-toggle="ps"], [data-toggle="contact"]',
         ) as HTMLElement
         if (block) {
           selectElement(block, sub || undefined)

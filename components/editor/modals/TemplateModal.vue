@@ -15,7 +15,7 @@ const { createNewTemplate } = useTemplateManager()
         <div class="modal-header">
           <div class="header-info">
             <h2>Nueva Plantilla</h2>
-            <p>Clona el diseño actual en un nuevo archivo</p>
+            <p>Comienza un nuevo diseño desde cero</p>
           </div>
           <button @click="showTemplateModal = false" class="btn-close-minimal">
             <X :size="20" />

@@ -136,15 +136,27 @@ function initBlock(el: HTMLElement, doc: Document) {
   }
 
   el.setAttribute('draggable', 'true')
-  el.querySelectorAll('div, span, p, h1, h2, h3, b, td, a').forEach((child: any) => {
+  // Enable inline editing for common text elements with a smarter non-nesting logic
+  const textTags = 'div, span, p, h1, h2, h3, b, td, a'
+  el.querySelectorAll(textTags).forEach((child: any) => {
     if (child.dataset.toggle === 'button') {
       child.contentEditable = 'false'
       return
     }
-    if (
-      (child.children && child.children.length === 0) ||
-      ((child.innerText || '').trim().length > 0 && Array.from(child.childNodes).some((n) => n.nodeType === 3))
-    ) {
+
+    // Si ya está dentro de algo editable, no necesitamos marcarlo (hereda)
+    // Esto evita el problema del triple click que borra la estructura
+    if (child.parentElement && child.parentElement.isContentEditable) {
+      return
+    }
+
+    const hasDirectText = Array.from(child.childNodes).some(
+      (n) => n.nodeType === 3 && (n.textContent || '').trim().length > 0,
+    )
+    const hasElements = child.children.length > 0
+
+    // Si es una hoja con texto o un contenedor con texto directo (mezcla), lo hacemos editable
+    if (!hasElements || hasDirectText) {
       child.contentEditable = 'true'
       child.spellcheck = false
     }
@@ -274,7 +286,7 @@ function setupIframeEvents(doc: Document) {
       const block = target.closest('.editable-block') as HTMLElement
       if (block) {
         const sub = target.closest(
-          '[data-toggle="title"], [data-toggle="subtitle"], [data-toggle="badge"], [data-toggle="image"], [data-toggle="button"]',
+          '[data-toggle="title"], [data-toggle="subtitle"], [data-toggle="badge"], [data-toggle="image"], [data-toggle="button"], [data-toggle="ps"], [data-toggle="contact"]',
         ) as HTMLElement
         import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
           useBlockEditor().selectElement(block, sub || undefined)
@@ -491,6 +503,7 @@ function injectIframeContent() {
   doc.close()
 
   const style = doc.createElement('style')
+  style.id = 'editor-styles'
   style.textContent = iframeEditorStyles
   doc.head.appendChild(style)
 
@@ -507,9 +520,17 @@ function injectIframeContent() {
 
   if (mainCard) {
     mainCard.style.maxWidth = '820px'
-    mainCard.style.margin = '0 auto'
+    mainCard.style.width = '100%'
+    mainCard.style.margin = '0 auto 80px auto'
     mainCard.style.borderRadius = '24px'
     mainCard.style.overflow = 'hidden'
+    
+    // Ensure parent has lateral margins for mobile responsiveness
+    const parent = mainCard.parentElement
+    if (parent && parent !== doc.body) {
+      parent.style.padding = '40px 20px'
+      parent.style.boxSizing = 'border-box'
+    }
   }
 
   if (container) {
@@ -530,7 +551,7 @@ function injectIframeContent() {
 
   setupIframeEvents(doc)
   if (useEditorState().darkModePreview.value) {
-    doc.body.classList.add('dark-mode-simulation')
+    doc.documentElement.classList.add('dark-mode-simulation')
   }
   
   refreshLayers()
@@ -560,8 +581,7 @@ function getSurgicalCleanHtml(): string {
   clone.querySelectorAll('[draggable]').forEach((el) => (el as HTMLElement).removeAttribute('draggable'))
   clone.querySelectorAll('[data-org-size]').forEach((el) => (el as HTMLElement).removeAttribute('data-org-size'))
 
-  const allStyles = clone.querySelectorAll('style')
-  if (allStyles.length > 0) allStyles[allStyles.length - 1].remove()
+  clone.querySelectorAll('#editor-styles').forEach(s => s.remove())
 
   return '<!DOCTYPE html>\n' + clone.outerHTML
 }
@@ -621,9 +641,9 @@ function setupEditorWatches() {
     const doc = iframeRef.value?.contentDocument
     if (!doc) return
     if (isDark) {
-      doc.body.classList.add('dark-mode-simulation')
+      doc.documentElement.classList.add('dark-mode-simulation')
     } else {
-      doc.body.classList.remove('dark-mode-simulation')
+      doc.documentElement.classList.remove('dark-mode-simulation')
     }
   })
 }

@@ -145,8 +145,41 @@ async function handleSave() {
 function createNewTemplate() {
   if (!newTemplateName.value) return
   currentTemplate.value = newTemplateName.value
+  
+  // Reiniciamos a una estructura base vacía
+  htmlContent.value = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <style>
+    body { margin: 0; padding: 0; background-color: #ffffff; font-family: Arial, sans-serif; }
+    .main-card {
+      width: 100%;
+      max-width: 820px;
+      margin: 0 auto 80px auto;
+      background: #ffffff;
+      min-height: 500px;
+      border-radius: 24px;
+      box-shadow: 0 10px 40px rgba(15, 23, 42, 0.08);
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#ffffff;">
+  <div style="margin:0;padding:0;width:100%;background-color:#ffffff;">
+    <div style="width:100%;margin:0 auto;padding:40px;">
+      <div class="main-card" style="width:100%;max-width:820px;margin:0 auto;background:#ffffff;border-radius:24px;box-shadow:0 10px 40px rgba(15, 23, 42, 0.08);overflow:hidden;min-height:500px;"></div>
+    </div>
+  </div>
+</body>
+</html>`
+
   localStorage.setItem('last_edited_template', currentTemplate.value)
   showTemplateModal.value = false
+  
+  // Limpiamos el editor y guardamos
+  const { injectIframeContent } = useIframeEngine()
+  injectIframeContent()
+  
   saveTemplate()
   newTemplateName.value = ''
 }

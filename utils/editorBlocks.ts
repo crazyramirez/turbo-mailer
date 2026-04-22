@@ -228,24 +228,24 @@ export const editorBlocks: EditorBlock[] = [
       <tr>
         <td style="vertical-align:middle;padding-right:14px;">
           <div class="image-container" data-toggle="image" style="width:70px;">
-            <img src="https://placehold.co/200x200/f8fafc/6366f1?text=A" alt="Firma" style="display:block;width:70px;height:auto;border:0;border-radius:10px;">
+            <img src="https://placehold.co/200x200/f8fafc/6366f1?text=A" alt="Firma" style="display:block;width:70px;height:auto;border:0;border-radius:0;">
           </div>
         </td>
         <td style="vertical-align:middle;">
           <div data-toggle="title" style="font-family:Arial;font-size:17px;font-weight:700;color:#0f172a;line-height:1.2;">Alex Rivera</div>
           <div data-toggle="subtitle" style="font-family:Arial;font-size:14px;color:#64748b;margin-top:2px;">NovaSphere Solutions</div>
-          <div style="font-family:Arial;font-size:14px;color:#334155;margin-top:3px;">
+          <div data-toggle="contact" style="font-family:Arial;font-size:14px;color:#334155;margin-top:3px;">
             <a href="mailto:hola@tudominio.com" style="color:#6366f1;text-decoration:none;">hola@tudominio.com</a>
           </div>
-          <div style="font-family:Arial;font-size:14px;color:#334155;margin-top:3px;">
+          <div data-toggle="contact" style="font-family:Arial;font-size:14px;color:#334155;margin-top:3px;">
             <a href="#" style="color:#6366f1;text-decoration:none;">www.tudominio.com</a>
           </div>
         </td>
       </tr>
     </table>
     <div style="height:20px;"></div>
-    <div data-toggle="badge" style="font-family:Arial;font-size:14px;line-height:22px;color:#64748b;border-left:3px solid #6366f1;padding-left:12px;">
-      <span style="font-weight:700;color:#334155;">P.D.</span> Escribe aquí una nota final, recordatorio o posdata para tu destinatario.
+    <div data-toggle="ps" style="font-family:Arial;font-size:14px;line-height:22px;color:#64748b;border-left:3px solid #6366f1;padding-left:12px;">
+      <span style="font-weight:700;color:#334155;">P.D.</span> <span style="display:inline-block;">Escribe aquí una nota final, recordatorio o posdata para tu destinatario.</span>
     </div>
   </div>`,
   },

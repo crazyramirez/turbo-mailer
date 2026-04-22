@@ -18,11 +18,12 @@ import {
   Trash2,
   Zap,
   Plus,
-} from 'lucide-vue-next'
-import { useEditorState } from '~/composables/useEditorState'
-import { useBlockEditor } from '~/composables/useBlockEditor'
+} from "lucide-vue-next";
+import { useEditorState } from "~/composables/useEditorState";
+import { useBlockEditor } from "~/composables/useBlockEditor";
 
-const { selectedElement, selectedSubElement, fontSizeRef, logoWidthRef } = useEditorState()
+const { selectedElement, selectedSubElement, fontSizeRef, logoWidthRef } =
+  useEditorState();
 
 const {
   deleteSelectedBlock,
@@ -47,27 +48,48 @@ const {
   addButton,
   improveBlockWithAI,
   isImprovingAI,
-} = useBlockEditor()
+} = useBlockEditor();
 
-const editableTypes = ['Header', 'Grid', 'Tarjeta', 'Imagen', 'Metodología', 'Presencia', 'Firma', 'Texto', 'Botón']
+const editableTypes = [
+  "Header",
+  "Grid",
+  "Tarjeta",
+  "Imagen",
+  "Metodología",
+  "Presencia",
+  "Firma",
+  "Texto",
+  "Botón",
+];
 </script>
 
 <template>
   <div v-if="selectedElement" class="edit-controls">
-
     <!-- Module Settings -->
     <div
       class="edit-section"
-      v-if="selectedElement?.dataset.type && editableTypes.includes(selectedElement.dataset.type)"
+      v-if="
+        selectedElement?.dataset.type &&
+        editableTypes.includes(selectedElement.dataset.type)
+      "
     >
       <!-- Card Layout -->
-      <div class="control-group" v-if="selectedElement.dataset.type === 'Tarjeta'">
+      <div
+        class="control-group"
+        v-if="selectedElement.dataset.type === 'Tarjeta'"
+      >
         <label>Estilo de Tarjeta</label>
         <div class="layout-pill-selector">
-          <button @click="toggleCardLayout" :class="{ active: getCardLayout() === 'standard' }">
+          <button
+            @click="toggleCardLayout"
+            :class="{ active: getCardLayout() === 'standard' }"
+          >
             <Square :size="14" /> <span>Clásica</span>
           </button>
-          <button @click="toggleCardLayout" :class="{ active: getCardLayout() === 'premium' }">
+          <button
+            @click="toggleCardLayout"
+            :class="{ active: getCardLayout() === 'premium' }"
+          >
             <Sparkles :size="14" /> <span>Premium</span>
           </button>
         </div>
@@ -82,31 +104,58 @@ const editableTypes = ['Header', 'Grid', 'Tarjeta', 'Imagen', 'Metodología', 'P
           class="layout-pill-selector"
           style="margin-top: 10px"
         >
-          <button @click="toggleButtonLayout" :class="{ active: getButtonLayout() === 'auto' }">
+          <button
+            @click="toggleButtonLayout"
+            :class="{ active: getButtonLayout() === 'auto' }"
+          >
             <Layout :size="14" /> <span>Ajuste Auto</span>
           </button>
-          <button @click="toggleButtonLayout" :class="{ active: getButtonLayout() === 'full' }">
+          <button
+            @click="toggleButtonLayout"
+            :class="{ active: getButtonLayout() === 'full' }"
+          >
             <Monitor :size="14" /> <span>Expandido (100%)</span>
           </button>
         </div>
 
         <!-- Non-button toggles -->
-        <div v-if="selectedElement.dataset.type !== 'Botón'" class="compact-toggles">
-
+        <div
+          v-if="selectedElement.dataset.type !== 'Botón'"
+          class="compact-toggles"
+        >
           <!-- Text alignment (Texto block only) -->
-          <div v-if="selectedElement.dataset.type === 'Texto'" class="toggle-item full-width-toggle">
+          <div
+            v-if="selectedElement.dataset.type === 'Texto'"
+            class="toggle-item full-width-toggle"
+          >
             <span class="label">Alineación de Texto</span>
             <div class="layout-pill-selector mini">
-              <button @click="updateTextAlign('left')" :class="{ active: getTextAlign() === 'left' }" title="Izquierda">
+              <button
+                @click="updateTextAlign('left')"
+                :class="{ active: getTextAlign() === 'left' }"
+                title="Izquierda"
+              >
                 <AlignLeft :size="14" />
               </button>
-              <button @click="updateTextAlign('center')" :class="{ active: getTextAlign() === 'center' }" title="Centro">
+              <button
+                @click="updateTextAlign('center')"
+                :class="{ active: getTextAlign() === 'center' }"
+                title="Centro"
+              >
                 <AlignCenter :size="14" />
               </button>
-              <button @click="updateTextAlign('right')" :class="{ active: getTextAlign() === 'right' }" title="Derecha">
+              <button
+                @click="updateTextAlign('right')"
+                :class="{ active: getTextAlign() === 'right' }"
+                title="Derecha"
+              >
                 <AlignRight :size="14" />
               </button>
-              <button @click="updateTextAlign('justify')" :class="{ active: getTextAlign() === 'justify' }" title="Justificado">
+              <button
+                @click="updateTextAlign('justify')"
+                :class="{ active: getTextAlign() === 'justify' }"
+                title="Justificado"
+              >
                 <AlignJustify :size="14" />
               </button>
             </div>
@@ -114,9 +163,15 @@ const editableTypes = ['Header', 'Grid', 'Tarjeta', 'Imagen', 'Metodología', 'P
 
           <!-- Visibility toggles (non-text blocks) -->
           <template v-if="selectedElement.dataset.type !== 'Texto'">
-            <div v-if="selectedElement.dataset.type === 'Header'" class="toggle-item">
+            <div
+              v-if="selectedElement.dataset.type === 'Header'"
+              class="toggle-item"
+            >
               <span class="label">Logotipo</span>
-              <button @click="toggleVisibility('logo')" :class="{ active: isVisible('logo') }">
+              <button
+                @click="toggleVisibility('logo')"
+                :class="{ active: isVisible('logo') }"
+              >
                 <Eye v-if="isVisible('logo')" :size="14" />
                 <EyeOff v-else :size="14" />
               </button>
@@ -124,7 +179,9 @@ const editableTypes = ['Header', 'Grid', 'Tarjeta', 'Imagen', 'Metodología', 'P
 
             <!-- Logo width slider -->
             <div
-              v-if="selectedElement.dataset.type === 'Header' && isVisible('logo')"
+              v-if="
+                selectedElement.dataset.type === 'Header' && isVisible('logo')
+              "
               class="toggle-item full-width-toggle no-border"
             >
               <div class="slider-row" style="width: 100%; margin-top: 8px">
@@ -143,33 +200,101 @@ const editableTypes = ['Header', 'Grid', 'Tarjeta', 'Imagen', 'Metodología', 'P
               </div>
             </div>
 
-            <div v-if="selectedElement.querySelector('[data-toggle=\'image\']')" class="toggle-item">
-              <span class="label">{{ selectedElement.dataset.type === 'Firma' ? 'Foto de Perfil' : 'Imagen / Recurso' }}</span>
-              <button @click="toggleVisibility('image')" :class="{ active: isVisible('image') }">
+            <div
+              v-if="selectedElement.querySelector('[data-toggle=\'image\']')"
+              class="toggle-item"
+            >
+              <span class="label">{{
+                selectedElement.dataset.type === "Firma"
+                  ? "Logo"
+                  : "Imagen / Recurso"
+              }}</span>
+              <button
+                @click="toggleVisibility('image')"
+                :class="{ active: isVisible('image') }"
+              >
                 <Eye v-if="isVisible('image')" :size="14" />
                 <EyeOff v-else :size="14" />
               </button>
             </div>
 
-            <div v-if="selectedElement.querySelector('[data-toggle=\'badge\']')" class="toggle-item">
-              <span class="label">{{ selectedElement.dataset.type === 'Firma' ? 'Nota Posdata' : 'Etiqueta / Badge' }}</span>
-              <button @click="toggleVisibility('badge')" :class="{ active: isVisible('badge') }">
+            <div
+              v-if="selectedElement.querySelector('[data-toggle=\'badge\']')"
+              class="toggle-item"
+            >
+              <span class="label">{{
+                selectedElement.dataset.type === "Firma"
+                  ? "Nota Posdata"
+                  : "Etiqueta / Badge"
+              }}</span>
+              <button
+                @click="toggleVisibility('badge')"
+                :class="{ active: isVisible('badge') }"
+              >
                 <Eye v-if="isVisible('badge')" :size="14" />
                 <EyeOff v-else :size="14" />
               </button>
             </div>
 
-            <div v-if="selectedElement.querySelector('[data-toggle=\'title\']')" class="toggle-item">
-              <span class="label">{{ selectedElement.dataset.type === 'Firma' ? 'Nombre / Firma' : 'Títulos Principales' }}</span>
-              <button @click="toggleVisibility('title')" :class="{ active: isVisible('title') }">
+            <div
+              v-if="selectedElement.querySelector('[data-toggle=\'ps\']')"
+              class="toggle-item"
+            >
+              <span class="label">Nota Posdata (P.D.)</span>
+              <button
+                @click="toggleVisibility('ps')"
+                :class="{ active: isVisible('ps') }"
+              >
+                <Eye v-if="isVisible('ps')" :size="14" />
+                <EyeOff v-else :size="14" />
+              </button>
+            </div>
+
+            <div
+              v-if="selectedElement.querySelector('[data-toggle=\'contact\']')"
+              class="toggle-item"
+            >
+              <span class="label">Datos de Contacto</span>
+              <button
+                @click="toggleVisibility('contact')"
+                :class="{ active: isVisible('contact') }"
+              >
+                <Eye v-if="isVisible('contact')" :size="14" />
+                <EyeOff v-else :size="14" />
+              </button>
+            </div>
+
+            <div
+              v-if="selectedElement.querySelector('[data-toggle=\'title\']')"
+              class="toggle-item"
+            >
+              <span class="label">{{
+                selectedElement.dataset.type === "Firma"
+                  ? "Nombre / Firma"
+                  : "Títulos Principales"
+              }}</span>
+              <button
+                @click="toggleVisibility('title')"
+                :class="{ active: isVisible('title') }"
+              >
                 <Eye v-if="isVisible('title')" :size="14" />
                 <EyeOff v-else :size="14" />
               </button>
             </div>
 
-            <div v-if="selectedElement.querySelector('[data-toggle=\'subtitle\']')" class="toggle-item">
-              <span class="label">{{ selectedElement.dataset.type === 'Firma' ? 'Cargo / Empresa' : 'Subtítulos / Descr.' }}</span>
-              <button @click="toggleVisibility('subtitle')" :class="{ active: isVisible('subtitle') }">
+            <div
+              v-if="selectedElement.querySelector('[data-toggle=\'subtitle\']')"
+              class="toggle-item"
+            >
+              <span class="label">{{
+                selectedElement.dataset.type === "Firma"
+                  ? "Cargo / Empresa"
+                  : "Subtítulos / Descr."
+              }}</span>
+              <button
+                @click="toggleVisibility('subtitle')"
+                :class="{ active: isVisible('subtitle') }"
+              >
                 <Eye v-if="isVisible('subtitle')" :size="14" />
                 <EyeOff v-else :size="14" />
               </button>
@@ -185,7 +310,9 @@ const editableTypes = ['Header', 'Grid', 'Tarjeta', 'Imagen', 'Metodología', 'P
       <div class="typography-controls">
         <button @click="updateFont" class="c-btn full-width">
           <CaseSensitive :size="16" /> Tipografía:
-          <span class="font-active-name">{{ selectedElement.style.fontFamily.split(',')[0] || 'Arial' }}</span>
+          <span class="font-active-name">{{
+            selectedElement.style.fontFamily.split(",")[0] || "Arial"
+          }}</span>
         </button>
         <div class="slider-row">
           <div class="slider-header">
@@ -205,19 +332,24 @@ const editableTypes = ['Header', 'Grid', 'Tarjeta', 'Imagen', 'Metodología', 'P
     </div>
 
     <!-- AI Copywriting -->
-    <div 
-      class="control-group" 
-      v-if="selectedElement.dataset.type !== 'Botón' && selectedElement.dataset.type !== 'Imagen'"
+    <div
+      class="control-group"
+      v-if="
+        selectedElement.dataset.type !== 'Botón' &&
+        selectedElement.dataset.type !== 'Imagen'
+      "
     >
       <label>IA Copywriting</label>
       <div class="ai-controls">
-        <button 
-          @click="improveBlockWithAI()" 
-          class="c-btn ai-magic-btn" 
+        <button
+          @click="improveBlockWithAI()"
+          class="c-btn ai-magic-btn"
           :disabled="isImprovingAI"
         >
           <Sparkles :size="14" :class="{ 'anim-spin': isImprovingAI }" />
-          <span>{{ isImprovingAI ? 'Mejorando...' : 'Optimizar Texto con IA' }}</span>
+          <span>{{
+            isImprovingAI ? "Mejorando..." : "Optimizar Texto con IA"
+          }}</span>
         </button>
       </div>
     </div>
@@ -229,16 +361,30 @@ const editableTypes = ['Header', 'Grid', 'Tarjeta', 'Imagen', 'Metodología', 'P
         <button @click="updateBgColor" class="c-btn">
           <Palette :size="14" /> Fondo
         </button>
-        <button v-if="selectedElement.querySelector('img')" @click="updateImage" class="c-btn">
+        <button
+          v-if="selectedElement.querySelector('img')"
+          @click="updateImage"
+          class="c-btn"
+        >
           <ImageIcon :size="14" /> Imagen
         </button>
 
         <template v-if="selectedElement.dataset.type === 'Botón'">
-          <div v-if="selectedSubElement?.closest('[data-toggle=\'button\']')" class="sub-edit-grid">
+          <div
+            v-if="selectedSubElement?.closest('[data-toggle=\'button\']')"
+            class="sub-edit-grid"
+          >
             <div class="sub-edit-header">
               <MousePointer2 :size="12" />
               <span>
-                Botón: "<strong>{{ (selectedSubElement?.innerText || '').substring(0, 30) }}{{ (selectedSubElement?.innerText || '').length > 30 ? '...' : '' }}</strong>"
+                Botón: "<strong
+                  >{{ (selectedSubElement?.innerText || "").substring(0, 30)
+                  }}{{
+                    (selectedSubElement?.innerText || "").length > 30
+                      ? "..."
+                      : ""
+                  }}</strong
+                >"
               </span>
             </div>
             <button @click="updateThisButtonColor" class="c-btn highlight-btn">
@@ -253,7 +399,9 @@ const editableTypes = ['Header', 'Grid', 'Tarjeta', 'Imagen', 'Metodología', 'P
           </div>
           <div v-else class="info-badge-premium">
             <Zap :size="14" />
-            <span>Toca un botón en el diseño para editar su color y enlace</span>
+            <span
+              >Toca un botón en el diseño para editar su color y enlace</span
+            >
           </div>
           <button @click="addButton" class="c-btn full-width mt-10">
             <Plus :size="14" /> Nuevo Botón
@@ -262,6 +410,8 @@ const editableTypes = ['Header', 'Grid', 'Tarjeta', 'Imagen', 'Metodología', 'P
       </div>
     </div>
 
-    <button @click="deleteSelectedBlock" class="btn-block-remove">Eliminar Bloque</button>
+    <button @click="deleteSelectedBlock" class="btn-block-remove">
+      Eliminar Bloque
+    </button>
   </div>
 </template>
