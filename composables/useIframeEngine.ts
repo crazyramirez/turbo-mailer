@@ -458,6 +458,11 @@ function setupIframeEvents(doc: Document) {
           useBlockEditor().selectElement(newBlock)
         })
         refreshLayers()
+        
+        import('~/composables/useTemplateManager').then(({ useTemplateManager }) => {
+          useTemplateManager().autoCreateTemplate()
+        })
+        
         triggerAutosave(true)
       } else if (parentState.draggedLayer) {
         const layerEl = parentState.draggedLayer as HTMLElement

@@ -145,15 +145,8 @@ async function handleSave() {
 async function createNewTemplate() {
   if (!newTemplateName.value) return
   
-  const { updateHtml, injectIframeContent } = useIframeEngine()
-  
-  // Si venimos de la demo o de un lienzo con contenido, preservamos los módulos
-  // para no obligar al usuario a empezar de cero si ya estaba editando.
-  if (currentTemplate.value === 'email_demo' || layerList.value.length > 0) {
-    updateHtml()
-  } else {
-    // Solo reiniciamos a base vacía si realmente estamos empezando de cero absoluto
-    htmlContent.value = `<!DOCTYPE html>
+  // Siempre que se crea manualmente, empezamos con un lienzo vacío (petición del usuario)
+  htmlContent.value = `<!DOCTYPE html>
 <html lang="es">
 <head>
   <style>
@@ -190,17 +183,30 @@ async function createNewTemplate() {
   </div>
 </body>
 </html>`
-  }
 
   currentTemplate.value = newTemplateName.value
   localStorage.setItem('last_edited_template', currentTemplate.value)
   showTemplateModal.value = false
   
+  const { injectIframeContent } = useIframeEngine()
   injectIframeContent()
   
-  // Guardamos inmediatamente de forma asíncrona pero esperada
   await saveTemplate()
   newTemplateName.value = ''
+}
+
+async function autoCreateTemplate() {
+  if (currentTemplate.value !== 'email_demo') return
+  
+  const now = new Date()
+  const timestamp = now.toLocaleDateString().replace(/\//g, '-') + '-' + now.getHours() + now.getMinutes()
+  const defaultName = `Campaña sin título ${timestamp}`
+  
+  currentTemplate.value = defaultName
+  localStorage.setItem('last_edited_template', defaultName)
+  
+  await saveTemplate(true)
+  showToast('Plantilla creada automáticamente', 'info')
 }
 
 export function useTemplateManager() {
@@ -212,5 +218,6 @@ export function useTemplateManager() {
     saveTemplate,
     handleSave,
     createNewTemplate,
+    autoCreateTemplate,
   }
 }
