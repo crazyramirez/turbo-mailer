@@ -16,9 +16,16 @@ Turbo-Mailer PRO es una solución de escritorio/PWA de alto rendimiento para env
 
 ## 📸 Interfaz del Proyecto
 
-| :----------------------------------: | :----------------------------------: |
-| ![](public/images/screenshot_1.webp) | ![](public/images/screenshot_2.webp) |
-| ![](public/images/screenshot_3.webp) | ![](public/images/screenshot_4.webp) |
+<table>
+  <tr>
+    <td><img src="public/images/screenshot_1.webp"></td>
+    <td><img src="public/images/screenshot_2.webp"></td>
+  </tr>
+  <tr>
+    <td><img src="public/images/screenshot_3.webp"></td>
+    <td><img src="public/images/screenshot_4.webp"></td>
+  </tr>
+</table>
 
 ---
 
@@ -148,4 +155,4 @@ Este proyecto es una herramienta de desarrollo. El uso indebido para comunicacio
 
 ---
 
-**Desarrollado con ❤️ por crazyramirez.**
+**Desarrollado con ❤️ por mi así con amor viéndome podcasts en Youtube de fondo.**
