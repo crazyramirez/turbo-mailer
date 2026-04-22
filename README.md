@@ -1,4 +1,4 @@
-# 🚀 Turbo-Mailer PRO
+# 🚀 Turbo-Mailer PRO 🚀
 
 **Dashboard de Envío Inteligente & Gestión de Campañas Premium**
 
