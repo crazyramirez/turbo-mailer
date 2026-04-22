@@ -8,7 +8,7 @@
 >
 > **No está diseñada, ni debe usarse, para spam o envíos masivos no solicitados.**
 >
-> El uso de esta aplicación implica la aceptación total de las políticas de uso de Gmail/Google, la normativa vigente (GDPR, CAN-SPAM Act, LSSI-CE) y las leyes de privacidad aplicables en tu país. **Los desarrolladores de Turbo-Mailer PRO no asumen ninguna responsabilidad por el uso indebido de la herramienta**, incluyendo el incumplimiento de dichas normativas, bloqueos de cuenta o consecuencias legales derivadas de un uso no autorizado.
+> El uso de esta aplicación implica la aceptación total de las políticas de uso de Gmail/Google, la normativa vigente (GDPR, CAN-SPAM Act, LSSI-CE) y las leyes de privacidad aplicables en tu país. **El desarrollador de Turbo-Mailer PRO no asume ninguna responsabilidad por el uso indebido de la herramienta**, incluyendo el incumplimiento de dichas normativas, bloqueos de cuenta o consecuencias legales derivadas de un uso no autorizado.
 
 Turbo-Mailer PRO es una solución de escritorio/PWA de alto rendimiento para envío masivo de correos personalizados. Construido con **Nuxt 3**, permite gestionar campañas completas con importación directa desde Excel, editor visual de plantillas HTML, previsualización en tiempo real e integración con IA para mejorar los textos.
 
@@ -16,8 +16,9 @@ Turbo-Mailer PRO es una solución de escritorio/PWA de alto rendimiento para env
 
 ## 📸 Interfaz del Proyecto
 
-| :----------------------------------: | :----------------------------------: | :----------------------------------: | :----------------------------------: |
-| ![](public/images/screenshot_1.webp) | ![](public/images/screenshot_2.webp) | ![](public/images/screenshot_3.webp) | ![](public/images/screenshot_4.webp) |
+| :----------------------------------: | :----------------------------------: |
+| ![](public/images/screenshot_1.webp) | ![](public/images/screenshot_2.webp) |
+| ![](public/images/screenshot_3.webp) | ![](public/images/screenshot_4.webp) |
 
 ---
 
