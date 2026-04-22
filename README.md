@@ -1,16 +1,18 @@
 # 🚀 Turbo-Mailer PRO
 
-**Dashboard de Envío Inteligente & Gestión de Campañas Premium**
+**Dashboard de Envío Inteligente de Emails**
 
 > ⚠️ **Uso Responsable — Leer antes de usar**
 >
-> Turbo-Mailer PRO es una herramienta profesional diseñada exclusivamente para **envíos de email legítimos, controlados y con consentimiento previo**: comunicaciones corporativas, newsletters opt-in, campañas B2B entre contactos propios y notificaciones transaccionales.
+> Turbo-Mailer PRO es una herramienta diseñada exclusivamente para **envíos de email legítimos, controlados y con consentimiento previo**: comunicaciones corporativas, newsletters opt-in, campañas B2B entre contactos propios y notificaciones transaccionales.
 >
 > **No está diseñada, ni debe usarse, para spam o envíos masivos no solicitados.**
 >
 > El uso de esta aplicación implica la aceptación total de las políticas de uso de Gmail/Google, la normativa vigente (GDPR, CAN-SPAM Act, LSSI-CE) y las leyes de privacidad aplicables en tu país. **El desarrollador de Turbo-Mailer PRO no asume ninguna responsabilidad por el uso indebido de la herramienta**, incluyendo el incumplimiento de dichas normativas, bloqueos de cuenta o consecuencias legales derivadas de un uso no autorizado.
 
 Turbo-Mailer PRO es una solución de escritorio/PWA de alto rendimiento para envío masivo de correos personalizados. Construido con **Nuxt 3**, permite gestionar campañas completas con importación directa desde Excel, editor visual de plantillas HTML, previsualización en tiempo real e integración con IA para mejorar los textos.
+
+> 💡 **Nota Técnica:** Esta aplicación **no utiliza bases de datos** ni almacena el historial de envíos. No es un gestor de contactos (CRM) completo; su función es puramente operativa: procesar un archivo estructurado (XLSX, XLS o CSV) y despachar los correos de forma inmediata y personalizada. Los datos cargados se mantienen únicamente en memoria durante la sesión.
 
 ![Turbo-Mailer PRO — Dashboard preview](public/images/ogimage.jpg)
 
