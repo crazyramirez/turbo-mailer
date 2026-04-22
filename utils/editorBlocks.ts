@@ -1,0 +1,252 @@
+import type { Component } from 'vue'
+import {
+  Layout,
+  Type,
+  Square,
+  MousePointer2,
+  Image as ImageIcon,
+  Zap,
+  Globe,
+  Edit3,
+} from 'lucide-vue-next'
+
+export interface EditorBlock {
+  id: string
+  name: string
+  icon: Component
+  content: string
+}
+
+const getPlaceholder = (w: number, h: number, text = 'Imagen') =>
+  `https://placehold.co/${w}x${h}/1e293b/white?text=${encodeURIComponent(text)}`
+
+const placeholder1200x800 = getPlaceholder(1200, 800, 'Imagen')
+const placeholder400x400 = getPlaceholder(400, 400, 'Imagen ')
+const placeholderLogo = getPlaceholder(200, 60, 'Logo')
+
+export const editorBlocks: EditorBlock[] = [
+  {
+    id: 'header-pro',
+    name: 'Header',
+    icon: Layout,
+    content: `<div class="header-block editable-block" data-type="Header" style="padding:48px 32px;background-color:#f6faff;border-bottom:1px solid #e2e8f0;">
+    <div data-toggle="logo" style="margin-bottom:24px;">
+      <img src="${placeholderLogo}" alt="Logo" style="display:block;max-height:50px;width:auto;">
+    </div>
+    <div data-toggle="badge" style="font-family:Arial;font-size:12px;font-weight:700;color:#6366f1;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;">
+      Presentación VIP
+    </div>
+    <div data-toggle="title" style="font-family:Arial;font-size:38px;line-height:1.2;font-weight:700;color:#0f172a;margin-bottom:16px;">Tu propuesta de valor principal aquí</div>
+    <div data-toggle="subtitle" style="font-family:Arial;font-size:18px;line-height:1.6;color:#475569;max-width:600px;">Más de 10 años ofreciendo soluciones profesionales para empresas e instituciones de primer nivel internacional.</div>
+  </div>`,
+  },
+  {
+    id: 'text',
+    name: 'Texto',
+    icon: Type,
+    content: `<div class="body-block editable-block" data-type="Texto" style="padding:48px 32px;background:#f6faff;">
+    <div data-toggle="title" style="font-family:Arial;font-size:17px;line-height:28px;color:#334155;">
+      Escribe aquí tu contenido principal. Utiliza este espacio para desarrollar tu mensaje con detalle y claridad, manteniendo siempre un tono institucional.
+      <br><br>
+      Puedes aplicar estilos como <b>negrita</b>, <i>cursiva</i> o subrayado para resaltar los puntos clave. Este bloque está diseñado para ofrecer una <u>legibilidad máxima</u> en cualquier dispositivo.
+    </div>
+  </div>`,
+  },
+  {
+    id: 'card',
+    name: 'Tarjeta',
+    icon: Square,
+    content: `<div class="card-block editable-block" data-type="Tarjeta" data-layout="premium" style="padding:16px 32px;background:#f6faff;">
+    <div class="card-wrapper" style="background:#f6faff;border:1px solid #e2e8f0;border-radius:18px;padding:20px;position:relative;">
+      <div class="image-container" data-toggle="image" style="position:relative;margin-bottom:16px;">
+        <img src="${placeholder1200x800}" alt="Servicio" style="display:block;width:100%;height:auto;border-radius:12px;">
+      </div>
+      <div class="text-group">
+        <div data-toggle="badge" class="badge-el" style="font-family:Arial;font-size:13px;font-weight:700;color:#6366f1;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;">01 · Categoría</div>
+        <div data-toggle="title" style="font-family:Arial;font-size:20px;font-weight:700;color:#0f172a;margin-bottom:10px;">Título del Servicio</div>
+        <div data-toggle="subtitle" style="font-family:Arial;font-size:15px;line-height:24px;color:#475569;">Describe aquí los detalles de este servicio o producto para captar la atención de tu cliente.</div>
+      </div>
+    </div>
+  </div>`,
+  },
+  {
+    id: 'button',
+    name: 'Botón',
+    icon: MousePointer2,
+    content: `<div class="cta-block editable-block" data-type="Botón" style="padding:24px 32px;background:#f6faff;text-align:center;">
+    <div class="buttons-row" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;flex-direction:row;">
+      <a href="#" data-toggle="button" style="display:inline-block;background:#6366f1;border-radius:14px;padding:18px 32px;font-family:Arial;font-size:17px;font-weight:700;color:#ffffff;text-decoration:none;text-align:center;min-width:200px;box-sizing:border-box;"><span class="btn-text">Llamada a la Acción →</span></a>
+    </div>
+  </div>`,
+  },
+  {
+    id: 'image',
+    name: 'Imagen',
+    icon: ImageIcon,
+    content: `<div class="image-block editable-block" data-type="Imagen" style="padding:16px 32px;background:#f6faff;text-align:center;">
+    <div data-toggle="image"><img src="${placeholder1200x800}" alt="Imagen" style="display:block;width:100%;height:auto;border-radius:12px;"></div>
+  </div>`,
+  },
+  {
+    id: 'methodology',
+    name: 'Metodología',
+    icon: Zap,
+    content: `<div class="methodology-block editable-block" data-type="Metodología" style="padding:24px 32px;background:#f6faff;">
+    <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:18px;padding:24px;border-left:4px solid #6366f1;">
+      <div data-toggle="badge" style="font-family:Arial;font-size:11px;font-weight:700;color:#6366f1;letter-spacing:1.2px;margin-bottom:12px;text-transform:uppercase;">Nuestra Metodología</div>
+      <div data-toggle="title" style="font-family:Arial;font-size:16px;font-weight:700;color:#0f172a;line-height:24px;margin-bottom:12px;">Innovación constante para resultados excepcionales.</div>
+      <div data-toggle="subtitle" style="font-family:Arial;font-size:15px;line-height:24px;color:#475569;">No replicamos soluciones genéricas: cada proyecto se construye desde cero, pensado para cada cliente y objetivo concreto. El resultado es siempre algo único y memorable.</div>
+    </div>
+  </div>`,
+  },
+  {
+    id: 'presence',
+    name: 'Presencia',
+    icon: Globe,
+    content: `<div class="presence-block editable-block" data-type="Presencia" style="padding:24px 32px;background:#f6faff;">
+    <div data-toggle="badge" style="font-family:Arial;font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:1.2px;text-align:center;margin-bottom:16px;text-transform:uppercase;">RECONOCIMIENTO Y PRESENCIA</div>
+    <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;text-align:center;">
+      <span style="display:inline-block;font-family:Arial;font-size:12px;font-weight:700;color:#475569;padding:4px 8px;">Tech Summit</span>
+      <span style="display:inline-block;font-family:Arial;font-size:12px;font-weight:700;color:#cbd5e1;padding:4px 2px;">·</span>
+      <span style="display:inline-block;font-family:Arial;font-size:12px;font-weight:700;color:#475569;padding:4px 8px;">Digital Expo</span>
+      <span style="display:inline-block;font-family:Arial;font-size:12px;font-weight:700;color:#cbd5e1;padding:4px 2px;">·</span>
+      <span style="display:inline-block;font-family:Arial;font-size:12px;font-weight:700;color:#475569;padding:4px 8px;">Innovation Week</span>
+      <span style="display:inline-block;font-family:Arial;font-size:12px;font-weight:700;color:#cbd5e1;padding:4px 2px;">·</span>
+      <span style="display:inline-block;font-family:Arial;font-size:12px;font-weight:700;color:#475569;padding:4px 8px;">Global Forum</span>
+    </div>
+  </div>`,
+  },
+  {
+    id: 'grid-2',
+    name: 'Grid Dúo',
+    icon: Layout,
+    content: `<div class="grid-block editable-block" data-type="Grid" style="padding:24px 32px;background:#f6faff;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td width="48%" valign="top">
+          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:16px;padding:12px;">
+            <div data-toggle="image"><img src="${placeholder400x400}" style="display:block;width:100%;border-radius:10px;margin-bottom:12px;"></div>
+            <div data-toggle="title" style="font-family:Arial;font-size:15px;font-weight:700;color:#0f172a;">Elemento 1</div>
+            <div data-toggle="subtitle" style="font-family:Arial;font-size:12px;line-height:1.4;color:#64748b;margin-top:4px;">Descripción breve aquí.</div>
+          </div>
+        </td>
+        <td width="4%">&nbsp;</td>
+        <td width="48%" valign="top">
+          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:16px;padding:12px;">
+            <div data-toggle="image"><img src="${placeholder400x400}" style="display:block;width:100%;border-radius:10px;margin-bottom:12px;"></div>
+            <div data-toggle="title" style="font-family:Arial;font-size:15px;font-weight:700;color:#0f172a;">Elemento 2</div>
+            <div data-toggle="subtitle" style="font-family:Arial;font-size:12px;line-height:1.4;color:#64748b;margin-top:4px;">Descripción breve aquí.</div>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>`,
+  },
+  {
+    id: 'grid-3',
+    name: 'Grid Trío',
+    icon: Layout,
+    content: `<div class="grid-block editable-block" data-type="Grid" style="padding:24px 32px;background:#f6faff;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td width="31%" valign="top">
+          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:12px;padding:10px;">
+            <div data-toggle="image"><img src="${placeholder400x400}" style="display:block;width:100%;border-radius:8px;margin-bottom:10px;"></div>
+            <div data-toggle="title" style="font-family:Arial;font-size:13px;font-weight:700;color:#0f172a;margin-bottom:4px;">Título 1</div>
+            <div data-toggle="subtitle" style="font-family:Arial;font-size:11px;line-height:1.4;color:#64748b;">Breve descripción aquí.</div>
+          </div>
+        </td>
+        <td width="3.5%">&nbsp;</td>
+        <td width="31%" valign="top">
+          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:12px;padding:10px;">
+            <div data-toggle="image"><img src="${placeholder400x400}" style="display:block;width:100%;border-radius:8px;margin-bottom:10px;"></div>
+            <div data-toggle="title" style="font-family:Arial;font-size:13px;font-weight:700;color:#0f172a;margin-bottom:4px;">Título 2</div>
+            <div data-toggle="subtitle" style="font-family:Arial;font-size:11px;line-height:1.4;color:#64748b;">Breve descripción aquí.</div>
+          </div>
+        </td>
+        <td width="3.5%">&nbsp;</td>
+        <td width="31%" valign="top">
+          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:12px;padding:10px;">
+            <div data-toggle="image"><img src="${placeholder400x400}" style="display:block;width:100%;border-radius:8px;margin-bottom:10px;"></div>
+            <div data-toggle="title" style="font-family:Arial;font-size:13px;font-weight:700;color:#0f172a;margin-bottom:4px;">Título 3</div>
+            <div data-toggle="subtitle" style="font-family:Arial;font-size:11px;line-height:1.4;color:#64748b;">Breve descripción aquí.</div>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>`,
+  },
+  {
+    id: 'grid-4',
+    name: 'Grid Quad',
+    icon: Layout,
+    content: `<div class="grid-block editable-block" data-type="Grid" style="padding:24px 32px;background:#f6faff;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td width="48%" valign="top">
+          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:16px;padding:12px;margin-bottom:16px;">
+            <div data-toggle="image"><img src="${placeholder400x400}" style="display:block;width:100%;border-radius:10px;margin-bottom:12px;"></div>
+            <div data-toggle="title" style="font-family:Arial;font-size:15px;font-weight:700;color:#0f172a;margin-bottom:4px;">Título 1</div>
+            <div data-toggle="subtitle" style="font-family:Arial;font-size:12px;line-height:1.4;color:#64748b;">Breve detalle aquí.</div>
+          </div>
+        </td>
+        <td width="4%">&nbsp;</td>
+        <td width="48%" valign="top">
+          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:16px;padding:12px;margin-bottom:16px;">
+            <div data-toggle="image"><img src="${placeholder400x400}" style="display:block;width:100%;border-radius:10px;margin-bottom:12px;"></div>
+            <div data-toggle="title" style="font-family:Arial;font-size:15px;font-weight:700;color:#0f172a;margin-bottom:4px;">Título 2</div>
+            <div data-toggle="subtitle" style="font-family:Arial;font-size:12px;line-height:1.4;color:#64748b;">Breve detalle aquí.</div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td width="48%" valign="top">
+          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:16px;padding:12px;margin-bottom:16px;">
+            <div data-toggle="image"><img src="${placeholder400x400}" style="display:block;width:100%;border-radius:10px;margin-bottom:12px;"></div>
+            <div data-toggle="title" style="font-family:Arial;font-size:15px;font-weight:700;color:#0f172a;margin-bottom:4px;">Título 3</div>
+            <div data-toggle="subtitle" style="font-family:Arial;font-size:12px;line-height:1.4;color:#64748b;">Breve detalle aquí.</div>
+          </div>
+        </td>
+        <td width="4%">&nbsp;</td>
+        <td width="48%" valign="top">
+          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:16px;padding:12px;margin-bottom:16px;">
+            <div data-toggle="image"><img src="${placeholder400x400}" style="display:block;width:100%;border-radius:10px;margin-bottom:12px;"></div>
+            <div data-toggle="title" style="font-family:Arial;font-size:15px;font-weight:700;color:#0f172a;margin-bottom:4px;">Título 4</div>
+            <div data-toggle="subtitle" style="font-family:Arial;font-size:12px;line-height:1.4;color:#64748b;">Breve detalle aquí.</div>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>`,
+  },
+  {
+    id: 'signature',
+    name: 'Firma',
+    icon: Edit3,
+    content: `<div class="signature-block editable-block" data-type="Firma" style="padding:24px 32px 40px;background:#f6faff;border-top:1px solid #e2e8f0;">
+    <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+      <tr>
+        <td style="vertical-align:middle;padding-right:14px;">
+          <div class="image-container" data-toggle="image" style="width:70px;">
+            <img src="https://placehold.co/200x200/f8fafc/6366f1?text=A" alt="Firma" style="display:block;width:70px;height:auto;border:0;border-radius:10px;">
+          </div>
+        </td>
+        <td style="vertical-align:middle;">
+          <div data-toggle="title" style="font-family:Arial;font-size:17px;font-weight:700;color:#0f172a;line-height:1.2;">Alex Rivera</div>
+          <div data-toggle="subtitle" style="font-family:Arial;font-size:14px;color:#64748b;margin-top:2px;">NovaSphere Solutions</div>
+          <div style="font-family:Arial;font-size:14px;color:#334155;margin-top:3px;">
+            <a href="mailto:hola@tudominio.com" style="color:#6366f1;text-decoration:none;">hola@tudominio.com</a>
+          </div>
+          <div style="font-family:Arial;font-size:14px;color:#334155;margin-top:3px;">
+            <a href="#" style="color:#6366f1;text-decoration:none;">www.tudominio.com</a>
+          </div>
+        </td>
+      </tr>
+    </table>
+    <div style="height:20px;"></div>
+    <div data-toggle="badge" style="font-family:Arial;font-size:14px;line-height:22px;color:#64748b;border-left:3px solid #6366f1;padding-left:12px;">
+      <span style="font-weight:700;color:#334155;">P.D.</span> Escribe aquí una nota final, recordatorio o posdata para tu destinatario.
+    </div>
+  </div>`,
+  },
+]

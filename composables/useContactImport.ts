@@ -1,0 +1,80 @@
+import * as XLSX from 'xlsx'
+import { useDashboardState } from '~/composables/useDashboardState'
+
+const {
+  xlsxFileName,
+  emails,
+  selectedEmails,
+  availableColumns,
+  selectedColumn,
+  empresaColumn,
+  nombreColumn,
+  rawRows,
+  xlsxDragging,
+  showToast,
+} = useDashboardState()
+
+function parseXlsx(file: File) {
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    try {
+      const data = new Uint8Array(e.target!.result as ArrayBuffer)
+      const wb = XLSX.read(data, { type: 'array' })
+      const ws = wb.Sheets[wb.SheetNames[0]]
+      const json = XLSX.utils.sheet_to_json(ws, { defval: '' }) as Record<string, any>[]
+
+      rawRows.value = json
+      const cols = Object.keys(json[0] || {})
+      availableColumns.value = cols
+
+      const findCol = (keys: string[]) =>
+        cols.find((c) => keys.some((k) => c.toLowerCase().includes(k.toLowerCase())))
+
+      selectedColumn.value = findCol(['email', 'mail', 'correo']) || cols[0] || 'Email'
+      empresaColumn.value = findCol(['empresa', 'company', 'business', 'entidad', 'brand']) || ''
+      nombreColumn.value = findCol(['nombre', 'name', 'contacto', 'persona']) || ''
+
+      emails.value = json.map((r) => String(r[selectedColumn.value] || '').trim()).filter(Boolean)
+      selectedEmails.value = [...emails.value]
+      showToast(`${emails.value.length} contactos cargados`, 'success')
+    } catch {
+      showToast('Error al procesar el Excel', 'error')
+    }
+  }
+  reader.readAsArrayBuffer(file)
+}
+
+function clearXlsx() {
+  xlsxFileName.value = ''
+  emails.value = []
+  rawRows.value = []
+  availableColumns.value = []
+  selectedEmails.value = []
+  showToast('Datos eliminados', 'info')
+}
+
+function onXlsxChange(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (file) {
+    xlsxFileName.value = file.name
+    parseXlsx(file)
+  }
+}
+
+function onXlsxDrop(e: DragEvent) {
+  xlsxDragging.value = false
+  const file = e.dataTransfer?.files?.[0]
+  if (file) {
+    xlsxFileName.value = file.name
+    parseXlsx(file)
+  }
+}
+
+function remapEmails() {
+  emails.value = rawRows.value.map((r) => String(r[selectedColumn.value] || '').trim()).filter(Boolean)
+  selectedEmails.value = [...emails.value]
+}
+
+export function useContactImport() {
+  return { parseXlsx, clearXlsx, onXlsxChange, onXlsxDrop, remapEmails }
+}
