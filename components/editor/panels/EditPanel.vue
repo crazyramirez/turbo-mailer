@@ -22,7 +22,7 @@ import {
 import { useEditorState } from "~/composables/useEditorState";
 import { useBlockEditor } from "~/composables/useBlockEditor";
 
-const { selectedElement, selectedSubElement, fontSizeRef, logoWidthRef } =
+const { selectedElement, selectedSubElement, fontSizeRef, logoWidthRef, gridImageHeightRef } =
   useEditorState();
 
 const {
@@ -38,6 +38,7 @@ const {
   updateFont,
   updateFontSize,
   updateLogoWidth,
+  updateGridImageHeight,
   updateBgColor,
   updateTextColor,
   updateImage,
@@ -195,6 +196,26 @@ const editableTypes = [
                   max="300"
                   v-model="logoWidthRef"
                   @input="updateLogoWidth(logoWidthRef)"
+                  class="premium-slider"
+                />
+              </div>
+            </div>
+
+            <div
+              v-if="selectedElement.dataset.type === 'Grid'"
+              class="toggle-item full-width-toggle no-border"
+            >
+              <div class="slider-row" style="width: 100%; margin-top: 8px">
+                <div class="slider-header">
+                  <span class="s-label">Altura de Imágenes (Grid)</span>
+                  <span class="s-value">{{ gridImageHeightRef }}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="40"
+                  max="400"
+                  v-model="gridImageHeightRef"
+                  @input="updateGridImageHeight()"
                   class="premium-slider"
                 />
               </div>

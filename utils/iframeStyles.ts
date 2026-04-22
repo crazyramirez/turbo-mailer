@@ -119,7 +119,7 @@ export const iframeEditorStyles = `
     position: relative;
     z-index: 50;
   }
-  img { max-width: 100% !important; height: auto !important; cursor: pointer !important; }
+  img { max-width: 100% !important; height: auto; cursor: pointer !important; }
   #floating-toolbar {
     position: fixed;
     display: none;
@@ -189,5 +189,18 @@ export const iframeEditorStyles = `
     pointer-events: none !important;
     border-radius: 12px;
     outline: 2px solid rgba(168, 85, 247, 0.5) !important;
+  }
+  
+  @media only screen and (max-width: 600px) {
+    .grid-quad-td {
+      display: inline-block !important;
+      width: 50% !important;
+      box-sizing: border-box !important;
+      padding: 4px !important;
+    }
+    img.grid-img {
+      height: 120px !important;
+      object-fit: cover !important;
+    }
   }
 `

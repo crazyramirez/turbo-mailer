@@ -126,7 +126,7 @@ export const editorBlocks: EditorBlock[] = [
       <tr>
         <td width="48%" valign="top">
           <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:16px;padding:12px;">
-            <div data-toggle="image"><img src="${placeholder400x400}" style="display:block;width:100%;border-radius:10px;margin-bottom:12px;"></div>
+            <div data-toggle="image"><img class="grid-img" src="${placeholder400x400}" style="display:block;width:100%;height:200px;object-fit:cover;border-radius:10px;margin-bottom:12px;"></div>
             <div data-toggle="title" style="font-family:Arial;font-size:15px;font-weight:700;color:#0f172a;">Elemento 1</div>
             <div data-toggle="subtitle" style="font-family:Arial;font-size:12px;line-height:1.4;color:#64748b;margin-top:4px;">Descripción breve aquí.</div>
           </div>
@@ -134,7 +134,7 @@ export const editorBlocks: EditorBlock[] = [
         <td width="4%">&nbsp;</td>
         <td width="48%" valign="top">
           <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:16px;padding:12px;">
-            <div data-toggle="image"><img src="${placeholder400x400}" style="display:block;width:100%;border-radius:10px;margin-bottom:12px;"></div>
+            <div data-toggle="image"><img class="grid-img" src="${placeholder400x400}" style="display:block;width:100%;height:200px;object-fit:cover;border-radius:10px;margin-bottom:12px;"></div>
             <div data-toggle="title" style="font-family:Arial;font-size:15px;font-weight:700;color:#0f172a;">Elemento 2</div>
             <div data-toggle="subtitle" style="font-family:Arial;font-size:12px;line-height:1.4;color:#64748b;margin-top:4px;">Descripción breve aquí.</div>
           </div>
@@ -151,24 +151,24 @@ export const editorBlocks: EditorBlock[] = [
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
         <td width="31%" valign="top">
-          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:12px;padding:10px;">
-            <div data-toggle="image"><img src="${placeholder400x400}" style="display:block;width:100%;border-radius:8px;margin-bottom:10px;"></div>
+          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:12px;padding:10px;min-height:260px;">
+            <div data-toggle="image"><img class="grid-img" src="${placeholder400x400}" style="display:block;width:100%;height:150px;object-fit:cover;border-radius:8px;margin-bottom:10px;"></div>
             <div data-toggle="title" style="font-family:Arial;font-size:13px;font-weight:700;color:#0f172a;margin-bottom:4px;">Título 1</div>
             <div data-toggle="subtitle" style="font-family:Arial;font-size:11px;line-height:1.4;color:#64748b;">Breve descripción aquí.</div>
           </div>
         </td>
         <td width="3.5%">&nbsp;</td>
         <td width="31%" valign="top">
-          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:12px;padding:10px;">
-            <div data-toggle="image"><img src="${placeholder400x400}" style="display:block;width:100%;border-radius:8px;margin-bottom:10px;"></div>
+          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:12px;padding:10px;min-height:260px;">
+            <div data-toggle="image"><img class="grid-img" src="${placeholder400x400}" style="display:block;width:100%;height:150px;object-fit:cover;border-radius:8px;margin-bottom:10px;"></div>
             <div data-toggle="title" style="font-family:Arial;font-size:13px;font-weight:700;color:#0f172a;margin-bottom:4px;">Título 2</div>
             <div data-toggle="subtitle" style="font-family:Arial;font-size:11px;line-height:1.4;color:#64748b;">Breve descripción aquí.</div>
           </div>
         </td>
         <td width="3.5%">&nbsp;</td>
         <td width="31%" valign="top">
-          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:12px;padding:10px;">
-            <div data-toggle="image"><img src="${placeholder400x400}" style="display:block;width:100%;border-radius:8px;margin-bottom:10px;"></div>
+          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:12px;padding:10px;min-height:260px;">
+            <div data-toggle="image"><img class="grid-img" src="${placeholder400x400}" style="display:block;width:100%;height:150px;object-fit:cover;border-radius:8px;margin-bottom:10px;"></div>
             <div data-toggle="title" style="font-family:Arial;font-size:13px;font-weight:700;color:#0f172a;margin-bottom:4px;">Título 3</div>
             <div data-toggle="subtitle" style="font-family:Arial;font-size:11px;line-height:1.4;color:#64748b;">Breve descripción aquí.</div>
           </div>
@@ -182,38 +182,34 @@ export const editorBlocks: EditorBlock[] = [
     name: 'Grid Quad',
     icon: Layout,
     content: `<div class="grid-block editable-block" data-type="Grid" style="padding:20px;background:#f6faff;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="table-layout: fixed;">
       <tr>
-        <td width="48%" valign="top">
-          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:16px;padding:12px;margin-bottom:16px;">
-            <div data-toggle="image"><img src="${placeholder400x400}" style="display:block;width:100%;border-radius:10px;margin-bottom:12px;"></div>
-            <div data-toggle="title" style="font-family:Arial;font-size:15px;font-weight:700;color:#0f172a;margin-bottom:4px;">Título 1</div>
-            <div data-toggle="subtitle" style="font-family:Arial;font-size:12px;line-height:1.4;color:#64748b;">Breve detalle aquí.</div>
+        <td class="grid-quad-td" width="25%" valign="top" style="padding: 0 6px;">
+          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:16px;padding:12px;">
+            <div data-toggle="image"><img class="grid-img" src="${placeholder400x400}" style="display:block;width:100%;height:120px;object-fit:cover;border-radius:10px;margin-bottom:12px;"></div>
+            <div data-toggle="title" style="font-family:Arial;font-size:14px;font-weight:700;color:#0f172a;margin-bottom:4px;">Título 1</div>
+            <div data-toggle="subtitle" style="font-family:Arial;font-size:11px;line-height:1.4;color:#64748b;">Breve detalle aquí.</div>
           </div>
         </td>
-        <td width="4%">&nbsp;</td>
-        <td width="48%" valign="top">
-          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:16px;padding:12px;margin-bottom:16px;">
-            <div data-toggle="image"><img src="${placeholder400x400}" style="display:block;width:100%;border-radius:10px;margin-bottom:12px;"></div>
-            <div data-toggle="title" style="font-family:Arial;font-size:15px;font-weight:700;color:#0f172a;margin-bottom:4px;">Título 2</div>
-            <div data-toggle="subtitle" style="font-family:Arial;font-size:12px;line-height:1.4;color:#64748b;">Breve detalle aquí.</div>
+        <td class="grid-quad-td" width="25%" valign="top" style="padding: 0 6px;">
+          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:16px;padding:12px;">
+            <div data-toggle="image"><img class="grid-img" src="${placeholder400x400}" style="display:block;width:100%;height:120px;object-fit:cover;border-radius:10px;margin-bottom:12px;"></div>
+            <div data-toggle="title" style="font-family:Arial;font-size:14px;font-weight:700;color:#0f172a;margin-bottom:4px;">Título 2</div>
+            <div data-toggle="subtitle" style="font-family:Arial;font-size:11px;line-height:1.4;color:#64748b;">Breve detalle aquí.</div>
           </div>
         </td>
-      </tr>
-      <tr>
-        <td width="48%" valign="top">
-          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:16px;padding:12px;margin-bottom:16px;">
-            <div data-toggle="image"><img src="${placeholder400x400}" style="display:block;width:100%;border-radius:10px;margin-bottom:12px;"></div>
-            <div data-toggle="title" style="font-family:Arial;font-size:15px;font-weight:700;color:#0f172a;margin-bottom:4px;">Título 3</div>
-            <div data-toggle="subtitle" style="font-family:Arial;font-size:12px;line-height:1.4;color:#64748b;">Breve detalle aquí.</div>
+        <td class="grid-quad-td" width="25%" valign="top" style="padding: 0 6px;">
+          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:16px;padding:12px;">
+            <div data-toggle="image"><img class="grid-img" src="${placeholder400x400}" style="display:block;width:100%;height:120px;object-fit:cover;border-radius:10px;margin-bottom:12px;"></div>
+            <div data-toggle="title" style="font-family:Arial;font-size:14px;font-weight:700;color:#0f172a;margin-bottom:4px;">Título 3</div>
+            <div data-toggle="subtitle" style="font-family:Arial;font-size:11px;line-height:1.4;color:#64748b;">Breve detalle aquí.</div>
           </div>
         </td>
-        <td width="4%">&nbsp;</td>
-        <td width="48%" valign="top">
-          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:16px;padding:12px;margin-bottom:16px;">
-            <div data-toggle="image"><img src="${placeholder400x400}" style="display:block;width:100%;border-radius:10px;margin-bottom:12px;"></div>
-            <div data-toggle="title" style="font-family:Arial;font-size:15px;font-weight:700;color:#0f172a;margin-bottom:4px;">Título 4</div>
-            <div data-toggle="subtitle" style="font-family:Arial;font-size:12px;line-height:1.4;color:#64748b;">Breve detalle aquí.</div>
+        <td class="grid-quad-td" width="25%" valign="top" style="padding: 0 6px;">
+          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:16px;padding:12px;">
+            <div data-toggle="image"><img class="grid-img" src="${placeholder400x400}" style="display:block;width:100%;height:120px;object-fit:cover;border-radius:10px;margin-bottom:12px;"></div>
+            <div data-toggle="title" style="font-family:Arial;font-size:14px;font-weight:700;color:#0f172a;margin-bottom:4px;">Título 4</div>
+            <div data-toggle="subtitle" style="font-family:Arial;font-size:11px;line-height:1.4;color:#64748b;">Breve detalle aquí.</div>
           </div>
         </td>
       </tr>

@@ -11,6 +11,7 @@ const {
   fontSizeRef,
   selectionBaseRef,
   logoWidthRef,
+  gridImageHeightRef,
   visibilityTrigger,
   layoutTrigger,
   originalFontBeforePreview,
@@ -41,6 +42,14 @@ function selectElement(el: HTMLElement, subEl?: HTMLElement) {
     if (img) {
       const w = parseInt(img.style.width) || img.offsetWidth || 150
       logoWidthRef.value = w
+    }
+  }
+
+  if (el.dataset.type === 'Grid') {
+    const firstImg = (el.querySelector("img.grid-img") || el.querySelector("[data-toggle='image'] img") || el.querySelector("td img")) as HTMLImageElement
+    if (firstImg) {
+      const h = parseInt(firstImg.style.height) || firstImg.offsetHeight || 150
+      gridImageHeightRef.value = h
     }
   }
 
@@ -337,6 +346,41 @@ function updateLogoWidth(val: number | string) {
   import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
 }
 
+function updateGridImageHeight(val?: number | string) {
+  if (!selectedElement.value || selectedElement.value.dataset.type !== 'Grid') return
+  
+  // Si se pasa un valor, lo usamos. Si no, usamos el del ref global.
+  let newHeight: number
+  if (val !== undefined) {
+    newHeight = typeof val === 'string' ? parseInt(val) : (typeof val === 'number' ? val : (val as any).value || 150)
+  } else {
+    newHeight = gridImageHeightRef.value
+  }
+  
+  if (isNaN(newHeight)) newHeight = 150
+  gridImageHeightRef.value = newHeight
+  const imgs = selectedElement.value.querySelectorAll("img.grid-img, [data-toggle='image'] img, td img")
+  imgs.forEach((img: any) => {
+    img.style.height = newHeight + 'px'
+    img.style.objectFit = 'cover'
+    img.setAttribute('height', newHeight.toString())
+  })
+
+  const doc = iframeRef.value?.contentDocument
+  if (doc) {
+    const mobileHeight = Math.round(newHeight * 0.6)
+    let styleTag = doc.getElementById('grid-img-mobile-height') as HTMLStyleElement
+    if (!styleTag) {
+      styleTag = doc.createElement('style')
+      styleTag.id = 'grid-img-mobile-height'
+      doc.head.appendChild(styleTag)
+    }
+    styleTag.textContent = `@media only screen and (max-width:600px){img.grid-img{height:${mobileHeight}px!important;}}`
+  }
+
+  import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
+}
+
 // ─── Button Controls ─────────────────────────────────────────────────────────
 
 function updateButtonColor() {
@@ -618,6 +662,7 @@ export function useBlockEditor() {
     getTextAlign,
     updateFontSize,
     updateLogoWidth,
+    updateGridImageHeight,
     updateButtonColor,
     updateThisButtonColor,
     updateButtonLink,

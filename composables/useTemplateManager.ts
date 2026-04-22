@@ -172,6 +172,12 @@ async function createNewTemplate() {
         padding-left: 20px !important;
         padding-right: 20px !important;
       }
+      .grid-quad-td {
+        display: inline-block !important;
+        width: 50% !important;
+        box-sizing: border-box !important;
+        padding: 4px !important;
+      }
     }
   </style>
 </head>

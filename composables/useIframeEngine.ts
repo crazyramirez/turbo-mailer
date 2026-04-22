@@ -100,6 +100,7 @@ function initBlock(el: HTMLElement, doc: Document) {
     else if (el.classList.contains('signature-block')) el.dataset.type = 'Firma'
     else if (el.classList.contains('cta-block')) el.dataset.type = 'Botón'
     else if (el.classList.contains('methodology-block')) el.dataset.type = 'Nota'
+    else if (el.classList.contains('grid-block')) el.dataset.type = 'Grid'
     else el.dataset.type = 'Bloque'
   }
 

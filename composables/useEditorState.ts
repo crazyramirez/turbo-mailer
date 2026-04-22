@@ -37,6 +37,7 @@ const darkModePreview = ref(localStorage.getItem('editor_dark_mode') === 'true')
 const fontSizeRef = ref(16)
 const selectionBaseRef = ref(16)
 const logoWidthRef = ref(150)
+const gridImageHeightRef = ref(150)
 const refreshLayersTrigger = ref(0)
 const visibilityTrigger = ref(0)
 const layoutTrigger = ref(0)
@@ -74,6 +75,12 @@ const htmlContent = ref(`<!DOCTYPE html>
       .header-block, .body-block, .methodology-block, .presence-block, .card-block, .cta-block, .signature-block {
         padding-left: 20px !important;
         padding-right: 20px !important;
+      }
+      .grid-quad-td {
+        display: inline-block !important;
+        width: 50% !important;
+        box-sizing: border-box !important;
+        padding: 6px !important;
       }
     }
   </style>
@@ -150,6 +157,7 @@ export function useEditorState() {
     fontSizeRef,
     selectionBaseRef,
     logoWidthRef,
+    gridImageHeightRef,
     refreshLayersTrigger,
     visibilityTrigger,
     layoutTrigger,
