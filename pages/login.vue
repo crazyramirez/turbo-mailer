@@ -17,7 +17,8 @@
         </div>
         <div class="logo-text-group">
           <span class="logo-title"
-            >Turbo-Mailer <span class="logo-accent">PRO</span></span
+            >Turbo-Mailer <span class="logo-accent">PRO</span>
+            <span class="version-tag">{{ APP_VERSION }}</span></span
           >
           <span class="logo-sub">Acceso seguro</span>
         </div>
@@ -132,7 +133,7 @@
       </form>
 
       <!-- Footer -->
-      <p class="login-footer">Turbo-Mailer PRO &mdash; acceso privado</p>
+      <p class="login-footer">Turbo-Mailer PRO {{ APP_VERSION }} &mdash; acceso privado</p>
     </div>
   </div>
 </template>
@@ -148,6 +149,7 @@ import {
   ShieldOff,
   LogIn,
 } from "lucide-vue-next";
+import { APP_VERSION } from "@/utils/version";
 import "@/assets/css/main.css";
 import "@/assets/css/bg-orbs.css";
 
@@ -378,6 +380,18 @@ onUnmounted(() => {
 
 .logo-accent {
   color: #818cf8;
+}
+
+.version-tag {
+  font-size: 10px;
+  font-weight: 500;
+  color: #475569;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1px 6px;
+  border-radius: 6px;
+  margin-left: 4px;
+  vertical-align: middle;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .logo-sub {
