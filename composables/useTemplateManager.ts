@@ -196,7 +196,8 @@ async function createNewTemplate() {
 }
 
 async function autoCreateTemplate() {
-  if (currentTemplate.value !== 'email_demo') return
+  // Solo auto-creamos si estamos en la demo o no hay ninguna plantilla seleccionada
+  if (currentTemplate.value !== 'email_demo' && currentTemplate.value !== '') return
   
   const now = new Date()
   const timestamp = now.toLocaleDateString().replace(/\//g, '-') + '-' + now.getHours() + now.getMinutes()
@@ -206,7 +207,7 @@ async function autoCreateTemplate() {
   localStorage.setItem('last_edited_template', defaultName)
   
   await saveTemplate(true)
-  showToast('Plantilla creada automáticamente', 'info')
+  showToast('Nueva plantilla vinculada automáticamente', 'info')
 }
 
 export function useTemplateManager() {

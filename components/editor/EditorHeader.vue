@@ -23,13 +23,20 @@ const {
   darkModePreview,
 } = useEditorState();
 const { undo, redo } = useIframeEngine();
-const { handleSave } = useTemplateManager();
+const { handleSave, saveTemplate } = useTemplateManager();
+
+async function handleBack() {
+  if (currentTemplate.value && currentTemplate.value !== "email_demo") {
+    await saveTemplate(true);
+  }
+  navigateTo("/");
+}
 </script>
 
 <template>
   <header class="editor-header" style="user-select: none">
     <div class="header-section left">
-      <button @click="navigateTo('/')" class="btn-action-back">
+      <button @click="handleBack" class="btn-action-back">
         <ArrowLeft :size="18" /> <span>Volver</span>
       </button>
       <div class="h-divider"></div>
