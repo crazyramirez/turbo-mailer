@@ -16,7 +16,9 @@
           <Rocket :size="22" stroke-width="2.5" />
         </div>
         <div class="logo-text-group">
-          <span class="logo-title">Turbo-Mailer <span class="logo-accent">PRO</span></span>
+          <span class="logo-title"
+            >Turbo-Mailer <span class="logo-accent">PRO</span></span
+          >
           <span class="logo-sub">Acceso seguro</span>
         </div>
       </div>
@@ -35,7 +37,12 @@
         <div class="field-group" :class="{ 'field-error': errorMsg }">
           <label for="password" class="field-label">Contraseña</label>
           <div class="field-input-wrap">
-            <Lock :size="16" stroke-width="2" class="field-icon" aria-hidden="true" />
+            <Lock
+              :size="16"
+              stroke-width="2"
+              class="field-icon"
+              aria-hidden="true"
+            />
             <input
               id="password"
               ref="inputRef"
@@ -52,7 +59,9 @@
             <button
               type="button"
               class="field-eye"
-              :aria-label="showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+              :aria-label="
+                showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'
+              "
               @click="showPass = !showPass"
               tabindex="0"
             >
@@ -63,7 +72,13 @@
 
           <!-- Error message -->
           <Transition name="err-fade">
-            <div v-if="errorMsg" id="error-msg" class="error-msg" role="alert" aria-live="assertive">
+            <div
+              v-if="errorMsg"
+              id="error-msg"
+              class="error-msg"
+              role="alert"
+              aria-live="assertive"
+            >
               <AlertTriangle :size="13" stroke-width="2.5" />
               <span>{{ errorMsg }}</span>
             </div>
@@ -72,11 +87,21 @@
 
         <!-- Attempts bar -->
         <Transition name="err-fade">
-          <div v-if="remaining !== null && remaining < 10 && remaining > 0 && !blocked" class="attempts-bar">
+          <div
+            v-if="
+              remaining !== null && remaining < 10 && remaining > 0 && !blocked
+            "
+            class="attempts-bar"
+          >
             <div class="attempts-track">
-              <div class="attempts-fill" :style="{ width: `${(remaining / 10) * 100}%` }"></div>
+              <div
+                class="attempts-fill"
+                :style="{ width: `${(remaining / 10) * 100}%` }"
+              ></div>
             </div>
-            <span class="attempts-label">{{ remaining }} intentos restantes</span>
+            <span class="attempts-label"
+              >{{ remaining }} intentos restantes</span
+            >
           </div>
         </Transition>
 
@@ -107,104 +132,117 @@
       </form>
 
       <!-- Footer -->
-      <p class="login-footer">
-        Turbo-Mailer PRO &mdash; acceso privado
-      </p>
+      <p class="login-footer">Turbo-Mailer PRO &mdash; acceso privado</p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onUnmounted } from 'vue'
-import { Rocket, Lock, Eye, EyeOff, AlertTriangle, ShieldOff, LogIn } from 'lucide-vue-next'
-import '@/assets/css/main.css'
+import { ref, onUnmounted } from "vue";
+import {
+  Rocket,
+  Lock,
+  Eye,
+  EyeOff,
+  AlertTriangle,
+  ShieldOff,
+  LogIn,
+} from "lucide-vue-next";
+import "@/assets/css/main.css";
+import "@/assets/css/bg-orbs.css";
 
-definePageMeta({ layout: false })
+definePageMeta({ layout: false });
 
-const password = ref('')
-const showPass = ref(false)
-const loading = ref(false)
-const errorMsg = ref('')
-const shaking = ref(false)
-const remaining = ref<number | null>(null)
-const blocked = ref(false)
-const countdownSec = ref(0)
-const countdownLabel = ref('')
-const inputRef = ref<HTMLInputElement>()
+const password = ref("");
+const showPass = ref(false);
+const loading = ref(false);
+const errorMsg = ref("");
+const shaking = ref(false);
+const remaining = ref<number | null>(null);
+const blocked = ref(false);
+const countdownSec = ref(0);
+const countdownLabel = ref("");
+const inputRef = ref<HTMLInputElement>();
 
-let countdownTimer: ReturnType<typeof setInterval> | null = null
+let countdownTimer: ReturnType<typeof setInterval> | null = null;
 
-const isAuthed = useState<boolean | null>('isAuthed', () => null)
+const isAuthed = useState<boolean | null>("isAuthed", () => null);
 
 function triggerShake() {
-  shaking.value = true
-  setTimeout(() => { shaking.value = false }, 600)
+  shaking.value = true;
+  setTimeout(() => {
+    shaking.value = false;
+  }, 600);
 }
 
 function startCountdown(sec: number) {
-  blocked.value = true
-  countdownSec.value = sec
-  updateLabel()
+  blocked.value = true;
+  countdownSec.value = sec;
+  updateLabel();
   countdownTimer = setInterval(() => {
-    countdownSec.value--
+    countdownSec.value--;
     if (countdownSec.value <= 0) {
-      stopCountdown()
-      remaining.value = 10
+      stopCountdown();
+      remaining.value = 10;
     } else {
-      updateLabel()
+      updateLabel();
     }
-  }, 1000)
+  }, 1000);
 }
 
 function stopCountdown() {
-  blocked.value = false
-  countdownSec.value = 0
-  countdownLabel.value = ''
-  if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null }
-}
-
-function updateLabel() {
-  const m = Math.floor(countdownSec.value / 60)
-  const s = countdownSec.value % 60
-  countdownLabel.value = m > 0
-    ? `— ${m}m ${s.toString().padStart(2, '0')}s`
-    : `— ${s}s`
-}
-
-async function submit() {
-  if (loading.value || blocked.value || !password.value) return
-  loading.value = true
-  errorMsg.value = ''
-
-  try {
-    await $fetch('/api/auth/login', {
-      method: 'POST',
-      body: { password: password.value }
-    })
-    isAuthed.value = true
-    await navigateTo('/')
-  } catch (err: any) {
-    const data = err?.data?.data ?? err?.response?._data?.data ?? {}
-    const msg = err?.data?.message ?? err?.message ?? 'Error inesperado'
-
-    if (err?.status === 429 || err?.statusCode === 429) {
-      const sec = data?.retryAfterSec ?? 900
-      startCountdown(sec)
-      errorMsg.value = msg
-    } else {
-      remaining.value = data?.remaining ?? null
-      errorMsg.value = msg
-      triggerShake()
-      password.value = ''
-      await nextTick()
-      inputRef.value?.focus()
-    }
-  } finally {
-    loading.value = false
+  blocked.value = false;
+  countdownSec.value = 0;
+  countdownLabel.value = "";
+  if (countdownTimer) {
+    clearInterval(countdownTimer);
+    countdownTimer = null;
   }
 }
 
-onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
+function updateLabel() {
+  const m = Math.floor(countdownSec.value / 60);
+  const s = countdownSec.value % 60;
+  countdownLabel.value =
+    m > 0 ? `— ${m}m ${s.toString().padStart(2, "0")}s` : `— ${s}s`;
+}
+
+async function submit() {
+  if (loading.value || blocked.value || !password.value) return;
+  loading.value = true;
+  errorMsg.value = "";
+
+  try {
+    await $fetch("/api/auth/login", {
+      method: "POST",
+      body: { password: password.value },
+    });
+    isAuthed.value = true;
+    await navigateTo("/");
+  } catch (err: any) {
+    const data = err?.data?.data ?? err?.response?._data?.data ?? {};
+    const msg = err?.data?.message ?? err?.message ?? "Error inesperado";
+
+    if (err?.status === 429 || err?.statusCode === 429) {
+      const sec = data?.retryAfterSec ?? 900;
+      startCountdown(sec);
+      errorMsg.value = msg;
+    } else {
+      remaining.value = data?.remaining ?? null;
+      errorMsg.value = msg;
+      triggerShake();
+      password.value = "";
+      await nextTick();
+      inputRef.value?.focus();
+    }
+  } finally {
+    loading.value = false;
+  }
+}
+
+onUnmounted(() => {
+  if (countdownTimer) clearInterval(countdownTimer);
+});
 </script>
 
 <style scoped>
@@ -234,47 +272,24 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
   animation: orbFloat 20s infinite alternate cubic-bezier(0.45, 0, 0.55, 1);
 }
 
-.bg-orb-1 {
-  width: 500px;
-  height: 500px;
-  top: -120px;
-  right: -100px;
-  background: #f97316;
-  opacity: 0.18;
-}
-
-.bg-orb-2 {
-  width: 450px;
-  height: 450px;
-  bottom: -120px;
-  left: -120px;
-  background: #3b82f6;
-  opacity: 0.16;
-  animation-delay: -7s;
-}
-
-.bg-orb-3 {
-  width: 300px;
-  height: 300px;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: #60a5fa;
-  opacity: 0.05;
-  animation-delay: -12s;
-}
-
 .bg-grid {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-image: radial-gradient(
+    rgba(255, 255, 255, 0.04) 1px,
+    transparent 1px
+  );
   background-size: 40px 40px;
   mask-image: radial-gradient(circle at 50% 50%, black, transparent 75%);
 }
 
 @keyframes orbFloat {
-  from { transform: translate(0, 0) scale(1); }
-  to   { transform: translate(50px, 80px) scale(1.1); }
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate(50px, 80px) scale(1.1);
+  }
 }
 
 /* ── Card ── */
@@ -305,14 +320,27 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
 
 /* ── Shake animation ── */
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  20%       { transform: translateX(-8px); }
-  40%       { transform: translateX(7px); }
-  60%       { transform: translateX(-5px); }
-  80%       { transform: translateX(4px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-8px);
+  }
+  40% {
+    transform: translateX(7px);
+  }
+  60% {
+    transform: translateX(-5px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
 }
 
-.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+.shake {
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
 
 /* ── Logo ── */
 .login-logo {
@@ -433,7 +461,10 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
   font-family: inherit;
   color: #f8fafc;
   outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
   letter-spacing: 0.04em;
   box-sizing: border-box;
 }
@@ -470,11 +501,18 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
   display: flex;
   align-items: center;
   border-radius: 8px;
-  transition: color 0.15s ease, background 0.15s ease;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
 }
 
-.field-eye:hover { color: #94a3b8; background: rgba(255,255,255,0.06); }
-.field-eye:focus-visible { outline: 2px solid rgba(99,102,241,0.5); }
+.field-eye:hover {
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.06);
+}
+.field-eye:focus-visible {
+  outline: 2px solid rgba(99, 102, 241, 0.5);
+}
 
 /* ── Error ── */
 .error-msg {
@@ -490,10 +528,12 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
   border-radius: 10px;
 }
 
-.err-fade-enter-active, .err-fade-leave-active {
+.err-fade-enter-active,
+.err-fade-leave-active {
   transition: all 0.25s ease;
 }
-.err-fade-enter-from, .err-fade-leave-to {
+.err-fade-enter-from,
+.err-fade-leave-to {
   opacity: 0;
   transform: translateY(-4px);
 }
@@ -508,7 +548,7 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
 .attempts-track {
   flex: 1;
   height: 3px;
-  background: rgba(255,255,255,0.07);
+  background: rgba(255, 255, 255, 0.07);
   border-radius: 99px;
   overflow: hidden;
 }
@@ -561,9 +601,10 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
   box-shadow:
     0 4px 20px rgba(99, 102, 241, 0.35),
     0 1px 0 rgba(255, 255, 255, 0.1) inset;
-  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.18s cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 0.18s ease;
+  transition:
+    transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.18s ease;
   letter-spacing: -0.01em;
   margin-top: 4px;
 }
@@ -608,14 +649,18 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
 .spinner {
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(255,255,255,0.25);
+  border: 2px solid rgba(255, 255, 255, 0.25);
   border-top-color: #fff;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
   flex-shrink: 0;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* ── Footer ── */
 .login-footer {
@@ -628,12 +673,24 @@ onUnmounted(() => { if (countdownTimer) clearInterval(countdownTimer) })
 
 /* ── Responsive ── */
 @media (max-width: 440px) {
-  .login-card { padding: 28px 20px 24px; border-radius: 22px; }
-  .login-h1 { font-size: 22px; }
+  .login-card {
+    padding: 28px 20px 24px;
+    border-radius: 22px;
+  }
+  .login-h1 {
+    font-size: 22px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bg-orb, .spinner { animation: none; }
-  .btn-login, .field-input, .field-eye { transition: none; }
+  .bg-orb,
+  .spinner {
+    animation: none;
+  }
+  .btn-login,
+  .field-input,
+  .field-eye {
+    transition: none;
+  }
 }
 </style>

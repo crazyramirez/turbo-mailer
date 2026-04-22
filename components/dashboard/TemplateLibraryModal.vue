@@ -95,9 +95,9 @@ const handleRename = async (name: string) => {
 
 <style scoped>
 .library-window {
-  max-width: 860px;
-  width: 90%;
-  max-height: 80vh;
+  max-width: 1000px;
+  width: 95%;
+  max-height: 85vh;
   background: #090b14;
   border: 1px solid var(--border-hi);
   border-radius: 32px;
@@ -106,27 +106,27 @@ const handleRename = async (name: string) => {
   overflow: hidden;
 }
 .library-header {
-  padding: 32px;
+  padding: 24px 32px;
   border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
 }
 .header-titles h2 {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 800;
   color: #fff;
 }
 .header-titles p {
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 13px;
 }
 .btn-close-modal {
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text-dim);
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -140,10 +140,10 @@ const handleRename = async (name: string) => {
   border-color: var(--red);
 }
 .library-grid {
-  padding: 32px;
+  padding: 24px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
   overflow-y: auto;
 }
 .template-card {
@@ -156,12 +156,12 @@ const handleRename = async (name: string) => {
 }
 .template-card:hover {
   border-color: var(--accent);
-  transform: translateY(-8px);
+  transform: translateY(-4px);
   background: rgba(99, 102, 241, 0.05);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
 }
 .template-preview-mock {
-  height: 200px;
+  height: 160px;
   background: #111420;
   display: flex;
   flex-direction: column;
@@ -169,7 +169,7 @@ const handleRename = async (name: string) => {
   overflow: hidden;
 }
 .mock-browser-bar {
-  padding: 8px 12px;
+  padding: 6px 10px;
   display: flex;
   gap: 4px;
   background: rgba(255, 255, 255, 0.05);
@@ -177,8 +177,8 @@ const handleRename = async (name: string) => {
   z-index: 5;
 }
 .mock-browser-bar span {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: var(--border-hi);
 }
@@ -191,10 +191,10 @@ const handleRename = async (name: string) => {
   background: #fff;
 }
 .mini-preview-frame {
-  width: 1000px;
-  height: 800px;
+  width: 1200px;
+  height: 900px;
   border: none;
-  transform: scale(0.24);
+  transform: scale(0.18);
   transform-origin: 0 0;
   pointer-events: none;
   user-select: none;
@@ -202,7 +202,7 @@ const handleRename = async (name: string) => {
 .template-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(99, 102, 241, 0.8);
+  background: rgba(99, 102, 241, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -217,9 +217,10 @@ const handleRename = async (name: string) => {
   background: #fff;
   color: var(--accent);
   border: none;
-  padding: 10px 20px;
-  border-radius: 12px;
+  padding: 8px 16px;
+  border-radius: 10px;
   font-weight: 800;
+  font-size: 13px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -230,11 +231,11 @@ const handleRename = async (name: string) => {
   transform: translateY(0);
 }
 .template-info {
-  padding: 16px;
+  padding: 12px 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 .info-main {
   display: flex;
@@ -242,7 +243,7 @@ const handleRename = async (name: string) => {
   min-width: 0;
 }
 .template-name {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   color: #fff;
   white-space: nowrap;
@@ -250,16 +251,16 @@ const handleRename = async (name: string) => {
   text-overflow: ellipsis;
 }
 .template-type {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-dim);
   font-weight: 800;
   text-transform: uppercase;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 .info-actions {
   display: flex;
-  gap: 6px;
-  opacity: 0.4;
+  gap: 4px;
+  opacity: 0.3;
   transition: opacity 0.2s;
 }
 .template-card:hover .info-actions {
@@ -269,9 +270,9 @@ const handleRename = async (name: string) => {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border);
   color: var(--text-dim);
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;

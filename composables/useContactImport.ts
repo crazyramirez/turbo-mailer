@@ -9,6 +9,10 @@ const {
   selectedColumn,
   empresaColumn,
   nombreColumn,
+  linkedinColumn,
+  urlColumn,
+  youtubeColumn,
+  instagramColumn,
   rawRows,
   xlsxDragging,
   showToast,
@@ -38,6 +42,10 @@ function parseXlsx(file: File) {
       selectedColumn.value = findCol(['email', 'mail', 'correo']) || cols[0] || 'Email'
       empresaColumn.value = findCol(['empresa', 'company', 'business', 'entidad', 'brand']) || ''
       nombreColumn.value = findCol(['nombre', 'name', 'contacto', 'persona']) || ''
+      linkedinColumn.value = findCol(['linkedin', 'social', 'perfil']) || ''
+      urlColumn.value = findCol(['url', 'web', 'sitio', 'website', 'link']) || ''
+      youtubeColumn.value = findCol(['youtube', 'video', 'canal']) || ''
+      instagramColumn.value = findCol(['instagram', 'ig', 'insta']) || ''
 
       emails.value = json.map((r) => String(r[selectedColumn.value] || '').trim()).filter(Boolean)
       selectedEmails.value = [...emails.value]

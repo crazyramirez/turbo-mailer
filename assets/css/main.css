@@ -522,19 +522,6 @@ body {
   animation: orbFloat 20s infinite alternate cubic-bezier(0.45, 0, 0.55, 1);
 }
 
-.bg-orb-1 {
-  top: -100px;
-  right: -100px;
-  background: var(--accent);
-}
-
-.bg-orb-2 {
-  bottom: -150px;
-  left: -150px;
-  background: #4f46e5;
-  animation-delay: -5s;
-}
-
 @keyframes orbFloat {
   from {
     transform: translate(0, 0) scale(1);
@@ -695,7 +682,7 @@ body {
   flex: 1;
   position: sticky;
   top: 100px;
-  height: calc(100vh - 240px);
+  height: calc(100vh - 280px);
   min-height: 500px;
 }
 
@@ -1040,6 +1027,86 @@ body {
   position: relative;
 }
 
+.subject-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.input-relative-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.pr-clear {
+  padding-right: 48px !important;
+}
+
+.btn-clear-input {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.btn-clear-input:hover {
+  background: var(--red);
+  color: white;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.btn-clear-input svg {
+  width: 14px;
+  height: 14px;
+}
+
+.subject-vars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.vars-label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-right: 4px;
+  letter-spacing: 0.05em;
+}
+
+.subject-vars button {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  color: var(--accent-light);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.subject-vars button:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+  transform: translateY(-1px);
+}
+
 .var-tags-compact {
   position: absolute;
   right: 12px;
@@ -1214,13 +1281,124 @@ body {
 
 .col-mapping-compact {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* Changed to 2 columns for more width per field */
-  gap: 16px;
-  margin-top: 24px;
-  padding: 24px;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 16px;
   background: rgba(0, 0, 0, 0.2);
   border-radius: 18px;
   border: 1px solid var(--border);
+}
+
+/* ── Plantilla Section Compact ── */
+.plantilla-compact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.library-shortcut-card {
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 18px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.library-shortcut-card:hover {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.shortcut-icon {
+  width: 44px;
+  height: 44px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+}
+
+.shortcut-text span {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.shortcut-text p {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+.drop-zone-ultra-compact {
+  border: 2px dashed var(--border);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  cursor: pointer;
+  min-height: 80px;
+}
+
+.drop-zone-ultra-compact:hover {
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.drop-content-minimal {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted);
+}
+
+.drop-content-minimal svg {
+  width: 18px;
+  height: 18px;
+  color: var(--accent-light);
+}
+
+.drop-content-minimal span {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.loaded-template-mini {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 12px 20px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+}
+
+.col-mapping-compact .input {
+  padding: 10px 14px;
+  font-size: 13px;
+  border-radius: 10px;
+}
+
+.col-mapping-compact select.input {
+  background-position: right 10px center;
+  background-size: 14px;
+  padding-right: 32px;
 }
 
 /* Specific styling for column mapping items to span full width if needed */
@@ -1752,7 +1930,11 @@ select.input {
 
 /* ── AI Copywriting Styles ───────────────────────────────────────── */
 .ai-magic-btn {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(99, 102, 241, 0.1)) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(168, 85, 247, 0.1),
+    rgba(99, 102, 241, 0.1)
+  ) !important;
   border: 1px solid rgba(168, 85, 247, 0.25) !important;
   color: #d8b4fe !important;
   width: 100%;
@@ -1768,16 +1950,27 @@ select.input {
 }
 
 .ai-magic-btn::before {
-  content: '';
+  content: "";
   position: absolute;
-  top: 0; left: -100%;
-  width: 100%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
   transition: 0.5s;
 }
 
 .ai-magic-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(99, 102, 241, 0.2)) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(168, 85, 247, 0.2),
+    rgba(99, 102, 241, 0.2)
+  ) !important;
   border-color: rgba(168, 85, 247, 0.6) !important;
   color: #fff !important;
   transform: translateY(-2px);
@@ -1827,6 +2020,10 @@ select.input {
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }

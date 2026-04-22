@@ -9,6 +9,10 @@ const {
   emails,
   empresaColumn,
   nombreColumn,
+  linkedinColumn,
+  urlColumn,
+  youtubeColumn,
+  instagramColumn,
   availableColumns,
   selectedColumn,
   rawRows,
@@ -18,6 +22,7 @@ const { clearXlsx, onXlsxChange, onXlsxDrop, remapEmails } = useContactImport();
 const { contactRows } = useDashboardState();
 
 const showContactList = ref(false);
+const showMappingModal = ref(false);
 </script>
 
 <template>
@@ -103,42 +108,141 @@ const showContactList = ref(false);
             >
               <span class="stat-val">{{ emails.length }}</span> Contactos
             </button>
-            <span v-if="empresaColumn" class="stat-pill var-pill">Empresa</span>
-            <span v-if="nombreColumn" class="stat-pill var-pill">Nombre</span>
+            <button
+              v-if="availableColumns.length"
+              class="stat-pill clickable-pill mapping-trigger"
+              @click.stop="showMappingModal = true"
+              title="Configurar variables"
+            >
+              Mapear Variables
+            </button>
           </div>
         </div>
       </div>
     </div>
+  </section>
 
-    <div v-if="availableColumns.length" class="col-mapping-compact">
-      <div class="mapping-item full-width">
-        <label>Columna Email (Principal)</label>
-        <select v-model="selectedColumn" class="input" @change="remapEmails">
-          <option v-for="c in availableColumns" :key="c" :value="c">
-            {{ c }}
-          </option>
-        </select>
-      </div>
-      <div class="mapping-item">
-        <label>Empresa</label>
-        <select v-model="empresaColumn" class="input">
-          <option value="">(Opcional)</option>
-          <option v-for="c in availableColumns" :key="c" :value="c">
-            {{ c }}
-          </option>
-        </select>
-      </div>
-      <div class="mapping-item">
-        <label>Nombre</label>
-        <select v-model="nombreColumn" class="input">
-          <option value="">(Opcional)</option>
-          <option v-for="c in availableColumns" :key="c" :value="c">
-            {{ c }}
-          </option>
-        </select>
+  <!-- Overlay de Mapeo -->
+  <Transition name="fade-scale">
+    <div
+      v-if="showMappingModal"
+      class="modal-overlay glass-modal"
+      @click="showMappingModal = false"
+    >
+      <div class="modal-window mapping-window" @click.stop>
+        <div class="modal-header-pro">
+          <div class="header-titles">
+            <h2>Asignar Variables</h2>
+            <p>Conecta las columnas de tu Excel con las etiquetas del sistema</p>
+          </div>
+          <button @click="showMappingModal = false" class="btn-close-modal">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              style="width: 18px"
+            >
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="mapping-modal-content">
+          <div class="col-mapping-compact">
+            <div class="mapping-item full-width">
+              <label>Columna Email (Principal)</label>
+              <select
+                v-model="selectedColumn"
+                class="input"
+                @change="remapEmails"
+              >
+                <option v-for="c in availableColumns" :key="c" :value="c">
+                  {{ c }}
+                </option>
+              </select>
+            </div>
+            <div class="mapping-item">
+              <label>Empresa</label>
+              <select v-model="empresaColumn" class="input">
+                <option value="">(Opcional)</option>
+                <option v-for="c in availableColumns" :key="c" :value="c">
+                  {{ c }}
+                </option>
+              </select>
+            </div>
+            <div class="mapping-item">
+              <label>Nombre</label>
+              <select v-model="nombreColumn" class="input">
+                <option value="">(Opcional)</option>
+                <option v-for="c in availableColumns" :key="c" :value="c">
+                  {{ c }}
+                </option>
+              </select>
+            </div>
+            <div class="mapping-item">
+              <label>LinkedIn</label>
+              <select v-model="linkedinColumn" class="input">
+                <option value="">(Opcional)</option>
+                <option v-for="c in availableColumns" :key="c" :value="c">
+                  {{ c }}
+                </option>
+              </select>
+            </div>
+            <div class="mapping-item">
+              <label>URL / Web</label>
+              <select v-model="urlColumn" class="input">
+                <option value="">(Opcional)</option>
+                <option v-for="c in availableColumns" :key="c" :value="c">
+                  {{ c }}
+                </option>
+              </select>
+            </div>
+            <div class="mapping-item">
+              <label>YouTube</label>
+              <select v-model="youtubeColumn" class="input">
+                <option value="">(Opcional)</option>
+                <option v-for="c in availableColumns" :key="c" :value="c">
+                  {{ c }}
+                </option>
+              </select>
+            </div>
+            <div class="mapping-item">
+              <label>Instagram</label>
+              <select v-model="instagramColumn" class="input">
+                <option value="">(Opcional)</option>
+                <option v-for="c in availableColumns" :key="c" :value="c">
+                  {{ c }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mapping-info-box">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4M12 8h.01" />
+            </svg>
+            <p>
+              Cualquier columna no mapeada también estará disponible usando
+              <code class="code-pill"> &#123;&#123; Nombre_Columna &#125;&#125; </code> en tu diseño.
+            </p>
+          </div>
+
+          <div class="mapping-actions">
+            <button class="btn-confirm-mapping" @click="showMappingModal = false">
+              Guardar Configuración
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-  </section>
+  </Transition>
 
   <!-- Overlay de Contactos -->
   <Transition name="fade-scale">
@@ -169,28 +273,64 @@ const showContactList = ref(false);
         </div>
 
         <div class="contacts-list-container">
-          <div class="contacts-table-header">
-            <span class="col-email">Correo Electrónico</span>
-            <span v-if="nombreColumn" class="col-extra">Nombre</span>
-            <span v-if="empresaColumn" class="col-extra">Empresa</span>
-          </div>
-          <div class="contacts-list">
-            <div
-              v-for="(row, idx) in contactRows"
-              :key="idx"
-              class="contact-row"
-            >
-              <div class="col-email">
-                <span class="row-number">{{ idx + 1 }}</span>
-                <span class="email-text">{{ row.email }}</span>
-              </div>
-              <div v-if="nombreColumn" class="col-extra">
-                <span class="extra-val">{{ row.nombre || "—" }}</span>
-              </div>
-              <div v-if="empresaColumn" class="col-extra">
-                <span class="extra-val">{{ row.empresa || "—" }}</span>
-              </div>
-            </div>
+          <div class="contacts-table-wrapper scroll-hide-x">
+            <table class="premium-contacts-table">
+              <thead>
+                <tr>
+                  <th class="col-index">#</th>
+                  <th
+                    v-for="col in availableColumns"
+                    :key="col"
+                    :class="{
+                      'col-primary': col === selectedColumn,
+                      'col-mapped':
+                        col === nombreColumn || col === empresaColumn || 
+                        col === linkedinColumn || col === urlColumn ||
+                        col === youtubeColumn || col === instagramColumn,
+                    }"
+                  >
+                    <div class="th-content">
+                      <span>{{ col }}</span>
+                      <span
+                        v-if="col === selectedColumn"
+                        class="col-tag tag-email"
+                        >EMAIL</span
+                      >
+                      <span v-if="col === nombreColumn" class="col-tag tag-var"
+                        >NOMBRE</span
+                      >
+                      <span v-if="col === empresaColumn" class="col-tag tag-var"
+                        >EMPRESA</span
+                      >
+                      <span v-if="col === linkedinColumn" class="col-tag tag-var"
+                        >LINKEDIN</span
+                      >
+                      <span v-if="col === urlColumn" class="col-tag tag-var"
+                        >URL</span
+                      >
+                      <span v-if="col === youtubeColumn" class="col-tag tag-var"
+                        >YOUTUBE</span
+                      >
+                      <span v-if="col === instagramColumn" class="col-tag tag-var"
+                        >INSTAGRAM</span
+                      >
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(row, idx) in rawRows" :key="idx">
+                  <td class="col-index">{{ idx + 1 }}</td>
+                  <td
+                    v-for="col in availableColumns"
+                    :key="col"
+                    :class="{ 'cell-primary': col === selectedColumn }"
+                  >
+                    {{ row[col] || "—" }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -212,10 +352,93 @@ const showContactList = ref(false);
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
-.contacts-window {
+.mapping-trigger {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--accent-light);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+.mapping-trigger:hover {
+  background: var(--accent) !important;
+  color: #fff !important;
+}
+
+.mapping-window {
   max-width: 600px;
   width: 90%;
-  max-height: 80vh;
+  background: #090b14;
+  border: 1px solid var(--border-hi);
+  border-radius: 32px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 50px 100px rgba(0, 0, 0, 0.6);
+}
+
+.mapping-modal-content {
+  padding: 0 32px 32px;
+}
+
+.mapping-info-box {
+  margin-top: 24px;
+  padding: 16px;
+  background: rgba(99, 102, 241, 0.05);
+  border-radius: 16px;
+  border: 1px solid rgba(99, 102, 241, 0.1);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.mapping-info-box svg {
+  width: 20px;
+  height: 20px;
+  color: var(--accent-light);
+  flex-shrink: 0;
+}
+
+.mapping-info-box p {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.code-pill {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  color: #fff;
+  font-size: 12px;
+}
+
+.mapping-actions {
+  margin-top: 32px;
+}
+
+.btn-confirm-mapping {
+  width: 100%;
+  padding: 16px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
+}
+
+.btn-confirm-mapping:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px rgba(99, 102, 241, 0.3);
+  filter: brightness(1.1);
+}
+
+.contacts-window {
+  max-width: 1600px;
+  width: 95%;
+  max-height: 85vh;
   background: #090b14;
   border: 1px solid var(--border-hi);
   border-radius: 32px;
@@ -267,81 +490,108 @@ const showContactList = ref(false);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 0 12px 12px;
+  padding: 0 0 24px 0;
 }
 
-.contacts-table-header {
-  display: flex;
+.contacts-table-wrapper {
+  flex: 1;
+  overflow: auto;
+  padding: 0 32px;
+}
+
+/* Custom scrollbar for premium look */
+.contacts-table-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.contacts-table-wrapper::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+.contacts-table-wrapper::-webkit-scrollbar-thumb {
+  background: var(--border-hi);
+  border-radius: 10px;
+}
+
+.premium-contacts-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 4px;
+}
+
+.premium-contacts-table th {
+  position: sticky;
+  top: 0;
+  background: #090b14;
+  z-index: 10;
+  text-align: left;
   padding: 16px 20px;
   font-size: 11px;
   font-weight: 800;
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
 }
 
-.contacts-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 8px;
+.th-content {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-/* Custom scrollbar for premium look */
-.contacts-list::-webkit-scrollbar {
-  width: 6px;
+.col-tag {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  width: fit-content;
 }
-.contacts-list::-webkit-scrollbar-track {
-  background: transparent;
+.tag-email {
+  background: var(--accent);
+  color: #fff;
 }
-.contacts-list::-webkit-scrollbar-thumb {
-  background: var(--border-hi);
-  border-radius: 10px;
+.tag-var {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
 }
 
-.contact-row {
-  display: flex;
+.premium-contacts-table td {
   padding: 12px 20px;
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 12px;
-  align-items: center;
-  transition: background 0.2s;
-}
-.contact-row:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.col-email {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
-.row-number {
-  font-size: 10px;
-  font-weight: 800;
-  color: var(--text-dim);
-  width: 20px;
-}
-.email-text {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
   color: var(--text);
+  background: rgba(255, 255, 255, 0.02);
   white-space: nowrap;
+  max-width: 250px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.col-extra {
-  width: 140px;
-  padding-left: 20px;
-  flex-shrink: 0;
+.premium-contacts-table tr td:first-child {
+  border-radius: 12px 0 0 12px;
 }
-.extra-val {
-  font-size: 13px;
-  color: var(--text-muted);
+.premium-contacts-table tr td:last-child {
+  border-radius: 0 12px 12px 0;
+}
+
+.premium-contacts-table tr:hover td {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.col-index {
+  width: 50px;
+  text-align: center !important;
+  color: var(--text-dim) !important;
+  font-weight: 800;
+}
+
+.col-primary {
+  color: var(--accent-light) !important;
+}
+.cell-primary {
+  color: var(--accent-light) !important;
+  font-weight: 600;
+}
+.col-mapped {
+  color: #fff !important;
 }
 </style>

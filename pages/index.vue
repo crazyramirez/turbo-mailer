@@ -1,39 +1,40 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import '@/assets/css/main.css'
+import { onMounted } from "vue";
+import "@/assets/css/main.css";
+import "@/assets/css/bg-orbs.css";
 
-import { useHtmlImport } from '~/composables/useHtmlImport'
+import { useHtmlImport } from "~/composables/useHtmlImport";
 
-import AppBackground from '~/components/dashboard/AppBackground.vue'
-import DashboardToast from '~/components/dashboard/DashboardToast.vue'
-import DashboardHeader from '~/components/dashboard/DashboardHeader.vue'
-import StepperNav from '~/components/dashboard/StepperNav.vue'
-import StepContactos from '~/components/dashboard/StepContactos.vue'
-import StepAsunto from '~/components/dashboard/StepAsunto.vue'
-import StepPlantilla from '~/components/dashboard/StepPlantilla.vue'
-import LivePreview from '~/components/dashboard/LivePreview.vue'
-import SendBar from '~/components/dashboard/SendBar.vue'
-import ResultsOverlay from '~/components/dashboard/ResultsOverlay.vue'
-import ResetModal from '~/components/dashboard/ResetModal.vue'
-import TemplateLibraryModal from '~/components/dashboard/TemplateLibraryModal.vue'
-import GlobalDialog from '~/components/dashboard/GlobalDialog.vue'
+import AppBackground from "~/components/dashboard/AppBackground.vue";
+import DashboardToast from "~/components/dashboard/DashboardToast.vue";
+import DashboardHeader from "~/components/dashboard/DashboardHeader.vue";
+import StepperNav from "~/components/dashboard/StepperNav.vue";
+import StepContactos from "~/components/dashboard/StepContactos.vue";
+import StepAsunto from "~/components/dashboard/StepAsunto.vue";
+import StepPlantilla from "~/components/dashboard/StepPlantilla.vue";
+import LivePreview from "~/components/dashboard/LivePreview.vue";
+import SendBar from "~/components/dashboard/SendBar.vue";
+import ResultsOverlay from "~/components/dashboard/ResultsOverlay.vue";
+import ResetModal from "~/components/dashboard/ResetModal.vue";
+import TemplateLibraryModal from "~/components/dashboard/TemplateLibraryModal.vue";
+import GlobalDialog from "~/components/dashboard/GlobalDialog.vue";
 
-const { fetchInternalTemplates } = useHtmlImport()
+const { fetchInternalTemplates } = useHtmlImport();
 
 useHead({
   link: [
-    { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-    { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+    { rel: "preconnect", href: "https://fonts.googleapis.com" },
+    { rel: "preconnect", href: "https://fonts.gstatic.com", crossorigin: "" },
     {
-      rel: 'stylesheet',
-      href: 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap',
+      rel: "stylesheet",
+      href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap",
     },
   ],
-})
+});
 
 onMounted(() => {
-  fetchInternalTemplates()
-})
+  fetchInternalTemplates();
+});
 </script>
 
 <template>
@@ -63,7 +64,9 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.internal-library-trigger { margin-bottom: 24px; }
+.internal-library-trigger {
+  margin-bottom: 24px;
+}
 
 .select-divider {
   display: flex;
@@ -76,7 +79,12 @@ onMounted(() => {
   margin-bottom: 12px;
   letter-spacing: 0.05em;
 }
-.select-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.select-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
 
 .btn-browse-library {
   width: 100%;
@@ -84,7 +92,11 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(161, 63, 241, 0.1));
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.1),
+    rgba(161, 63, 241, 0.1)
+  );
   border: 1px solid rgba(99, 102, 241, 0.3);
   color: var(--accent-light);
   padding: 16px;
@@ -95,7 +107,11 @@ onMounted(() => {
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .btn-browse-library:hover {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(161, 63, 241, 0.2));
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.2),
+    rgba(161, 63, 241, 0.2)
+  );
   border-color: var(--accent);
   transform: translateY(-2px);
   box-shadow: 0 10px 25px rgba(99, 102, 241, 0.2);
@@ -122,8 +138,17 @@ onMounted(() => {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
-.btn-copy-preview svg { flex-shrink: 0; }
+.btn-copy-preview svg {
+  flex-shrink: 0;
+}
 
-.fade-scale-enter-active, .fade-scale-leave-active { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-.fade-scale-enter-from, .fade-scale-leave-to { opacity: 0; transform: scale(0.95) translateY(10px); }
+.fade-scale-enter-active,
+.fade-scale-leave-active {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.fade-scale-enter-from,
+.fade-scale-leave-to {
+  opacity: 0;
+  transform: scale(0.95) translateY(10px);
+}
 </style>

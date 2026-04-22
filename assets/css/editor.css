@@ -289,19 +289,10 @@ body {
   overflow-x: hidden;
   z-index: 1;
 }
-.editor-viewport.dark-mode-env {
-  background-color: #020617;
-  background-image: radial-gradient(
-    rgba(255, 255, 255, 0.02) 1px,
-    transparent 1px
-  );
-  transition: background-color 0.5s ease;
-}
 
 .canvas-box {
   position: relative;
   z-index: 1; /* Elevate above background glows */
-  background: #fff;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -1677,6 +1668,7 @@ body {
   height: 100%;
   border-radius: 12px;
   border: none;
+  background: #000;
 }
 
 .canvas-box.mobile .iframe-host {

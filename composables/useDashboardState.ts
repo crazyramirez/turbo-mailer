@@ -15,6 +15,10 @@ const availableColumns = ref<string[]>([])
 const selectedColumn = ref('Email')
 const empresaColumn = ref('')
 const nombreColumn = ref('')
+const linkedinColumn = ref('')
+const urlColumn = ref('')
+const youtubeColumn = ref('')
+const instagramColumn = ref('')
 const rawRows = ref<Record<string, any>[]>([])
 const xlsxDragging = ref(false)
 
@@ -78,15 +82,30 @@ function showToast(message: string, type: 'success' | 'error' | 'info' = 'info')
 
 // ─── Computed ──────────────────────────────────────────────────────────────────
 
-function applyVars(template: string, empresa: string, nombre: string, email: string): string {
-  return template
-    .replace(/\{\{\s*Empresa\s*\}\}/gi, empresa || '')
-    .replace(/\{\{\s*Nombre\s*\}\}/gi, nombre || '')
-    .replace(/\{\{\s*Email\s*\}\}/gi, email || '')
+function applyVars(template: string, row: Record<string, any>): string {
+  let result = template
+  // Global mapping support (legacy/shortcuts)
+  result = result
+    .replace(/\{\{\s*Empresa\s*\}\}/gi, row[empresaColumn.value] || '')
+    .replace(/\{\{\s*Nombre\s*\}\}/gi, row[nombreColumn.value] || '')
+    .replace(/\{\{\s*Email\s*\}\}/gi, row[selectedColumn.value] || '')
+    .replace(/\{\{\s*Linkedin\s*\}\}/gi, row[linkedinColumn.value] || '')
+    .replace(/\{\{\s*URL\s*\}\}/gi, row[urlColumn.value] || '')
+    .replace(/\{\{\s*Youtube\s*\}\}/gi, row[youtubeColumn.value] || '')
+    .replace(/\{\{\s*Instagram\s*\}\}/gi, row[instagramColumn.value] || '')
+  
+  // Dynamic column support
+  Object.keys(row).forEach(key => {
+    const regex = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'gi')
+    result = result.replace(regex, row[key] || '')
+  })
+  
+  return result
 }
 
 const contactRows = computed(() =>
   rawRows.value.map((row) => ({
+    ...row,
     email: String(row[selectedColumn.value] || '').trim(),
     empresa: empresaColumn.value ? String(row[empresaColumn.value] || '').trim() : '',
     nombre: nombreColumn.value ? String(row[nombreColumn.value] || '').trim() : '',
@@ -94,15 +113,14 @@ const contactRows = computed(() =>
 )
 
 const subjectPreview = computed(() => {
-  if (!emailSubject.value || !contactRows.value.length) return ''
-  const first = contactRows.value[0]
-  return applyVars(emailSubject.value, first.empresa, first.nombre, first.email)
+  if (!emailSubject.value || !rawRows.value.length) return ''
+  return applyVars(emailSubject.value, rawRows.value[0])
 })
 
 const personalizedPreviewHtml = computed(() => {
   if (!htmlBody.value) return ''
-  const first = contactRows.value[0] || { empresa: '', nombre: '', email: '' }
-  return applyVars(htmlBody.value, first.empresa, first.nombre, first.email)
+  const first = rawRows.value[0] || {}
+  return applyVars(htmlBody.value, first)
 })
 
 const canSend = computed(() =>
@@ -134,6 +152,10 @@ function resetDashboardState() {
   selectedColumn.value = 'Email'
   empresaColumn.value = ''
   nombreColumn.value = ''
+  linkedinColumn.value = ''
+  urlColumn.value = ''
+  youtubeColumn.value = ''
+  instagramColumn.value = ''
   rawRows.value = []
   xlsxDragging.value = false
   htmlFileName.value = ''
@@ -161,6 +183,10 @@ export function useDashboardState() {
     selectedColumn,
     empresaColumn,
     nombreColumn,
+    linkedinColumn,
+    urlColumn,
+    youtubeColumn,
+    instagramColumn,
     rawRows,
     xlsxDragging,
     // HTML

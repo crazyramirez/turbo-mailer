@@ -8,9 +8,12 @@ const {
   showResetConfirm,
   contactRows,
   selectedEmails,
-  htmlBody,
-  subjectInputRef,
-  showToast,
+  empresaColumn,
+  nombreColumn,
+  linkedinColumn,
+  urlColumn,
+  youtubeColumn,
+  instagramColumn,
   resetDashboardState,
 } = useDashboardState()
 
@@ -21,10 +24,23 @@ async function sendEmails() {
 
   const recipients = contactRows.value
     .filter((r) => selectedEmails.value.includes(r.email))
-    .map((r) => ({
-      email: r.email,
-      vars: { Empresa: r.empresa, Nombre: r.nombre, Email: r.email },
-    }))
+    .map((r) => {
+      // Create a vars object with all original columns + global shortcuts
+      const vars: Record<string, any> = { ...r }
+      // Ensure Empresa, Nombre and Email are also available even if the columns are named differently
+      vars.Empresa = r.empresa
+      vars.Nombre = r.nombre
+      vars.Email = r.email
+      vars.Linkedin = r[linkedinColumn.value] || ''
+      vars.URL = r[urlColumn.value] || ''
+      vars.Youtube = r[youtubeColumn.value] || ''
+      vars.Instagram = r[instagramColumn.value] || ''
+      
+      return {
+        email: r.email,
+        vars
+      }
+    })
 
   try {
     const res = await $fetch<any>('/api/send-emails', {

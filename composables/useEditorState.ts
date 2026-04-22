@@ -68,7 +68,7 @@ const htmlContent = ref(`<!DOCTYPE html>
 </head>
 <body style="margin:0;padding:0;background-color:#f8fafc;">
   <div style="margin:0;padding:0;width:100%;background-color:#f8fafc;">
-    <div style="width:100%;margin:0 auto;padding:40px 0;">
+    <div style="width:100%;margin:0 auto;padding:0;">
       <div class="main-card"></div>
     </div>
   </div>
