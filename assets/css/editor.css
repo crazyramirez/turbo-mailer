@@ -291,14 +291,6 @@ body {
   transition: background-color 0.4s ease;
 }
 
-.editor-viewport.dark-mode-env {
-  background-color: #000 !important;
-  background-image: radial-gradient(
-    rgba(255, 255, 255, 0.02) 1px,
-    transparent 1px
-  );
-}
-
 .editor-viewport.dark-mode-env .iframe-host {
   background-color: #000;
 }
@@ -514,10 +506,6 @@ body {
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.canvas-box.desktop {
-  width: 720px;
-  min-height: 70%;
-}
 .canvas-box.mobile {
   width: auto;
   min-height: 600px;
@@ -1010,7 +998,7 @@ body {
 }
 
 .hex-box {
-  background: #000;
+  background: #5f646a;
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 4px 8px;
@@ -1417,27 +1405,6 @@ body {
   align-items: stretch;
 }
 
-.hex-box {
-  background: #05060b;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  height: 56px;
-}
-
-.hex-box input {
-  background: transparent;
-  border: none;
-  color: #fff;
-  font-family: monospace;
-  font-size: 18px;
-  width: 100%;
-  text-transform: uppercase;
-  outline: none;
-}
-
 .btn-open-system {
   background: var(--bg-card);
   color: var(--text-muted);
@@ -1660,7 +1627,7 @@ body {
 }
 
 .canvas-box.desktop {
-  width: 820px; /* Aligned with main-card max-width */
+  width: 1000px; /* Aligned with main-card max-width */
   min-height: 800px;
   background: #fff;
   border-radius: 12px;

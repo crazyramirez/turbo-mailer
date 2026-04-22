@@ -1,4 +1,4 @@
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch } from 'vue'
 
 export interface Template {
   name: string
@@ -16,7 +16,9 @@ export interface LayerItem {
 // All reactive refs live here so every composable and component shares one instance.
 
 const iframeRef = ref<HTMLIFrameElement | null>(null)
-const viewMode = ref<'desktop' | 'mobile'>('desktop')
+const viewMode = ref<'desktop' | 'mobile'>(
+  (localStorage.getItem('editor_view_mode') as 'desktop' | 'mobile') ?? 'desktop'
+)
 const activePanel = ref<'layers' | 'edit' | 'fonts'>('layers')
 const selectedElement = ref<HTMLElement | null>(null)
 const selectedSubElement = ref<HTMLElement | null>(null)
@@ -30,7 +32,7 @@ const isMorphing = ref(false)
 const showTemplateModal = ref(false)
 const newTemplateName = ref('')
 const lastSavedTime = ref('')
-const darkModePreview = ref(false)
+const darkModePreview = ref(localStorage.getItem('editor_dark_mode') === 'true')
 
 const fontSizeRef = ref(16)
 const selectionBaseRef = ref(16)
@@ -48,6 +50,9 @@ const isDraggingOverIframe = ref(false)
 const undoStack = ref<string[]>([])
 const redoStack = ref<string[]>([])
 const maxHistory = 30
+
+watch(viewMode, (v) => localStorage.setItem('editor_view_mode', v))
+watch(darkModePreview, (v) => localStorage.setItem('editor_dark_mode', String(v)))
 
 const htmlContent = ref(`<!DOCTYPE html>
 <html lang="es">

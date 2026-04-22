@@ -1,14 +1,14 @@
 export const iframeEditorStyles = `
   html, body { background-color: #ffffff; overflow-x: hidden !important; margin: 0; padding: 20px 0 40px 0 !important; min-height: 100vh; box-sizing: border-box; }
   .main-card { max-width: 820px !important; margin: 0 auto !important; box-sizing: border-box !important; }
-  .editable-block { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
-  .editable-block:hover { outline: 2px solid #6366f1 !important; outline-offset: -2px; cursor: pointer; }
+  .editable-block { position: relative; }
+  .editable-block:hover { outline: 2px solid #6366f1 !important; cursor: pointer; outline-offset: -2px; }
   .editable-block.selected {
     outline: 2px solid #6366f1 !important;
-    outline-offset: 2px;
+    outline-offset: -2px;
     position: relative;
     z-index: 10;
-    box-shadow: 0 0 40px rgba(99, 102, 241, 0.15);
+    box-shadow: 0 0 40px rgba(99, 102, 241, 0.35);
     transition: outline-color 0.3s;
   }
   .editable-block.selected::before {

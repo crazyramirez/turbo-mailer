@@ -12,6 +12,13 @@ import { colorPalettes } from "~/utils/editorColors";
 
 const { promptData } = useEditorState();
 const { submitPrompt, handlePromptInput } = usePrompt();
+
+function handleHexInput() {
+  if (promptData.value !== 'transparent' && !promptData.value.startsWith('#')) {
+    promptData.value = '#' + promptData.value;
+  }
+  handlePromptInput(promptData.value);
+}
 </script>
 
 <template>
@@ -63,7 +70,7 @@ const { submitPrompt, handlePromptInput } = usePrompt();
                     type="text"
                     maxlength="7"
                     spellcheck="false"
-                    @input="handlePromptInput(promptData.value)"
+                    @input="handleHexInput"
                   />
                 </div>
                 <label for="nat-pick" class="btn-open-system">
