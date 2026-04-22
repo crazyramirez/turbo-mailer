@@ -99,6 +99,7 @@ function initBlock(el: HTMLElement, doc: Document) {
     else if (el.classList.contains('body-block')) el.dataset.type = 'Contenido'
     else if (el.classList.contains('signature-block')) el.dataset.type = 'Firma'
     else if (el.classList.contains('cta-block')) el.dataset.type = 'Botón'
+    else if (el.classList.contains('methodology-block')) el.dataset.type = 'Nota'
     else el.dataset.type = 'Bloque'
   }
 
@@ -137,7 +138,7 @@ function initBlock(el: HTMLElement, doc: Document) {
 
   el.setAttribute('draggable', 'true')
   // Enable inline editing for common text elements with a smarter non-nesting logic
-  const textTags = 'div, span, p, h1, h2, h3, b, td, a'
+  const textTags = 'div, span, p, h1, h2, h3, b, td, a, i, u, strong, em, font, s, small, sub, sup'
   el.querySelectorAll(textTags).forEach((child: any) => {
     if (child.dataset.toggle === 'button') {
       child.contentEditable = 'false'
@@ -154,11 +155,15 @@ function initBlock(el: HTMLElement, doc: Document) {
       (n) => n.nodeType === 3 && (n.textContent || '').trim().length > 0,
     )
     const hasElements = child.children.length > 0
+    
+    // Check if it's a known text toggle (title, subtitle, etc.)
+    const isTextToggle = ['title', 'subtitle', 'badge', 'ps', 'contact'].includes(child.dataset.toggle || '')
 
-    // Si es una hoja con texto o un contenedor con texto directo (mezcla), lo hacemos editable
-    if (!hasElements || hasDirectText) {
+    // Si es una hoja con texto, un contenedor con texto directo (mezcla), o un toggle de texto conocido
+    if (!hasElements || hasDirectText || isTextToggle) {
       child.contentEditable = 'true'
       child.spellcheck = false
+      child.setAttribute('draggable', 'false')
     }
   })
 

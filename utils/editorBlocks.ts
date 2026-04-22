@@ -8,6 +8,7 @@ import {
   Zap,
   Globe,
   Edit3,
+  StickyNote,
 } from 'lucide-vue-next'
 
 export interface EditorBlock {
@@ -88,14 +89,14 @@ export const editorBlocks: EditorBlock[] = [
   </div>`,
   },
   {
-    id: 'methodology',
-    name: 'Metodología',
-    icon: Zap,
-    content: `<div class="methodology-block editable-block" data-type="Metodología" style="padding:20px;background:#f6faff;">
+    id: 'note',
+    name: 'Nota',
+    icon: StickyNote,
+    content: `<div class="methodology-block editable-block" data-type="Nota" style="padding:20px;background:#f6faff;">
     <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:18px;padding:24px;border-left:4px solid #6366f1;">
-      <div data-toggle="badge" style="font-family:Arial;font-size:11px;font-weight:700;color:#6366f1;letter-spacing:1.2px;margin-bottom:12px;text-transform:uppercase;">Nuestra Metodología</div>
-      <div data-toggle="title" style="font-family:Arial;font-size:16px;font-weight:700;color:#0f172a;line-height:24px;margin-bottom:12px;">Innovación constante para resultados excepcionales.</div>
-      <div data-toggle="subtitle" style="font-family:Arial;font-size:15px;line-height:24px;color:#475569;">No replicamos soluciones genéricas: cada proyecto se construye desde cero, pensado para cada cliente y objetivo concreto. El resultado es siempre algo único y memorable.</div>
+      <div data-toggle="badge" style="font-family:Arial;font-size:11px;font-weight:700;color:#6366f1;letter-spacing:1.2px;margin-bottom:12px;text-transform:uppercase;">Información Importante</div>
+      <div data-toggle="title" style="font-family:Arial;font-size:16px;font-weight:700;color:#0f172a;line-height:24px;margin-bottom:12px;">Punto clave a destacar en tu comunicación.</div>
+      <div data-toggle="subtitle" style="font-family:Arial;font-size:15px;line-height:24px;color:#475569;">Utiliza este bloque para resaltar datos, aclaraciones o cualquier información que deba captar la atención del lector de forma inmediata y profesional.</div>
     </div>
   </div>`,
   },

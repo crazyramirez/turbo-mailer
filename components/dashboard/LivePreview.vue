@@ -344,7 +344,7 @@ async function copyHtml() {
 }
 
 .p-canvas-box {
-  background: #fff;
+  /* background: #fff; */
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
@@ -421,7 +421,7 @@ async function copyHtml() {
   position: relative;
   background-color: #fff;
   transition: background-color 0.4s ease;
-  padding: 10px;
+  padding: 20px;
   border-radius: 20px;
 }
 
@@ -456,7 +456,7 @@ async function copyHtml() {
 .p-frame-top .p-notch {
   width: 120px;
   height: 22px;
-  background: #000;
+  background: #0f172a;
   border-radius: 0 0 14px 14px;
   box-shadow: inset 0 -1px 1px rgba(255, 255, 255, 0.1);
 }

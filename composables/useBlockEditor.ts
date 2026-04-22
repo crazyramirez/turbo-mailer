@@ -47,7 +47,7 @@ function selectElement(el: HTMLElement, subEl?: HTMLElement) {
   activePanel.value = 'edit'
   el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
 
-  const elements = el.querySelectorAll('div, p, span, h1, h2, td, b, strong')
+  const elements = el.querySelectorAll('div, p, span, h1, h2, h3, td, b, strong, i, u, font, em')
   if (elements.length > 0) {
     const firstEl = elements[0] as HTMLElement
     const firstSize = parseInt(window.getComputedStyle(firstEl).fontSize) || 16
