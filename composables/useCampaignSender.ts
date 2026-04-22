@@ -3,9 +3,12 @@ import { useDashboardState } from '~/composables/useDashboardState'
 
 const {
   emailSubject,
+  htmlBody,
   isSending,
   sendResults,
   showResetConfirm,
+  showSendConfirm,
+  lastSentCount,
   contactRows,
   selectedEmails,
   empresaColumn,
@@ -14,7 +17,9 @@ const {
   urlColumn,
   youtubeColumn,
   instagramColumn,
+  resetFormFields,
   resetDashboardState,
+  showToast,
 } = useDashboardState()
 
 async function sendEmails() {
@@ -48,12 +53,18 @@ async function sendEmails() {
       body: { subject: emailSubject.value, htmlBody: htmlBody.value, recipients },
     })
     sendResults.value = res.results
+    lastSentCount.value = res.results.filter((r: any) => r.status === 'sent').length
+    resetFormFields()
     showToast('Campaña finalizada', 'success')
   } catch {
     showToast('Error en el envío', 'error')
   } finally {
     isSending.value = false
   }
+}
+
+function confirmSend() {
+  showSendConfirm.value = true
 }
 
 function resetAll() {
@@ -76,5 +87,5 @@ function insertVar(token: string) {
 }
 
 export function useCampaignSender() {
-  return { sendEmails, resetAll, performFullReset, logout, insertVar }
+  return { sendEmails, confirmSend, resetAll, performFullReset, logout, insertVar }
 }

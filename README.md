@@ -2,41 +2,77 @@
 
 **Dashboard de Envío Inteligente & Gestión de Campañas Premium**
 
-Turbo-Mailer PRO es una solución de escritorio/PWA de alto rendimiento diseñada para simplificar el envío masivo de correos electrónicos personalizados. Construido con **Nuxt 3** y un enfoque en la experiencia de usuario (UX) institucional, permite gestionar campañas complejas con importación directa de datos y previsualización en tiempo real.
+> ⚠️ **Uso Responsable — Leer antes de usar**
+>
+> Turbo-Mailer PRO es una herramienta profesional diseñada exclusivamente para **envíos de email legítimos, controlados y con consentimiento previo**: comunicaciones corporativas, newsletters opt-in, campañas B2B entre contactos propios y notificaciones transaccionales.
+>
+> **No está diseñada, ni debe usarse, para spam o envíos masivos no solicitados.**
+>
+> El uso de esta aplicación implica la aceptación total de las políticas de uso de Gmail/Google, la normativa vigente (GDPR, CAN-SPAM Act, LSSI-CE) y las leyes de privacidad aplicables en tu país. **Los desarrolladores de Turbo-Mailer PRO no asumen ninguna responsabilidad por el uso indebido de la herramienta**, incluyendo el incumplimiento de dichas normativas, bloqueos de cuenta o consecuencias legales derivadas de un uso no autorizado.
+
+Turbo-Mailer PRO es una solución de escritorio/PWA de alto rendimiento para envío masivo de correos personalizados. Construido con **Nuxt 3**, permite gestionar campañas completas con importación directa desde Excel, editor visual de plantillas HTML, previsualización en tiempo real e integración con IA para mejorar los textos.
 
 ![Turbo-Mailer PRO](public/images/ogimage.jpg)
 
 ## 📸 Interfaz del Proyecto
 
-|                 Simple Login                  |                 Dashboard                  |                        Editor                        |
-| :-------------------------------------------: | :----------------------------------------: | :--------------------------------------------------: |
-| ![Dashboard](public/images/screenshot_1.jpeg) | ![Editor](public/images/screenshot_2.jpeg) | ![Previsualización](public/images/screenshot_3.jpeg) |
+|                                      |                                      |                                      |
+| :----------------------------------: | :----------------------------------: | :----------------------------------: |
+| ![](public/images/screenshot_1.webp) | ![](public/images/screenshot_2.webp) | ![](public/images/screenshot_3.webp) |
+| ![](public/images/screenshot_4.webp) |                                      |                                      |
 
 ---
 
 ## ✨ Características Principales
 
-- **📊 Importación Inteligente**: Soporte nativo para archivos `.xlsx`, `.xls` y `.csv`. Mapeo automático de columnas para correos, nombres y empresas.
-- **🎨 Live Preview Real-Time**: Visualiza exactamente cómo se verá tu diseño HTML para cada destinatario antes de presionar enviar.
-- **🏷️ Variables Dinámicas**: Personalización profunda tanto en el asunto como en el cuerpo del correo usando el motor de etiquetas `{{Empresa}}`, `{{Contacto}}`, etc.
-- **🛠️ Motor SMTP Express**: Integración robusta con servicios de correo (Gmail, Outlook, SMTP propio) vía Nodemailer con reporte de resultados en tiempo vivo.
-- **📱 PWA & Mobile First**: Instalable como aplicación nativa en Windows/iOS/Android para una gestión rápida desde cualquier lugar.
-- **🎨 Editor de Plantillas Visual**: Editor Drag & Drop institucional para crear y modificar plantillas HTML sin tocar código. Con sistema de bloques, edición de texto enriquecido y gestión de imágenes.
-- **🤖 IA Copywriting Assistant**: Integración con OpenAI (GPT-4o) para mejorar, profesionalizar y optimizar los textos de tus correos con un solo clic, respetando el diseño HTML y las variables de personalización.
-- **🌙 Dark Mode Simulator**: Previsualización realista que simula cómo las apps de correo (como Gmail) transforman tus diseños a modo oscuro, asegurando que tu mensaje sea siempre legible.
-- **📂 Galería de Plantillas Premium**: Biblioteca integrada para guardar, renombrar, eliminar y gestionar tus propios diseños institucionales de forma eficiente.
-- **🔒 Acceso Protegido**: Sistema de login mediante contraseña maestra configurada por entorno con limitación de intentos por IP para máxima seguridad.
-- **💎 Diseño de Vanguardia**: Interfáz ultramoderna con tipografía _Plus Jakarta Sans_, efectos de glassmorfismo, animaciones quirúrgicas y navegación intuitiva por pasos.
+- **📊 Importación Inteligente**: Soporte para `.xlsx`, `.xls` y `.csv`. Detección automática de columnas para correo, empresa, contacto, LinkedIn, URL, YouTube e Instagram.
+- **🎨 Live Preview en Tiempo Real**: Visualiza el correo personalizado con los datos reales del primer contacto antes de enviar. Toggle desktop / móvil / modo oscuro.
+- **🏷️ Variables Dinámicas**: Personalización en asunto y cuerpo con `{{Empresa}}`, `{{Contacto}}`, `{{URL}}`, `{{Linkedin}}`, `{{Instagram}}`, `{{Youtube}}`.
+- **🛠️ Motor SMTP Gmail**: Envío masivo vía Nodemailer + Gmail App Password con reporte en tiempo real de éxitos y fallos por destinatario.
+- **🎨 Editor de Plantillas Visual**: Editor Drag & Drop con bloques (Header, Hero, Card, Botones, Imagen, Texto, Separador, Footer), panel de fuentes, panel de capas y controles de estilo por bloque.
+- **🤖 IA Copywriting Assistant**: Integración con OpenAI (GPT-4o-mini / GPT-4o) para mejorar el texto de bloques individuales o toda la plantilla con un clic. Preserva el HTML y las variables.
+- **📂 Galería de Plantillas**: Biblioteca integrada para guardar, cargar, renombrar y eliminar plantillas HTML propias. Persistencia en servidor.
+- **🔒 Acceso Protegido**: Login con contraseña maestra configurable. Rate limiting por IP: 10 intentos fallidos bloquean el acceso durante 15 minutos.
+- **📱 PWA & Mobile First**: Instalable como app nativa en Windows / iOS / Android con soporte offline vía Service Worker.
+- **💎 Diseño de Vanguardia**: UI ultramoderna con tipografía _Plus Jakarta Sans_, glassmorfismo, animaciones y flujo de trabajo en 4 pasos guiados.
 
 ---
 
 ## 🛠️ Tecnologías
 
-- **Framework**: [Nuxt 3](https://nuxt.com/) (Vue 3 SSR/Client)
-- **Emailing**: [Nodemailer](https://nodemailer.com/)
+- **Framework**: [Nuxt 3](https://nuxt.com/) — SPA mode (`ssr: false`)
+- **Emailing**: [Nodemailer](https://nodemailer.com/) — Gmail SMTP
 - **Data Handling**: [XLSX (SheetJS)](https://sheetjs.com/)
+- **IA**: [OpenAI API](https://platform.openai.com/) — GPT-4o-mini (configurable)
 - **Icons**: [Lucide Vue Next](https://lucide.dev/)
 - **Offline/PWA**: `@vite-pwa/nuxt`
+
+---
+
+## 🚀 Flujo de Trabajo
+
+La app guía el envío en **4 pasos**:
+
+1. **Contactos** — Arrastra tu archivo Excel. La app detecta automáticamente las columnas de correo, empresa, nombre y redes sociales.
+2. **Asunto** — Escribe el asunto de la campaña. Usa los botones de variables para personalización dinámica.
+3. **Plantilla** — Sube un archivo `.html` listo o abre el **Editor Visual** para construir tu diseño desde cero con bloques drag & drop.
+4. **Envío** — Revisa la previsualización en tiempo real y envía. Verás el resultado (enviados / fallidos) por destinatario al instante.
+
+> **Nota:** Los datos de contactos y asunto se mantienen en memoria. No persisten si recargas la página. Las plantillas sí se guardan en servidor.
+
+---
+
+## 🎨 Editor Visual de Plantillas
+
+Accesible desde `/editor`. Funciones clave:
+
+- **Bloques disponibles**: Header, Hero, Card (standard/premium), Botones, Imagen, Texto, Separador, Footer
+- **Panel de edición**: Fuente, tamaño, color de texto y fondo, alineación por bloque
+- **Panel de capas**: Árbol visual de bloques con reordenamiento drag & drop
+- **IA por bloque**: Selecciona un bloque y mejora su texto con un clic
+- **IA masiva**: Mejora todos los bloques de la plantilla a la vez
+- **Atajos de teclado**: `Ctrl+S` guardar · `Ctrl+Z` deshacer · `Ctrl+Y` rehacer · `Delete` eliminar bloque
+- **Autosave**: Guardado automático al detectar cambios
 
 ---
 
@@ -56,65 +92,53 @@ Turbo-Mailer PRO es una solución de escritorio/PWA de alto rendimiento diseñad
    ```
 
 3. **Configurar el entorno**
-   Crea un archivo `.env` en la raíz del proyecto con tus credenciales:
+
+   Renombra `.env.template` a `.env` en la raíz del proyecto y completa los campos:
 
    ```env
-   # Configuración de Gmail
+   # Acceso a la Aplicación (requerido)
+   APP_PASSWORD=tu-contraseña-de-acceso
+
+   # Gmail SMTP (requerido para enviar)
    GMAIL_USER=tu-correo@gmail.com
-   GMAIL_APP_PASSWORD=tu-password-de-aplicacion-de-16-caracteres
+   GMAIL_APP_PASSWORD=tu-app-password-de-16-caracteres
 
-   # Acceso a la Aplicación
-   APP_PASSWORD=tu-contraseña-de-acceso-al-dashboard
-
-   # Inteligencia Artificial (Opcional)
-   OPENAI_API_KEY=tu-api-key-de-openai
+   # Inteligencia Artificial (opcional)
+   OPENAI_API_KEY=sk-...
    OPENAI_MODEL=gpt-4o-mini
    ```
 
-### 🔑 Cómo crear una "App Password" de Gmail
-
-Para enviar correos desde esta aplicación usando tu cuenta de Gmail, necesitas una contraseña de aplicación (App Password) de 16 dígitos:
-
-1. **Activar Verificación en 2 Pasos**: Ve a tu [Cuenta de Google > Seguridad](https://myaccount.google.com/security) y asegúrate de que la "Verificación en 2 pasos" esté **Activada**.
-2. **Generar Contraseña**: Accede directamente a **[https://myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)**.
-3. **Configurar**:
-   - Escribe un nombre descriptivo (ejemplo: `Turbo Mailer PRO`).
-   - Haz clic en **Crear**.
-4. **Copiar Código**: Copia el código de 16 caracteres generado (sin espacios) y pégalo en el campo `GMAIL_APP_PASSWORD` de tu archivo `.env`.
-
----
-
 4. **Iniciar en desarrollo**
+
    ```bash
    npm run dev
    ```
 
 ---
 
-## 📋 Guía de Uso
+### 🔑 Cómo crear una App Password de Gmail
 
-### 1. Cargar Contactos
+La app usa Gmail SMTP con una contraseña de aplicación de 16 dígitos (no tu contraseña normal).
 
-Arrastra tu archivo Excel a la zona de "Contactos & Datos". La plataforma detectará automáticamente la columna de correo. Puedes ajustar el mapeo manualmente si es necesario.
+1. **Activar Verificación en 2 Pasos**: [Cuenta de Google → Seguridad](https://myaccount.google.com/security)
+2. **Generar contraseña**: Accede a [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
+3. Escribe un nombre (ej. `Turbo Mailer PRO`) y haz clic en **Crear**
+4. Copia el código de 16 caracteres (sin espacios) y pégalo en `GMAIL_APP_PASSWORD`
 
-### 2. Configurar Asunto
+---
 
-Escribe el asunto de tu campaña. Puedes usar etiquetas como `{{Contacto}}` para aumentar la tasa de apertura:
-_Ejemplo: "¡Hola {{Contacto}}! Tenemos algo para {{Empresa}}"_
+## 🛡️ Seguridad
 
-### 3. Diseñar o Cargar Plantilla
-
-Sube tu propio archivo `.html` o utiliza el **Editor Visual** integrado para construir una plantilla profesional desde cero mediante drag-and-drop. El sistema permite gestionar una biblioteca de plantillas personalizadas. El dashboard mostrará una previsualización inmediata con datos reales.
-
-### 4. Envío y Resultados
-
-Haz clic en "Enviar Campaña". Se desplegará un panel de monitoreo donde verás el progreso de los envíos exitosos y fallidos en tiempo real.
+- Contraseña maestra almacenada en variable de entorno (nunca en código)
+- Sesión en cookie `httpOnly` + `SameSite=strict` con TTL de 24 horas
+- Rate limiting por IP: 10 intentos fallidos → bloqueo de 15 minutos con contador visible
+- Middleware global que redirige a `/login` si la sesión no es válida
 
 ---
 
 ## 📄 Plantillas de Demo
 
-Encuentra una plantilla de ejemplo profesional y optimizada en:
+Encuentra una plantilla de ejemplo profesional en:
 `docs/email_demo.html`
 
 ---

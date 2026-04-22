@@ -114,6 +114,12 @@ async function saveTemplate(silent = false) {
 
     localStorage.setItem('last_edited_template', currentTemplate.value)
 
+    if (typeof BroadcastChannel !== 'undefined') {
+      const bc = new BroadcastChannel('turbo-mailer-templates')
+      bc.postMessage({ type: 'template-saved', name: currentTemplate.value, content: finalHtml })
+      bc.close()
+    }
+
     if (!silent) {
       await loadTemplates()
       showToast('Plantilla guardada', 'success')

@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onMounted, onUnmounted } from "vue";
 import "@/assets/css/main.css";
 import "@/assets/css/bg-orbs.css";
 
 import { useHtmlImport } from "~/composables/useHtmlImport";
+import { useDashboardState } from "~/composables/useDashboardState";
 
 import AppBackground from "~/components/dashboard/AppBackground.vue";
 import DashboardToast from "~/components/dashboard/DashboardToast.vue";
@@ -15,11 +16,16 @@ import StepPlantilla from "~/components/dashboard/StepPlantilla.vue";
 import LivePreview from "~/components/dashboard/LivePreview.vue";
 import SendBar from "~/components/dashboard/SendBar.vue";
 import ResultsOverlay from "~/components/dashboard/ResultsOverlay.vue";
-import ResetModal from "~/components/dashboard/ResetModal.vue";
+import ResetModal from "~/components/dashboard/ResetModal.vue"
+import SendConfirmModal from "~/components/dashboard/SendConfirmModal.vue";
+import SendingOverlay from "~/components/dashboard/SendingOverlay.vue";
 import TemplateLibraryModal from "~/components/dashboard/TemplateLibraryModal.vue";
 import GlobalDialog from "~/components/dashboard/GlobalDialog.vue";
 
-const { fetchInternalTemplates } = useHtmlImport();
+const { fetchInternalTemplates, selectInternalTemplate } = useHtmlImport();
+const { setupTemplateSync, selectedInternalTemplate } = useDashboardState();
+
+let cleanupSync: (() => void) | undefined;
 
 useHead({
   link: [
@@ -34,6 +40,14 @@ useHead({
 
 onMounted(() => {
   fetchInternalTemplates();
+  cleanupSync = setupTemplateSync();
+  if (selectedInternalTemplate.value) {
+    selectInternalTemplate(selectedInternalTemplate.value);
+  }
+});
+
+onUnmounted(() => {
+  cleanupSync?.();
 });
 </script>
 
@@ -58,6 +72,8 @@ onMounted(() => {
     <SendBar />
     <ResultsOverlay />
     <ResetModal />
+    <SendConfirmModal />
+    <SendingOverlay />
     <TemplateLibraryModal />
     <GlobalDialog />
   </div>

@@ -3,7 +3,7 @@ import { useDashboardState } from '~/composables/useDashboardState'
 import { useCampaignSender } from '~/composables/useCampaignSender'
 
 const { canSend, isSending, selectedEmails } = useDashboardState()
-const { sendEmails } = useCampaignSender()
+const { confirmSend } = useCampaignSender()
 </script>
 
 <template>
@@ -13,7 +13,7 @@ const { sendEmails } = useCampaignSender()
         <span class="send-bar-title">Listo para el despegue</span>
         <span class="send-bar-sub">{{ selectedEmails.length }} destinatarios seleccionados</span>
       </div>
-      <button class="btn-send-pro" @click="sendEmails" :disabled="isSending">
+      <button class="btn-send-pro" @click="confirmSend" :disabled="isSending">
         <div class="btn-inner">
           <template v-if="isSending">
             <div class="spinner"></div>

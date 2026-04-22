@@ -2,7 +2,7 @@
 import { Layout, RefreshCcw, LogOut } from "lucide-vue-next";
 import { APP_VERSION } from "~/utils/version";
 
-const { emails, emailSubject, htmlBody } = useDashboardState();
+const { emails, emailSubject, htmlBody, lastSentCount } = useDashboardState();
 const { resetAll, logout } = useCampaignSender();
 </script>
 
@@ -25,6 +25,15 @@ const { resetAll, logout } = useCampaignSender();
           <span class="logo-sub">Dashboard de Envío Inteligente</span>
         </div>
       </div>
+
+      <Transition name="fade-scale">
+        <div v-if="lastSentCount > 0" class="sent-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          {{ lastSentCount }} enviados
+        </div>
+      </Transition>
 
       <div class="header-right">
         <!-- Desktop buttons -->
@@ -106,5 +115,24 @@ const { resetAll, logout } = useCampaignSender();
   align-items: center;
   font-size: 16px;
   font-weight: 800;
+}
+
+.sent-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #10b981;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 20px;
+}
+
+.sent-badge svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 </style>

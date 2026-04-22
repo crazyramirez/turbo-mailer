@@ -32,6 +32,8 @@ const emailSubject = ref('')
 const isSending = ref(false)
 const sendResults = ref<{ email: string; status: string }[]>([])
 const showResetConfirm = ref(false)
+const showSendConfirm = ref(false)
+const lastSentCount = ref(0)
 
 // Template library state
 const internalTemplates = ref<{ name: string; path: string }[]>([])
@@ -142,9 +144,22 @@ function stepStatus(i: number) {
   return 'pending'
 }
 
+// ─── Template sync (cross-page via BroadcastChannel) ──────────────────────────
+
+function setupTemplateSync(): () => void {
+  if (typeof BroadcastChannel === 'undefined') return () => {}
+  const bc = new BroadcastChannel('turbo-mailer-templates')
+  bc.onmessage = (e) => {
+    if (e.data?.type === 'template-saved' && e.data.name === selectedInternalTemplate.value) {
+      htmlBody.value = e.data.content
+    }
+  }
+  return () => bc.close()
+}
+
 // ─── Reset ─────────────────────────────────────────────────────────────────────
 
-function resetDashboardState() {
+function resetFormFields() {
   xlsxFileName.value = ''
   emails.value = []
   selectedEmails.value = []
@@ -163,10 +178,16 @@ function resetDashboardState() {
   htmlDragging.value = false
   emailSubject.value = ''
   isSending.value = false
-  sendResults.value = []
   showResetConfirm.value = false
+  showSendConfirm.value = false
   selectedInternalTemplate.value = ''
   showTemplatesModal.value = false
+}
+
+function resetDashboardState() {
+  resetFormFields()
+  sendResults.value = []
+  lastSentCount.value = 0
 }
 
 export function useDashboardState() {
@@ -198,6 +219,8 @@ export function useDashboardState() {
     isSending,
     sendResults,
     showResetConfirm,
+    showSendConfirm,
+    lastSentCount,
     // Library
     internalTemplates,
     selectedInternalTemplate,
@@ -220,6 +243,9 @@ export function useDashboardState() {
     stepStatus,
     applyVars,
     // Reset
+    resetFormFields,
     resetDashboardState,
+    // Sync
+    setupTemplateSync,
   }
 }
