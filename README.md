@@ -5,7 +5,14 @@ Turbo-Mailer PRO es una solución de escritorio/PWA de alto rendimiento diseñad
 
 ![Turbo-Mailer PRO](public/images/ogimage.jpg)
 
+## 📸 Interfaz del Proyecto
+
+| Dashboard Principal | Editor de Plantillas | Previsualización en Vivo |
+| :---: | :---: | :---: |
+| ![Dashboard](public/images/screenshot_1.jpeg) | ![Editor](public/images/screenshot_2.jpeg) | ![Previsualización](public/images/screenshot_3.jpeg) |
+
 ---
+
 
 ## ✨ Características Principales
 
