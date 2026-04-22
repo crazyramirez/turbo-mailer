@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import { X, Hash, Pipette, AlertCircle, Image as ImageIcon } from 'lucide-vue-next'
-import { useEditorState } from '~/composables/useEditorState'
-import { usePrompt } from '~/composables/usePrompt'
-import { colorPalettes } from '~/utils/editorColors'
+import {
+  X,
+  Hash,
+  Pipette,
+  AlertCircle,
+  Image as ImageIcon,
+} from "lucide-vue-next";
+import { useEditorState } from "~/composables/useEditorState";
+import { usePrompt } from "~/composables/usePrompt";
+import { colorPalettes } from "~/utils/editorColors";
 
-const { promptData } = useEditorState()
-const { submitPrompt, handlePromptInput } = usePrompt()
+const { promptData } = useEditorState();
+const { submitPrompt, handlePromptInput } = usePrompt();
 </script>
 
 <template>
@@ -37,8 +43,16 @@ const { submitPrompt, handlePromptInput } = usePrompt()
           <!-- Color Picker -->
           <div v-if="promptData.mode === 'color'" class="premium-color-picker">
             <div class="picker-main">
-              <div class="main-preview" :style="{ background: promptData.value }">
-                <div v-if="promptData.value === 'transparent'" class="transparent-indicator">✕</div>
+              <div
+                class="main-preview"
+                :style="{ background: promptData.value }"
+              >
+                <div
+                  v-if="promptData.value === 'transparent'"
+                  class="transparent-indicator"
+                >
+                  ✕
+                </div>
                 <div class="checker-bg"></div>
               </div>
               <div class="picker-controls">
@@ -70,14 +84,20 @@ const { submitPrompt, handlePromptInput } = usePrompt()
                 <div class="p-grid">
                   <button
                     class="swatch-transparent"
-                    @click="promptData.value = 'transparent'; handlePromptInput('transparent')"
+                    @click="
+                      promptData.value = 'transparent';
+                      handlePromptInput('transparent');
+                    "
                     title="Reseteo"
                   ></button>
                   <button
                     v-for="c in colorPalettes.brand"
                     :key="c"
                     :style="{ background: c }"
-                    @click="promptData.value = c; handlePromptInput(c)"
+                    @click="
+                      promptData.value = c;
+                      handlePromptInput(c);
+                    "
                     :class="{ selected: promptData.value === c }"
                   ></button>
                 </div>
@@ -89,7 +109,25 @@ const { submitPrompt, handlePromptInput } = usePrompt()
                     v-for="c in colorPalettes.neutrals"
                     :key="c"
                     :style="{ background: c }"
-                    @click="promptData.value = c; handlePromptInput(c)"
+                    @click="
+                      promptData.value = c;
+                      handlePromptInput(c);
+                    "
+                    :class="{ selected: promptData.value === c }"
+                  ></button>
+                </div>
+              </div>
+              <div class="palette-group">
+                <span class="p-title">Fondos Soft (Pastel)</span>
+                <div class="p-grid">
+                  <button
+                    v-for="c in colorPalettes.softPastels"
+                    :key="c"
+                    :style="{ background: c }"
+                    @click="
+                      promptData.value = c;
+                      handlePromptInput(c);
+                    "
                     :class="{ selected: promptData.value === c }"
                   ></button>
                 </div>
@@ -116,10 +154,13 @@ const { submitPrompt, handlePromptInput } = usePrompt()
           </div>
 
           <div class="modal-footer-actions">
-            <button @click="promptData.visible = false" class="btn-modal-secondary">Cancelar</button>
             <button
               @click="submitPrompt"
-              :class="[promptData.variant === 'danger' ? 'btn-modal-danger' : 'premium-button']"
+              :class="[
+                promptData.variant === 'danger'
+                  ? 'btn-modal-danger'
+                  : 'premium-button',
+              ]"
             >
               {{ promptData.confirmLabel }}
             </button>

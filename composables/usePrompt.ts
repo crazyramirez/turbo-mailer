@@ -9,7 +9,7 @@ function openPrompt(
   mode: 'text' | 'color' | 'font' | 'confirm',
   callback: (val: string) => void,
   variant: 'primary' | 'danger' = 'primary',
-  confirmLabel = 'Aplicar Cambios',
+  confirmLabel = 'Aplicar',
 ) {
   promptData.title = title
   promptData.label = label

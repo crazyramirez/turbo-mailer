@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { X, Check } from 'lucide-vue-next'
-import { useDashboardState } from '~/composables/useDashboardState'
-import { useHtmlImport } from '~/composables/useHtmlImport'
+import { X, Check } from "lucide-vue-next";
+import { useDashboardState } from "~/composables/useDashboardState";
+import { useHtmlImport } from "~/composables/useHtmlImport";
 
-const { showTemplatesModal, internalTemplates, libraryId } = useDashboardState()
-const { selectInternalTemplate } = useHtmlImport()
+const { showTemplatesModal, internalTemplates, libraryId } =
+  useDashboardState();
+const { selectInternalTemplate } = useHtmlImport();
 </script>
 
 <template>
@@ -13,7 +14,7 @@ const { selectInternalTemplate } = useHtmlImport()
       <div class="modal-window library-window">
         <div class="library-header">
           <div class="header-titles">
-            <h2>Biblioteca de Plantillas</h2>
+            <h2>Biblioteca</h2>
             <p>Selecciona un diseño profesional para tu campaña</p>
           </div>
           <button @click="showTemplatesModal = false" class="btn-close-modal">
@@ -76,8 +77,15 @@ const { selectInternalTemplate } = useHtmlImport()
   justify-content: space-between;
   align-items: flex-start;
 }
-.header-titles h2 { font-size: 24px; font-weight: 800; color: #fff; }
-.header-titles p { color: var(--text-muted); font-size: 14px; }
+.header-titles h2 {
+  font-size: 24px;
+  font-weight: 800;
+  color: #fff;
+}
+.header-titles p {
+  color: var(--text-muted);
+  font-size: 14px;
+}
 .btn-close-modal {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -91,7 +99,11 @@ const { selectInternalTemplate } = useHtmlImport()
   cursor: pointer;
   transition: all 0.2s;
 }
-.btn-close-modal:hover { background: var(--red); color: #fff; border-color: var(--red); }
+.btn-close-modal:hover {
+  background: var(--red);
+  color: #fff;
+  border-color: var(--red);
+}
 .library-grid {
   padding: 32px;
   display: grid;
@@ -129,8 +141,20 @@ const { selectInternalTemplate } = useHtmlImport()
   flex-shrink: 0;
   z-index: 5;
 }
-.mock-browser-bar span { width: 6px; height: 6px; border-radius: 50%; background: var(--border-hi); }
-.iframe-wrapper { flex: 1; width: 100%; height: 100%; overflow: hidden; position: relative; background: #fff; }
+.mock-browser-bar span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border-hi);
+}
+.iframe-wrapper {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  background: #fff;
+}
 .mini-preview-frame {
   width: 1000px;
   height: 800px;
@@ -151,7 +175,9 @@ const { selectInternalTemplate } = useHtmlImport()
   transition: opacity 0.3s;
   backdrop-filter: blur(4px);
 }
-.template-card:hover .template-overlay { opacity: 1; }
+.template-card:hover .template-overlay {
+  opacity: 1;
+}
 .btn-select-template {
   background: #fff;
   color: var(--accent);
@@ -165,8 +191,24 @@ const { selectInternalTemplate } = useHtmlImport()
   transform: translateY(10px);
   transition: transform 0.3s;
 }
-.template-card:hover .btn-select-template { transform: translateY(0); }
-.template-info { padding: 16px; display: flex; flex-direction: column; }
-.template-name { font-size: 15px; font-weight: 700; color: #fff; }
-.template-type { font-size: 11px; color: var(--text-dim); font-weight: 800; text-transform: uppercase; margin-top: 4px; }
+.template-card:hover .btn-select-template {
+  transform: translateY(0);
+}
+.template-info {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+.template-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+}
+.template-type {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
 </style>

@@ -23,6 +23,7 @@ const {
   promptData,
   viewMode,
   refreshLayersTrigger,
+  isDraggingOverIframe,
 } = useEditorState()
 
 const { showToast } = useToast()
@@ -328,6 +329,7 @@ function setupIframeEvents(doc: Document) {
     'dragover',
     (e: DragEvent) => {
       e.preventDefault()
+      isDraggingOverIframe.value = true
       const target = e.target as HTMLElement
       const block = target.closest('.editable-block') as HTMLElement
 
@@ -366,6 +368,7 @@ function setupIframeEvents(doc: Document) {
     (e: DragEvent) => {
       if (!e.relatedTarget || (e.relatedTarget as HTMLElement).tagName === 'HTML' || e.relatedTarget === doc.documentElement) {
         doc.getElementById('drop-placeholder')?.remove()
+        isDraggingOverIframe.value = false
       }
     },
     { signal },
@@ -375,6 +378,7 @@ function setupIframeEvents(doc: Document) {
     'drop',
     (e: DragEvent) => {
       e.preventDefault()
+      isDraggingOverIframe.value = false
       const placeholder = doc.getElementById('drop-placeholder')
       const target = e.target as HTMLElement
       const block = target.closest('.editable-block') as HTMLElement
@@ -459,14 +463,33 @@ function injectIframeContent() {
 
   injectFloatingToolbar(doc)
 
-  const mainCard = doc.querySelector('.main-card')
+  // 1. Inicializar bloques que ya tengan clases identificativas (busqueda profunda)
+  doc.querySelectorAll('.header-block, .body-block, .signature-block, .cta-block, .editable-block, [data-type]').forEach(el => {
+    initBlock(el as HTMLElement, doc)
+  })
+
+  // 2. Asegurar que los hijos directos del contenedor principal sean bloques si parecen contenido
+  const mainCard = doc.querySelector('.main-card') as HTMLElement
+  const container = mainCard || doc.body
+
   if (mainCard) {
-    Array.from(mainCard.children).forEach((child: any) => {
+    mainCard.style.maxWidth = '820px'
+    mainCard.style.margin = '0 auto'
+    mainCard.style.borderRadius = '24px'
+    mainCard.style.overflow = 'hidden'
+  }
+
+  if (container) {
+    Array.from(container.children).forEach((child: any) => {
       if (
-        child.tagName === 'DIV' ||
-        child.tagName === 'TABLE' ||
-        (child as HTMLElement).classList.contains('editable-block')
-      ) {
+        child.id === 'floating-toolbar' ||
+        child.id === 'drop-placeholder' ||
+        ['SCRIPT', 'STYLE', 'NOSCRIPT', 'BR'].includes(child.tagName) ||
+        child.classList.contains('editable-block') // Ya procesado arriba
+      ) return
+
+      const hasContent = child.innerText.trim().length > 0 || child.querySelector('img, table, a, div')
+      if (hasContent || child.tagName === 'DIV' || child.tagName === 'TABLE') {
         initBlock(child as HTMLElement, doc)
       }
     })

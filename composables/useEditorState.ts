@@ -42,6 +42,7 @@ const originalColorBeforePreview = ref('')
 
 const isSidebarDragging = ref(false)
 const isLayerDragging = ref(false)
+const isDraggingOverIframe = ref(false)
 
 const undoStack = ref<string[]>([])
 const redoStack = ref<string[]>([])
@@ -51,18 +52,25 @@ const htmlContent = ref(`<!DOCTYPE html>
 <html lang="es">
 <head>
   <style>
-    body { margin: 0; padding: 40px 0; background-color: #ffffff; font-family: Arial, sans-serif; }
+    body { margin: 0; padding: 0; background-color: #f8fafc; font-family: Arial, sans-serif; }
     .main-card {
       width: 100%;
       max-width: 820px;
       margin: 0 auto;
       background: #ffffff;
       min-height: 500px;
+      border-radius: 24px;
+      box-shadow: 0 10px 40px rgba(15, 23, 42, 0.08);
+      overflow: hidden;
     }
   </style>
 </head>
-<body>
-  <div class="main-card"></div>
+<body style="margin:0;padding:0;background-color:#f8fafc;">
+  <div style="margin:0;padding:0;width:100%;background-color:#f8fafc;">
+    <div style="width:100%;margin:0 auto;padding:40px 0;">
+      <div class="main-card"></div>
+    </div>
+  </div>
 </body>
 </html>`)
 
@@ -81,7 +89,7 @@ const promptData = reactive({
   visible: false,
   mode: 'text' as 'text' | 'color' | 'font' | 'confirm',
   variant: 'primary' as 'primary' | 'danger',
-  confirmLabel: 'Aplicar Cambios',
+  confirmLabel: 'Aplicar',
   title: '',
   label: '',
   value: '',
@@ -135,6 +143,7 @@ export function useEditorState() {
     originalColorBeforePreview,
     isSidebarDragging,
     isLayerDragging,
+    isDraggingOverIframe,
     undoStack,
     redoStack,
     maxHistory,

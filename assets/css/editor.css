@@ -2,6 +2,7 @@
 
 :root {
   --primary: #6366f1;
+  --secondary: #ff8400;
   --primary-glow: rgba(99, 102, 241, 0.3);
   --bg-deep: #020408;
   --bg-panel: #0f172a;
@@ -262,6 +263,181 @@ body {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.canvas-empty-guide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  pointer-events: none;
+}
+
+.guide-premium-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 380px;
+  text-align: center;
+  padding: 40px;
+  animation: premiumReveal 1s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.g-visual {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin-bottom: 24px;
+}
+
+.g-icon-wrapper {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 15px 35px rgba(99, 102, 241, 0.3);
+  position: relative;
+  z-index: 2;
+}
+
+.sparkle-icon {
+  animation: sparkleRotate 4s linear infinite;
+}
+
+.g-cursor-anim {
+  position: absolute;
+  bottom: -10px;
+  right: -10px;
+  color: #0f172a;
+  z-index: 3;
+  animation: cursorFloat 2s ease-in-out infinite;
+}
+
+.g-content h3 {
+  font-size: 22px;
+  color: #0f172a;
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.g-content p {
+  font-size: 15px;
+  color: #64748b;
+  margin: 12px 0 24px 0;
+  line-height: 1.6;
+}
+
+.g-badges {
+  display: flex;
+  gap: 8px;
+}
+
+.g-badge {
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: #f1f5f9;
+  color: #475569;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+}
+
+.canvas-drag-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.drag-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: #6366f1;
+}
+
+.drag-icon-premium {
+  width: 100px;
+  height: 100px;
+  border: 2px dashed #6366f1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: dragPulse 2s infinite;
+}
+
+.drag-hint span {
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+
+@keyframes premiumReveal {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes sparkleRotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes cursorFloat {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(10px, 10px);
+  }
+}
+
+@keyframes dragPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+    transform: scale(1);
+  }
+  70% {
+    box-shadow: 0 0 0 20px rgba(99, 102, 241, 0);
+    transform: scale(1.05);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+    transform: scale(1);
+  }
 }
 
 .layout-pill-selector.mini {
@@ -527,7 +703,10 @@ body {
   gap: 12px;
   cursor: grab;
   border: 1px solid transparent;
-  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    transform 0.2s;
   user-select: none;
 }
 
@@ -538,9 +717,8 @@ body {
 .stack-item.active {
   border-color: var(--primary);
   background: rgba(99, 102, 241, 0.05);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
-
 
 .grip {
   color: var(--text-dim);
@@ -869,17 +1047,25 @@ body {
   justify-content: center;
 }
 
-.modal-overlay.lighter-backdrop .modal-backdrop {
+.modal-overlay.lighter-backdrop {
   background: transparent !important;
+  backdrop-filter: none !important;
+  pointer-events: none; /* Allow interaction with canvas? No, keep it for the modal only */
+}
+
+.modal-overlay.lighter-backdrop .modal-backdrop {
+  background: rgba(0, 0, 0, 0.1) !important; /* Extremely subtle */
   backdrop-filter: none !important;
 }
 
 .modal-window.side-modal {
+  pointer-events: auto; /* Ensure modal stays interactive */
   position: fixed;
-  right: 380px;
+  right: 200px;
   top: 100px;
-  width: 380px;
+  width: 360px;
   margin: 0;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
 }
 
 .modal-backdrop {
@@ -1239,12 +1425,12 @@ body {
 .p-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 12px;
+  gap: 8px;
 }
 
 .p-grid button {
-  height: 48px;
-  border-radius: 12px;
+  height: 38px;
+  border-radius: 5px;
   border: 2px solid transparent;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -1257,9 +1443,9 @@ body {
 .p-grid button.selected::after {
   content: "";
   position: absolute;
-  inset: -4px;
-  border: 2px solid var(--primary);
-  border-radius: 14px;
+  inset: -2px;
+  border: 5px solid var(--secondary);
+  border-radius: 5px;
 }
 
 /* ── TOASTS & UTILS ── */
@@ -1374,7 +1560,7 @@ body {
 /* ?? Mobile Mockup System */
 /* ── 🎭 ULTIMATE MORPHING VIEWPORT ── */
 .canvas-box {
-  transition: 
+  transition:
     width 0.5s cubic-bezier(0.16, 1, 0.3, 1),
     height 0.5s cubic-bezier(0.16, 1, 0.3, 1),
     transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
@@ -1412,8 +1598,12 @@ body {
 }
 
 @keyframes light-sweep {
-  from { transform: translateX(-100%) skewX(-25deg); }
-  to { transform: translateX(200%) skewX(-25deg); }
+  from {
+    transform: translateX(-100%) skewX(-25deg);
+  }
+  to {
+    transform: translateX(200%) skewX(-25deg);
+  }
 }
 
 .canvas-box.desktop {
@@ -1451,7 +1641,7 @@ body {
   background: #000;
   border-radius: 42px;
   padding: 12px;
-  box-shadow: 
+  box-shadow:
     0 0 0 4px #1e293b,
     0 30px 60px -12px rgba(0, 0, 0, 0.5);
   margin: 0 auto;
@@ -1551,7 +1741,7 @@ body {
 
 /* ── 🎭 CINEMATIC VIEWPORT TRANSITION ── */
 .canvas-box {
-  transition: 
+  transition:
     width 0.7s cubic-bezier(0.34, 1.56, 0.64, 1),
     height 0.7s cubic-bezier(0.34, 1.56, 0.64, 1),
     transform 0.8s cubic-bezier(0.23, 1, 0.32, 1),
@@ -1568,9 +1758,15 @@ body {
 }
 
 @keyframes viewport-bounce {
-  0% { transform: scale(1); }
-  30% { transform: scale(0.98) translateY(5px); }
-  100% { transform: scale(1) translateY(0); }
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(0.98) translateY(5px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+  }
 }
 
 .canvas-box.template-loading {
@@ -1625,7 +1821,9 @@ body {
 /* 🎨 SIDEBAR PANEL CROSS-FADE */
 .panel-fade-enter-active,
 .panel-fade-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .panel-fade-enter-from {
@@ -1637,7 +1835,6 @@ body {
   opacity: 0;
   transform: translateY(-10px);
 }
-
 
 /* ??? Image Settings Modal UI */
 .image-settings-grid {
@@ -1935,7 +2132,6 @@ body {
   box-shadow: 0 4px 12px var(--primary-glow) !important;
 }
 
-
 .premium-button:hover {
   background: #4f46e5 !important;
   transform: translateY(-1px);
@@ -1976,7 +2172,7 @@ body {
 .layout-pill-selector button.active {
   background: var(--bg-card) !important;
   color: var(--primary) !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* ── EMPTY STATE DESIGN ── */
@@ -2017,8 +2213,14 @@ body {
 }
 
 @keyframes pulse-icon {
-  from { transform: translateY(0) scale(1); opacity: 0.4; }
-  to { transform: translateY(-6px) scale(1.1); opacity: 0.7; }
+  from {
+    transform: translateY(0) scale(1);
+    opacity: 0.4;
+  }
+  to {
+    transform: translateY(-6px) scale(1.1);
+    opacity: 0.7;
+  }
 }
 
 /* ── CANVAS EMPTY OVERLAY DESIGN ── */
@@ -2033,7 +2235,11 @@ body {
   justify-content: center;
   z-index: 10;
   pointer-events: none;
-  background: radial-gradient(circle at center, rgba(15, 23, 42, 0.4) 0%, transparent 70%);
+  background: radial-gradient(
+    circle at center,
+    rgba(15, 23, 42, 0.4) 0%,
+    transparent 70%
+  );
 }
 
 .overlay-card {
@@ -2089,14 +2295,29 @@ body {
 }
 
 @keyframes overlay-pop {
-  from { opacity: 0; transform: scale(0.9) translateY(20px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 @keyframes pulse-ring {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+  }
 }
 
 .sub-edit-grid {
@@ -2136,7 +2357,11 @@ body {
   align-items: center;
   gap: 12px;
   padding: 14px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(129, 140, 248, 0.05));
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.05),
+    rgba(129, 140, 248, 0.05)
+  );
   border: 1px solid rgba(99, 102, 241, 0.1);
   border-radius: 14px;
   color: #6366f1;
@@ -2152,11 +2377,19 @@ body {
 }
 
 @keyframes badge-slide {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.mt-10 { margin-top: 10px; }
+.mt-10 {
+  margin-top: 10px;
+}
 .btn-danger-soft {
   background: rgba(239, 68, 68, 0.05) !important;
   color: #ef4444 !important;
@@ -2166,4 +2399,3 @@ body {
   background: #ef4444 !important;
   color: #fff !important;
 }
-

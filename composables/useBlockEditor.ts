@@ -1,6 +1,7 @@
 import { useEditorState } from '~/composables/useEditorState'
 import { usePrompt } from '~/composables/usePrompt'
 import { useToast } from '~/composables/useToast'
+import { rgbToHex } from '~/utils/editorColors'
 
 const {
   iframeRef,
@@ -236,8 +237,9 @@ function previewTextColor(color: string) {
 
 function updateBgColor() {
   if (!selectedElement.value) return
-  originalColorBeforePreview.value = selectedElement.value.style.backgroundColor || 'transparent'
-  openPrompt('Color de Fondo', 'Elige un tono institucional:', originalColorBeforePreview.value, 'color', (val) => {
+  const current = rgbToHex(selectedElement.value.style.backgroundColor || 'transparent')
+  originalColorBeforePreview.value = current
+  openPrompt('Color de Fondo', 'Elige un tono institucional:', current, 'color', (val) => {
     if (val) {
       previewBlockColor(val)
       import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave())
@@ -249,8 +251,9 @@ function updateBgColor() {
 
 function updateTextColor() {
   if (!selectedElement.value) return
-  originalColorBeforePreview.value = selectedElement.value.style.color || 'inherit'
-  openPrompt('Color del Texto', 'Define el color de la tipografía:', originalColorBeforePreview.value, 'color', (val) => {
+  const current = rgbToHex(selectedElement.value.style.color || 'inherit')
+  originalColorBeforePreview.value = current
+  openPrompt('Color del Texto', 'Define el color de la tipografía:', current, 'color', (val) => {
     if (val) {
       previewTextColor(val)
       import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave())
@@ -347,7 +350,7 @@ function updateButtonColor() {
 function updateThisButtonColor() {
   const btn = selectedSubElement.value?.closest('[data-toggle="button"]') as HTMLElement
   if (!btn) return
-  const current = btn.style.background || '#6366f1'
+  const current = rgbToHex(btn.style.background || '#6366f1')
   openPrompt('Color de Botón', 'Elige el color para este botón específico:', current, 'color', (color) => {
     btn.style.background = color
     import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))

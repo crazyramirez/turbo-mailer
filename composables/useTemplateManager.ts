@@ -17,8 +17,12 @@ const {
 const { showToast } = useToast()
 
 async function loadTemplates() {
-  const all = await $fetch<{ name: string; path: string }[]>('/api/templates')
-  templates.value = all.filter((t) => t.name !== 'email_demo')
+  try {
+    const all = await $fetch<{ name: string; path: string }[]>('/api/templates')
+    templates.value = (all || []).filter((t) => t.name !== 'email_demo')
+  } catch {
+    templates.value = []
+  }
 }
 
 async function loadTemplate(name: string, animate = true) {
@@ -45,7 +49,10 @@ async function loadTemplate(name: string, animate = true) {
     }
   } catch {
     isTemplateLoading.value = false
-    showToast('Error al cargar', 'error')
+    currentTemplate.value = ''
+    localStorage.removeItem('last_edited_template')
+    useIframeEngine().injectIframeContent()
+    showToast('Error al cargar plantilla, se inició lienzo vacío', 'error')
   }
 }
 

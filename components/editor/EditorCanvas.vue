@@ -1,8 +1,16 @@
 <script setup lang="ts">
+import { MousePointer2, Sparkles } from 'lucide-vue-next'
 import { useEditorState } from '~/composables/useEditorState'
 import { useIframeEngine } from '~/composables/useIframeEngine'
 
-const { iframeRef, viewMode, layerList, isTemplateLoading, isMorphing } = useEditorState()
+const {
+  iframeRef,
+  viewMode,
+  layerList,
+  isTemplateLoading,
+  isMorphing,
+  isDraggingOverIframe,
+} = useEditorState()
 const { injectIframeContent } = useIframeEngine()
 </script>
 
@@ -19,20 +27,43 @@ const { injectIframeContent } = useIframeEngine()
           <div class="frame-bottom"><div class="home-bar"></div></div>
         </div>
 
-        <iframe ref="iframeRef" @load="injectIframeContent"></iframe>
-
-        <!-- Empty canvas overlay -->
-        <div v-if="layerList.length === 0 && !isTemplateLoading" class="canvas-empty-overlay">
-          <div class="overlay-card">
-            <div class="o-icon">✨</div>
-            <h2>Empieza tu Diseño</h2>
-            <p>Arrastra módulos desde el panel izquierdo hacia el centro para construir tu email</p>
-            <div class="overlay-animation-hint">
-              <div class="pulse-ring"></div>
-              <span>Listo para recibir módulos</span>
+        <!-- Empty canvas guide (Premium) -->
+        <div v-if="layerList.length === 0 && !isTemplateLoading && !isMorphing && !isDraggingOverIframe" class="canvas-empty-guide">
+          <div class="guide-premium-card">
+            <div class="g-visual">
+              <div class="g-icon-wrapper">
+                <Sparkles :size="32" class="sparkle-icon" />
+              </div>
+              <div class="g-cursor-anim">
+                <MousePointer2 :size="20" fill="currentColor" />
+              </div>
+            </div>
+            <div class="g-content">
+              <h3>Composición Institucional</h3>
+              <p>El lienzo está optimizado para diseños de alto impacto. Arrastra módulos para comenzar.</p>
+            </div>
+            <div class="g-badges">
+              <span class="g-badge">820px</span>
+              <span class="g-badge">Premium UI</span>
+              <span class="g-badge">Lucide Ready</span>
             </div>
           </div>
         </div>
+
+        <iframe ref="iframeRef" @load="injectIframeContent"></iframe>
+
+        <!-- Contextual drag overlay -->
+        <Transition name="fade">
+          <div v-if="isDraggingOverIframe" class="canvas-drag-overlay">
+            <div class="drag-hint">
+              <div class="drag-icon-premium">
+                <MousePointer2 :size="48" stroke-width="1" />
+              </div>
+              <span>Suelta para insertar módulo</span>
+            </div>
+          </div>
+        </Transition>
+
       </div>
     </div>
   </main>

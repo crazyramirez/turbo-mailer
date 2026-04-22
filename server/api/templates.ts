@@ -27,8 +27,12 @@ export default defineEventHandler(async (event) => {
       } catch (e) {
         // Fallback to demo if not found and it's the first time
         if (name === 'email_demo') {
-           const content = await fs.readFile(baseTemplatePath, 'utf-8');
-           return { content };
+           try {
+             const content = await fs.readFile(baseTemplatePath, 'utf-8');
+             return { content };
+           } catch (e) {
+             return { content: '<!DOCTYPE html><html><body><div class="main-card"><h1>Demo Fallback</h1></div></body></html>' };
+           }
         }
         throw createError({ statusCode: 404, message: 'Template not found' });
       }
