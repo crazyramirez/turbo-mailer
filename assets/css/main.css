@@ -147,19 +147,6 @@ button {
   text-overflow: ellipsis;
 }
 
-.preview-viewport {
-  flex: 1;
-  overflow-y: auto;
-  background: #f1f5f9;
-  position: relative;
-}
-.preview-frame {
-  width: 100%;
-  height: 100%;
-  border: none;
-  display: block;
-}
-
 .empty-preview-state {
   flex: 1;
   display: flex;

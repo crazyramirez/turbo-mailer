@@ -329,6 +329,7 @@ function updateLogoWidth(val: number | string) {
   const img = selectedElement.value.querySelector("[data-toggle='logo'] img") as HTMLImageElement
   if (img) {
     img.style.width = newWidth + 'px'
+    img.setAttribute('width', newWidth.toString())
     img.style.maxWidth = '100%'
     img.style.height = 'auto'
     img.style.maxHeight = 'none'

@@ -73,7 +73,7 @@ export const editorBlocks: EditorBlock[] = [
     id: 'button',
     name: 'Botón',
     icon: MousePointer2,
-    content: `<div class="cta-block editable-block" data-type="Botón" style="padding:24px 32px;background:#f6faff;text-align:center;">
+    content: `<div class="cta-block editable-block" data-type="Botón" style="padding:20px;background:#f6faff;text-align:center;">
     <div class="buttons-row" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;flex-direction:row;">
       <a href="#" data-toggle="button" style="display:inline-block;background:#6366f1;border-radius:14px;padding:18px 32px;font-family:Arial;font-size:17px;font-weight:700;color:#ffffff;text-decoration:none;text-align:center;min-width:200px;box-sizing:border-box;"><span class="btn-text">Llamada a la Acción →</span></a>
     </div>
@@ -91,7 +91,7 @@ export const editorBlocks: EditorBlock[] = [
     id: 'methodology',
     name: 'Metodología',
     icon: Zap,
-    content: `<div class="methodology-block editable-block" data-type="Metodología" style="padding:24px 32px;background:#f6faff;">
+    content: `<div class="methodology-block editable-block" data-type="Metodología" style="padding:20px;background:#f6faff;">
     <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:18px;padding:24px;border-left:4px solid #6366f1;">
       <div data-toggle="badge" style="font-family:Arial;font-size:11px;font-weight:700;color:#6366f1;letter-spacing:1.2px;margin-bottom:12px;text-transform:uppercase;">Nuestra Metodología</div>
       <div data-toggle="title" style="font-family:Arial;font-size:16px;font-weight:700;color:#0f172a;line-height:24px;margin-bottom:12px;">Innovación constante para resultados excepcionales.</div>
@@ -103,7 +103,7 @@ export const editorBlocks: EditorBlock[] = [
     id: 'presence',
     name: 'Presencia',
     icon: Globe,
-    content: `<div class="presence-block editable-block" data-type="Presencia" style="padding:24px 32px;background:#f6faff;">
+    content: `<div class="presence-block editable-block" data-type="Presencia" style="padding:20px;background:#f6faff;">
     <div data-toggle="badge" style="font-family:Arial;font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:1.2px;text-align:center;margin-bottom:16px;text-transform:uppercase;">RECONOCIMIENTO Y PRESENCIA</div>
     <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;text-align:center;">
       <span style="display:inline-block;font-family:Arial;font-size:12px;font-weight:700;color:#475569;padding:4px 8px;">Tech Summit</span>
@@ -120,7 +120,7 @@ export const editorBlocks: EditorBlock[] = [
     id: 'grid-2',
     name: 'Grid Dúo',
     icon: Layout,
-    content: `<div class="grid-block editable-block" data-type="Grid" style="padding:24px 32px;background:#f6faff;">
+    content: `<div class="grid-block editable-block" data-type="Grid" style="padding:20px;background:#f6faff;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
         <td width="48%" valign="top">
@@ -146,7 +146,7 @@ export const editorBlocks: EditorBlock[] = [
     id: 'grid-3',
     name: 'Grid Trío',
     icon: Layout,
-    content: `<div class="grid-block editable-block" data-type="Grid" style="padding:24px 32px;background:#f6faff;">
+    content: `<div class="grid-block editable-block" data-type="Grid" style="padding:20px;background:#f6faff;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
         <td width="31%" valign="top">
@@ -180,7 +180,7 @@ export const editorBlocks: EditorBlock[] = [
     id: 'grid-4',
     name: 'Grid Quad',
     icon: Layout,
-    content: `<div class="grid-block editable-block" data-type="Grid" style="padding:24px 32px;background:#f6faff;">
+    content: `<div class="grid-block editable-block" data-type="Grid" style="padding:20px;background:#f6faff;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
         <td width="48%" valign="top">
@@ -223,7 +223,7 @@ export const editorBlocks: EditorBlock[] = [
     id: 'signature',
     name: 'Firma',
     icon: Edit3,
-    content: `<div class="signature-block editable-block" data-type="Firma" style="padding:24px 32px 40px;background:#f6faff;border-top:1px solid #e2e8f0;">
+    content: `<div class="signature-block editable-block" data-type="Firma" style="padding:20px 40px;background:#f6faff;border-top:1px solid #e2e8f0;">
     <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
       <tr>
         <td style="vertical-align:middle;padding-right:14px;">

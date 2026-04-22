@@ -142,45 +142,64 @@ async function handleSave() {
   await saveTemplate()
 }
 
-function createNewTemplate() {
+async function createNewTemplate() {
   if (!newTemplateName.value) return
-  currentTemplate.value = newTemplateName.value
   
-  // Reiniciamos a una estructura base vacía
-  htmlContent.value = `<!DOCTYPE html>
+  const { updateHtml, injectIframeContent } = useIframeEngine()
+  
+  // Si venimos de la demo o de un lienzo con contenido, preservamos los módulos
+  // para no obligar al usuario a empezar de cero si ya estaba editando.
+  if (currentTemplate.value === 'email_demo' || layerList.value.length > 0) {
+    updateHtml()
+  } else {
+    // Solo reiniciamos a base vacía si realmente estamos empezando de cero absoluto
+    htmlContent.value = `<!DOCTYPE html>
 <html lang="es">
 <head>
   <style>
-    body { margin: 0; padding: 0; background-color: #ffffff; font-family: Arial, sans-serif; }
+    body { 
+      margin: 0; padding: 0; background-color: #ffffff; font-family: Arial, sans-serif; 
+      width: 100% !important;
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
     .main-card {
       width: 100%;
       max-width: 820px;
-      margin: 0 auto 80px auto;
+      margin: 0 auto 20px auto;
       background: #ffffff;
       min-height: 500px;
       border-radius: 24px;
       box-shadow: 0 10px 40px rgba(15, 23, 42, 0.08);
       overflow: hidden;
     }
+    @media only screen and (max-width: 600px) {
+      .main-card { border-radius: 20px !important; }
+      .header-block, .body-block, .methodology-block, .presence-block, .card-block, .cta-block, .signature-block {
+        padding-left: 20px !important;
+        padding-right: 20px !important;
+      }
+    }
   </style>
 </head>
 <body style="margin:0;padding:0;background-color:#ffffff;">
   <div style="margin:0;padding:0;width:100%;background-color:#ffffff;">
-    <div style="width:100%;margin:0 auto;padding:40px;">
-      <div class="main-card" style="width:100%;max-width:820px;margin:0 auto;background:#ffffff;border-radius:24px;box-shadow:0 10px 40px rgba(15, 23, 42, 0.08);overflow:hidden;min-height:500px;"></div>
+    <div style="width:100%;margin:0 auto;padding:40px 20px;">
+      <div class="main-card" style="width:100%;max-width:820px;margin:0 auto;background:#ffffff;border: 1px solid #e9e9e9;border-radius:24px;box-shadow:0 10px 40px rgba(15, 23, 42, 0.08);overflow:hidden;min-height:500px;"></div>
     </div>
   </div>
 </body>
 </html>`
+  }
 
+  currentTemplate.value = newTemplateName.value
   localStorage.setItem('last_edited_template', currentTemplate.value)
   showTemplateModal.value = false
   
-  // Limpiamos el editor y guardamos
-  const { injectIframeContent } = useIframeEngine()
   injectIframeContent()
   
-  saveTemplate()
+  // Guardamos inmediatamente de forma asíncrona pero esperada
+  await saveTemplate()
   newTemplateName.value = ''
 }
 

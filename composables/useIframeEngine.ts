@@ -521,14 +521,15 @@ function injectIframeContent() {
   if (mainCard) {
     mainCard.style.maxWidth = '820px'
     mainCard.style.width = '100%'
-    mainCard.style.margin = '0 auto 80px auto'
+    mainCard.style.margin = '0 auto 40px auto'
     mainCard.style.borderRadius = '24px'
     mainCard.style.overflow = 'hidden'
     
     // Ensure parent has lateral margins for mobile responsiveness
     const parent = mainCard.parentElement
     if (parent && parent !== doc.body) {
-      parent.style.padding = '40px 20px'
+      // Adjusted to 0px lateral padding for edge-to-edge mobile experience as requested
+      parent.style.padding = '10px 0px'
       parent.style.boxSizing = 'border-box'
     }
   }

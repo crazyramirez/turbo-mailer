@@ -419,6 +419,14 @@ async function copyHtml() {
   width: 100%;
   height: 100%;
   position: relative;
+  background-color: #fff;
+  transition: background-color 0.4s ease;
+  padding: 10px;
+  border-radius: 20px;
+}
+
+.dark-mode-env .p-iframe-host {
+  background-color: #000000 !important;
 }
 
 /* Mobile Mockup Styles */
@@ -437,7 +445,7 @@ async function copyHtml() {
 
 .p-frame-top {
   position: absolute;
-  top: -2px; /* Adjusted for better alignment */
+  top: 0; /* Adjusted for better alignment */
   left: 0;
   right: 0;
   height: 30px;
