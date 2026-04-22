@@ -16,7 +16,7 @@ import StepPlantilla from "~/components/dashboard/StepPlantilla.vue";
 import LivePreview from "~/components/dashboard/LivePreview.vue";
 import SendBar from "~/components/dashboard/SendBar.vue";
 import ResultsOverlay from "~/components/dashboard/ResultsOverlay.vue";
-import ResetModal from "~/components/dashboard/ResetModal.vue"
+import ResetModal from "~/components/dashboard/ResetModal.vue";
 import SendConfirmModal from "~/components/dashboard/SendConfirmModal.vue";
 import SendingOverlay from "~/components/dashboard/SendingOverlay.vue";
 import TemplateLibraryModal from "~/components/dashboard/TemplateLibraryModal.vue";

@@ -10,3 +10,5 @@ docs/
 docs/*
 
 data/templates/*
+private
+private/*
