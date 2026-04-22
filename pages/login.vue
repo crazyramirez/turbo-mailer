@@ -2,10 +2,11 @@
   <div class="login-wrapper">
     <!-- Ambient background -->
     <div class="login-bg" aria-hidden="true">
+      <div class="bg-grid"></div>
+
       <div class="bg-orb bg-orb-1"></div>
       <div class="bg-orb bg-orb-2"></div>
       <div class="bg-orb bg-orb-3"></div>
-      <div class="bg-grid"></div>
     </div>
 
     <!-- Card -->
@@ -13,7 +14,11 @@
       <!-- Logo -->
       <div class="login-logo">
         <div class="logo-icon-wrap">
-          <img src="/images/icons/web-app-manifest-192x192.png" class="logo-img" alt="Logo" />
+          <img
+            src="/images/icons/web-app-manifest-192x192.png"
+            class="logo-img"
+            alt="Logo"
+          />
         </div>
         <div class="logo-text-group">
           <span class="logo-title">
@@ -133,7 +138,9 @@
       </form>
 
       <!-- Footer -->
-      <p class="login-footer">Turbo-Mailer PRO {{ APP_VERSION }} &mdash; acceso privado</p>
+      <p class="login-footer">
+        Turbo-Mailer PRO {{ APP_VERSION }} &mdash; acceso privado
+      </p>
     </div>
   </div>
 </template>
@@ -164,7 +171,6 @@ const blocked = ref(false);
 const countdownSec = ref(0);
 const countdownLabel = ref("");
 const inputRef = ref<HTMLInputElement>();
-
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
 
 const isAuthed = useState<boolean | null>("isAuthed", () => null);
@@ -266,43 +272,16 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-.bg-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(120px);
-  animation: orbFloat 20s infinite alternate cubic-bezier(0.45, 0, 0.55, 1);
-}
-
-.bg-grid {
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(
-    rgba(255, 255, 255, 0.04) 1px,
-    transparent 1px
-  );
-  background-size: 40px 40px;
-  mask-image: radial-gradient(circle at 50% 50%, black, transparent 75%);
-}
-
-@keyframes orbFloat {
-  from {
-    transform: translate(0, 0) scale(1);
-  }
-  to {
-    transform: translate(50px, 80px) scale(1.1);
-  }
-}
-
 /* ── Card ── */
 .login-card {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 28px;
-  padding: 36px 32px 28px;
+  padding: 42px 42px;
   backdrop-filter: blur(24px) saturate(180%);
   box-shadow:
     0 0 0 1px rgba(99, 102, 241, 0.08),
@@ -354,8 +333,8 @@ onUnmounted(() => {
 }
 
 .logo-icon-wrap {
-  width: 80px;
-  height: 80px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
   overflow: hidden;
   display: flex;
@@ -380,10 +359,11 @@ onUnmounted(() => {
 }
 
 .logo-title {
-  font-size: 18px;
+  font-size: 26px;
   font-weight: 800;
   color: #f8fafc;
   letter-spacing: -0.02em;
+  margin-bottom: 10px;
 }
 
 .logo-accent {
@@ -496,6 +476,12 @@ onUnmounted(() => {
   letter-spacing: 0.1em;
 }
 
+.field-input:hover:not(:disabled) {
+  border-color: rgba(99, 102, 241, 0.35);
+  background: rgba(99, 102, 241, 0.03);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.07);
+}
+
 .field-input:focus {
   border-color: rgba(99, 102, 241, 0.6);
   background: rgba(99, 102, 241, 0.05);
@@ -504,7 +490,6 @@ onUnmounted(() => {
 
 .field-input:disabled {
   opacity: 0.45;
-  cursor: not-allowed;
 }
 
 .field-group.field-error .field-input {
@@ -645,7 +630,6 @@ onUnmounted(() => {
 
 .btn-login:disabled {
   opacity: 0.4;
-  cursor: not-allowed;
   transform: none;
   box-shadow: none;
 }

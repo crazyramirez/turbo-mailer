@@ -49,20 +49,20 @@ body {
   filter: blur(100px);
   z-index: 0;
   pointer-events: none;
-  opacity: 0.3;
+  opacity: 0.5;
   animation: float-glows 30s infinite alternate ease-in-out;
 }
 
 .editor-container::before {
   top: 0%;
   left: 5%;
-  background: radial-gradient(circle, #f97316 0%, transparent 70%);
+  background: radial-gradient(circle, #f97316 0%, transparent 50%);
 }
 
 .editor-container::after {
   bottom: 0%;
   right: 5%;
-  background: radial-gradient(circle, #0ea5e9 0%, transparent 70%);
+  background: radial-gradient(circle, #0ea5e9 0%, transparent 50%);
   animation-delay: -15s;
 }
 

@@ -516,36 +516,6 @@ body {
   overflow: hidden;
 }
 
-.bg-orb {
-  position: absolute;
-  width: 600px;
-  height: 600px;
-  border-radius: 50%;
-  filter: blur(120px);
-  opacity: 0.15;
-  animation: orbFloat 20s infinite alternate cubic-bezier(0.45, 0, 0.55, 1);
-}
-
-@keyframes orbFloat {
-  from {
-    transform: translate(0, 0) scale(1);
-  }
-  to {
-    transform: translate(50px, 100px) scale(1.1);
-  }
-}
-
-.bg-grid {
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(
-    rgba(255, 255, 255, 0.04) 1px,
-    transparent 1px
-  );
-  background-size: 40px 40px;
-  mask-image: radial-gradient(circle at 50% 40%, black, transparent 80%);
-}
-
 /* ── Header ── */
 .header {
   height: 80px;
@@ -1302,6 +1272,9 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin-top: 8px;
+}
+.plantilla-compact-grid.single-column {
+  grid-template-columns: 1fr;
 }
 
 .library-shortcut-card {

@@ -40,7 +40,7 @@ const { clearHtml, onHtmlChange, onHtmlDrop, openLibrary } = useHtmlImport();
     </div>
 
     <!-- Library shortcut + Drop Zone in a compact row -->
-    <div v-if="!htmlBody" class="plantilla-compact-grid">
+    <div v-if="!htmlBody" class="plantilla-compact-grid" :class="{ 'single-column': !internalTemplates.length }">
       <div v-if="internalTemplates.length" class="library-shortcut-card" @click="openLibrary">
         <div class="shortcut-icon">
           <LayoutGrid :size="24" />
