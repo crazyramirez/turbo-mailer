@@ -29,7 +29,7 @@ async function sendEmails() {
       const vars: Record<string, any> = { ...r }
       // Ensure Empresa, Nombre and Email are also available even if the columns are named differently
       vars.Empresa = r.empresa
-      vars.Nombre = r.nombre
+      vars.Contacto = r.nombre
       vars.Email = r.email
       vars.Linkedin = r[linkedinColumn.value] || ''
       vars.URL = r[urlColumn.value] || ''

@@ -205,7 +205,7 @@ async function copyHtml() {
             >
               <Copy :size="14" v-if="!copied" />
               <Check :size="14" v-else />
-              <span>{{ copied ? "¡Copiado!" : "Copiar" }}</span>
+              <span>{{ copied ? "¡Copiado!" : "Copiar HTML" }}</span>
             </button>
           </div>
         </div>
@@ -362,12 +362,12 @@ async function copyHtml() {
 .p-canvas-box.desktop {
   width: 100%;
   max-width: 820px;
-  height: 720px;
+  height: 700px;
 }
 
 .p-canvas-box.mobile {
   width: 360px;
-  height: 720px;
+  height: 680px;
   margin: 10px auto;
   position: relative;
   overflow: visible;

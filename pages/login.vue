@@ -13,13 +13,13 @@
       <!-- Logo -->
       <div class="login-logo">
         <div class="logo-icon-wrap">
-          <Rocket :size="22" stroke-width="2.5" />
+          <img src="/images/icons/web-app-manifest-192x192.png" class="logo-img" alt="Logo" />
         </div>
         <div class="logo-text-group">
-          <span class="logo-title"
-            >Turbo-Mailer <span class="logo-accent">PRO</span>
-            <span class="version-tag">{{ APP_VERSION }}</span></span
-          >
+          <span class="logo-title">
+            Turbo-Mailer <span class="logo-accent">PRO</span>
+            <span class="version-tag">{{ APP_VERSION }}</span>
+          </span>
           <span class="logo-sub">Acceso seguro</span>
         </div>
       </div>
@@ -141,7 +141,6 @@
 <script setup lang="ts">
 import { ref, onUnmounted } from "vue";
 import {
-  Rocket,
   Lock,
   Eye,
   EyeOff,
@@ -347,35 +346,44 @@ onUnmounted(() => {
 /* ── Logo ── */
 .login-logo {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 16px;
+  margin-bottom: 32px;
+  text-align: center;
 }
 
 .logo-icon-wrap {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 12px 32px rgba(99, 102, 241, 0.4);
   flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .logo-text-group {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 1px;
 }
 
 .logo-title {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 800;
   color: #f8fafc;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 .logo-accent {

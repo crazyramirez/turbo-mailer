@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Rocket, Layout, RefreshCcw, LogOut } from 'lucide-vue-next'
+import { Layout, RefreshCcw, LogOut } from 'lucide-vue-next'
 import { useDashboardState } from '~/composables/useDashboardState'
 import { useCampaignSender } from '~/composables/useCampaignSender'
+import { APP_VERSION } from '~/utils/version'
 
 const { emails, emailSubject, htmlBody } = useDashboardState()
 const { resetAll, logout } = useCampaignSender()
@@ -12,10 +13,10 @@ const { resetAll, logout } = useCampaignSender()
     <div class="header-inner">
       <div class="header-logo">
         <div class="logo-icon-wrapper">
-          <Rocket :size="24" stroke-width="2.5" class="logo-icon-lucide" />
+          <img src="/images/icons/web-app-manifest-192x192.png" class="logo-img" alt="Logo" />
         </div>
         <div class="logo-text-group">
-          <span class="logo-title">Turbo-Mailer <span class="logo-accent">PRO</span></span>
+          <span class="logo-title">Turbo-Mailer <span class="logo-accent">PRO</span> <span class="version-badge">{{ APP_VERSION }}</span></span>
           <span class="logo-sub">Dashboard de Envío Inteligente</span>
         </div>
       </div>
@@ -54,3 +55,41 @@ const { resetAll, logout } = useCampaignSender()
     </div>
   </header>
 </template>
+
+<style scoped>
+.version-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1px 6px;
+  border-radius: 6px;
+  margin-left: 6px;
+  vertical-align: middle;
+  border: 1px solid var(--border);
+}
+
+.logo-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+}
+
+.logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.logo-title {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 800;
+}
+</style>

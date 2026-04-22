@@ -642,6 +642,7 @@ body {
   display: flex;
   flex-direction: column;
   line-height: 1.1;
+  gap: 5px;
 }
 .logo-title {
   font-size: 18px;
@@ -1075,7 +1076,7 @@ body {
 .subject-vars {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
   align-items: center;
 }
 
@@ -1094,7 +1095,7 @@ body {
   border-radius: 8px;
   padding: 6px 12px;
   color: var(--accent-light);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;

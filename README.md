@@ -18,7 +18,7 @@ Turbo-Mailer PRO es una solución de escritorio/PWA de alto rendimiento diseñad
 
 - **📊 Importación Inteligente**: Soporte nativo para archivos `.xlsx`, `.xls` y `.csv`. Mapeo automático de columnas para correos, nombres y empresas.
 - **🎨 Live Preview Real-Time**: Visualiza exactamente cómo se verá tu diseño HTML para cada destinatario antes de presionar enviar.
-- **🏷️ Variables Dinámicas**: Personalización profunda tanto en el asunto como en el cuerpo del correo usando el motor de etiquetas `{{Empresa}}`, `{{Nombre}}`, etc.
+- **🏷️ Variables Dinámicas**: Personalización profunda tanto en el asunto como en el cuerpo del correo usando el motor de etiquetas `{{Empresa}}`, `{{Contacto}}`, etc.
 - **🛠️ Motor SMTP Express**: Integración robusta con servicios de correo (Gmail, Outlook, SMTP propio) vía Nodemailer con reporte de resultados en tiempo vivo.
 - **📱 PWA & Mobile First**: Instalable como aplicación nativa en Windows/iOS/Android para una gestión rápida desde cualquier lugar.
 - **🎨 Editor de Plantillas Visual**: Editor Drag & Drop institucional para crear y modificar plantillas HTML sin tocar código. Con sistema de bloques, edición de texto enriquecido y gestión de imágenes.
@@ -99,8 +99,8 @@ Arrastra tu archivo Excel a la zona de "Contactos & Datos". La plataforma detect
 
 ### 2. Configurar Asunto
 
-Escribe el asunto de tu campaña. Puedes usar etiquetas como `{{Nombre}}` para aumentar la tasa de apertura:
-_Ejemplo: "¡Hola {{Nombre}}! Tenemos algo para {{Empresa}}"_
+Escribe el asunto de tu campaña. Puedes usar etiquetas como `{{Contacto}}` para aumentar la tasa de apertura:
+_Ejemplo: "¡Hola {{Contacto}}! Tenemos algo para {{Empresa}}"_
 
 ### 3. Diseñar o Cargar Plantilla
 

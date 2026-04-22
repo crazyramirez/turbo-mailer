@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ArrowLeft, Layout, Monitor, Smartphone, Undo, Redo, Clock, Lock, Save, Moon, Sun } from 'lucide-vue-next'
+import { ArrowLeft, Monitor, Smartphone, Undo, Redo, Clock, Lock, Save, Moon, Sun } from 'lucide-vue-next'
 import { useEditorState } from '~/composables/useEditorState'
 import { useIframeEngine } from '~/composables/useIframeEngine'
 import { useTemplateManager } from '~/composables/useTemplateManager'
+import { APP_VERSION } from '~/utils/version'
 
 const { viewMode, undoStack, redoStack, lastSavedTime, currentTemplate, isSaving, darkModePreview } = useEditorState()
 const { undo, redo } = useIframeEngine()
@@ -17,7 +18,10 @@ const { handleSave } = useTemplateManager()
       </button>
       <div class="h-divider"></div>
       <div class="editor-brand">
-        <Layout :size="18" class="brand-icon" /> <span>TurboEditor</span>
+        <div class="brand-icon-wrapper">
+          <img src="/images/icons/web-app-manifest-192x192.png" class="brand-img" alt="Logo" />
+        </div>
+        <span>TurboEditor <span class="editor-version">{{ APP_VERSION }}</span></span>
       </div>
     </div>
 
@@ -85,3 +89,43 @@ const { handleSave } = useTemplateManager()
     </div>
   </header>
 </template>
+
+<style scoped>
+.editor-version {
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-left: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.editor-brand span {
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.brand-icon-wrapper {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+.brand-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+</style>

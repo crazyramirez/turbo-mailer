@@ -172,7 +172,7 @@ const showMappingModal = ref(false);
               </select>
             </div>
             <div class="mapping-item">
-              <label>Nombre</label>
+              <label>Contacto</label>
               <select v-model="nombreColumn" class="input">
                 <option value="">(Opcional)</option>
                 <option v-for="c in availableColumns" :key="c" :value="c">
@@ -297,7 +297,7 @@ const showMappingModal = ref(false);
                         >EMAIL</span
                       >
                       <span v-if="col === nombreColumn" class="col-tag tag-var"
-                        >NOMBRE</span
+                        >CONTACTO</span
                       >
                       <span v-if="col === empresaColumn" class="col-tag tag-var"
                         >EMPRESA</span
