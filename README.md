@@ -12,7 +12,7 @@
 
 Turbo-Mailer PRO es una solución de escritorio/PWA de alto rendimiento para envío masivo de correos personalizados. Construido con **Nuxt 3**, permite gestionar campañas completas con importación directa desde Excel, editor visual de plantillas HTML, previsualización en tiempo real e integración con IA para mejorar los textos.
 
-![Turbo-Mailer PRO](public/images/ogimage.jpg)
+![Turbo-Mailer PRO — Dashboard preview](public/images/ogimage.jpg)
 
 ## 📸 Interfaz del Proyecto
 
@@ -115,7 +115,7 @@ Accesible desde `/editor`. Funciones clave:
 
 ---
 
-### 🔑 Cómo crear una App Password de Gmail
+## 🔑 Cómo crear una App Password de Gmail
 
 La app usa Gmail SMTP con una contraseña de aplicación de 16 dígitos (no tu contraseña normal).
 
@@ -142,10 +142,10 @@ Encuentra una plantilla de ejemplo profesional en:
 
 ---
 
-## 🛡️ Aviso Legal
+## ⚖️ Aviso Legal
 
 Este proyecto es una herramienta de desarrollo. El uso indebido para comunicaciones no solicitadas (SPAM) está prohibido. Asegúrate de cumplir con las normativas locales (GDPR, CAN-SPAM Act) antes de realizar envíos masivos.
 
 ---
 
-**Desarrollado con ❤️ por el equipo de Turbo-Mailer PRO.**
+**Desarrollado con ❤️ por crazyramirez.**
