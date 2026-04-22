@@ -295,11 +295,6 @@ body {
   background-color: #000;
 }
 
-.editor-viewport.dark-mode-env .canvas-empty-guide {
-  background-color: #000;
-  filter: invert(1) hue-rotate(180deg);
-}
-
 .canvas-box {
   position: relative;
   z-index: 1; /* Elevate above background glows */

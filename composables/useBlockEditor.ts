@@ -349,7 +349,6 @@ function updateLogoWidth(val: number | string) {
 function updateGridImageHeight(val?: number | string) {
   if (!selectedElement.value || selectedElement.value.dataset.type !== 'Grid') return
   
-  // Si se pasa un valor, lo usamos. Si no, usamos el del ref global.
   let newHeight: number
   if (val !== undefined) {
     newHeight = typeof val === 'string' ? parseInt(val) : (typeof val === 'number' ? val : (val as any).value || 150)
@@ -359,24 +358,18 @@ function updateGridImageHeight(val?: number | string) {
   
   if (isNaN(newHeight)) newHeight = 150
   gridImageHeightRef.value = newHeight
+  
+  // Seteamos la variable CSS en el bloque contenedor
+  selectedElement.value.style.setProperty('--grid-img-h', newHeight + 'px')
+  
+  // También aplicamos la altura base a las imágenes para asegurar compatibilidad inicial
   const imgs = selectedElement.value.querySelectorAll("img.grid-img, [data-toggle='image'] img, td img")
   imgs.forEach((img: any) => {
+    // IMPORTANTE: No usamos !important aquí para que la media-query global de variables pueda ganar en móvil
     img.style.height = newHeight + 'px'
     img.style.objectFit = 'cover'
     img.setAttribute('height', newHeight.toString())
   })
-
-  const doc = iframeRef.value?.contentDocument
-  if (doc) {
-    const mobileHeight = Math.round(newHeight * 0.6)
-    let styleTag = doc.getElementById('grid-img-mobile-height') as HTMLStyleElement
-    if (!styleTag) {
-      styleTag = doc.createElement('style')
-      styleTag.id = 'grid-img-mobile-height'
-      doc.head.appendChild(styleTag)
-    }
-    styleTag.textContent = `@media only screen and (max-width:600px){img.grid-img{height:${mobileHeight}px!important;}}`
-  }
 
   import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
 }

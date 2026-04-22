@@ -14,8 +14,8 @@ const { promptData } = useEditorState();
 const { submitPrompt, handlePromptInput } = usePrompt();
 
 function handleHexInput() {
-  if (promptData.value !== 'transparent' && !promptData.value.startsWith('#')) {
-    promptData.value = '#' + promptData.value;
+  if (promptData.value !== "transparent" && !promptData.value.startsWith("#")) {
+    promptData.value = "#" + promptData.value;
   }
   handlePromptInput(promptData.value);
 }
@@ -177,3 +177,42 @@ function handleHexInput() {
     </div>
   </Transition>
 </template>
+
+<style scoped>
+.confirm-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  background: #1c1c1c30;
+  border-radius: 12px;
+  border: 1px solid #444;
+  text-align: center;
+}
+
+.confirm-message .warn-icon {
+  color: #e83939;
+  filter: drop-shadow(0 0 8px rgba(248, 113, 113, 0.4));
+}
+
+.confirm-message p {
+  margin: 0;
+  font-size: 15px;
+  color: #ccc;
+  line-height: 1.4;
+}
+button.btn-modal-danger {
+  background: #e83939;
+  color: #fff;
+  padding: 8px 24px;
+  border-radius: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+</style>

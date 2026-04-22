@@ -151,7 +151,7 @@ export const editorBlocks: EditorBlock[] = [
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr>
         <td width="31%" valign="top">
-          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:12px;padding:10px;min-height:260px;">
+          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:12px;padding:10px;">
             <div data-toggle="image"><img class="grid-img" src="${placeholder400x400}" style="display:block;width:100%;height:150px;object-fit:cover;border-radius:8px;margin-bottom:10px;"></div>
             <div data-toggle="title" style="font-family:Arial;font-size:13px;font-weight:700;color:#0f172a;margin-bottom:4px;">Título 1</div>
             <div data-toggle="subtitle" style="font-family:Arial;font-size:11px;line-height:1.4;color:#64748b;">Breve descripción aquí.</div>
@@ -159,7 +159,7 @@ export const editorBlocks: EditorBlock[] = [
         </td>
         <td width="3.5%">&nbsp;</td>
         <td width="31%" valign="top">
-          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:12px;padding:10px;min-height:260px;">
+          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:12px;padding:10px;">
             <div data-toggle="image"><img class="grid-img" src="${placeholder400x400}" style="display:block;width:100%;height:150px;object-fit:cover;border-radius:8px;margin-bottom:10px;"></div>
             <div data-toggle="title" style="font-family:Arial;font-size:13px;font-weight:700;color:#0f172a;margin-bottom:4px;">Título 2</div>
             <div data-toggle="subtitle" style="font-family:Arial;font-size:11px;line-height:1.4;color:#64748b;">Breve descripción aquí.</div>
@@ -167,7 +167,7 @@ export const editorBlocks: EditorBlock[] = [
         </td>
         <td width="3.5%">&nbsp;</td>
         <td width="31%" valign="top">
-          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:12px;padding:10px;min-height:260px;">
+          <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:12px;padding:10px;">
             <div data-toggle="image"><img class="grid-img" src="${placeholder400x400}" style="display:block;width:100%;height:150px;object-fit:cover;border-radius:8px;margin-bottom:10px;"></div>
             <div data-toggle="title" style="font-family:Arial;font-size:13px;font-weight:700;color:#0f172a;margin-bottom:4px;">Título 3</div>
             <div data-toggle="subtitle" style="font-family:Arial;font-size:11px;line-height:1.4;color:#64748b;">Breve descripción aquí.</div>

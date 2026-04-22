@@ -198,9 +198,16 @@ export const iframeEditorStyles = `
       box-sizing: border-box !important;
       padding: 4px !important;
     }
+  }
+
+  /* Responsive Grid Images via CSS Variables */
+  img.grid-img {
+    height: var(--grid-img-h, 150px) !important;
+    object-fit: cover !important;
+  }
+  @media only screen and (max-width: 600px) {
     img.grid-img {
-      height: 120px !important;
-      object-fit: cover !important;
+      height: calc(var(--grid-img-h, 150px) * 0.5) !important;
     }
   }
 `
