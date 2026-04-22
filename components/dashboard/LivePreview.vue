@@ -10,8 +10,6 @@ import {
   Copy,
   Check,
 } from "lucide-vue-next";
-import { useDashboardState } from "~/composables/useDashboardState";
-import { useEditorState } from "~/composables/useEditorState";
 
 const {
   htmlBody,

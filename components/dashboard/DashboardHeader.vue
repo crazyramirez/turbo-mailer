@@ -1,22 +1,27 @@
 <script setup lang="ts">
-import { Layout, RefreshCcw, LogOut } from 'lucide-vue-next'
-import { useDashboardState } from '~/composables/useDashboardState'
-import { useCampaignSender } from '~/composables/useCampaignSender'
-import { APP_VERSION } from '~/utils/version'
+import { Layout, RefreshCcw, LogOut } from "lucide-vue-next";
+import { APP_VERSION } from "~/utils/version";
 
-const { emails, emailSubject, htmlBody } = useDashboardState()
-const { resetAll, logout } = useCampaignSender()
+const { emails, emailSubject, htmlBody } = useDashboardState();
+const { resetAll, logout } = useCampaignSender();
 </script>
 
 <template>
-  <header class="header">
+  <header class="header" style="user-select: none">
     <div class="header-inner">
       <div class="header-logo">
         <div class="logo-icon-wrapper">
-          <img src="/images/icons/web-app-manifest-192x192.png" class="logo-img" alt="Logo" />
+          <img
+            src="/images/icons/web-app-manifest-192x192.png"
+            class="logo-img"
+            alt="Logo"
+          />
         </div>
         <div class="logo-text-group">
-          <span class="logo-title">Turbo-Mailer <span class="logo-accent">PRO</span> <span class="version-badge">{{ APP_VERSION }}</span></span>
+          <span class="logo-title"
+            >Turbo-Mailer <span class="logo-accent">PRO</span>
+            <span class="version-badge">{{ APP_VERSION }}</span></span
+          >
           <span class="logo-sub">Dashboard de Envío Inteligente</span>
         </div>
       </div>
@@ -27,17 +32,22 @@ const { resetAll, logout } = useCampaignSender()
           <Layout :size="18" stroke-width="2.5" />
           <span>Editor PRO</span>
         </NuxtLink>
-        <div class="status-pill hide-mobile">
-          <span class="status-dot"></span>
-          <span>SMTP Express</span>
-        </div>
-        <button @click="logout" class="btn-logout hide-mobile" title="Cerrar sesión" aria-label="Cerrar sesión">
+        <button
+          @click="logout"
+          class="btn-logout hide-mobile"
+          title="Cerrar sesión"
+          aria-label="Cerrar sesión"
+        >
           <LogOut :size="16" stroke-width="2.5" />
           <span>Salir</span>
         </button>
 
         <!-- Mobile buttons -->
-        <NuxtLink to="/editor" class="header-btn-editor show-mobile" title="Editor de Plantillas">
+        <NuxtLink
+          to="/editor"
+          class="header-btn-editor show-mobile"
+          title="Editor de Plantillas"
+        >
           <Layout :size="18" stroke-width="2.5" />
         </NuxtLink>
         <button
@@ -48,7 +58,12 @@ const { resetAll, logout } = useCampaignSender()
         >
           <RefreshCcw :size="18" stroke-width="2.5" />
         </button>
-        <button @click="logout" class="header-btn-reset show-mobile" title="Cerrar sesión" aria-label="Cerrar sesión">
+        <button
+          @click="logout"
+          class="header-btn-reset show-mobile"
+          title="Cerrar sesión"
+          aria-label="Cerrar sesión"
+        >
           <LogOut :size="18" stroke-width="2.5" />
         </button>
       </div>

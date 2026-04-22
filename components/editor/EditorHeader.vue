@@ -1,17 +1,33 @@
 <script setup lang="ts">
-import { ArrowLeft, Monitor, Smartphone, Undo, Redo, Clock, Lock, Save, Moon, Sun } from 'lucide-vue-next'
-import { useEditorState } from '~/composables/useEditorState'
-import { useIframeEngine } from '~/composables/useIframeEngine'
-import { useTemplateManager } from '~/composables/useTemplateManager'
-import { APP_VERSION } from '~/utils/version'
+import {
+  ArrowLeft,
+  Monitor,
+  Smartphone,
+  Undo,
+  Redo,
+  Clock,
+  Lock,
+  Save,
+  Moon,
+  Sun,
+} from "lucide-vue-next";
+import { APP_VERSION } from "~/utils/version";
 
-const { viewMode, undoStack, redoStack, lastSavedTime, currentTemplate, isSaving, darkModePreview } = useEditorState()
-const { undo, redo } = useIframeEngine()
-const { handleSave } = useTemplateManager()
+const {
+  viewMode,
+  undoStack,
+  redoStack,
+  lastSavedTime,
+  currentTemplate,
+  isSaving,
+  darkModePreview,
+} = useEditorState();
+const { undo, redo } = useIframeEngine();
+const { handleSave } = useTemplateManager();
 </script>
 
 <template>
-  <header class="editor-header">
+  <header class="editor-header" style="user-select: none">
     <div class="header-section left">
       <button @click="navigateTo('/')" class="btn-action-back">
         <ArrowLeft :size="18" /> <span>Volver</span>
@@ -19,9 +35,16 @@ const { handleSave } = useTemplateManager()
       <div class="h-divider"></div>
       <div class="editor-brand">
         <div class="brand-icon-wrapper">
-          <img src="/images/icons/web-app-manifest-192x192.png" class="brand-img" alt="Logo" />
+          <img
+            src="/images/icons/web-app-manifest-192x192.png"
+            class="brand-img"
+            alt="Logo"
+          />
         </div>
-        <span>TurboEditor <span class="editor-version">{{ APP_VERSION }}</span></span>
+        <span
+          >TurboEditor
+          <span class="editor-version">{{ APP_VERSION }}</span></span
+        >
       </div>
     </div>
 
@@ -47,10 +70,14 @@ const { handleSave } = useTemplateManager()
         @click="darkModePreview = !darkModePreview"
         class="btn-dark-mode"
         :class="{ active: darkModePreview }"
-        :title="darkModePreview ? 'Desactivar Modo Oscuro' : 'Previsualizar Modo Oscuro'"
+        :title="
+          darkModePreview
+            ? 'Desactivar Modo Oscuro'
+            : 'Previsualizar Modo Oscuro'
+        "
       >
         <component :is="darkModePreview ? Sun : Moon" :size="16" />
-        <span class="d-label">{{ darkModePreview ? 'Light' : 'Dark' }}</span>
+        <span class="d-label">{{ darkModePreview ? "Light" : "Dark" }}</span>
       </button>
       <div class="h-divider" style="margin: 0 12px"></div>
       <div class="history-controls">
@@ -78,13 +105,21 @@ const { handleSave } = useTemplateManager()
         <Clock :size="12" /> <span>{{ lastSavedTime }}</span>
       </div>
       <div class="active-template-tag">
-        <Lock v-if="currentTemplate === 'email_demo'" :size="12" class="demo-lock" />
-        <span>{{ currentTemplate === 'email_demo' ? 'Base Template' : currentTemplate + '.html' }}</span>
+        <Lock
+          v-if="currentTemplate === 'email_demo'"
+          :size="12"
+          class="demo-lock"
+        />
+        <span>{{
+          currentTemplate === "email_demo"
+            ? "Base Template"
+            : currentTemplate + ".html"
+        }}</span>
       </div>
 
       <button @click="handleSave" :disabled="isSaving" class="btn-premium-save">
         <Save v-if="!isSaving" :size="16" />
-        <span>{{ isSaving ? 'Guardando' : 'Guardar' }}</span>
+        <span>{{ isSaving ? "Guardando" : "Guardar" }}</span>
       </button>
     </div>
   </header>
@@ -92,7 +127,7 @@ const { handleSave } = useTemplateManager()
 
 <style scoped>
 .editor-version {
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.4);
   background: rgba(255, 255, 255, 0.05);
@@ -108,7 +143,6 @@ const { handleSave } = useTemplateManager()
   display: flex;
   align-items: center;
   font-weight: 700;
-  font-size: 15px;
 }
 
 .brand-icon-wrapper {
