@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ArrowLeft, Layout, Monitor, Smartphone, Undo, Redo, Clock, Lock, Save } from 'lucide-vue-next'
+import { ArrowLeft, Layout, Monitor, Smartphone, Undo, Redo, Clock, Lock, Save, Moon, Sun } from 'lucide-vue-next'
 import { useEditorState } from '~/composables/useEditorState'
 import { useIframeEngine } from '~/composables/useIframeEngine'
 import { useTemplateManager } from '~/composables/useTemplateManager'
 
-const { viewMode, undoStack, redoStack, lastSavedTime, currentTemplate, isSaving } = useEditorState()
+const { viewMode, undoStack, redoStack, lastSavedTime, currentTemplate, isSaving, darkModePreview } = useEditorState()
 const { undo, redo } = useIframeEngine()
 const { handleSave } = useTemplateManager()
 </script>
@@ -38,6 +38,17 @@ const { handleSave } = useTemplateManager()
           <Smartphone :size="14" /> <span>Mobile</span>
         </button>
       </div>
+      <div class="h-divider" style="margin: 0 12px"></div>
+      <button
+        @click="darkModePreview = !darkModePreview"
+        class="btn-dark-mode"
+        :class="{ active: darkModePreview }"
+        :title="darkModePreview ? 'Desactivar Modo Oscuro' : 'Previsualizar Modo Oscuro'"
+      >
+        <component :is="darkModePreview ? Sun : Moon" :size="16" />
+        <span class="d-label">{{ darkModePreview ? 'Light' : 'Dark' }}</span>
+      </button>
+      <div class="h-divider" style="margin: 0 12px"></div>
       <div class="history-controls">
         <button
           @click="undo"
@@ -66,6 +77,7 @@ const { handleSave } = useTemplateManager()
         <Lock v-if="currentTemplate === 'email_demo'" :size="12" class="demo-lock" />
         <span>{{ currentTemplate === 'email_demo' ? 'Base Template' : currentTemplate + '.html' }}</span>
       </div>
+
       <button @click="handleSave" :disabled="isSaving" class="btn-premium-save">
         <Save v-if="!isSaving" :size="16" />
         <span>{{ isSaving ? 'Guardando' : 'Guardar' }}</span>

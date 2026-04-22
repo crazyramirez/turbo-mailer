@@ -166,6 +166,40 @@ body {
   color: #fff;
 }
 
+.btn-dark-mode {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 36px;
+}
+
+.btn-dark-mode:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-dark-mode.active {
+  background: #facc15;
+  color: #000;
+  border-color: #facc15;
+  box-shadow: 0 0 20px rgba(250, 204, 21, 0.3);
+}
+
+.btn-dark-mode .d-label {
+  width: 30px;
+  text-align: left;
+}
+
 .save-indicator {
   font-size: 11px;
   color: #10b981;
@@ -254,6 +288,14 @@ body {
   position: relative;
   overflow-x: hidden;
   z-index: 1;
+}
+.editor-viewport.dark-mode-env {
+  background-color: #020617;
+  background-image: radial-gradient(
+    rgba(255, 255, 255, 0.02) 1px,
+    transparent 1px
+  );
+  transition: background-color 0.5s ease;
 }
 
 .canvas-box {
@@ -1041,10 +1083,12 @@ body {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 10000;
 }
 
 .modal-overlay.lighter-backdrop {
@@ -1623,7 +1667,7 @@ body {
 .canvas-box.desktop .iframe-host {
   width: 100%;
   height: 100%;
-  background: #fff;
+  background: #ffffff;
   border-radius: 12px;
   padding: 0;
 }

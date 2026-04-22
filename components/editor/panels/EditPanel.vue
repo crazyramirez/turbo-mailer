@@ -45,6 +45,8 @@ const {
   updateButtonLink,
   removeThisButton,
   addButton,
+  improveBlockWithAI,
+  isImprovingAI,
 } = useBlockEditor()
 
 const editableTypes = ['Header', 'Grid', 'Tarjeta', 'Imagen', 'Metodología', 'Presencia', 'Firma', 'Texto', 'Botón']
@@ -199,6 +201,24 @@ const editableTypes = ['Header', 'Grid', 'Tarjeta', 'Imagen', 'Metodología', 'P
             class="premium-slider"
           />
         </div>
+      </div>
+    </div>
+
+    <!-- AI Copywriting -->
+    <div 
+      class="control-group" 
+      v-if="selectedElement.dataset.type !== 'Botón' && selectedElement.dataset.type !== 'Imagen'"
+    >
+      <label>IA Copywriting</label>
+      <div class="ai-controls">
+        <button 
+          @click="improveBlockWithAI()" 
+          class="c-btn ai-magic-btn" 
+          :disabled="isImprovingAI"
+        >
+          <Sparkles :size="14" :class="{ 'anim-spin': isImprovingAI }" />
+          <span>{{ isImprovingAI ? 'Mejorando...' : 'Optimizar Texto con IA' }}</span>
+        </button>
       </div>
     </div>
 

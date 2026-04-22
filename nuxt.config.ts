@@ -4,6 +4,11 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
   ssr: false,
 
+  runtimeConfig: {
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    openaiModel: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+  },
+
   modules: ["@vite-pwa/nuxt"],
 
   app: {
@@ -58,7 +63,7 @@ export default defineNuxtConfig({
   vite: {
     server: {
       watch: {
-        ignored: ['**/public/templates/**']
+        ignored: ['**/data/templates/**']
       }
     }
   }

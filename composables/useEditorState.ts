@@ -30,6 +30,7 @@ const isMorphing = ref(false)
 const showTemplateModal = ref(false)
 const newTemplateName = ref('')
 const lastSavedTime = ref('')
+const darkModePreview = ref(false)
 
 const fontSizeRef = ref(16)
 const selectionBaseRef = ref(16)
@@ -133,6 +134,7 @@ export function useEditorState() {
     showTemplateModal,
     newTemplateName,
     lastSavedTime,
+    darkModePreview,
     fontSizeRef,
     selectionBaseRef,
     logoWidthRef,

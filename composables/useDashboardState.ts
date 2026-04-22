@@ -36,12 +36,38 @@ const showTemplatesModal = ref(false)
 const libraryId = ref(Date.now())
 const copied = ref(false)
 
-// Toast
+// Toast state
 const toast = reactive({
   visible: false,
   message: '',
   type: 'info' as 'success' | 'error' | 'info',
 })
+
+// Dialog state
+const dialogState = reactive({
+  show: false,
+  type: 'confirm' as 'confirm' | 'prompt',
+  title: '',
+  message: '',
+  value: '',
+  resolve: null as ((v: any) => void) | null,
+})
+
+function showDialog(options: { 
+  type?: 'confirm' | 'prompt', 
+  title: string, 
+  message?: string, 
+  defaultValue?: string 
+}): Promise<any> {
+  return new Promise((resolve) => {
+    dialogState.type = options.type || 'confirm'
+    dialogState.title = options.title
+    dialogState.message = options.message || ''
+    dialogState.value = options.defaultValue || ''
+    dialogState.resolve = resolve
+    dialogState.show = true
+  })
+}
 
 function showToast(message: string, type: 'success' | 'error' | 'info' = 'info') {
   toast.message = message
@@ -152,6 +178,9 @@ export function useDashboardState() {
     showTemplatesModal,
     libraryId,
     copied,
+    // Dialog
+    dialogState,
+    showDialog,
     // Toast
     toast,
     showToast,

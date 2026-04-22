@@ -22,8 +22,11 @@ Turbo-Mailer PRO es una solución de escritorio/PWA de alto rendimiento diseñad
 - **🛠️ Motor SMTP Express**: Integración robusta con servicios de correo (Gmail, Outlook, SMTP propio) vía Nodemailer con reporte de resultados en tiempo vivo.
 - **📱 PWA & Mobile First**: Instalable como aplicación nativa en Windows/iOS/Android para una gestión rápida desde cualquier lugar.
 - **🎨 Editor de Plantillas Visual**: Editor Drag & Drop institucional para crear y modificar plantillas HTML sin tocar código. Con sistema de bloques, edición de texto enriquecido y gestión de imágenes.
+- **🤖 IA Copywriting Assistant**: Integración con OpenAI (GPT-4o) para mejorar, profesionalizar y optimizar los textos de tus correos con un solo clic, respetando el diseño HTML y las variables de personalización.
+- **🌙 Dark Mode Simulator**: Previsualización realista que simula cómo las apps de correo (como Gmail) transforman tus diseños a modo oscuro, asegurando que tu mensaje sea siempre legible.
+- **📂 Galería de Plantillas Premium**: Biblioteca integrada para guardar, renombrar, eliminar y gestionar tus propios diseños institucionales de forma eficiente.
 - **🔒 Acceso Protegido**: Sistema de login mediante contraseña maestra configurada por entorno con limitación de intentos por IP para máxima seguridad.
-- **💎 Diseño Premium**: Interfáz ultramoderna con tipografía *Plus Jakarta Sans*, efectos de glassmorfismo y navegación por pasos intuitiva.
+- **💎 Diseño de Vanguardia**: Interfáz ultramoderna con tipografía *Plus Jakarta Sans*, efectos de glassmorfismo, animaciones quirúrgicas y navegación intuitiva por pasos.
 
 ---
 
@@ -59,6 +62,10 @@ Turbo-Mailer PRO es una solución de escritorio/PWA de alto rendimiento diseñad
 
    # Acceso a la Aplicación
    APP_PASSWORD=tu-contraseña-de-acceso-al-dashboard
+
+   # Inteligencia Artificial (Opcional)
+   OPENAI_API_KEY=tu-api-key-de-openai
+   OPENAI_MODEL=gpt-4o-mini
    ```
 
 ### 🔑 Cómo crear una "App Password" de Gmail

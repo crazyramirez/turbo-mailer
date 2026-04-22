@@ -1,4 +1,5 @@
-export const iframeEditorStyles = `
+<!DOCTYPE html>
+<html><head><style>
   body { overflow-x: hidden !important; margin: 0; padding: 40px 0; min-height: 100vh; box-sizing: border-box; }
   .main-card { max-width: 820px !important; margin: 0 auto !important; box-sizing: border-box !important; }
   .editable-block { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
@@ -63,45 +64,13 @@ export const iframeEditorStyles = `
   }
   .module-drop-reveal { animation: moduleReveal 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
   .drop-placeholder {
-    height: 50px;
-    background: rgba(99, 102, 241, 0.04);
-    border: 1px dashed rgba(99, 102, 241, 0.3);
-    border-radius: 8px;
-    margin: 4px 0;
+    height: 60px;
+    background: rgba(99, 102, 241, 0.08);
+    border: 2px dashed rgba(99, 102, 241, 0.4);
+    border-radius: 12px;
+    margin: 8px 0;
     pointer-events: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    overflow: hidden;
-    animation: dropZoneGlow 2s ease-in-out infinite;
   }
-  @keyframes dropZoneGlow {
-    0%, 100% { 
-      background: rgba(99, 102, 241, 0.04); 
-      border-color: rgba(99, 102, 241, 0.3); 
-      box-shadow: 0 0 0px rgba(99, 102, 241, 0);
-    }
-    50% { 
-      background: rgba(99, 102, 241, 0.08); 
-      border-color: rgba(99, 102, 241, 0.6); 
-      box-shadow: 0 0 25px rgba(99, 102, 241, 0.2);
-    }
-  }
-  .drop-icon {
-    color: #6366f1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2;
-    animation: dropBounce 1.5s ease-in-out infinite;
-    opacity: 0.8;
-  }
-  @keyframes dropBounce {
-    0%, 100% { transform: translateY(-3px); opacity: 0.6; }
-    50% { transform: translateY(3px); opacity: 1; }
-  }
-  .drop-icon svg { width: 22px; height: 22px; }
   .editable-block.dragging { opacity: 0.4; transform: scale(0.96); pointer-events: none; }
   @keyframes textFocus {
     0% { background: rgba(99, 102, 241, 0); transform: scale(0.99); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
@@ -168,24 +137,23 @@ export const iframeEditorStyles = `
   .dark-mode-simulation [data-toggle="button"],
   .dark-mode-simulation .visor-drag-handle,
   .dark-mode-simulation #floating-toolbar,
-  .dark-mode-simulation .drop-placeholder,
-  .dark-mode-simulation .drop-icon {
+  .dark-mode-simulation .drop-placeholder {
     filter: invert(100%) hue-rotate(180deg) !important;
   }
   /* Preserve contrast for links, but NOT for buttons which we want to keep original */
   .dark-mode-simulation a:not([data-toggle="button"]) { color: #8ab4f8 !important; }
-
-  @keyframes aiGlow {
-    0% { box-shadow: 0 0 0px rgba(168, 85, 247, 0); background: rgba(168, 85, 247, 0); transform: scale(1); }
-    50% { box-shadow: 0 0 40px 5px rgba(168, 85, 247, 0.5); background: rgba(168, 85, 247, 0.08); transform: scale(1.01); }
-    100% { box-shadow: 0 0 0px rgba(168, 85, 247, 0); background: rgba(168, 85, 247, 0); transform: scale(1); }
-  }
-  .ai-improving {
-    animation: aiGlow 1.5s ease-in-out infinite !important;
-    position: relative !important;
-    z-index: 5000 !important;
-    pointer-events: none !important;
-    border-radius: 12px;
-    outline: 2px solid rgba(168, 85, 247, 0.5) !important;
-  }
-`
+</style></head><body><div class="header-block" data-type="Header" style="padding:48px 32px;background-color:#f6faff;border-bottom:1px solid #e2e8f0;" data-id="blk-y0491u0">
+    <div data-toggle="logo" style="margin-bottom:24px;">
+      <img src="https://placehold.co/200x60/1e293b/white?text=Logo" alt="Logo" style="display:block;max-height:50px;width:auto;">
+    </div>
+    <div data-toggle="badge" style="font-family:Arial;font-size:12px;font-weight:700;color:#6366f1;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;" spellcheck="false">
+      Exclusivo para Miembros VIP
+    </div>
+    <div data-toggle="title" style="font-family:Arial;font-size:38px;line-height:1.2;font-weight:700;color:#0f172a;margin-bottom:16px;" spellcheck="false">Fiestas y Celebraciones</div>
+    <div data-toggle="subtitle" style="font-family:Arial;font-size:18px;line-height:1.6;color:#475569;max-width:600px;" spellcheck="false">El señor Ábalos disfruta de momentos <b><i><u>inolvidables</u></i></b></div></div><div class="body-block" data-type="Texto" style="padding:48px 32px;background:#f6faff;" data-id="blk-1hzvprb">
+    <div data-toggle="title" style="font-family:Arial;font-size:17px;line-height:28px;color:#334155;" spellcheck="false">
+      Escribe aquí tu contenido principal. Utiliza este espacio para desarrollar tu mensaje con detalle y claridad, manteniendo siempre un tono institucional.
+      <br><br>
+      Puedes aplicar estilos como <b spellcheck="false">negrita</b>, <i>cursiva</i> o subrayado para resaltar los puntos clave. Este bloque está diseñado para ofrecer una <u>legibilidad máxima</u> en cualquier dispositivo.
+    </div>
+  </div></body></html>

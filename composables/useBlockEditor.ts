@@ -25,6 +25,8 @@ const {
 const { openPrompt } = usePrompt()
 const { showToast } = useToast()
 
+const isImprovingAI = ref(false)
+
 // ─── Selection ───────────────────────────────────────────────────────────────
 
 function selectElement(el: HTMLElement, subEl?: HTMLElement) {
@@ -412,6 +414,95 @@ function updateImage() {
   })
 }
 
+// ─── AI Improvement ──────────────────────────────────────────────────────────
+
+async function improveBlockWithAI(el?: HTMLElement) {
+  const target = el || selectedElement.value
+  if (!target) return
+
+  const textToImprove = target.innerHTML
+
+  if (!textToImprove || target.innerText.trim().length < 5) {
+    showToast('No hay suficiente texto para mejorar', 'info')
+    return
+  }
+
+  isImprovingAI.value = true
+  showToast('Optimizando textos con IA...', 'info')
+  
+  // Añadir efecto visual al bloque
+  target.classList.add('ai-improving')
+
+  try {
+    const { improvedText } = await $fetch('/api/ai/improve', {
+      method: 'POST',
+      body: { text: textToImprove }
+    })
+
+    if (improvedText) {
+      // Aplicamos el HTML mejorado manteniendo la estructura
+      target.innerHTML = improvedText
+      showToast('Texto optimizado con éxito', 'success')
+      
+      import('~/composables/useIframeEngine').then(({ useIframeEngine }) => {
+        useIframeEngine().refreshLayers()
+        useIframeEngine().triggerAutosave(true)
+      })
+    }
+  } catch (err: any) {
+    showToast(err.statusMessage || 'Error al conectar con OpenAI', 'error')
+  } finally {
+    isImprovingAI.value = false
+    target.classList.remove('ai-improving')
+  }
+}
+
+async function improveAllWithAI() {
+  const doc = iframeRef.value?.contentDocument
+  if (!doc) return
+
+  const blocks = doc.querySelectorAll('.editable-block')
+  if (blocks.length === 0) return
+
+  showToast('Mejorando toda la plantilla...', 'info')
+  isImprovingAI.value = true
+
+  try {
+    for (const block of Array.from(blocks)) {
+      const el = block as HTMLElement
+      const html = el.innerHTML
+      if (el.innerText.trim().length < 10 || el.dataset.type === 'Imagen' || el.dataset.type === 'Botón') continue
+
+      // Efecto visual individual
+      el.classList.add('ai-improving')
+
+      try {
+        const { improvedText } = await $fetch('/api/ai/improve', {
+          method: 'POST',
+          body: { text: html }
+        })
+
+        if (improvedText) {
+          el.innerHTML = improvedText
+        }
+      } catch (e) {
+        console.error('Error mejorando bloque individual', e)
+      } finally {
+        el.classList.remove('ai-improving')
+      }
+    }
+    showToast('Plantilla mejorada al completo', 'success')
+    import('~/composables/useIframeEngine').then(({ useIframeEngine }) => {
+      useIframeEngine().refreshLayers()
+      useIframeEngine().triggerAutosave(true)
+    })
+  } catch (err: any) {
+    showToast('Error durante la mejora global', 'error')
+  } finally {
+    isImprovingAI.value = false
+  }
+}
+
 // ─── Image Modal ─────────────────────────────────────────────────────────────
 
 function openImageModal(el: HTMLImageElement) {
@@ -539,5 +630,8 @@ export function useBlockEditor() {
     handleLayerDragStart,
     handleLayerDragEnd,
     handleLayerDrop,
+    improveBlockWithAI,
+    improveAllWithAI,
+    isImprovingAI,
   }
 }

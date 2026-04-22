@@ -4,7 +4,7 @@ import path from 'node:path';
 
 export default defineEventHandler(async (event) => {
   const method = event.method;
-  const templatesDir = path.resolve(process.cwd(), 'public/templates');
+  const templatesDir = path.resolve(process.cwd(), 'data/templates');
   const baseTemplatePath = path.resolve(process.cwd(), 'docs/email_demo.html');
 
   // Ensure templates directory exists
@@ -17,21 +17,35 @@ export default defineEventHandler(async (event) => {
   if (method === 'GET') {
     const query = getQuery(event);
     const name = query.name as string;
+    const isPreview = query.preview === '1';
 
     if (name) {
       // Load specific template
       const filePath = path.join(templatesDir, name.endsWith('.html') ? name : `${name}.html`);
       try {
         const content = await fs.readFile(filePath, 'utf-8');
+        if (isPreview) {
+          setResponseHeader(event, 'Content-Type', 'text/html');
+          return content;
+        }
         return { content };
       } catch (e) {
         // Fallback to demo if not found and it's the first time
         if (name === 'email_demo') {
            try {
              const content = await fs.readFile(baseTemplatePath, 'utf-8');
+             if (isPreview) {
+               setResponseHeader(event, 'Content-Type', 'text/html');
+               return content;
+             }
              return { content };
            } catch (e) {
-             return { content: '<!DOCTYPE html><html><body><div class="main-card"><h1>Demo Fallback</h1></div></body></html>' };
+             const fallback = '<!DOCTYPE html><html><body><div class="main-card"><h1>Demo Fallback</h1></div></body></html>';
+             if (isPreview) {
+               setResponseHeader(event, 'Content-Type', 'text/html');
+               return fallback;
+             }
+             return { content: fallback };
            }
         }
         throw createError({ statusCode: 404, message: 'Template not found' });
@@ -44,7 +58,7 @@ export default defineEventHandler(async (event) => {
       .filter(f => f.endsWith('.html') && f !== 'email_demo.html')
       .map(f => ({
         name: f.replace('.html', ''),
-        path: `/templates/${f}`
+        path: `/api/templates?name=${f.replace('.html', '')}&preview=1`
       }));
 
     return templates;
@@ -62,7 +76,7 @@ export default defineEventHandler(async (event) => {
     const filePath = path.join(templatesDir, fileName);
     
     await fs.writeFile(filePath, content, 'utf-8');
-    return { success: true, path: `/templates/${fileName}` };
+    return { success: true, path: `/api/templates?name=${fileName.replace('.html', '')}&preview=1` };
   }
 
   if (method === 'PATCH') {

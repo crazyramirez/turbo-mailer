@@ -120,6 +120,7 @@ function initBlock(el: HTMLElement, doc: Document) {
     handle.dataset.ignoreSave = 'true'
     handle.addEventListener('dragstart', (e) => {
       e.stopPropagation()
+      ;(window as any).draggedElement = el
       import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
         useBlockEditor().handleLayerDragStart(el, e as DragEvent)
       })
@@ -129,6 +130,8 @@ function initBlock(el: HTMLElement, doc: Document) {
         useBlockEditor().handleLayerDragEnd(e)
       })
     })
+    el.prepend(handle)
+
     el.prepend(handle)
   }
 
@@ -348,11 +351,41 @@ function setupIframeEvents(doc: Document) {
         placeholder.id = 'drop-placeholder'
         placeholder.className = 'drop-placeholder'
         placeholder.dataset.ignoreSave = 'true'
+        placeholder.innerHTML = `
+          <div class="drop-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m6 9 6 6 6-6"/>
+            </svg>
+          </div>
+        `
       }
 
       if (block) {
         const bRect = block.getBoundingClientRect()
         const isTop = e.clientY - bRect.top < bRect.height / 2
+
+        // Evitar posiciones redundantes al arrastrar un elemento del propio visor
+        const parentState = (window as any).editorState
+        const dragged = (window as any).draggedElement || (parentState ? parentState.draggedLayer : null)
+        
+        if (dragged) {
+          // Si es el mismo bloque, es redundante en cualquier mitad
+          if (block === dragged) {
+            placeholder?.remove()
+            return
+          }
+          // Si es el anterior y estamos en su mitad inferior, es su posición actual
+          if (block === dragged.previousElementSibling && !isTop) {
+            placeholder?.remove()
+            return
+          }
+          // Si es el siguiente y estamos en su mitad superior, es su posición actual
+          if (block === dragged.nextElementSibling && isTop) {
+            placeholder?.remove()
+            return
+          }
+        }
+
         if (isTop) block.parentNode?.insertBefore(placeholder, block)
         else block.after(placeholder)
       } else {
@@ -496,6 +529,10 @@ function injectIframeContent() {
   }
 
   setupIframeEvents(doc)
+  if (useEditorState().darkModePreview.value) {
+    doc.body.classList.add('dark-mode-simulation')
+  }
+  
   refreshLayers()
   pushToHistory()
 }
@@ -579,6 +616,16 @@ function setupEditorWatches() {
       }
     },
   )
+  
+  watch(useEditorState().darkModePreview, (isDark) => {
+    const doc = iframeRef.value?.contentDocument
+    if (!doc) return
+    if (isDark) {
+      doc.body.classList.add('dark-mode-simulation')
+    } else {
+      doc.body.classList.remove('dark-mode-simulation')
+    }
+  })
 }
 
 export function useIframeEngine() {

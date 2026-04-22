@@ -1,11 +1,28 @@
 <script setup lang="ts">
-import { X, Check } from "lucide-vue-next";
+import { X, Check, Pencil, Trash2 } from "lucide-vue-next";
 import { useDashboardState } from "~/composables/useDashboardState";
 import { useHtmlImport } from "~/composables/useHtmlImport";
 
-const { showTemplatesModal, internalTemplates, libraryId } =
-  useDashboardState();
-const { selectInternalTemplate } = useHtmlImport();
+const {
+  showTemplatesModal,
+  internalTemplates,
+  libraryId,
+  showToast,
+  showDialog,
+} = useDashboardState();
+const { selectInternalTemplate, deleteTemplate, renameTemplate } =
+  useHtmlImport();
+
+const handleRename = async (name: string) => {
+  const newName = await showDialog({
+    type: "prompt",
+    title: "Renombrar Plantilla",
+    defaultValue: name,
+  });
+  if (newName && newName !== name) {
+    renameTemplate(name, newName);
+  }
+};
 </script>
 
 <template>
@@ -35,7 +52,7 @@ const { selectInternalTemplate } = useHtmlImport();
               </div>
               <div class="iframe-wrapper">
                 <iframe
-                  :src="`/templates/${t.name}.html?t=${libraryId}`"
+                  :src="`${t.path}&t=${libraryId}`"
                   class="mini-preview-frame"
                   scrolling="no"
                 ></iframe>
@@ -48,8 +65,26 @@ const { selectInternalTemplate } = useHtmlImport();
               </div>
             </div>
             <div class="template-info">
-              <span class="template-name">{{ t.name }}</span>
-              <span class="template-type">HTML Email v1.0</span>
+              <div class="info-main">
+                <span class="template-name">{{ t.name }}</span>
+                <span class="template-type">HTML Email v1.0</span>
+              </div>
+              <div class="info-actions">
+                <button
+                  @click.stop="handleRename(t.name)"
+                  class="btn-action-small"
+                  title="Renombrar"
+                >
+                  <Pencil :size="14" />
+                </button>
+                <button
+                  @click.stop="deleteTemplate(t.name)"
+                  class="btn-action-small btn-danger"
+                  title="Eliminar"
+                >
+                  <Trash2 :size="14" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -60,7 +95,7 @@ const { selectInternalTemplate } = useHtmlImport();
 
 <style scoped>
 .library-window {
-  max-width: 900px;
+  max-width: 860px;
   width: 90%;
   max-height: 80vh;
   background: #090b14;
@@ -107,7 +142,7 @@ const { selectInternalTemplate } = useHtmlImport();
 .library-grid {
   padding: 32px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 24px;
   overflow-y: auto;
 }
@@ -197,12 +232,22 @@ const { selectInternalTemplate } = useHtmlImport();
 .template-info {
   padding: 16px;
   display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.info-main {
+  display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 .template-name {
   font-size: 15px;
   font-weight: 700;
   color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .template-type {
   font-size: 11px;
@@ -210,5 +255,36 @@ const { selectInternalTemplate } = useHtmlImport();
   font-weight: 800;
   text-transform: uppercase;
   margin-top: 4px;
+}
+.info-actions {
+  display: flex;
+  gap: 6px;
+  opacity: 0.4;
+  transition: opacity 0.2s;
+}
+.template-card:hover .info-actions {
+  opacity: 1;
+}
+.btn-action-small {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-action-small:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.btn-action-small.btn-danger:hover {
+  background: var(--red);
+  border-color: var(--red);
 }
 </style>

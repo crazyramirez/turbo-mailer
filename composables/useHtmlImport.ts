@@ -9,6 +9,7 @@ const {
   showTemplatesModal,
   libraryId,
   showToast,
+  showDialog,
 } = useDashboardState()
 
 function parseHtml(file: File) {
@@ -71,6 +72,39 @@ async function selectInternalTemplate(name: string) {
   showTemplatesModal.value = false
 }
 
+async function deleteTemplate(name: string) {
+  const confirmed = await showDialog({
+    type: 'confirm',
+    title: 'Eliminar Plantilla',
+    message: `¿Estás seguro de que quieres eliminar "${name}"? Esta acción no se puede deshacer.`,
+  })
+  if (!confirmed) return
+  try {
+    await $fetch('/api/templates', {
+      method: 'DELETE',
+      body: { name },
+    })
+    await fetchInternalTemplates()
+    showToast('Plantilla eliminada', 'success')
+  } catch (e) {
+    showToast('Error al eliminar la plantilla', 'error')
+  }
+}
+
+async function renameTemplate(oldName: string, newName: string) {
+  if (!newName || oldName === newName) return
+  try {
+    await $fetch('/api/templates', {
+      method: 'PATCH',
+      body: { oldName, newName },
+    })
+    await fetchInternalTemplates()
+    showToast('Plantilla renombrada', 'success')
+  } catch (e) {
+    showToast('Error al renombrar la plantilla', 'error')
+  }
+}
+
 export function useHtmlImport() {
   return {
     parseHtml,
@@ -80,5 +114,7 @@ export function useHtmlImport() {
     fetchInternalTemplates,
     openLibrary,
     selectInternalTemplate,
+    deleteTemplate,
+    renameTemplate,
   }
 }

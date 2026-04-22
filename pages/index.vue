@@ -16,6 +16,7 @@ import SendBar from '~/components/dashboard/SendBar.vue'
 import ResultsOverlay from '~/components/dashboard/ResultsOverlay.vue'
 import ResetModal from '~/components/dashboard/ResetModal.vue'
 import TemplateLibraryModal from '~/components/dashboard/TemplateLibraryModal.vue'
+import GlobalDialog from '~/components/dashboard/GlobalDialog.vue'
 
 const { fetchInternalTemplates } = useHtmlImport()
 
@@ -57,6 +58,7 @@ onMounted(() => {
     <ResultsOverlay />
     <ResetModal />
     <TemplateLibraryModal />
+    <GlobalDialog />
   </div>
 </template>
 

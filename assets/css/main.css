@@ -902,7 +902,7 @@ body {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
@@ -931,6 +931,7 @@ body {
 }
 .modal-content {
   padding: 40px;
+  padding-bottom: 10px;
   text-align: center;
 }
 .modal-icon-warn {
@@ -1747,4 +1748,85 @@ select.input {
   .card-header-text h2 {
     font-size: 15px;
   }
+}
+
+/* ── AI Copywriting Styles ───────────────────────────────────────── */
+.ai-magic-btn {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(99, 102, 241, 0.1)) !important;
+  border: 1px solid rgba(168, 85, 247, 0.25) !important;
+  color: #d8b4fe !important;
+  width: 100%;
+  margin-top: 12px;
+  padding: 14px !important;
+  justify-content: center;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  border-radius: 14px !important;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-magic-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: 0.5s;
+}
+
+.ai-magic-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(99, 102, 241, 0.2)) !important;
+  border-color: rgba(168, 85, 247, 0.6) !important;
+  color: #fff !important;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(168, 85, 247, 0.25);
+}
+
+.ai-magic-btn:hover::before {
+  left: 100%;
+}
+
+.ai-magic-btn:disabled {
+  opacity: 0.6;
+  filter: grayscale(0.5);
+  cursor: wait;
+}
+
+.btn-ai-global {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: white;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(168, 85, 247, 0.35);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-right: 12px;
+  position: relative;
+}
+
+.btn-ai-global:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 12px 30px rgba(168, 85, 247, 0.5);
+  filter: saturate(1.2) brightness(1.1);
+}
+
+.btn-ai-global:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.anim-spin {
+  animation: spin 1.2s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
