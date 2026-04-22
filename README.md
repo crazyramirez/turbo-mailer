@@ -61,7 +61,7 @@ La app guía el envío en **4 pasos**:
 
 1. **Contactos** — Arrastra tu archivo Excel. La app detecta automáticamente las columnas de correo, empresa, nombre y redes sociales.
 2. **Asunto** — Escribe el asunto de la campaña. Usa los botones de variables para personalización dinámica.
-3. **Plantilla** — Sube un archivo `.html` listo o abre el **Editor Visual** para construir tu diseño desde cero con bloques drag & drop.
+3. **Plantilla** — Sube un archivo `.html` listo o abre el **Turbo Editor Visual** para construir tu diseño desde cero con bloques drag & drop.
 4. **Envío** — Revisa la previsualización en tiempo real y envía. Verás el resultado (enviados / fallidos) por destinatario al instante.
 
 > **Nota:** Los datos de contactos y asunto se mantienen en memoria. No persisten si recargas la página. Las plantillas sí se guardan en servidor.
