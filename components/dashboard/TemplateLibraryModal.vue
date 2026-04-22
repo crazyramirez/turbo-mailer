@@ -209,6 +209,7 @@ const handleRename = async (name: string) => {
   opacity: 0;
   transition: opacity 0.3s;
   backdrop-filter: blur(4px);
+  cursor: pointer;
 }
 .template-card:hover .template-overlay {
   opacity: 1;
