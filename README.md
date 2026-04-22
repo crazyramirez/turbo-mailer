@@ -155,4 +155,4 @@ Este proyecto es una herramienta de desarrollo. El uso indebido para comunicacio
 
 ---
 
-**Desarrollado con ❤️ por mi así con amor viéndome podcasts en Youtube de fondo.**
+**Desarrollado con ❤️ por crazyramirez mientras me zampo tropecientos podcasts en Youtube de fondo.**
