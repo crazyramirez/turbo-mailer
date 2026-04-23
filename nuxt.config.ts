@@ -41,6 +41,8 @@ export default defineNuxtConfig({
         { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
         { name: "format-detection", content: "telephone=no" },
         { name: "description", content: "Premium Email Marketing Dashboard" },
+        { name: "robots", content: "noindex, nofollow, noarchive" },
+        { name: "googlebot", content: "noindex, nofollow, noarchive" },
         // Open Graph / Facebook
         { property: "og:type", content: "website" },
         { property: "og:title", content: "Turbo-Mailer PRO" },
