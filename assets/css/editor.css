@@ -45,19 +45,19 @@
   filter: blur(100px);
   z-index: 0;
   pointer-events: none;
-  opacity: 0.5;
-  animation: float-glows 30s infinite alternate ease-in-out;
+  opacity: 0.65;
+  animation: float-glows 10s infinite alternate ease-in-out;
 }
 
 .editor-container::before {
-  top: 0%;
-  left: 5%;
+  top: -10%;
+  left: 2%;
   background: radial-gradient(circle, #f97316 0%, transparent 50%);
 }
 
 .editor-container::after {
   bottom: 0%;
-  right: 5%;
+  right: 2%;
   background: radial-gradient(circle, #0ea5e9 0%, transparent 50%);
   animation-delay: -15s;
 }
@@ -67,10 +67,10 @@
     transform: translate(0, 0) scale(1) rotate(0deg);
   }
   50% {
-    transform: translate(60px, 100px) scale(1.1) rotate(90deg);
+    transform: translate(10px, 10px) scale(1.4) rotate(90deg);
   }
   100% {
-    transform: translate(-100px, 60px) scale(0.9) rotate(180deg);
+    transform: translate(0px, 0px) scale(1) rotate(180deg);
   }
 }
 
@@ -272,7 +272,7 @@
   flex: 1;
   background: transparent;
   background-image: radial-gradient(
-    rgba(255, 255, 255, 0.05) 1px,
+    rgba(255, 255, 255, 0.1) 1px,
     transparent 1px
   );
   background-size: 24px 24px;
