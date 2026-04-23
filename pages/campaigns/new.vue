@@ -22,6 +22,7 @@ const showLibrary = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
 const htmlDragging = ref(false);
 const isSaving = ref(false);
+const subjectRef = ref<HTMLInputElement | null>(null);
 
 const form = ref({
   name: "",
@@ -62,6 +63,35 @@ function clearTemplate() {
   form.value.templateName = "";
 }
 
+function insertVar(v: string) {
+  const el = subjectRef.value;
+  if (!el) {
+    let toInsert = v + " ";
+    if (form.value.subject.length > 0 && !form.value.subject.endsWith(" ")) {
+      toInsert = " " + toInsert;
+    }
+    form.value.subject += toInsert;
+    return;
+  }
+  const s = el.selectionStart ?? form.value.subject.length;
+  const e2 = el.selectionEnd ?? form.value.subject.length;
+
+  let prefix = "";
+  if (s > 0 && form.value.subject[s - 1] !== " ") {
+    prefix = " ";
+  }
+
+  const toInsert = prefix + v + " ";
+  form.value.subject =
+    form.value.subject.slice(0, s) + toInsert + form.value.subject.slice(e2);
+
+  nextTick(() => {
+    el.focus();
+    const p = s + toInsert.length;
+    el.setSelectionRange(p, p);
+  });
+}
+
 function canNext() {
   if (step.value === 1)
     return form.value.name.trim() && form.value.subject.trim();
@@ -95,222 +125,227 @@ onMounted(() => {
   <div class="page-layout">
     <main class="page-main">
       <div
-        class="wizard-wrap"
-        :class="{ 'wizard-wide': step === 3 && form.templateHtml }"
+        class="wizard-card"
+        :class="{ 'card-wide': step === 3 && form.templateHtml }"
       >
-        <!-- Steps indicator -->
-        <div class="steps-nav">
-          <div
-            v-for="n in 4"
-            :key="n"
-            class="step-item"
-            :class="{ done: step > n, active: step === n }"
-          >
-            <div class="step-node">
-              <Check v-if="step > n" :size="14" stroke-width="3" />
-              <span v-else>{{ n }}</span>
-            </div>
-            <span class="step-label">{{
-              t(`campaigns_page.step${n}_title`)
-            }}</span>
-            <div v-if="n < 4" class="step-line" />
-          </div>
-        </div>
-
-        <!-- Step 1: Name & Subject -->
-        <div v-if="step === 1" class="step-panel">
-          <h2>{{ t("campaigns_page.step1_title") }}</h2>
-          <label
-            >{{ t("campaigns_page.campaign_name") }}
-            <input
-              v-model="form.name"
-              type="text"
-              class="form-input"
-              :placeholder="t('campaigns_page.campaign_name_ph')"
-            />
-          </label>
-          <label
-            >{{ t("step_subject.title") }}
-            <input
-              v-model="form.subject"
-              type="text"
-              class="form-input"
-              :placeholder="t('step_subject.placeholder')"
-            />
-            <div class="var-chips">
-              <button
-                v-for="v in [
-                  '{{Nombre}}',
-                  '{{Empresa}}',
-                  '{{URL}}',
-                  '{{Linkedin}}',
-                  '{{Instagram}}',
-                  '{{Youtube}}',
-                ]"
-                :key="v"
-                type="button"
-                class="var-chip"
-                @click="form.subject += v"
-              >
-                {{ v.replaceAll("{", "").replaceAll("}", "") }}
-              </button>
-            </div>
-          </label>
-        </div>
-
-        <!-- Step 2: List -->
-        <div v-if="step === 2" class="step-panel">
-          <h2>{{ t("campaigns_page.step2_title") }}</h2>
-          <div class="list-options">
+        <button class="btn-close-wizard" @click="router.push('/campaigns')" title="Cancelar">
+          <X :size="20" />
+        </button>
+        <div class="wizard-wrap">
+          <!-- Steps indicator -->
+          <div class="steps-nav">
             <div
-              class="list-option"
-              :class="{ active: form.listId === null }"
-              @click="form.listId = null"
+              v-for="n in 4"
+              :key="n"
+              class="step-item"
+              :class="{ done: step > n, active: step === n }"
             >
-              <div class="opt-dot" style="background: #4b5563" />
-              <div>
-                <strong>{{ t("campaigns_page.no_list") }}</strong>
-                <p>Usa el Excel desde el dashboard</p>
+              <div class="step-node">
+                <Check v-if="step > n" :size="14" stroke-width="3" />
+                <span v-else>{{ n }}</span>
               </div>
-            </div>
-            <div
-              v-for="list in lists"
-              :key="list.id"
-              class="list-option"
-              :class="{ active: form.listId === list.id }"
-              @click="form.listId = list.id"
-            >
-              <div class="opt-dot" :style="{ background: list.color }" />
-              <div>
-                <strong>{{ list.name }}</strong>
-                <p>{{ list.contactCount }} {{ t("contacts_page.contacts") }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Step 3: Template -->
-        <div v-if="step === 3" class="step-panel">
-          <h2>{{ t("campaigns_page.step3_title") }}</h2>
-
-          <!-- Loaded state with preview -->
-          <div v-if="form.templateHtml" class="tpl-loaded-layout">
-            <div class="tpl-loaded-left">
-              <div class="tpl-loaded">
-                <div class="tpl-loaded-icon">
-                  <Check :size="20" stroke-width="3" />
-                </div>
-                <div class="tpl-loaded-meta">
-                  <span class="tpl-loaded-name">{{ form.templateName }}</span>
-                  <span class="tpl-loaded-sub">Plantilla HTML lista</span>
-                </div>
-                <button
-                  class="tpl-clear"
-                  @click="clearTemplate"
-                  title="Cambiar plantilla"
-                >
-                  <X :size="16" />
-                </button>
-              </div>
-              <div class="tpl-change-row">
-                <button class="tpl-change-btn" @click="showLibrary = true">
-                  <LayoutGrid :size="14" /> Cambiar desde biblioteca
-                </button>
-                <button class="tpl-change-btn" @click="fileInput?.click()">
-                  <Upload :size="14" /> Importar otro HTML
-                </button>
-              </div>
-            </div>
-            <div class="tpl-loaded-preview">
-              <CampaignPreview
-                :html="form.templateHtml"
-                :subject="form.subject"
-              />
-            </div>
-          </div>
-
-          <!-- Picker (no template yet) -->
-          <div v-else class="tpl-picker">
-            <button class="tpl-option biblioteca" @click="showLibrary = true">
-              <div class="tpl-option-icon"><LayoutGrid :size="28" /></div>
-              <div class="tpl-option-text">
-                <span>Biblioteca</span>
-                <p>Explorar diseños guardados</p>
-              </div>
-            </button>
-
-            <div
-              class="tpl-option dropzone"
-              :class="{ dragging: htmlDragging }"
-              @click="fileInput?.click()"
-              @dragover.prevent="htmlDragging = true"
-              @dragleave="htmlDragging = false"
-              @drop.prevent="onDrop"
-            >
-              <div class="tpl-option-icon"><Upload :size="28" /></div>
-              <div class="tpl-option-text">
-                <span>Importar HTML</span>
-                <p>Arrastra o haz clic para subir</p>
-              </div>
-            </div>
-          </div>
-
-          <input
-            ref="fileInput"
-            type="file"
-            accept=".html"
-            class="sr-only"
-            @change="handleFile"
-          />
-        </div>
-
-        <!-- Step 4: Review -->
-        <div v-if="step === 4" class="step-panel">
-          <h2>{{ t("campaigns_page.step4_title") }}</h2>
-          <div class="review-grid">
-            <div class="review-item">
-              <span class="rev-label">Nombre</span>
-              <span class="rev-val">{{ form.name }}</span>
-            </div>
-            <div class="review-item">
-              <span class="rev-label">Asunto</span>
-              <span class="rev-val">{{ form.subject }}</span>
-            </div>
-            <div class="review-item">
-              <span class="rev-label">Lista</span>
-              <span class="rev-val">{{
-                form.listId
-                  ? lists.find((l) => l.id === form.listId)?.name
-                  : "Manual (Excel)"
+              <span class="step-label">{{
+                t(`campaigns_page.step${n}_title`)
               }}</span>
-            </div>
-            <div class="review-item">
-              <span class="rev-label">Plantilla</span>
-              <span class="rev-val">{{ form.templateName || "—" }}</span>
+              <div v-if="n < 4" class="step-line" />
             </div>
           </div>
-        </div>
 
-        <!-- Navigation -->
-        <div class="wizard-nav">
-          <button class="btn-secondary" @click="router.push('/campaigns')">
-            <X :size="15" />Cancelar
-          </button>
-          <button v-if="step > 1" class="btn-secondary" @click="step--">
-            <ChevronLeft :size="15" />{{ t("campaigns_page.back") }}
-          </button>
-          <div style="flex: 1" />
-          <button
-            v-if="step < 4"
-            class="btn-primary"
-            :disabled="!canNext()"
-            @click="step++"
-          >
-            {{ t("campaigns_page.next") }}<ChevronRight :size="15" />
-          </button>
-          <button v-else class="btn-primary" @click="save">
-            <Check :size="15" />{{ t("campaigns_page.save_draft") }}
-          </button>
+          <!-- Step 1: Name & Subject -->
+          <div v-if="step === 1" class="step-panel">
+            <h2>{{ t("campaigns_page.step1_title") }}</h2>
+            <label
+              >{{ t("campaigns_page.campaign_name") }}
+              <input
+                v-model="form.name"
+                type="text"
+                class="form-input"
+                :placeholder="t('campaigns_page.campaign_name_ph')"
+              />
+            </label>
+            <label
+              >{{ t("step_subject.title") }}
+              <input
+                ref="subjectRef"
+                v-model="form.subject"
+                type="text"
+                class="form-input"
+                :placeholder="t('step_subject.placeholder')"
+              />
+              <div class="var-chips">
+                <button
+                  v-for="v in [
+                    '{{Nombre}}',
+                    '{{Empresa}}',
+                    '{{URL}}',
+                    '{{Linkedin}}',
+                    '{{Instagram}}',
+                    '{{Youtube}}',
+                  ]"
+                  :key="v"
+                  type="button"
+                  class="var-chip"
+                  @click="insertVar(v)"
+                >
+                  {{ v.replaceAll("{", "").replaceAll("}", "") }}
+                </button>
+              </div>
+            </label>
+          </div>
+
+          <!-- Step 2: List -->
+          <div v-if="step === 2" class="step-panel">
+            <h2>{{ t("campaigns_page.step2_title") }}</h2>
+            <div class="list-options">
+              <div
+                class="list-option"
+                :class="{ active: form.listId === null }"
+                @click="form.listId = null"
+              >
+                <div class="opt-dot" style="background: #4b5563" />
+                <div>
+                  <strong>{{ t("campaigns_page.no_list") }}</strong>
+                  <p>Usa el Excel desde el dashboard</p>
+                </div>
+              </div>
+              <div
+                v-for="list in lists"
+                :key="list.id"
+                class="list-option"
+                :class="{ active: form.listId === list.id }"
+                @click="form.listId = list.id"
+              >
+                <div class="opt-dot" :style="{ background: list.color }" />
+                <div>
+                  <strong>{{ list.name }}</strong>
+                  <p>
+                    {{ list.contactCount }} {{ t("contacts_page.contacts") }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: Template -->
+          <div v-if="step === 3" class="step-panel">
+            <h2>{{ t("campaigns_page.step3_title") }}</h2>
+
+            <!-- Loaded state with preview -->
+            <div v-if="form.templateHtml" class="tpl-loaded-layout">
+              <div class="tpl-loaded-left">
+                <div class="tpl-loaded">
+                  <div class="tpl-loaded-icon">
+                    <Check :size="20" stroke-width="3" />
+                  </div>
+                  <div class="tpl-loaded-meta">
+                    <span class="tpl-loaded-name">{{ form.templateName }}</span>
+                    <span class="tpl-loaded-sub">Plantilla HTML lista</span>
+                  </div>
+                  <button
+                    class="tpl-clear"
+                    @click="clearTemplate"
+                    title="Cambiar plantilla"
+                  >
+                    <X :size="16" />
+                  </button>
+                </div>
+                <div class="tpl-change-row">
+                  <button class="tpl-change-btn" @click="showLibrary = true">
+                    <LayoutGrid :size="14" /> Cambiar desde biblioteca
+                  </button>
+                  <button class="tpl-change-btn" @click="fileInput?.click()">
+                    <Upload :size="14" /> Importar otro HTML
+                  </button>
+                </div>
+              </div>
+              <div class="tpl-loaded-preview">
+                <CampaignPreview
+                  :html="form.templateHtml"
+                  :subject="form.subject"
+                />
+              </div>
+            </div>
+
+            <!-- Picker (no template yet) -->
+            <div v-else class="tpl-picker">
+              <button class="tpl-option biblioteca" @click="showLibrary = true">
+                <div class="tpl-option-icon"><LayoutGrid :size="28" /></div>
+                <div class="tpl-option-text">
+                  <span>Biblioteca</span>
+                  <p>Explorar diseños guardados</p>
+                </div>
+              </button>
+
+              <div
+                class="tpl-option dropzone"
+                :class="{ dragging: htmlDragging }"
+                @click="fileInput?.click()"
+                @dragover.prevent="htmlDragging = true"
+                @dragleave="htmlDragging = false"
+                @drop.prevent="onDrop"
+              >
+                <div class="tpl-option-icon"><Upload :size="28" /></div>
+                <div class="tpl-option-text">
+                  <span>Importar HTML</span>
+                  <p>Arrastra o haz clic para subir</p>
+                </div>
+              </div>
+            </div>
+
+            <input
+              ref="fileInput"
+              type="file"
+              accept=".html"
+              class="sr-only"
+              @change="handleFile"
+            />
+          </div>
+
+          <!-- Step 4: Review -->
+          <div v-if="step === 4" class="step-panel">
+            <h2>{{ t("campaigns_page.step4_title") }}</h2>
+            <div class="review-grid">
+              <div class="review-item">
+                <span class="rev-label">Nombre</span>
+                <span class="rev-val">{{ form.name }}</span>
+              </div>
+              <div class="review-item">
+                <span class="rev-label">Asunto</span>
+                <span class="rev-val">{{ form.subject }}</span>
+              </div>
+              <div class="review-item">
+                <span class="rev-label">Lista</span>
+                <span class="rev-val">{{
+                  form.listId
+                    ? lists.find((l) => l.id === form.listId)?.name
+                    : "Manual (Excel)"
+                }}</span>
+              </div>
+              <div class="review-item">
+                <span class="rev-label">Plantilla</span>
+                <span class="rev-val">{{ form.templateName || "—" }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Navigation -->
+          <div class="wizard-nav">
+            <button v-if="step > 1" class="btn-secondary" @click="step--">
+              <ChevronLeft :size="15" />{{ t("campaigns_page.back") }}
+            </button>
+            <div style="flex: 1" />
+            <button
+              v-if="step < 4"
+              class="btn-primary"
+              :disabled="!canNext()"
+              @click="step++"
+            >
+              {{ t("campaigns_page.next") }}<ChevronRight :size="15" />
+            </button>
+            <button v-else class="btn-primary" @click="save">
+              <Check :size="15" />{{ t("campaigns_page.save_draft") }}
+            </button>
+          </div>
         </div>
       </div>
     </main>
@@ -367,22 +402,75 @@ onMounted(() => {
   padding: 60px 24px;
 }
 
+.wizard-card {
+  width: 100%;
+  max-width: 1000px;
+  background: rgba(15, 17, 35, 0.45);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 32px;
+  padding: 40px;
+  box-shadow:
+    0 40px 100px -20px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(99, 102, 241, 0.05);
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+.wizard-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(99, 102, 241, 0.3),
+    transparent
+  );
+}
+.card-wide {
+  max-width: 1000px;
+}
+
+.btn-close-wizard {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 10;
+}
+.btn-close-wizard:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.2);
+  transform: rotate(90deg);
+}
+
 .wizard-wrap {
   width: 100%;
-  max-width: 620px;
   display: flex;
   flex-direction: column;
   gap: 32px;
-  transition: max-width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.wizard-wide {
-  max-width: 1100px;
 }
 
 /* Steps */
 .steps-nav {
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 .step-item {
   display: flex;

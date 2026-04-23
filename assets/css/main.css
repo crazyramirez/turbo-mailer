@@ -521,7 +521,7 @@ body {
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0px;
+  padding: 0 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -631,7 +631,7 @@ body {
 .main {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 20px 0px;
+  padding: 20px 40px;
 }
 .layout-grid {
   display: flex;

@@ -154,18 +154,30 @@ const VARS = [
 function insertVar(v: string) {
   const el = subjectRef.value;
   if (!el) {
-    subjectInput.value += v;
+    let toInsert = v + " ";
+    if (subjectInput.value.length > 0 && !subjectInput.value.endsWith(" ")) {
+      toInsert = " " + toInsert;
+    }
+    subjectInput.value += toInsert;
     scheduleSave();
     return;
   }
   const s = el.selectionStart ?? subjectInput.value.length;
   const e2 = el.selectionEnd ?? subjectInput.value.length;
+
+  let prefix = "";
+  if (s > 0 && subjectInput.value[s - 1] !== " ") {
+    prefix = " ";
+  }
+
+  const toInsert = prefix + v + " ";
   subjectInput.value =
-    subjectInput.value.slice(0, s) + v + subjectInput.value.slice(e2);
+    subjectInput.value.slice(0, s) + toInsert + subjectInput.value.slice(e2);
+
   scheduleSave();
   nextTick(() => {
     el.focus();
-    const p = s + v.length;
+    const p = s + toInsert.length;
     el.setSelectionRange(p, p);
   });
 }
@@ -252,12 +264,21 @@ onMounted(async () => {
   // Auto-sync template content if it was updated in the editor
   if (campaign.value && campaign.value.templateName) {
     try {
-      const data = await $fetch<any>('/api/templates', { query: { name: campaign.value.templateName } });
-      if (data && data.content && data.content !== campaign.value.templateHtml) {
+      const data = await $fetch<any>("/api/templates", {
+        query: { name: campaign.value.templateName },
+      });
+      if (
+        data &&
+        data.content &&
+        data.content !== campaign.value.templateHtml
+      ) {
         campaign.value.templateHtml = data.content;
-        await $fetch(`/api/campaigns/${id}`, { method: "PUT", body: campaign.value });
+        await $fetch(`/api/campaigns/${id}`, {
+          method: "PUT",
+          body: campaign.value,
+        });
       }
-    } catch(e) {
+    } catch (e) {
       // Ignorar si la plantilla ya no existe
     }
   }
@@ -308,12 +329,12 @@ onUnmounted(() => clearTimeout(saveTimer));
               <span class="camp-badge" :class="STATUS_BADGE[campaign.status]">
                 {{ STATUS_LABEL[campaign.status] || campaign.status }}
               </span>
-              <span v-if="campaign.finishedAt" class="hdr-date"
-                >· {{ fmtDate(campaign.finishedAt) }}</span
-              >
-              <span v-if="campaign.listName" class="hdr-list"
-                >· {{ campaign.listName }}</span
-              >
+              <span v-if="campaign.finishedAt" class="hdr-date">{{
+                fmtDate(campaign.finishedAt)
+              }}</span>
+              <span v-if="campaign.listName" class="hdr-list">{{
+                campaign.listName
+              }}</span>
             </div>
           </div>
         </div>
@@ -553,6 +574,12 @@ onUnmounted(() => clearTimeout(saveTimer));
   margin: 0 auto;
   width: 100%;
   overflow-x: hidden;
+  padding: 0 40px;
+}
+@media (max-width: 1024px) {
+  .cpage {
+    padding: 0 16px;
+  }
 }
 .cpage-loading {
   flex: 1;
@@ -575,7 +602,7 @@ onUnmounted(() => clearTimeout(saveTimer));
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 40px 20px;
+  padding: 24px 0;
   border-bottom: 1px solid var(--border);
   gap: 16px;
 }
@@ -661,10 +688,37 @@ onUnmounted(() => clearTimeout(saveTimer));
 .hdr-meta {
   display: flex;
   align-items: center;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 6px 8px;
   margin-top: 5px;
   font-size: 13px;
   color: var(--text-muted);
+}
+.hdr-meta > span {
+  display: flex;
+  align-items: center;
+}
+.hdr-meta > span:not(:first-child)::before {
+  content: "·";
+  margin-right: 8px;
+  font-weight: 900;
+  color: var(--text-dim);
+}
+
+@media (max-width: 640px) {
+  .hdr-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .hdr-meta > span:not(:first-child)::before {
+    display: none;
+  }
+}
+
+.hdr-date,
+.hdr-list {
+  white-space: nowrap;
 }
 .camp-badge {
   display: inline-flex;
@@ -832,7 +886,7 @@ onUnmounted(() => clearTimeout(saveTimer));
   display: grid;
   grid-template-columns: 40% 1fr;
   gap: 24px;
-  padding: 24px 40px 40px;
+  padding: 24px 0;
   align-items: start;
 }
 
@@ -1098,9 +1152,6 @@ select.field-input option {
 /* ── Responsive ──────────────────────────────────────────── */
 
 @media (max-width: 1024px) {
-  .cpage-header {
-    padding: 20px 24px 16px;
-  }
   .cpage-body {
     padding: 20px 24px 32px;
     gap: 20px;
@@ -1110,14 +1161,11 @@ select.field-input option {
 @media (max-width: 900px) {
   .cpage-body {
     grid-template-columns: 1fr;
-    padding: 20px 20px 32px;
   }
   .right-preview {
     position: static;
   }
-  .cpage-header {
-    padding: 18px 20px 14px;
-  }
+
   .hdr-name {
     font-size: 18px;
   }
@@ -1129,39 +1177,66 @@ select.field-input option {
 
 @media (max-width: 640px) {
   .cpage-header {
-    flex-direction: column;
+    flex-wrap: wrap;
     align-items: flex-start;
-    padding: 16px 16px 12px;
     gap: 12px;
   }
   .hdr-left {
-    width: 100%;
+    flex: 1;
+    min-width: 240px;
     gap: 10px;
   }
   .hdr-actions {
-    width: 100%;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
     gap: 8px;
     flex-wrap: wrap;
+  }
+  .hdr-warning {
+    width: 100%;
+    flex: 0 0 100%;
+    font-size: 11px;
+    order: -1;
   }
   .btn-send {
     flex: 1;
     justify-content: center;
     min-height: 44px;
+    order: 1;
+    min-width: 140px;
   }
   .btn-ghost {
     flex: 1;
     justify-content: center;
     min-height: 44px;
+    order: 0;
+    min-width: 100px;
+  }
+  .btn-delete {
+    order: 2;
+    flex-shrink: 0;
   }
   .hdr-name {
     font-size: 17px;
   }
-  .hdr-warning {
-    width: 100%;
+  .btn-icon-ghost {
+    flex-shrink: 0;
+  }
+  .hdr-meta {
     font-size: 11px;
+    gap: 4px 8px;
+  }
+  .hdr-meta > span:not(:first-child)::before {
+    margin-right: 6px;
+  }
+  .hdr-date,
+  .hdr-list {
+    white-space: normal;
   }
   .cpage-body {
-    padding: 16px 14px 28px;
+    padding: 20px 0;
     gap: 16px;
   }
   .stats-grid {
@@ -1186,7 +1261,7 @@ select.field-input option {
   .data-table th,
   .data-table td {
     padding: 10px 12px;
-    font-size: 12px;
+    font-size: 10px;
   }
   .data-table th:nth-child(3),
   .data-table td:nth-child(3) {
@@ -1202,12 +1277,6 @@ select.field-input option {
 }
 
 @media (max-width: 480px) {
-  .cpage-header {
-    padding: 14px 12px 10px;
-  }
-  .cpage-body {
-    padding: 12px 12px 24px;
-  }
   .hdr-name {
     font-size: 16px;
   }
