@@ -10,7 +10,7 @@ docs/
 docs/*
 
 data/templates/*
-!data/templates
+!data/templates/.gitkeep
 data/*.db
 data/*.db-wal
 data/*.db-shm
