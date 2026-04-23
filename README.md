@@ -103,7 +103,7 @@ Turbo-Mailer PRO es una plataforma de email marketing de alto rendimiento constr
 
 ### 🧹 Reseteo Selectivo (Mantenimiento)
 
-Desde el Dashboard, el botón de **Reiniciar** abre un visor modal avanzado que permite realizar limpiezas quirúrgicas de los datos:
+Desde el Dashboard, el botón de **Reset** abre un visor modal avanzado que permite realizar limpiezas quirúrgicas de los datos:
 
 - **Todo (Reset Agresivo)**: Elimina absolutamente todos los registros de la base de datos y borra físicamente todos los archivos de plantillas HTML creados en `/data/templates`.
 - **Solo Base de Datos**: Limpia todos los registros de contactos, listas, campañas, envíos y analíticas, pero preserva tus plantillas de diseño.
