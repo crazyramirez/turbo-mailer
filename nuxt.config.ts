@@ -5,6 +5,9 @@ export default defineNuxtConfig({
   ssr: false,
 
   runtimeConfig: {
+    appPassword: process.env.APP_PASSWORD,
+    gmailUser: process.env.GMAIL_USER,
+    gmailAppPassword: process.env.GMAIL_APP_PASSWORD,
     openaiApiKey: process.env.OPENAI_API_KEY,
     openaiModel: process.env.OPENAI_MODEL || 'gpt-4o-mini',
     trackingBaseUrl: process.env.TRACKING_BASE_URL || 'http://localhost:3000',

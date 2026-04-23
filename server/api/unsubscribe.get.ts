@@ -3,15 +3,14 @@ import { db } from '~/server/db/index'
 import { sends, contacts } from '~/server/db/schema'
 import { eq } from 'drizzle-orm'
 
-async function sendConfirmationEmail(email: string, name: string | null) {
-  const gmailUser = process.env.GMAIL_USER
-  const gmailPassword = process.env.GMAIL_APP_PASSWORD
-  if (!gmailUser || !gmailPassword) return
-
+async function sendConfirmationEmail(email: string, name: string | null, gmailUser: string, gmailPassword: string) {
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: { user: gmailUser, pass: gmailPassword },
-  })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any)
 
   const displayName = name || email
 
@@ -49,6 +48,9 @@ async function sendConfirmationEmail(email: string, name: string | null) {
 }
 
 export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig()
+  const gmailUser = config.gmailUser as string
+  const gmailPassword = config.gmailAppPassword as string
   const query = getQuery(event)
   const sendId = Number(query.s)
 
@@ -69,7 +71,7 @@ export default defineEventHandler(async (event) => {
       .where(eq(contacts.id, contact.id))
 
     // Fire-and-forget — don't block response on email delivery
-    sendConfirmationEmail(contact.email, contact.name).catch(() => {})
+    sendConfirmationEmail(contact.email, contact.name, gmailUser, gmailPassword).catch(() => {})
 
     return { status: 'ok' }
   } catch {

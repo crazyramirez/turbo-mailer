@@ -34,8 +34,8 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const baseUrl = config.trackingBaseUrl || 'http://localhost:3000'
 
-  const gmailUser = process.env.GMAIL_USER
-  const gmailPassword = process.env.GMAIL_APP_PASSWORD
+  const gmailUser = config.gmailUser
+  const gmailPassword = config.gmailAppPassword
 
   if (!gmailUser || !gmailPassword) {
     throw createError({ statusCode: 500, statusMessage: 'Gmail credentials not configured' })
@@ -76,9 +76,12 @@ export default defineEventHandler(async (event) => {
   }).where(eq(campaigns.id, campaignId))
 
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: { user: gmailUser, pass: gmailPassword },
-  })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any)
 
   let sentCount = 0
   let failCount = 0

@@ -16,7 +16,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Contraseña requerida' })
   }
 
-  const correctPassword = process.env.APP_PASSWORD
+  const config = useRuntimeConfig()
+  const correctPassword = config.appPassword
   if (!correctPassword) {
     throw createError({ statusCode: 500, message: 'APP_PASSWORD no configurado' })
   }

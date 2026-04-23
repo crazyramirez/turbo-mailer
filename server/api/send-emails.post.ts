@@ -1,8 +1,9 @@
 import nodemailer from 'nodemailer'
 
 export default defineEventHandler(async (event) => {
-  const gmailUser = process.env.GMAIL_USER
-  const gmailPassword = process.env.GMAIL_APP_PASSWORD
+  const config = useRuntimeConfig()
+  const gmailUser = config.gmailUser
+  const gmailPassword = config.gmailAppPassword
 
   if (!gmailUser || !gmailPassword) {
     throw createError({
