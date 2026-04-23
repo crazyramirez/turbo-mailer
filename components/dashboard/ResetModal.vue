@@ -7,6 +7,8 @@ import {
   BarChart2,
   AlertTriangle,
   X,
+  ShieldCheck,
+  FolderOpen,
 } from "lucide-vue-next";
 
 const emit = defineEmits<{ close: []; done: [] }>();
@@ -62,6 +64,7 @@ const scopes: Scope[] = [
 const selectedScope = ref<string | null>(null);
 const confirmInput = ref("");
 const loading = ref(false);
+const backupPath = ref<string | null>(null);
 
 const canDelete = computed(
   () =>
@@ -80,22 +83,38 @@ function dangerClass(d: "high" | "medium" | "low") {
   return "danger-low";
 }
 
+const needsReload = computed(
+  () => selectedScope.value === "all" || selectedScope.value === "db",
+);
+
 async function performReset() {
   if (!canDelete.value || !selectedScope.value) return;
   loading.value = true;
   try {
-    await $fetch("/api/reset", {
-      method: "DELETE",
-      body: { scope: selectedScope.value },
-    });
-    showToast(t("reset_modal.success"), "success");
-    emit("done");
-    emit("close");
+    const res = await $fetch<{ ok: boolean; backupPath: string | null }>(
+      "/api/reset",
+      { method: "DELETE", body: { scope: selectedScope.value } },
+    );
+    if (needsReload.value) {
+      localStorage.removeItem("turbomailer_welcome_seen");
+      backupPath.value = res.backupPath;
+      emit("done");
+      // don't close yet — show backup confirmation first
+    } else {
+      showToast(t("reset_modal.success"), "success");
+      emit("done");
+      emit("close");
+    }
   } catch {
     showToast(t("reset_modal.error"), "error");
   } finally {
     loading.value = false;
   }
+}
+
+function acceptAndReload() {
+  emit("close");
+  window.location.reload();
 }
 
 function onOverlayClick(e: MouseEvent) {
@@ -108,8 +127,29 @@ function onOverlayClick(e: MouseEvent) {
     <Transition name="rm-fade">
       <div class="rm-overlay" @click="onOverlayClick">
         <div class="rm-window" role="dialog" aria-modal="true">
+
+          <!-- ── Backup confirmation (post-reset) ──────────────── -->
+          <Transition name="rm-confirm-slide">
+            <div v-if="backupPath" class="rm-backup-done">
+              <div class="rm-backup-icon">
+                <ShieldCheck :size="22" />
+              </div>
+              <div class="rm-backup-body">
+                <span class="rm-backup-title">{{ t("reset_modal.backup_title") }}</span>
+                <span class="rm-backup-desc">{{ t("reset_modal.backup_desc") }}</span>
+                <div class="rm-backup-path">
+                  <FolderOpen :size="12" />
+                  <code>{{ backupPath }}</code>
+                </div>
+              </div>
+              <button class="rm-btn-accept" @click="acceptAndReload">
+                {{ t("reset_modal.backup_accept") }}
+              </button>
+            </div>
+          </Transition>
+
           <!-- Header -->
-          <div class="rm-header">
+          <div v-if="!backupPath" class="rm-header">
             <div class="rm-header-icon">
               <AlertTriangle :size="20" />
             </div>
@@ -123,7 +163,7 @@ function onOverlayClick(e: MouseEvent) {
           </div>
 
           <!-- Scope grid -->
-          <div class="rm-scopes">
+          <div v-if="!backupPath" class="rm-scopes">
             <button
               v-for="s in scopes"
               :key="s.id"
@@ -146,15 +186,21 @@ function onOverlayClick(e: MouseEvent) {
 
           <!-- Confirm input -->
           <Transition name="rm-confirm-slide">
-            <div v-if="selectedScope" class="rm-confirm-area">
+            <div v-if="selectedScope && !backupPath" class="rm-confirm-area">
               <label class="rm-confirm-label">
                 <AlertTriangle :size="13" />
-                <span v-html="t('reset_modal.confirm_text', { ok: '<strong>OK</strong>' })"></span>
+                <span
+                  v-html="
+                    t('reset_modal.confirm_text', { ok: '<strong>OK</strong>' })
+                  "
+                ></span>
               </label>
               <input
                 v-model="confirmInput"
                 class="rm-confirm-input"
-                :placeholder="t('reset_modal.confirm_placeholder', { ok: 'OK' })"
+                :placeholder="
+                  t('reset_modal.confirm_placeholder', { ok: 'OK' })
+                "
                 autocomplete="off"
                 spellcheck="false"
                 @keydown.enter="performReset"
@@ -163,7 +209,7 @@ function onOverlayClick(e: MouseEvent) {
           </Transition>
 
           <!-- Actions -->
-          <div class="rm-actions">
+          <div v-if="!backupPath" class="rm-actions">
             <button class="rm-btn-cancel" @click="emit('close')">
               {{ t("reset_modal.cancel") }}
             </button>
@@ -173,7 +219,9 @@ function onOverlayClick(e: MouseEvent) {
               @click="performReset"
             >
               <Trash2 :size="14" />
-              {{ loading ? t("reset_modal.deleting") : t("reset_modal.delete") }}
+              {{
+                loading ? t("reset_modal.deleting") : t("reset_modal.delete")
+              }}
             </button>
           </div>
         </div>
@@ -484,5 +532,94 @@ function onOverlayClick(e: MouseEvent) {
 .rm-confirm-slide-leave-from {
   opacity: 1;
   max-height: 120px;
+}
+
+/* ── Backup confirmation panel ───────────────────────── */
+.rm-backup-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px 28px 28px;
+  text-align: center;
+}
+
+.rm-backup-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.12);
+}
+
+.rm-backup-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.rm-backup-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.rm-backup-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.rm-backup-path {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 8px;
+  padding: 10px 14px;
+  background: rgb(0 0 0 / 20%);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: #10b981;
+  text-align: left;
+  overflow: hidden;
+}
+
+.rm-backup-path svg {
+  flex-shrink: 0;
+}
+
+.rm-backup-path code {
+  font-size: 11px;
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-break: break-all;
+}
+
+.rm-btn-accept {
+  width: 100%;
+  padding: 11px 20px;
+  border-radius: 10px;
+  border: none;
+  background: #10b981;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.15s;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+}
+
+.rm-btn-accept:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
 }
 </style>

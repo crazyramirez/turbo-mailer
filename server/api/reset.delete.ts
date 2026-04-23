@@ -2,6 +2,7 @@ import { db } from '~/server/db/index'
 import { contacts, lists, listContacts, campaigns, sends, trackingEvents } from '~/server/db/schema'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { createBackup } from '~/server/utils/backup'
 
 const VALID_SCOPES = ['all', 'db', 'contacts', 'campaigns', 'analytics'] as const
 type Scope = typeof VALID_SCOPES[number]
@@ -13,6 +14,9 @@ export default defineEventHandler(async (event) => {
   if (!VALID_SCOPES.includes(scope)) {
     throw createError({ statusCode: 400, message: 'Invalid scope' })
   }
+
+  // Backup before any destructive operation
+  const backupPath = await createBackup().catch(() => null)
 
   if (scope === 'analytics') {
     await db.delete(trackingEvents)
@@ -54,5 +58,5 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  return { ok: true }
+  return { ok: true, backupPath }
 })

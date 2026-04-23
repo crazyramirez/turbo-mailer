@@ -11,6 +11,8 @@ docs/*
 
 data/templates/*
 !data/templates/.gitkeep
+data/backup/*
+!data/backup/.gitkeep
 data/*.db
 data/*.db-wal
 data/*.db-shm

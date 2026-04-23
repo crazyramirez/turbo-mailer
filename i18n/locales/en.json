@@ -226,6 +226,24 @@
     "hours_ago": "{n}h ago",
     "reset_btn": "Reset"
   },
+  "welcome_modal": {
+    "pill": "Empty database",
+    "title": "Welcome to Turbo Mailer!",
+    "subtitle": "The database is empty. Choose how you want to get started.",
+    "demo_tag": "Just to explore",
+    "demo_title": "Demo data",
+    "demo_desc": "We automatically load real contacts, campaigns with statistics and analytics events so you can explore the full app.",
+    "feat_contacts": "Contacts and distribution lists",
+    "feat_campaigns": "Campaigns with real statistics",
+    "feat_analytics": "Open and click tracking events",
+    "scratch_title": "Start from scratch",
+    "scratch_desc": "Empty database — create your own contacts and campaigns",
+    "note": "Demo data can be deleted at any time using the Reset button",
+    "btn_demo": "Load demo data",
+    "btn_scratch": "Start from scratch",
+    "loading": "Loading data...",
+    "error": "Failed to load demo data"
+  },
   "reset_modal": {
     "title": "System Reset",
     "subtitle": "Select which data you want to permanently delete",
@@ -245,7 +263,10 @@
     "delete": "Delete",
     "deleting": "Deleting...",
     "success": "Data deleted successfully",
-    "error": "Error deleting data"
+    "error": "Error deleting data",
+    "backup_title": "Backup created",
+    "backup_desc": "Your data was backed up before the reset. You can restore it by unzipping the file.",
+    "backup_accept": "Got it!"
   },
   "common": {
     "loading": "Loading...",

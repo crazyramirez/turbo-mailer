@@ -226,6 +226,24 @@
     "hours_ago": "hace {n}h",
     "reset_btn": "Reset"
   },
+  "welcome_modal": {
+    "pill": "Base de datos vacía",
+    "title": "¡Bienvenido a Turbo Mailer!",
+    "subtitle": "La base de datos está vacía. Elige cómo quieres empezar.",
+    "demo_tag": "Solo para probar",
+    "demo_title": "Datos de ejemplo",
+    "demo_desc": "Cargamos automáticamente contactos reales, campañas con estadísticas y eventos de analítica para que explores la app al completo.",
+    "feat_contacts": "Contactos y listas de distribución",
+    "feat_campaigns": "Campañas con estadísticas reales",
+    "feat_analytics": "Eventos de apertura y click",
+    "scratch_title": "Empezar desde cero",
+    "scratch_desc": "Base de datos vacía, crea tus propios contactos y campañas",
+    "note": "Los datos de ejemplo se pueden eliminar en cualquier momento desde el botón Reset",
+    "btn_demo": "Cargar datos de ejemplo",
+    "btn_scratch": "Empezar desde cero",
+    "loading": "Cargando datos...",
+    "error": "Error al cargar los datos de ejemplo"
+  },
   "reset_modal": {
     "title": "Reinicio del Sistema",
     "subtitle": "Selecciona qué datos deseas eliminar permanentemente",
@@ -245,7 +263,10 @@
     "delete": "Eliminar",
     "deleting": "Eliminando...",
     "success": "Datos eliminados correctamente",
-    "error": "Error al eliminar los datos"
+    "error": "Error al eliminar los datos",
+    "backup_title": "Copia de seguridad creada",
+    "backup_desc": "Tus datos han sido respaldados antes del reseteo. Puedes recuperarlos descomprimiendo el archivo.",
+    "backup_accept": "¡Entendido!"
   },
   "common": {
     "loading": "Cargando...",

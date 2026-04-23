@@ -201,6 +201,28 @@ SQLite en `./data/turbomailer.db` gestionada con Drizzle ORM. Tablas principales
 
 ---
 
+## 🎯 Primer Uso — Base de Datos Demo
+
+Al abrir la app por primera vez (o tras un reset completo), el dashboard detecta automáticamente que la base de datos está vacía y muestra una pantalla de bienvenida con dos opciones:
+
+### Opción A — Cargar datos de ejemplo (recomendado)
+
+Pulsa **"Datos de ejemplo"** en el modal de bienvenida. La app copia automáticamente `data/turbomailer_demo.db` sobre `data/turbomailer.db` y recarga la página. Verás de inmediato:
+
+- Contactos y listas de distribución de muestra
+- Campañas con estadísticas reales (enviadas, aperturas, clics)
+- Eventos de tracking y analíticas pobladas
+
+Esto te permite explorar todas las funciones sin configurar nada. Cuando quieras empezar con tus propios datos, abre el botón **Reset** del dashboard y elige **"Todo (Reset Agresivo)"** — borra todo y vuelve a mostrar la pantalla de bienvenida.
+
+### Opción B — Empezar desde cero
+
+Pulsa **"Empezar desde cero"** para comenzar directamente con la base de datos vacía e importar tus propios contactos.
+
+> **Nota:** `data/turbomailer_demo.db` nunca se elimina. Puedes volver a cargar los datos demo en cualquier momento haciendo un **Reset → Todo** desde el dashboard.
+
+---
+
 ## 🔑 Cómo crear una App Password de Gmail
 
 La app usa Gmail SMTP con una contraseña de aplicación de 16 dígitos (no tu contraseña normal).

@@ -17,6 +17,7 @@ import {
 } from "lucide-vue-next";
 import CampaignPreview from "~/components/campaigns/CampaignPreview.vue";
 import ResetModal from "~/components/dashboard/ResetModal.vue";
+import WelcomeModal from "~/components/dashboard/WelcomeModal.vue";
 
 definePageMeta({ layout: "app" });
 
@@ -69,7 +70,25 @@ const analyticsLoading = ref(true);
 const campaignsLoading = ref(true);
 const selectedCampaign = ref<Campaign | null>(null);
 const showResetModal = ref(false);
+const welcomeDismissed = ref(
+  typeof localStorage !== "undefined" &&
+    !!localStorage.getItem("turbomailer_welcome_seen"),
+);
 let refreshTimer: ReturnType<typeof setInterval>;
+
+const showWelcome = computed(
+  () =>
+    !analyticsLoading.value &&
+    !campaignsLoading.value &&
+    !welcomeDismissed.value &&
+    (analyticsData.value?.totalContacts ?? 0) === 0 &&
+    campaigns.value.length === 0,
+);
+
+function dismissWelcome() {
+  localStorage.setItem("turbomailer_welcome_seen", "1");
+  welcomeDismissed.value = true;
+}
 
 // ── Computed ─────────────────────────────────────────────────────
 const recentCampaigns = computed(() => campaigns.value.slice(0, 12));
@@ -244,6 +263,11 @@ async function duplicateCampaign() {
         v-if="showResetModal"
         @close="showResetModal = false"
         @done="fetchAll"
+      />
+      <WelcomeModal
+        v-if="showWelcome"
+        @close="dismissWelcome"
+        @done="dismissWelcome"
       />
 
       <!-- KPI Row -->
