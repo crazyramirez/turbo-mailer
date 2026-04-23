@@ -113,9 +113,13 @@ Desde el Dashboard, el botón de **Reset** abre un visor modal avanzado que perm
   - **Analíticas**: Limpia exclusivamente los eventos de tracking (aperturas y clics) para reiniciar métricas.
 - **🛡️ Copia de Seguridad Automática**: Antes de ejecutar cualquier proceso de reseteo masivo (Todo o Solo BBDD), el sistema genera automáticamente un archivo `.zip` con el respaldo íntegro de la base de datos y las plantillas. La ruta del backup se muestra en pantalla al finalizar el proceso para tu tranquilidad.
 
----
+### 🔒 Privacidad y SEO (Anti-Indexación)
 
-### 🔒 Seguridad y Acceso
+Para garantizar la privacidad de tus datos y evitar que la plataforma aparezca en motores de búsqueda, Turbo-Mailer PRO está configurado para **no ser indexado ni cacheado**:
+
+- **No-Index**: Se han incluido etiquetas `meta` (`robots` y `googlebot`) con directivas `noindex` y `nofollow`.
+- **Anti-Caché**: Se ha activado la directiva `noarchive` para evitar que Google guarde copias en caché de la interfaz.
+- **Robots.txt**: El archivo `robots.txt` bloquea explícitamente el acceso a todos los rastreadores (`User-agent: *`, `Disallow: /`).
 
 ---
 
