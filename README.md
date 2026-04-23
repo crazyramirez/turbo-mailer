@@ -190,25 +190,7 @@ SQLite en `./data/turbomailer.db` gestionada con Drizzle ORM. Tablas principales
    TRACKING_BASE_URL=http://localhost:3000
    ```
 
-4. **Base de datos — dos opciones**
-
-   **Opción A — Demo preconfigurada** (recomendado para probar la app rápidamente):
-
-   Renombra el archivo de demo incluido en el repositorio:
-
-   ```bash
-   mv data/turbomailer_demo.db data/turbomailer.db
-   ```
-
-   Contiene 15 contactos, 3 listas, 4 campañas (3 enviadas + 1 borrador) y eventos de tracking listos para explorar el dashboard.
-
-   **Opción B — Base de datos vacía** (para uso real):
-
-   ```bash
-   npx drizzle-kit push
-   ```
-
-5. **Iniciar en desarrollo**
+4. **Iniciar en desarrollo**
 
    ```bash
    npm run dev
