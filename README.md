@@ -2,6 +2,9 @@
 
 **Dashboard de Envío Inteligente de Emails**
 
+WIP -- En breve esta webapp va a cambiar radicalmente, si todo va bien vamos a añadirle muchas opciones (Gestión de contactos, importador, Gestión de campañas, analíticas, tracking de visualización, tracking de clicks...)
+Nada... Un par de días como mucho
+
 > ⚠️ **Uso Responsable — Leer antes de usar**
 >
 > Turbo-Mailer PRO es una herramienta diseñada exclusivamente para **envíos de email legítimos, controlados y con consentimiento previo**: comunicaciones corporativas, newsletters opt-in, campañas B2B entre contactos propios y notificaciones transaccionales.
