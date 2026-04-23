@@ -53,10 +53,11 @@ async function handleBack() {
             alt="Logo"
           />
         </div>
-        <span
-          >TurboEditor
-          <span class="editor-version">{{ APP_VERSION }}</span></span
-        >
+        <div class="brand-title">
+          <span style="color: #ffffff">Turbo</span>
+          <span style="color: var(--primary); margin-left: 4px">Editor</span>
+          <span class="editor-version">{{ APP_VERSION }}</span>
+        </div>
       </div>
     </div>
 
@@ -151,7 +152,7 @@ async function handleBack() {
   letter-spacing: 0.05em;
 }
 
-.editor-brand span {
+.brand-title {
   display: flex;
   align-items: center;
   font-weight: 700;

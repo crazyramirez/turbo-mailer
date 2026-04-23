@@ -13,7 +13,7 @@
   top: -150px;
   right: -120px;
   background: #ff8000;
-  opacity: 0.15;
+  opacity: 0.2;
   animation: orb-float-1 12s infinite alternate ease-in-out;
 }
 
@@ -23,7 +23,7 @@
   bottom: -150px;
   left: -140px;
   background: #3b82f6;
-  opacity: 0.15;
+  opacity: 0.2;
   animation: orb-float-2 15s infinite alternate ease-in-out;
   animation-delay: -4s;
 }
@@ -35,7 +35,7 @@
   left: 50%;
   transform: translate(-50%, -50%);
   background: #a855f7;
-  opacity: 0.12;
+  opacity: 0.16;
   animation: orb-float-3 10s infinite alternate ease-in-out;
   animation-delay: -6s;
 }
@@ -62,6 +62,20 @@
   pointer-events: none;
   z-index: 1;
   animation: grid-drift 120s linear infinite;
+}
+
+@media (max-width: 768px) {
+  .bg-orb-1,
+  .bg-orb-2 {
+    opacity: 0.12;
+  }
+  .bg-orb-3 {
+    opacity: 0.1;
+  }
+
+  .bg-grid {
+    opacity: 0.5;
+  }
 }
 
 @keyframes grid-drift {

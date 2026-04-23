@@ -957,9 +957,9 @@ async function duplicateCampaign() {
   border-radius: 12px;
 }
 .ac-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
