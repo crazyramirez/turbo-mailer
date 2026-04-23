@@ -1,6 +1,8 @@
 {
   "name": "contacto-email-sender",
-  "private": true,
+  "version": "1.0.0",
+  "private": false,
+  "license": "AGPL-3.0-or-later",
   "type": "module",
   "scripts": {
     "build": "nuxt build",

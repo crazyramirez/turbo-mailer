@@ -1,5 +1,7 @@
 # 🚀 Turbo-Mailer PRO
 
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+
 **Plataforma Completa de Email Marketing con CRM simple, Editor de plantillas HTML, IA, Analytics, Tracking y mucho más.**
 
 > ⚠️ **Uso Responsable — Leer antes de usar**
@@ -287,6 +289,19 @@ Encuentra una plantilla de ejemplo profesional en: `docs/email_demo.html`
 - [ ] **Contactos** — Revisar CRUD, importación Excel, exportación CSV, drag-to-list, paginación y filtros. Funcional y testeado básicamente, pero requiere testing en profundidad.
 - [ ] **Analíticas** — Revisar KPIs, últimas aperturas, top campañas y eventos de tracking. Funcional y testeado básicamente, pero requiere testing en profundidad.
 - [ ] **Responsive** — Adaptar toda la interfaz para dispositivos móviles (actualmente optimizado para Desktop).
+
+---
+
+## ⚖️ License
+
+This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+
+### 🔑 Key Requirements
+- **Copyleft**: Any modifications must be released under the same license.
+- **Network Interaction**: If you run a modified version as a service (SaaS), you **must** provide the source code to your users.
+- **Commercial Use**: Free for personal and open-source projects. For commercial use without opening your source code, a **private commercial license** is required.
+
+For commercial licensing inquiries, please contact: `drleria@gmail.com`
 
 ---
 
