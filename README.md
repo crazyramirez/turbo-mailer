@@ -111,6 +111,7 @@ Desde el Dashboard, el botón de **Reset** abre un visor modal avanzado que perm
   - **Contactos**: Elimina solo la base de datos de contactos y sus listas asociadas.
   - **Campañas**: Borra el historial de campañas y sus reportes de envío.
   - **Analíticas**: Limpia exclusivamente los eventos de tracking (aperturas y clics) para reiniciar métricas.
+- **🛡️ Copia de Seguridad Automática**: Antes de ejecutar cualquier proceso de reseteo masivo (Todo o Solo BBDD), el sistema genera automáticamente un archivo `.zip` con el respaldo íntegro de la base de datos y las plantillas. La ruta del backup se muestra en pantalla al finalizar el proceso para tu tranquilidad.
 
 ---
 
