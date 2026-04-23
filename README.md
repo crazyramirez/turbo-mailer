@@ -20,16 +20,16 @@ Turbo-Mailer PRO es una plataforma de email marketing de alto rendimiento constr
 
 <table>
   <tr>
-    <td><img src="public/images/screenshot_1.webp"></td>
-    <td><img src="public/images/screenshot_2.webp"></td>
+    <td><img src="public/images/screen_1.webp"></td>
+    <td><img src="public/images/screen_2.webp"></td>
   </tr>
   <tr>
-    <td><img src="public/images/screenshot_3.webp"></td>
-    <td><img src="public/images/screenshot_4.webp"></td>
+    <td><img src="public/images/screen_3.webp"></td>
+    <td><img src="public/images/screen_4.webp"></td>
   </tr>
     <tr>
-    <td><img src="public/images/screenshot_5.webp"></td>
-    <td><img src="public/images/screenshot_6.webp"></td>
+    <td><img src="public/images/screen_5.webp"></td>
+    <td><img src="public/images/screen_6.webp"></td>
   </tr>
 </table>
 
