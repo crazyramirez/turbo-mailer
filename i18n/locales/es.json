@@ -7,7 +7,7 @@
     "editor": "Editor PRO",
     "logout": "Salir",
     "logout_full": "Cerrar sesión",
-    "reset": "Reiniciar",
+    "reset": "Reset",
     "contacts": "Contactos",
     "campaigns": "Campañas",
     "analytics": "Analytics",
@@ -223,7 +223,8 @@
     "no_activity": "Sin aperturas recientes",
     "just_now": "ahora mismo",
     "minutes_ago": "hace {n}m",
-    "hours_ago": "hace {n}h"
+    "hours_ago": "hace {n}h",
+    "reset_btn": "Reset"
   },
   "common": {
     "loading": "Cargando...",

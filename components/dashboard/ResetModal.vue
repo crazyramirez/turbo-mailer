@@ -1,29 +1,487 @@
 <script setup lang="ts">
-import { useDashboardState } from '~/composables/useDashboardState'
-import { useCampaignSender } from '~/composables/useCampaignSender'
+import {
+  Trash2,
+  Database,
+  Users,
+  Mail,
+  BarChart2,
+  AlertTriangle,
+  X,
+} from "lucide-vue-next";
 
-const { showResetConfirm } = useDashboardState()
-const { performFullReset } = useCampaignSender()
+const emit = defineEmits<{ close: []; done: [] }>();
+const { showToast } = useDashboardState();
+
+interface Scope {
+  id: string;
+  icon: any;
+  label: string;
+  desc: string;
+  danger: "high" | "medium" | "low";
+}
+
+const scopes: Scope[] = [
+  {
+    id: "all",
+    icon: Trash2,
+    label: "Todo (Agresivo)",
+    desc: "Elimina todos los registros de la BBDD y las plantillas HTML del disco",
+    danger: "high",
+  },
+  {
+    id: "db",
+    icon: Database,
+    label: "Solo Base de Datos",
+    desc: "Elimina contactos, campañas y analíticas. Las plantillas HTML se conservan",
+    danger: "high",
+  },
+  {
+    id: "contacts",
+    icon: Users,
+    label: "Contactos & Listas",
+    desc: "Elimina todos los contactos y listas de distribución",
+    danger: "medium",
+  },
+  {
+    id: "campaigns",
+    icon: Mail,
+    label: "Campañas",
+    desc: "Elimina todas las campañas, envíos y eventos de seguimiento",
+    danger: "medium",
+  },
+  {
+    id: "analytics",
+    icon: BarChart2,
+    label: "Analíticas",
+    desc: "Elimina solo los eventos de apertura y click. Las campañas se conservan",
+    danger: "low",
+  },
+];
+
+const selectedScope = ref<string | null>(null);
+const confirmInput = ref("");
+const loading = ref(false);
+
+const canDelete = computed(
+  () =>
+    selectedScope.value !== null &&
+    confirmInput.value.trim().toUpperCase() === "OK",
+);
+
+function selectScope(id: string) {
+  selectedScope.value = selectedScope.value === id ? null : id;
+  confirmInput.value = "";
+}
+
+function dangerClass(d: "high" | "medium" | "low") {
+  if (d === "high") return "danger-high";
+  if (d === "medium") return "danger-medium";
+  return "danger-low";
+}
+
+async function performReset() {
+  if (!canDelete.value || !selectedScope.value) return;
+  loading.value = true;
+  try {
+    await $fetch("/api/reset", {
+      method: "DELETE",
+      body: { scope: selectedScope.value },
+    });
+    showToast("Datos eliminados correctamente", "success");
+    emit("done");
+    emit("close");
+  } catch {
+    showToast("Error al eliminar los datos", "error");
+  } finally {
+    loading.value = false;
+  }
+}
+
+function onOverlayClick(e: MouseEvent) {
+  if ((e.target as HTMLElement).classList.contains("rm-overlay")) emit("close");
+}
 </script>
 
 <template>
-  <Transition name="fade-scale">
-    <div v-if="showResetConfirm" class="modal-overlay">
-      <div class="modal-window">
-        <div class="modal-content">
-          <div class="modal-icon-warn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M12 9v4m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
+  <Teleport to="body">
+    <Transition name="rm-fade">
+      <div class="rm-overlay" @click="onOverlayClick">
+        <div class="rm-window" role="dialog" aria-modal="true">
+          <!-- Header -->
+          <div class="rm-header">
+            <div class="rm-header-icon">
+              <AlertTriangle :size="20" />
+            </div>
+            <div class="rm-header-text">
+              <h2>Reinicio del Sistema</h2>
+              <p>Selecciona qué datos deseas eliminar permanentemente</p>
+            </div>
+            <button class="rm-close" @click="emit('close')">
+              <X :size="16" />
+            </button>
           </div>
-          <h3>¿Reiniciar Campaña?</h3>
-          <p>Se eliminarán todos los contactos, plantillas y configuraciones actuales. Esta acción no se puede deshacer.</p>
-        </div>
-        <div class="modal-actions">
-          <button @click="showResetConfirm = false" class="btn-modal-cancel">Cancelar</button>
-          <button @click="performFullReset" class="btn-modal-confirm">Reiniciar Todo</button>
+
+          <!-- Scope grid -->
+          <div class="rm-scopes">
+            <button
+              v-for="s in scopes"
+              :key="s.id"
+              class="rm-scope-card"
+              :class="[
+                dangerClass(s.danger),
+                { selected: selectedScope === s.id },
+              ]"
+              @click="selectScope(s.id)"
+            >
+              <div class="rm-scope-icon">
+                <component :is="s.icon" :size="18" />
+              </div>
+              <div class="rm-scope-body">
+                <span class="rm-scope-label">{{ s.label }}</span>
+                <span class="rm-scope-desc">{{ s.desc }}</span>
+              </div>
+            </button>
+          </div>
+
+          <!-- Confirm input -->
+          <Transition name="rm-confirm-slide">
+            <div v-if="selectedScope" class="rm-confirm-area">
+              <label class="rm-confirm-label">
+                <AlertTriangle :size="13" />
+                Escribe <strong>OK</strong> para confirmar la eliminación
+              </label>
+              <input
+                v-model="confirmInput"
+                class="rm-confirm-input"
+                placeholder="Escribe OK"
+                autocomplete="off"
+                spellcheck="false"
+                @keydown.enter="performReset"
+              />
+            </div>
+          </Transition>
+
+          <!-- Actions -->
+          <div class="rm-actions">
+            <button class="rm-btn-cancel" @click="emit('close')">
+              Cancelar
+            </button>
+            <button
+              class="rm-btn-delete"
+              :disabled="!canDelete || loading"
+              @click="performReset"
+            >
+              <Trash2 :size="14" />
+              {{ loading ? "Eliminando…" : "Eliminar" }}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  </Transition>
+    </Transition>
+  </Teleport>
 </template>
+
+<style scoped>
+.rm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.rm-window {
+  background: #1d242f;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.6);
+  padding: 10px;
+}
+
+/* ── Header ──────────────────────────────────────────── */
+.rm-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 22px 22px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.rm-header-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.rm-header-text {
+  flex: 1;
+}
+
+.rm-header-text h2 {
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0 0 3px;
+  color: var(--text);
+}
+
+.rm-header-text p {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.rm-close {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.rm-close:hover {
+  background: rgb(255 255 255 / 5%);
+  color: var(--text);
+}
+
+/* ── Scope cards ─────────────────────────────────────── */
+.rm-scopes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 22px;
+}
+
+.rm-scope-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+  width: 100%;
+}
+
+.rm-scope-card:hover:not(.selected) {
+  background: rgb(255 255 255 / 3%);
+}
+
+.rm-scope-card.selected.danger-high {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.07);
+}
+
+.rm-scope-card.selected.danger-medium {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.07);
+}
+
+.rm-scope-card.selected.danger-low {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.07);
+}
+
+.rm-scope-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.danger-high .rm-scope-icon {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.danger-medium .rm-scope-icon {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.danger-low .rm-scope-icon {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.rm-scope-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.rm-scope-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.rm-scope-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* ── Confirm area ────────────────────────────────────── */
+.rm-confirm-area {
+  padding: 0 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rm-confirm-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.rm-confirm-label strong {
+  color: #ef4444;
+  font-weight: 800;
+}
+
+.rm-confirm-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgb(0 0 0 / 20%);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  outline: none;
+  transition: border-color 0.15s;
+  letter-spacing: 0.05em;
+  box-sizing: border-box;
+}
+
+.rm-confirm-input:focus {
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+/* ── Actions ─────────────────────────────────────────── */
+.rm-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 22px;
+  border-top: 1px solid var(--border);
+}
+
+.rm-btn-cancel {
+  padding: 9px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.rm-btn-cancel:hover {
+  background: rgb(255 255 255 / 5%);
+  color: var(--text);
+}
+
+.rm-btn-delete {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 20px;
+  border-radius: 10px;
+  border: none;
+  background: #ef4444;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.rm-btn-delete:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.rm-btn-delete:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Transitions ─────────────────────────────────────── */
+.rm-fade-enter-active,
+.rm-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.rm-fade-enter-from,
+.rm-fade-leave-to {
+  opacity: 0;
+}
+
+.rm-fade-enter-active .rm-window,
+.rm-fade-leave-active .rm-window {
+  transition: transform 0.2s ease;
+}
+
+.rm-fade-enter-from .rm-window,
+.rm-fade-leave-to .rm-window {
+  transform: scale(0.96) translateY(8px);
+}
+
+.rm-confirm-slide-enter-active,
+.rm-confirm-slide-leave-active {
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.rm-confirm-slide-enter-from,
+.rm-confirm-slide-leave-to {
+  opacity: 0;
+  max-height: 0;
+  padding-bottom: 0;
+}
+
+.rm-confirm-slide-enter-to,
+.rm-confirm-slide-leave-from {
+  opacity: 1;
+  max-height: 120px;
+}
+</style>

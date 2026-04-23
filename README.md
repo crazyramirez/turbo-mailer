@@ -101,17 +101,20 @@ Turbo-Mailer PRO es una plataforma de email marketing de alto rendimiento constr
 - Cambio de idioma en tiempo real sin recarga
 - Traducción de toda la UI: navegación, pasos, contactos, campañas, analytics, baja de suscripción
 
+### 🧹 Reseteo Selectivo (Mantenimiento)
+
+Desde el Dashboard, el botón de **Reiniciar** abre un visor modal avanzado que permite realizar limpiezas quirúrgicas de los datos:
+
+- **Todo (Reset Agresivo)**: Elimina absolutamente todos los registros de la base de datos y borra físicamente todos los archivos de plantillas HTML creados en `/data/templates`.
+- **Solo Base de Datos**: Limpia todos los registros de contactos, listas, campañas, envíos y analíticas, pero preserva tus plantillas de diseño.
+- **Reseteo por Módulos**:
+  - **Contactos**: Elimina solo la base de datos de contactos y sus listas asociadas.
+  - **Campañas**: Borra el historial de campañas y sus reportes de envío.
+  - **Analíticas**: Limpia exclusivamente los eventos de tracking (aperturas y clics) para reiniciar métricas.
+
+---
+
 ### 🔒 Seguridad y Acceso
-
-- Login con contraseña maestra configurable en variable de entorno
-- Sesión en cookie `httpOnly` + `SameSite=strict` con TTL de 24 horas
-- Rate limiting por IP: 10 intentos fallidos → bloqueo de 15 minutos con contador visible
-- Middleware global que redirige a `/login` si la sesión no es válida
-
-### 📱 PWA & Mobile First
-
-- Instalable como webapp en Windows, iOS y Android
-- Soporte offline vía Service Worker (autoUpdate + workbox navigation fallback)
 
 ---
 
@@ -262,6 +265,7 @@ La app usa Gmail SMTP con una contraseña de aplicación de 16 dígitos (no tu c
 | GET    | `/api/track/click` | Redirect trackeado          |
 | GET    | `/api/analytics`   | KPIs del dashboard          |
 | GET    | `/api/unsubscribe` | Baja de suscripción         |
+| DELETE | `/api/reset`       | Reseteo selectivo de datos  |
 
 ---
 
@@ -283,9 +287,9 @@ Encuentra una plantilla de ejemplo profesional en: `docs/email_demo.html`
 
 ## 📝 ToDo / Pendiente
 
-- [ ] **Campañas** — Revisar funcionalidades completas (wizard, envío, estados, tracking inyectado). Funcional y testeado básicamente, pero requiere testing en profundidad.
-- [ ] **Contactos** — Revisar CRUD, importación Excel, exportación CSV, drag-to-list, paginación y filtros. Funcional y testeado básicamente, pero requiere testing en profundidad.
-- [ ] **Analíticas** — Revisar KPIs, últimas aperturas, top campañas y eventos de tracking. Funcional y testeado básicamente, pero requiere testing en profundidad.
+- [x] **Campañas** — Revisar funcionalidades completas (wizard, envío, estados, tracking inyectado). Funcional y testeado básicamente, pero requiere testing en profundidad.
+- [x] **Contactos** — Revisar CRUD, importación Excel, exportación CSV, drag-to-list, paginación y filtros. Funcional y testeado básicamente, pero requiere testing en profundidad.
+- [x] **Analíticas** — Revisar KPIs, últimas aperturas, top campañas y eventos de tracking. Funcional y testeado básicamente, pero requiere testing en profundidad.
 - [ ] **Responsive** — Adaptar toda la interfaz para dispositivos móviles (actualmente optimizado para Desktop).
 
 ---

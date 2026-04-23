@@ -217,7 +217,8 @@
     "no_activity": "No recent opens yet",
     "just_now": "just now",
     "minutes_ago": "{n}m ago",
-    "hours_ago": "{n}h ago"
+    "hours_ago": "{n}h ago",
+    "reset_btn": "Reset"
   },
   "common": {
     "loading": "Loading...",

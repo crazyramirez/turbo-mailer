@@ -13,8 +13,10 @@ import {
   Clock,
   PauseCircle,
   ArrowRight,
+  Trash2,
 } from "lucide-vue-next";
 import CampaignPreview from "~/components/campaigns/CampaignPreview.vue";
+import ResetModal from "~/components/dashboard/ResetModal.vue";
 
 definePageMeta({ layout: "app" });
 
@@ -66,6 +68,7 @@ const campaigns = ref<Campaign[]>([]);
 const analyticsLoading = ref(true);
 const campaignsLoading = ref(true);
 const selectedCampaign = ref<Campaign | null>(null);
+const showResetModal = ref(false);
 let refreshTimer: ReturnType<typeof setInterval>;
 
 // ── Computed ─────────────────────────────────────────────────────
@@ -230,8 +233,18 @@ async function duplicateCampaign() {
             {{ t("dashboard.all_campaigns") }}
             <ArrowRight :size="13" />
           </NuxtLink>
+          <button class="btn-reset" @click="showResetModal = true">
+            <Trash2 :size="14" />
+            {{ t("dashboard.reset_btn") }}
+          </button>
         </div>
       </div>
+
+      <ResetModal
+        v-if="showResetModal"
+        @close="showResetModal = false"
+        @done="fetchAll"
+      />
 
       <!-- KPI Row -->
       <div class="kpi-grid">
@@ -583,6 +596,25 @@ async function duplicateCampaign() {
 .btn-secondary:hover {
   background: rgb(0 0 0 / 6%);
   color: var(--text);
+}
+.btn-reset {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 18px;
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+.btn-reset:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.6);
 }
 
 /* ── KPI ─────────────────────────────────────────────────── */
