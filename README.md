@@ -1,6 +1,6 @@
 # 🚀 Turbo-Mailer PRO
 
-**Plataforma Completa de Email Marketing con CRM, Analytics y Tracking**
+**Plataforma Completa de Email Marketing con CRM simple, Editor de plantillas HTML, IA, Analytics, Tracking y mucho más.**
 
 > ⚠️ **Uso Responsable — Leer antes de usar**
 >
@@ -54,7 +54,7 @@ Turbo-Mailer PRO es una plataforma de email marketing de alto rendimiento constr
 - Estados de campaña: `borrador / programado / enviando / enviado / pausado`
 - Vista de detalle por campaña con listado de destinatarios, sus estados y métricas individuales
 - Inyección automática de **pixel de tracking** (apertura) y **enlaces trackeados** (clics) en el HTML antes del envío
-- Variables dinámicas: `{{Empresa}}`, `{{Contacto}}`, `{{URL}}`, `{{Linkedin}}`, `{{Instagram}}`, `{{Youtube}}`
+- Variables dinámicas: `{{Empresa}}`, `{{Nombre}}`, `{{URL}}`, `{{Linkedin}}`, `{{Instagram}}`, `{{Youtube}}`
 - Envío masivo vía Gmail SMTP con reporte en tiempo real de éxitos y fallos
 
 ### 📊 Analytics

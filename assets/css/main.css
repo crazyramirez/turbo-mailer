@@ -464,7 +464,7 @@ button {
   --surface-hov: rgb(0 0 0 / 11%);
   --border: rgba(255 255 255 / 0.12);
   --border-hi: rgb(0 0 0 / 14%);
-  --accent: #6366f1;
+  --accent: #3f4f67;
   --accent-hov: #4f46e5;
   --accent2: #818cf8;
   --accent-light: #c7d2fe;
@@ -489,6 +489,7 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   margin: 0;
+  overflow-y: scroll;
 }
 
 .app-wrapper {
@@ -1396,6 +1397,11 @@ select.input {
   transition: none !important; /* Eliminate internal transitions for the chevron/bg */
 }
 
+select option {
+  background-color: #090b14;
+  color: #f8fafc;
+}
+
 /* ── Preview Side ── */
 
 .preview-header-bar {
@@ -1966,8 +1972,21 @@ select.input {
 }
 
 /* ── Global scrollbar ──────────────────────────────────────── */
-*::-webkit-scrollbar { width: 4px; height: 4px; }
-*::-webkit-scrollbar-track { background: transparent; }
-*::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 10px; }
-*::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.18); }
-* { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.08) transparent; }
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+}

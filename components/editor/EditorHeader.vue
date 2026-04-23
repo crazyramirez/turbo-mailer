@@ -29,7 +29,12 @@ async function handleBack() {
   if (currentTemplate.value && currentTemplate.value !== "email_demo") {
     await saveTemplate(true);
   }
-  navigateTo("/");
+  const router = useRouter();
+  if (window.history.state && window.history.state.back) {
+    router.back();
+  } else {
+    navigateTo("/");
+  }
 }
 </script>
 

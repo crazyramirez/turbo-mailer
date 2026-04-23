@@ -17,9 +17,14 @@ const loading = ref(true);
 
 async function fetchAnalytics() {
   loading.value = true;
+  const start = Date.now();
   try {
     data.value = await $fetch<any>("/api/analytics");
   } finally {
+    const elapsed = Date.now() - start;
+    if (elapsed < 600) {
+      await new Promise((r) => setTimeout(r, 600 - elapsed));
+    }
     loading.value = false;
   }
 }
@@ -143,9 +148,11 @@ onUnmounted(() => clearInterval(timer));
                 <div class="ev-body">
                   <span class="ev-email">{{ ev.contactEmail || ev.ip }}</span>
                   <div class="ev-info">
-                    <span v-if="ev.contactName" class="ev-name">{{ ev.contactName }}</span>
+                    <span v-if="ev.contactName" class="ev-name">{{
+                      ev.contactName
+                    }}</span>
                     <span v-if="ev.contactCompany" class="ev-company">
-                      {{ ev.contactName ? '• ' : '' }}{{ ev.contactCompany }}
+                      {{ ev.contactName ? "• " : "" }}{{ ev.contactCompany }}
                     </span>
                   </div>
                   <span class="ev-campaign">{{ ev.campaignName }}</span>
@@ -241,10 +248,16 @@ onUnmounted(() => clearInterval(timer));
 .btn-refresh:hover {
   background: rgb(0 0 0 / 6%);
 }
+.btn-refresh:active {
+  transform: scale(0.92);
+}
 .spin {
-  animation: spin 1s linear infinite;
+  animation: spin 0.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 @keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
   to {
     transform: rotate(360deg);
   }
@@ -372,13 +385,14 @@ onUnmounted(() => clearInterval(timer));
 }
 .ev-email {
   display: block;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--accent-light);
   font-family: monospace;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  margin-bottom: 2px;
 }
 .ev-name {
   display: inline-block;
@@ -387,10 +401,10 @@ onUnmounted(() => clearInterval(timer));
 }
 .ev-company {
   display: inline-block;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--accent-light);
   font-weight: 500;
-  margin-left: 4px;
+  margin-bottom: 4px;
 }
 .ev-info {
   display: flex;
@@ -443,10 +457,11 @@ onUnmounted(() => clearInterval(timer));
   flex: 1;
 }
 .camp-name {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--text);
   text-decoration: none;
+  margin-bottom: 4px;
 }
 .camp-name:hover {
   color: var(--accent-light);
@@ -457,7 +472,7 @@ onUnmounted(() => clearInterval(timer));
   margin-top: 4px;
 }
 .cs {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
 }
 .cs.green {

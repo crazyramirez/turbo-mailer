@@ -46,7 +46,11 @@ const isDraft = computed(() =>
   ["draft", "paused"].includes(campaign.value?.status),
 );
 const canSend = computed(
-  () => isDraft.value && campaign.value?.listId && campaign.value?.templateHtml,
+  () =>
+    isDraft.value &&
+    campaign.value?.listId &&
+    campaign.value?.templateHtml &&
+    subjectInput.value.trim().length > 0,
 );
 
 // ─── Fetch ───────────────────────────────────────────────────
@@ -131,9 +135,16 @@ async function handleFile(e: Event) {
   (e.target as HTMLInputElement).value = "";
 }
 
+function openEditor() {
+  if (campaign.value.templateName) {
+    localStorage.setItem("last_edited_template", campaign.value.templateName);
+  }
+  router.push("/editor");
+}
+
 // ─── Subject vars ────────────────────────────────────────────
 const VARS = [
-  "{{Contacto}}",
+  "{{Nombre}}",
   "{{Empresa}}",
   "{{URL}}",
   "{{Linkedin}}",
@@ -237,6 +248,20 @@ const SEND_LABEL: Record<string, string> = {
 
 onMounted(async () => {
   await Promise.all([fetchCampaign(), fetchSends(), fetchLists()]);
+
+  // Auto-sync template content if it was updated in the editor
+  if (campaign.value && campaign.value.templateName) {
+    try {
+      const data = await $fetch<any>('/api/templates', { query: { name: campaign.value.templateName } });
+      if (data && data.content && data.content !== campaign.value.templateHtml) {
+        campaign.value.templateHtml = data.content;
+        await $fetch(`/api/campaigns/${id}`, { method: "PUT", body: campaign.value });
+      }
+    } catch(e) {
+      // Ignorar si la plantilla ya no existe
+    }
+  }
+
   loading.value = false;
 });
 onUnmounted(() => clearTimeout(saveTimer));
@@ -294,13 +319,19 @@ onUnmounted(() => clearTimeout(saveTimer));
         </div>
 
         <div class="hdr-actions">
+          <div
+            v-if="isDraft && subjectInput.trim().length === 0"
+            class="hdr-warning"
+          >
+            <AlertCircle :size="13" /> Escribe un asunto
+          </div>
           <div v-if="isDraft && !campaign.listId" class="hdr-warning">
             <AlertCircle :size="13" /> Asigna una lista
           </div>
           <button
             v-if="isDraft"
             class="btn-ghost"
-            @click="router.push('/editor')"
+            @click="openEditor"
             title="Editor de plantillas"
           >
             <ExternalLink :size="14" /> Editor
@@ -697,7 +728,7 @@ onUnmounted(() => clearTimeout(saveTimer));
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 9px 16px;
+  padding: 12px 32px;
   background: transparent;
   color: var(--text-muted);
   border: 1px solid var(--border);
@@ -830,7 +861,7 @@ onUnmounted(() => clearTimeout(saveTimer));
 }
 .field-input {
   width: 100%;
-  background: rgb(0 0 0 / 10%);
+  background: #0d1017;
   border: 1px solid var(--border);
   border-radius: 10px;
   color: var(--text);
@@ -843,6 +874,10 @@ onUnmounted(() => clearTimeout(saveTimer));
 }
 .field-input:focus {
   border-color: var(--accent);
+}
+select.field-input option {
+  background-color: #090b14;
+  color: #f8fafc;
 }
 .btn-clear {
   position: absolute;

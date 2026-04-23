@@ -55,6 +55,7 @@ function handleGlobalKeydown(e: KeyboardEvent) {
 }
 
 onMounted(async () => {
+  document.body.style.overflow = "hidden";
   setupEditorWatches();
   await loadTemplates();
 
@@ -90,6 +91,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  document.body.style.overflow = "";
   window.removeEventListener("keydown", handleGlobalKeydown);
   resetEditorState();
 });

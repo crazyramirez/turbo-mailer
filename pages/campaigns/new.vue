@@ -6,6 +6,7 @@ import {
   X,
   LayoutGrid,
   Upload,
+  Send,
 } from "lucide-vue-next";
 import CampaignLibraryModal from "~/components/campaigns/CampaignLibraryModal.vue";
 import CampaignPreview from "~/components/campaigns/CampaignPreview.vue";
@@ -20,6 +21,7 @@ const lists = ref<any[]>([]);
 const showLibrary = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
 const htmlDragging = ref(false);
+const isSaving = ref(false);
 
 const form = ref({
   name: "",
@@ -69,11 +71,19 @@ function canNext() {
 }
 
 async function save() {
-  const campaign = await $fetch<any>("/api/campaigns", {
-    method: "POST",
-    body: form.value,
-  });
-  router.push(`/campaigns/${campaign.id}`);
+  isSaving.value = true;
+  try {
+    const campaign = await $fetch<any>("/api/campaigns", {
+      method: "POST",
+      body: form.value,
+    });
+    // Artificial delay to show the premium overlay
+    await new Promise((r) => setTimeout(r, 2000));
+    router.push(`/campaigns/${campaign.id}`);
+  } catch (err) {
+    isSaving.value = false;
+    console.error(err);
+  }
 }
 
 onMounted(() => {
@@ -130,7 +140,7 @@ onMounted(() => {
             <div class="var-chips">
               <button
                 v-for="v in [
-                  '{{Contacto}}',
+                  '{{Nombre}}',
                   '{{Empresa}}',
                   '{{URL}}',
                   '{{Linkedin}}',
@@ -312,6 +322,31 @@ onMounted(() => {
         @select="applyTemplate"
         @close="showLibrary = false"
       />
+    </Transition>
+
+    <!-- Saving / Processing Overlay -->
+    <Transition name="premium-overlay">
+      <div v-if="isSaving" class="saving-overlay">
+        <div class="saving-glass">
+          <div class="saving-icon-wrapper">
+            <div class="saving-rings">
+              <div class="ring r1"></div>
+              <div class="ring r2"></div>
+              <div class="ring r3"></div>
+            </div>
+            <div class="saving-icon">
+              <Send :size="32" stroke-width="1.5" />
+            </div>
+          </div>
+          <h2 class="saving-title">Procesando campaña</h2>
+          <p class="saving-desc">
+            Configurando enlaces y estructurando métricas...
+          </p>
+          <div class="saving-progress">
+            <div class="saving-bar"></div>
+          </div>
+        </div>
+      </div>
     </Transition>
   </div>
 </template>
@@ -638,7 +673,7 @@ label {
   color: var(--accent-light);
 }
 .tpl-loaded-preview {
-  height: 520px;
+  height: 620px;
 }
 
 .sr-only {
@@ -732,6 +767,180 @@ label {
   transform: scale(0.96) translateY(8px);
 }
 
+/* ── Premium Saving Overlay ───────────────────────── */
+.saving-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+}
+.saving-glass {
+  background: rgba(15, 17, 35, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(99, 102, 241, 0.1);
+  border-radius: 28px;
+  padding: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 90%;
+  max-width: 380px;
+  position: relative;
+  overflow: hidden;
+}
+.saving-glass::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(99, 102, 241, 0.1),
+    transparent
+  );
+  animation: shine 2.5s infinite;
+}
+@keyframes shine {
+  to {
+    left: 200%;
+  }
+}
+.saving-icon-wrapper {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+.saving-icon {
+  position: relative;
+  z-index: 10;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
+  animation: float-icon 3s ease-in-out infinite;
+}
+@keyframes float-icon {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.saving-rings {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(99, 102, 241, 0.5);
+  animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+.r1 {
+  width: 100%;
+  height: 100%;
+  animation-delay: 0s;
+}
+.r2 {
+  width: 100%;
+  height: 100%;
+  animation-delay: 0.4s;
+}
+.r3 {
+  width: 100%;
+  height: 100%;
+  animation-delay: 0.8s;
+}
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.7);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+.saving-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.01em;
+}
+.saving-desc {
+  font-size: 14px;
+  color: var(--text-dim);
+  margin: 0 0 32px 0;
+}
+.saving-progress {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+.saving-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(90deg, var(--accent), #38bdf8);
+  border-radius: 10px;
+  animation: progress-slide 1.2s ease-in-out infinite alternate;
+}
+@keyframes progress-slide {
+  0% {
+    left: 0%;
+    width: 40%;
+  }
+  100% {
+    left: 60%;
+    width: 40%;
+  }
+}
+
+.premium-overlay-enter-active,
+.premium-overlay-leave-active {
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.premium-overlay-enter-from,
+.premium-overlay-leave-to {
+  opacity: 0;
+  backdrop-filter: blur(0px);
+}
+.premium-overlay-enter-from .saving-glass,
+.premium-overlay-leave-to .saving-glass {
+  transform: scale(0.9) translateY(20px);
+  opacity: 0;
+}
+
 /* ── Responsive ──────────────────────────────────────────── */
 
 @media (max-width: 900px) {
@@ -745,7 +954,7 @@ label {
     grid-template-columns: 240px 1fr;
   }
   .tpl-loaded-preview {
-    height: 420px;
+    height: 620px;
   }
 }
 
@@ -782,7 +991,7 @@ label {
     grid-template-columns: 1fr;
   }
   .tpl-loaded-preview {
-    height: 360px;
+    height: 560px;
   }
   .wizard-nav {
     flex-wrap: wrap;

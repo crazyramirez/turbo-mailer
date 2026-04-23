@@ -18,6 +18,7 @@ const { resetAll, logout } = useCampaignSender();
 const { t, locale, setLocale } = useI18n();
 
 const menuOpen = ref(false);
+const showDesktopAlert = ref(false);
 
 function toggleLocale() {
   setLocale(locale.value === "es" ? "en" : "es");
@@ -25,6 +26,11 @@ function toggleLocale() {
 
 function closeMenu() {
   menuOpen.value = false;
+}
+
+function handleEditorClick() {
+  closeMenu();
+  showDesktopAlert.value = true;
 }
 
 watch(menuOpen, (open) => {
@@ -232,12 +238,12 @@ onMounted(() => {
 
         <!-- Secondary actions -->
         <div class="drawer-actions">
-          <NuxtLink to="/editor" class="drawer-action-row" @click="closeMenu">
+          <button class="drawer-action-row" @click="handleEditorClick">
             <span class="drawer-action-icon accent">
               <Layout :size="17" stroke-width="2" />
             </span>
             <span>{{ t("nav.editor") }}</span>
-          </NuxtLink>
+          </button>
 
           <button
             class="drawer-action-row"
@@ -276,6 +282,27 @@ onMounted(() => {
             <span>{{ t("nav.logout") }}</span>
           </button>
           <span class="drawer-version">v{{ APP_VERSION }}</span>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+
+  <!-- Desktop Only Alert -->
+  <Teleport to="body">
+    <Transition name="fade-scale">
+      <div v-if="showDesktopAlert" class="desktop-alert-overlay" @click="showDesktopAlert = false">
+        <div class="desktop-alert-glass" @click.stop>
+          <div class="desktop-alert-icon-wrapper">
+            <div class="desktop-alert-icon">
+              <Layout :size="32" stroke-width="1.5" />
+            </div>
+            <div class="desktop-alert-ring"></div>
+          </div>
+          <h3 class="desktop-alert-title">{{ t('nav.editor_desktop_only_title') }}</h3>
+          <p class="desktop-alert-desc">{{ t('nav.editor_desktop_only_desc') }}</p>
+          <button class="btn-desktop-alert" @click="showDesktopAlert = false">
+            {{ t('nav.got_it') }}
+          </button>
         </div>
       </div>
     </Transition>
@@ -727,5 +754,112 @@ onMounted(() => {
 .icon-swap-leave-to {
   opacity: 0;
   transform: rotate(45deg) scale(0.7);
+}
+
+/* ── Desktop Alert Overlay ───────────────────────── */
+.desktop-alert-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  padding: 24px;
+}
+.desktop-alert-glass {
+  background: rgba(15, 17, 35, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(99, 102, 241, 0.15);
+  border-radius: 28px;
+  padding: 40px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  max-width: 340px;
+  position: relative;
+  overflow: hidden;
+}
+.desktop-alert-glass::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(99, 102, 241, 0.1),
+    transparent
+  );
+  animation: shine 2.5s infinite;
+}
+.desktop-alert-icon-wrapper {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+.desktop-alert-icon {
+  position: relative;
+  z-index: 10;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
+}
+.desktop-alert-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px dashed rgba(99, 102, 241, 0.4);
+  animation: spin-slow 10s linear infinite;
+}
+@keyframes spin-slow {
+  100% { transform: rotate(360deg); }
+}
+.desktop-alert-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 12px 0;
+  letter-spacing: -0.01em;
+}
+.desktop-alert-desc {
+  font-size: 14px;
+  color: var(--text-dim);
+  margin: 0 0 32px 0;
+  line-height: 1.5;
+}
+.btn-desktop-alert {
+  width: 100%;
+  padding: 14px;
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--accent-light);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-desktop-alert:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
 }
 </style>

@@ -127,7 +127,7 @@ const insertLC = db.prepare('INSERT INTO list_contacts (list_id, contact_id) VAL
 
 const templateHtml = `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
   <h1 style="color:#6366f1">Turbo-Mailer PRO</h1>
-  <p>Hola {{Contacto}},</p>
+  <p>Hola {{Nombre}},</p>
   <p>Te escribimos desde <strong>{{Empresa}}</strong> para compartirte nuestras últimas novedades.</p>
   <p>Visita nuestro sitio para más información:</p>
   <a href="{{URL}}" style="background:#6366f1;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">Ver más</a>

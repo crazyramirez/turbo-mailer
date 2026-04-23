@@ -12,7 +12,10 @@
     "campaigns": "Campañas",
     "analytics": "Analytics",
     "settings": "Ajustes",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "editor_desktop_only_title": "Funcionalidad de Escritorio",
+    "editor_desktop_only_desc": "El Editor PRO requiere una pantalla grande para funcionar correctamente. Úsalo desde tu ordenador para una experiencia óptima.",
+    "got_it": "Entendido"
   },
   "steps": {
     "contacts": "Contactos",
@@ -148,8 +151,8 @@
     "duplicate": "Duplicar",
     "delete": "Eliminar",
     "no_campaigns": "No tienes campañas aún. Crea tu primera campaña.",
-    "open_rate": "Tasa apertura",
-    "click_rate": "Tasa click",
+    "open_rate": "Aperturas",
+    "click_rate": "Clicks",
     "failed": "Fallidos",
     "resend_failed": "Reenviar a fallidos",
     "recipients": "Destinatarios",

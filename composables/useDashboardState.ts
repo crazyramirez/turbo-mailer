@@ -89,7 +89,7 @@ function applyVars(template: string, row: Record<string, any>): string {
   // Global mapping support (legacy/shortcuts)
   result = result
     .replace(/\{\{\s*Empresa\s*\}\}/gi, row[empresaColumn.value] || '')
-    .replace(/\{\{\s*Contacto\s*\}\}/gi, row[nombreColumn.value] || '')
+    .replace(/\{\{\s*Nombre\s*\}\}/gi, row[nombreColumn.value] || '')
     .replace(/\{\{\s*Email\s*\}\}/gi, row[selectedColumn.value] || '')
     .replace(/\{\{\s*Linkedin\s*\}\}/gi, row[linkedinColumn.value] || '')
     .replace(/\{\{\s*URL\s*\}\}/gi, row[urlColumn.value] || '')

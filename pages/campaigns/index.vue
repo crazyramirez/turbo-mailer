@@ -12,6 +12,7 @@ import {
   PauseCircle,
   CheckCircle,
   FileEdit,
+  Loader2,
 } from "lucide-vue-next";
 
 definePageMeta({ layout: "app" });
@@ -23,12 +24,12 @@ const { showDialog } = useDashboardState();
 const campaigns = ref<any[]>([]);
 const loading = ref(false);
 
-async function fetchCampaigns() {
-  loading.value = true;
+async function fetchCampaigns(showLoading = true) {
+  if (showLoading) loading.value = true;
   try {
     campaigns.value = await $fetch<any[]>("/api/campaigns");
   } finally {
-    loading.value = false;
+    if (showLoading) loading.value = false;
   }
 }
 
@@ -39,22 +40,29 @@ async function deleteCampaign(c: any) {
   });
   if (!ok) return;
   await $fetch(`/api/campaigns/${c.id}`, { method: "DELETE" });
-  fetchCampaigns();
+  fetchCampaigns(false);
 }
 
+const duplicatingId = ref<number | null>(null);
+
 async function duplicateCampaign(c: any) {
-  const full = await $fetch<any>(`/api/campaigns/${c.id}`);
-  await $fetch("/api/campaigns", {
-    method: "POST",
-    body: {
-      name: `${full.name} (copia)`,
-      subject: full.subject,
-      templateName: full.templateName,
-      templateHtml: full.templateHtml,
-      listId: full.listId,
-    },
-  });
-  fetchCampaigns();
+  duplicatingId.value = c.id;
+  try {
+    const full = await $fetch<any>(`/api/campaigns/${c.id}`);
+    await $fetch("/api/campaigns", {
+      method: "POST",
+      body: {
+        name: `${full.name} (copia)`,
+        subject: full.subject,
+        templateName: full.templateName,
+        templateHtml: full.templateHtml,
+        listId: full.listId,
+      },
+    });
+    await fetchCampaigns(false);
+  } finally {
+    duplicatingId.value = null;
+  }
 }
 
 function openRate(c: any) {
@@ -86,9 +94,9 @@ function statusClass(s: string) {
 }
 function fmtDate(d: any) {
   if (!d) return "—";
-  return new Date(typeof d === "number" ? d * 1000 : d).toLocaleDateString(
+  return new Date(typeof d === "number" ? d * 1000 : d).toLocaleString(
     "es-ES",
-    { day: "2-digit", month: "short", year: "numeric" },
+    { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" },
   );
 }
 
@@ -119,8 +127,18 @@ onMounted(fetchCampaigns);
         </NuxtLink>
       </div>
 
-      <div v-else class="campaigns-grid">
-        <div v-for="c in campaigns" :key="c.id" class="campaign-card">
+      <TransitionGroup
+        name="premium-list"
+        tag="div"
+        v-else
+        class="campaigns-grid"
+      >
+        <div
+          v-for="c in campaigns"
+          :key="c.id"
+          class="campaign-card"
+          :class="{ 'is-duplicating': duplicatingId === c.id }"
+        >
           <!-- Status badge -->
           <div class="card-top">
             <span class="badge" :class="statusClass(c.status)">
@@ -172,8 +190,10 @@ onMounted(fetchCampaigns);
               class="btn-action"
               @click="duplicateCampaign(c)"
               :title="t('campaigns_page.duplicate')"
+              :disabled="duplicatingId === c.id"
             >
-              <Copy :size="13" />
+              <Loader2 v-if="duplicatingId === c.id" :size="13" class="spin" />
+              <Copy v-else :size="13" />
             </button>
             <button
               class="btn-action danger"
@@ -184,7 +204,7 @@ onMounted(fetchCampaigns);
             </button>
           </div>
         </div>
-      </div>
+      </TransitionGroup>
     </main>
   </div>
 </template>
@@ -262,8 +282,8 @@ onMounted(fetchCampaigns);
     transform 0.2s;
 }
 .campaign-card:hover {
-  border-color: var(--border-hi);
   transform: translateY(-2px);
+  background: rgb(255, 255, 255, 0.02);
 }
 
 .card-top {
@@ -478,6 +498,56 @@ onMounted(fetchCampaigns);
   }
   .stat-val {
     font-size: 14px;
+  }
+}
+
+/* Premium List Transitions & Animations */
+.premium-list-move,
+.premium-list-enter-active,
+.premium-list-leave-active {
+  transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.15); /* Subtle bounce */
+}
+
+.premium-list-enter-from {
+  opacity: 0;
+  transform: scale(0.85) translateY(30px);
+  filter: blur(4px);
+}
+
+.premium-list-leave-to {
+  opacity: 0;
+  transform: scale(0.9) translateY(-20px);
+  filter: blur(4px);
+}
+
+.premium-list-leave-active {
+  position: absolute;
+  z-index: 0;
+}
+
+.campaign-card.is-duplicating {
+  animation: premium-pulse 1.5s infinite;
+  border-color: var(--accent);
+}
+
+@keyframes premium-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 </style>

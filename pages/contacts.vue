@@ -159,6 +159,7 @@ function openNewContact() {
     listIds: selectedListId.value ? [selectedListId.value] : [],
   };
   showContactModal.value = true;
+  nextTick(() => emailInputRef.value?.focus());
 }
 
 async function openEditContact(c: any) {
@@ -207,12 +208,45 @@ async function deleteContact(c: any) {
   fetchContacts();
 }
 
+async function removeFromList(contactId: number, listId: number) {
+  removingIds.value = new Set([...removingIds.value, contactId]);
+  await $fetch(`/api/lists/${listId}/contacts/${contactId}`, {
+    method: "DELETE",
+  });
+  setTimeout(() => {
+    removingIds.value.delete(contactId);
+    removingIds.value = new Set(removingIds.value);
+    fetchContacts();
+    fetchLists();
+  }, 320);
+}
+
+async function batchRemoveFromList() {
+  if (!selectedListId.value || selectedContactIds.value.size === 0) return;
+  const ids = [...selectedContactIds.value];
+  removingIds.value = new Set(ids);
+  await Promise.all(
+    ids.map((id) =>
+      $fetch(`/api/lists/${selectedListId.value}/contacts/${id}`, {
+        method: "DELETE",
+      }),
+    ),
+  );
+  selectedContactIds.value = new Set();
+  setTimeout(() => {
+    removingIds.value = new Set();
+    fetchContacts();
+    fetchLists();
+  }, 320);
+}
+
 // ── List CRUD ─────────────────────────────────────────────────────────────
 function openNewList() {
   editListData.value = null;
   newListName.value = "";
   newListColor.value = "#6366f1";
   showListModal.value = true;
+  nextTick(() => listNameInputRef.value?.focus());
 }
 
 function openEditList(list: any) {
@@ -220,6 +254,7 @@ function openEditList(list: any) {
   newListName.value = list.name;
   newListColor.value = list.color || "#6366f1";
   showListModal.value = true;
+  nextTick(() => listNameInputRef.value?.focus());
 }
 
 async function saveList() {
@@ -253,6 +288,8 @@ async function deleteList(list: any) {
 
 // ── Import / Export ───────────────────────────────────────────────────────
 const xlsxInputRef = ref<HTMLInputElement | null>(null);
+const listNameInputRef = ref<HTMLInputElement | null>(null);
+const emailInputRef = ref<HTMLInputElement | null>(null);
 
 async function doImport(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0];
@@ -445,12 +482,23 @@ watch([search, statusFilter], () => {
         </div>
       </div>
 
-      <!-- Drag hint -->
+      <!-- Selection action bar -->
       <Transition name="fade-scale">
         <div v-if="selectedContactIds.size > 0" class="drag-hint">
           <Tag :size="13" />
-          {{ selectedContactIds.size }} seleccionado(s) — arrastra a una lista
-          del panel izquierdo
+          <span>{{ selectedContactIds.size }} seleccionado(s)</span>
+          <span class="drag-hint-sep" v-if="!selectedListId"
+            >— arrastra a una lista del panel izquierdo</span
+          >
+          <button
+            v-if="selectedListId"
+            class="batch-remove-btn"
+            @click="batchRemoveFromList"
+            :title="`Quitar de ${lists.find((l) => l.id === selectedListId)?.name}`"
+          >
+            <UserMinus :size="13" />
+            Quitar de lista
+          </button>
           <button
             class="drag-hint-clear"
             @click="selectedContactIds = new Set()"
@@ -486,9 +534,9 @@ watch([search, statusFilter], () => {
                   @change="toggleAll"
                 />
               </th>
-              <th>{{ t("contacts_page.col_name") }}</th>
               <th>{{ t("contacts_page.col_email") }}</th>
               <th>{{ t("contacts_page.col_company") }}</th>
+              <th>{{ t("contacts_page.col_name") }}</th>
               <th>{{ t("contacts_page.col_status") }}</th>
               <th>{{ t("contacts_page.col_actions") }}</th>
             </tr>
@@ -497,7 +545,10 @@ watch([search, statusFilter], () => {
             <tr
               v-for="c in contacts"
               :key="c.id"
-              :class="{ selected: selectedContactIds.has(c.id) }"
+              :class="{
+                selected: selectedContactIds.has(c.id),
+                removing: removingIds.has(c.id),
+              }"
               draggable="true"
               @dragstart="onDragStart($event, c.id)"
               @dragend="onDragEnd"
@@ -509,9 +560,36 @@ watch([search, statusFilter], () => {
                   @change="toggleContact(c.id)"
                 />
               </td>
-              <td>{{ c.name || "—" }}</td>
-              <td class="cell-email">{{ c.email }}</td>
+              <td>
+                <div class="email-cell">
+                  <span class="cell-email">{{ c.email }}</span>
+                  <div v-if="c.lists?.length" class="contact-list-chips">
+                    <span
+                      v-for="list in c.lists.slice(0, 3)"
+                      :key="list.id"
+                      class="contact-chip"
+                    >
+                      <span
+                        class="chip-dot"
+                        :style="{ background: list.color }"
+                      />
+                      <span class="chip-label">{{ list.name }}</span>
+                      <button
+                        class="chip-x"
+                        @click.stop="removeFromList(c.id, list.id)"
+                        :title="`Quitar de ${list.name}`"
+                      >
+                        <X :size="9" />
+                      </button>
+                    </span>
+                    <span v-if="c.lists.length > 3" class="chip-more">
+                      +{{ c.lists.length - 3 }}
+                    </span>
+                  </div>
+                </div>
+              </td>
               <td>{{ c.company || "—" }}</td>
+              <td>{{ c.name || "—" }}</td>
               <td>
                 <span class="badge" :class="statusClass(c.status)">{{
                   statusLabel(c.status)
@@ -521,6 +599,14 @@ watch([search, statusFilter], () => {
                 <div class="row-actions">
                   <button class="btn-icon-xs" @click="openEditContact(c)">
                     <Pencil :size="13" />
+                  </button>
+                  <button
+                    v-if="selectedListId"
+                    class="btn-icon-xs amber"
+                    :title="`Quitar de lista`"
+                    @click.stop="removeFromList(c.id, selectedListId!)"
+                  >
+                    <UserMinus :size="13" />
                   </button>
                   <button class="btn-icon-xs red" @click="deleteContact(c)">
                     <Trash2 :size="13" />
@@ -582,7 +668,12 @@ watch([search, statusFilter], () => {
             <div class="form-grid">
               <label
                 >{{ t("contacts_page.email") }} *
-                <input v-model="form.email" type="email" class="form-input" />
+                <input
+                  ref="emailInputRef"
+                  v-model="form.email"
+                  type="email"
+                  class="form-input"
+                />
               </label>
               <label
                 >{{ t("contacts_page.name") }}
@@ -703,6 +794,7 @@ watch([search, statusFilter], () => {
             <label
               >{{ t("contacts_page.list_name") }}
               <input
+                ref="listNameInputRef"
                 v-model="newListName"
                 type="text"
                 class="form-input"
@@ -971,9 +1063,15 @@ watch([search, statusFilter], () => {
   cursor: grabbing;
 }
 .col-check {
-  width: 36px;
-  padding-left: 12px;
+  width: 44px;
+  padding-left: 14px;
   padding-right: 4px;
+}
+.col-check input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  accent-color: var(--accent);
 }
 
 .drag-hint {
@@ -989,6 +1087,10 @@ watch([search, statusFilter], () => {
   color: var(--accent-light);
   margin-bottom: 12px;
 }
+.drag-hint-sep {
+  opacity: 0.7;
+  font-weight: 500;
+}
 .drag-hint-clear {
   margin-left: auto;
   background: none;
@@ -1001,6 +1103,117 @@ watch([search, statusFilter], () => {
 }
 .drag-hint-clear:hover {
   opacity: 1;
+}
+.batch-remove-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: auto;
+}
+.batch-remove-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  transform: translateY(-1px);
+}
+
+/* Email cell with list chips */
+.contact-list-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+}
+.contact-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px 3px 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: all 0.15s;
+  max-width: 140px;
+}
+.contact-chip:hover {
+  background: rgba(239, 68, 68, 0.07);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: var(--text);
+}
+.contact-chip:hover .chip-x {
+  opacity: 1;
+  width: 14px;
+}
+.chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100px;
+}
+.chip-x {
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  padding: 0;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.chip-x:hover {
+  color: #dc2626;
+}
+.chip-more {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent-light);
+}
+
+/* Row remove animation */
+.data-table tr.removing td {
+  opacity: 0;
+  transform: translateX(-10px);
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+}
+
+.btn-icon-xs.amber:hover {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.25);
+}
+.email-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 .cell-email {
   font-family: monospace;
@@ -1225,6 +1438,14 @@ label {
 .form-input:focus {
   border-color: var(--accent);
 }
+select.form-input {
+  background: #0d1017;
+  appearance: none;
+}
+select.form-input option {
+  background-color: #090b14;
+  color: #f8fafc;
+}
 .color-in {
   padding: 4px;
   height: 40px;
@@ -1387,6 +1608,15 @@ label {
   .filter-tab {
     flex-shrink: 0;
     min-height: 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .contact-list-chips {
+    display: none;
+  }
+  .batch-remove-btn span {
+    display: none;
   }
 }
 

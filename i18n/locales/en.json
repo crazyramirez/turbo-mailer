@@ -12,7 +12,10 @@
     "campaigns": "Campaigns",
     "analytics": "Analytics",
     "settings": "Settings",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "editor_desktop_only_title": "Desktop Feature Only",
+    "editor_desktop_only_desc": "The PRO Editor requires a larger screen to function properly. Please use it from your desktop for an optimal experience.",
+    "got_it": "Got it"
   },
   "steps": {
     "contacts": "Contacts",

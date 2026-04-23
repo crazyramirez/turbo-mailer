@@ -41,7 +41,7 @@ function parseXlsx(file: File) {
 
       selectedColumn.value = findCol(['email', 'mail', 'correo']) || cols[0] || 'Email'
       empresaColumn.value = findCol(['empresa', 'company', 'business', 'entidad', 'brand']) || ''
-      nombreColumn.value = findCol(['nombre', 'name', 'contacto', 'persona']) || ''
+      nombreColumn.value = findCol(['nombre', 'name', 'nombre', 'persona']) || ''
       linkedinColumn.value = findCol(['linkedin', 'social', 'perfil']) || ''
       urlColumn.value = findCol(['url', 'web', 'sitio', 'website', 'link']) || ''
       youtubeColumn.value = findCol(['youtube', 'video', 'canal']) || ''

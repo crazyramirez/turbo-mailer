@@ -173,7 +173,11 @@ function statusClass(s: string): string {
 
 // ── Actions ──────────────────────────────────────────────────────
 function selectCampaign(c: Campaign) {
-  selectedCampaign.value = selectedCampaign.value?.id === c.id ? null : c;
+  if (selectedCampaign.value?.id === c.id) {
+    // selectedCampaign.value = null;
+    return;
+  }
+  selectedCampaign.value = c;
 }
 function editTemplate() {
   if (!selectedCampaign.value) return;
@@ -556,6 +560,7 @@ async function duplicateCampaign() {
   transition: all 0.2s;
   text-decoration: none;
 }
+
 .btn-primary:hover {
   filter: brightness(1.1);
   transform: translateY(-1px);
@@ -635,7 +640,7 @@ async function duplicateCampaign() {
 /* ── Main grid ───────────────────────────────────────────── */
 .dash-main-grid {
   display: grid;
-  grid-template-columns: 5fr 4fr;
+  grid-template-columns: 4fr 5fr;
   gap: 20px;
   align-items: start;
 }
@@ -650,7 +655,15 @@ async function duplicateCampaign() {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  max-height: 700px;
 }
+
+@media (max-width: 1400px) {
+  .panel {
+    height: auto;
+  }
+}
+
 .panel-header {
   display: flex;
   align-items: center;
@@ -720,7 +733,7 @@ async function duplicateCampaign() {
     background 0.2s;
 }
 .campaign-item:hover:not(.selected) {
-  background: rgb(0 0 0 / 5%);
+  background: rgba(30 34 43 / 0.43);
   border-color: rgba(255, 255, 255, 0.12);
 }
 .campaign-item.selected {
@@ -851,7 +864,7 @@ async function duplicateCampaign() {
   flex: 1;
 }
 .preview-frame-wrap {
-  height: 460px;
+  height: 510px;
   padding: 0 12px 12px;
 }
 .preview-frame-wrap > * {
@@ -1164,14 +1177,13 @@ async function duplicateCampaign() {
     overscroll-behavior: contain;
   }
   .campaign-item {
-    min-height: 52px;
     padding: 13px 14px;
     touch-action: manipulation;
   }
 
   /* Preview */
   .preview-frame-wrap {
-    height: 300px;
+    height: 700px;
   }
   .preview-actions {
     flex-wrap: wrap;
@@ -1279,7 +1291,7 @@ async function duplicateCampaign() {
 
   /* Preview */
   .preview-frame-wrap {
-    height: 260px;
+    height: 640px;
     padding: 0 8px 8px;
   }
   .preview-header {
