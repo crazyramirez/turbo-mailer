@@ -10,6 +10,7 @@ import {
 } from "lucide-vue-next";
 
 const emit = defineEmits<{ close: []; done: [] }>();
+const { t } = useI18n();
 const { showToast } = useDashboardState();
 
 interface Scope {
@@ -24,36 +25,36 @@ const scopes: Scope[] = [
   {
     id: "all",
     icon: Trash2,
-    label: "Todo (Agresivo)",
-    desc: "Elimina todos los registros de la BBDD y las plantillas HTML del disco",
+    label: t("reset_modal.scope_all_label"),
+    desc: t("reset_modal.scope_all_desc"),
     danger: "high",
   },
   {
     id: "db",
     icon: Database,
-    label: "Solo Base de Datos",
-    desc: "Elimina contactos, campañas y analíticas. Las plantillas HTML se conservan",
+    label: t("reset_modal.scope_db_label"),
+    desc: t("reset_modal.scope_db_desc"),
     danger: "high",
   },
   {
     id: "contacts",
     icon: Users,
-    label: "Contactos & Listas",
-    desc: "Elimina todos los contactos y listas de distribución",
+    label: t("reset_modal.scope_contacts_label"),
+    desc: t("reset_modal.scope_contacts_desc"),
     danger: "medium",
   },
   {
     id: "campaigns",
     icon: Mail,
-    label: "Campañas",
-    desc: "Elimina todas las campañas, envíos y eventos de seguimiento",
+    label: t("reset_modal.scope_campaigns_label"),
+    desc: t("reset_modal.scope_campaigns_desc"),
     danger: "medium",
   },
   {
     id: "analytics",
     icon: BarChart2,
-    label: "Analíticas",
-    desc: "Elimina solo los eventos de apertura y click. Las campañas se conservan",
+    label: t("reset_modal.scope_analytics_label"),
+    desc: t("reset_modal.scope_analytics_desc"),
     danger: "low",
   },
 ];
@@ -87,11 +88,11 @@ async function performReset() {
       method: "DELETE",
       body: { scope: selectedScope.value },
     });
-    showToast("Datos eliminados correctamente", "success");
+    showToast(t("reset_modal.success"), "success");
     emit("done");
     emit("close");
   } catch {
-    showToast("Error al eliminar los datos", "error");
+    showToast(t("reset_modal.error"), "error");
   } finally {
     loading.value = false;
   }
@@ -113,8 +114,8 @@ function onOverlayClick(e: MouseEvent) {
               <AlertTriangle :size="20" />
             </div>
             <div class="rm-header-text">
-              <h2>Reinicio del Sistema</h2>
-              <p>Selecciona qué datos deseas eliminar permanentemente</p>
+              <h2>{{ t("reset_modal.title") }}</h2>
+              <p>{{ t("reset_modal.subtitle") }}</p>
             </div>
             <button class="rm-close" @click="emit('close')">
               <X :size="16" />
@@ -148,12 +149,12 @@ function onOverlayClick(e: MouseEvent) {
             <div v-if="selectedScope" class="rm-confirm-area">
               <label class="rm-confirm-label">
                 <AlertTriangle :size="13" />
-                Escribe <strong>OK</strong> para confirmar la eliminación
+                <span v-html="t('reset_modal.confirm_text', { ok: '<strong>OK</strong>' })"></span>
               </label>
               <input
                 v-model="confirmInput"
                 class="rm-confirm-input"
-                placeholder="Escribe OK"
+                :placeholder="t('reset_modal.confirm_placeholder', { ok: 'OK' })"
                 autocomplete="off"
                 spellcheck="false"
                 @keydown.enter="performReset"
@@ -164,7 +165,7 @@ function onOverlayClick(e: MouseEvent) {
           <!-- Actions -->
           <div class="rm-actions">
             <button class="rm-btn-cancel" @click="emit('close')">
-              Cancelar
+              {{ t("reset_modal.cancel") }}
             </button>
             <button
               class="rm-btn-delete"
@@ -172,7 +173,7 @@ function onOverlayClick(e: MouseEvent) {
               @click="performReset"
             >
               <Trash2 :size="14" />
-              {{ loading ? "Eliminando…" : "Eliminar" }}
+              {{ loading ? t("reset_modal.deleting") : t("reset_modal.delete") }}
             </button>
           </div>
         </div>

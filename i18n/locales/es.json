@@ -226,6 +226,27 @@
     "hours_ago": "hace {n}h",
     "reset_btn": "Reset"
   },
+  "reset_modal": {
+    "title": "Reinicio del Sistema",
+    "subtitle": "Selecciona qué datos deseas eliminar permanentemente",
+    "scope_all_label": "Todo (Agresivo)",
+    "scope_all_desc": "Elimina todos los registros de la BBDD y las plantillas HTML del disco",
+    "scope_db_label": "Solo Base de Datos",
+    "scope_db_desc": "Elimina contactos, campañas y analíticas. Las plantillas HTML se conservan",
+    "scope_contacts_label": "Contactos & Listas",
+    "scope_contacts_desc": "Elimina todos los contactos y listas de distribución",
+    "scope_campaigns_label": "Campañas",
+    "scope_campaigns_desc": "Elimina todas las campañas, envíos y eventos de seguimiento",
+    "scope_analytics_label": "Analíticas",
+    "scope_analytics_desc": "Elimina solo los eventos de apertura y click. Las campañas se conservan",
+    "confirm_text": "Escribe {ok} para confirmar la eliminación",
+    "confirm_placeholder": "Escribe {ok}",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "deleting": "Eliminando...",
+    "success": "Datos eliminados correctamente",
+    "error": "Error al eliminar los datos"
+  },
   "common": {
     "loading": "Cargando...",
     "error": "Error",

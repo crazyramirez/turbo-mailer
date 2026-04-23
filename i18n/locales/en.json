@@ -223,7 +223,29 @@
     "no_activity": "No recent opens yet",
     "just_now": "just now",
     "minutes_ago": "{n}m ago",
-    "hours_ago": "{n}h ago"
+    "hours_ago": "{n}h ago",
+    "reset_btn": "Reset"
+  },
+  "reset_modal": {
+    "title": "System Reset",
+    "subtitle": "Select which data you want to permanently delete",
+    "scope_all_label": "All (Aggressive)",
+    "scope_all_desc": "Deletes all database records and HTML templates from disk",
+    "scope_db_label": "Database Only",
+    "scope_db_desc": "Deletes contacts, campaigns, and analytics. HTML templates are kept",
+    "scope_contacts_label": "Contacts & Lists",
+    "scope_contacts_desc": "Deletes all contacts and distribution lists",
+    "scope_campaigns_label": "Campaigns",
+    "scope_campaigns_desc": "Deletes all campaigns, sends, and tracking events",
+    "scope_analytics_label": "Analytics",
+    "scope_analytics_desc": "Deletes only open and click events. Campaigns are kept",
+    "confirm_text": "Type {ok} to confirm deletion",
+    "confirm_placeholder": "Type {ok}",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleting": "Deleting...",
+    "success": "Data deleted successfully",
+    "error": "Error deleting data"
   },
   "common": {
     "loading": "Loading...",
