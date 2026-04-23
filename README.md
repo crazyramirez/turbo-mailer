@@ -39,7 +39,7 @@ Turbo-Mailer PRO es una plataforma de email marketing de alto rendimiento constr
 
 ### 👥 CRM de Contactos
 
-- Base de datos SQLite con **contactos completos**: email, nombre, empresa, teléfono, LinkedIn, URL, YouTube, Instagram, etiquetas (tags) y estado (`activo / dado de baja / rebotado`)
+- Base de datos SQLite autogenerada con **contactos completos**: email, nombre, empresa, teléfono, LinkedIn, URL, YouTube, Instagram, etiquetas (tags) y estado (`activo / dado de baja / rebotado`)
 - Gestión de **listas de distribución** con nombre, descripción y color personalizable
 - Búsqueda en tiempo real por email, nombre o empresa
 - Filtrado por lista y por estado de suscripción

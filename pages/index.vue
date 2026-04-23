@@ -378,7 +378,10 @@ async function duplicateCampaign() {
 
             <div v-else key="content" class="preview-content">
               <div class="preview-header">
-                <span class="badge" :class="statusClass(selectedCampaign.status)">
+                <span
+                  class="badge"
+                  :class="statusClass(selectedCampaign.status)"
+                >
                   <component
                     :is="statusIcon(selectedCampaign.status)"
                     :size="10"
@@ -429,9 +432,7 @@ async function duplicateCampaign() {
                   <span class="ps-val">{{
                     selectedCampaign.sentCount ?? 0
                   }}</span>
-                  <span class="ps-lbl">{{
-                    t("campaigns_page.col_sent")
-                  }}</span>
+                  <span class="ps-lbl">{{ t("campaigns_page.col_sent") }}</span>
                 </div>
                 <div class="ps-item">
                   <span class="ps-val green">{{
@@ -470,11 +471,7 @@ async function duplicateCampaign() {
           {{ t("dashboard.no_activity") }}
         </div>
         <div v-else class="activity-grid">
-          <div
-            v-for="ev in activityItems"
-            :key="ev.id"
-            class="activity-card"
-          >
+          <div v-for="ev in activityItems" :key="ev.id" class="activity-card">
             <div
               class="ac-avatar"
               :style="{
@@ -489,11 +486,9 @@ async function duplicateCampaign() {
               <span class="ac-name">{{
                 ev.contactName || ev.contactEmail || ev.ip
               }}</span>
-              <span
-                v-if="ev.contactEmail && ev.contactName"
-                class="ac-email"
-                >{{ ev.contactEmail }}</span
-              >
+              <span v-if="ev.contactEmail && ev.contactName" class="ac-email">{{
+                ev.contactEmail
+              }}</span>
               <span class="ac-campaign">{{ ev.campaignName }}</span>
             </div>
             <span class="ac-time">{{ timeAgo(ev.createdAt) }}</span>
