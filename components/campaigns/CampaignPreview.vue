@@ -386,4 +386,63 @@ onMounted(() => {
   font-size: 13px;
   color: var(--text-dim);
 }
+
+/* ── Responsive ──────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .cp-toolbar {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .cp-subject {
+    max-width: 160px;
+    font-size: 11px;
+  }
+  .v-pill span {
+    display: none;
+  }
+  .v-pill {
+    padding: 6px 10px;
+  }
+  .btn-theme span {
+    display: none;
+  }
+  .btn-theme {
+    padding: 0 10px;
+    gap: 0;
+  }
+  .cp-viewport {
+    padding: 16px;
+  }
+  .cp-canvas.desktop {
+    height: calc(100vh - 340px);
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cp-toolbar {
+    padding: 8px 10px;
+  }
+  .cp-label {
+    display: none;
+  }
+  .cp-subject {
+    max-width: 130px;
+  }
+  .cp-controls {
+    gap: 6px;
+  }
+  .cp-viewport {
+    padding: 10px;
+  }
+  .cp-canvas.desktop {
+    height: calc(100vh - 300px);
+    min-height: 260px;
+  }
+  .cp-canvas.mobile {
+    width: min(340px, calc(100vw - 44px));
+    height: 560px;
+  }
+}
 </style>

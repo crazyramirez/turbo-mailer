@@ -1088,7 +1088,12 @@ async function duplicateCampaign() {
 }
 
 /* ── Responsive ──────────────────────────────────────────── */
+
+/* Tablet ≤900px */
 @media (max-width: 900px) {
+  .page-layout {
+    margin: 0 20px;
+  }
   .dash-main-grid {
     grid-template-columns: 1fr;
   }
@@ -1102,8 +1107,222 @@ async function duplicateCampaign() {
     flex-direction: column;
     gap: 16px;
   }
+}
+
+/* Mobile ≤640px */
+@media (max-width: 640px) {
   .page-layout {
-    margin: 0 20px;
+    margin: 0 16px;
+  }
+  .page-main {
+    padding: 24px 0;
+    gap: 16px;
+  }
+
+  /* Header */
+  .dash-header {
+    gap: 12px;
+  }
+  .dash-header-left h1 {
+    font-size: 22px;
+  }
+  .dash-header-actions {
+    width: 100%;
+    gap: 8px;
+  }
+  .btn-primary,
+  .btn-secondary {
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+    border-radius: 14px;
+  }
+
+  /* KPI */
+  .kpi-grid {
+    gap: 10px;
+  }
+  .kpi-card {
+    padding: 16px 14px;
+    gap: 12px;
+    border-radius: 14px;
+  }
+  .kpi-val {
+    font-size: 22px;
+  }
+
+  /* Panel */
+  .panel {
+    padding: 18px;
+    gap: 14px;
+    border-radius: 16px;
+  }
+
+  /* Campaign list */
+  .campaign-scroll-area {
+    max-height: 45vh;
+    overscroll-behavior: contain;
+  }
+  .campaign-item {
+    min-height: 52px;
+    padding: 13px 14px;
+    touch-action: manipulation;
+  }
+
+  /* Preview */
+  .preview-frame-wrap {
+    height: 300px;
+  }
+  .preview-actions {
+    flex-wrap: wrap;
+  }
+  .btn-action {
+    min-height: 44px;
+    flex: 1;
+    justify-content: center;
+    border-radius: 10px;
+  }
+  .preview-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .ps-item {
+    border-right: none;
+  }
+  .ps-item:nth-child(odd) {
+    border-right: 1px solid var(--border);
+  }
+  .ps-item:nth-child(n + 3) {
+    border-top: 1px solid var(--border);
+  }
+
+  /* Activity */
+  .activity-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Small mobile ≤480px */
+@media (max-width: 480px) {
+  .page-layout {
+    margin: 0 12px;
+  }
+  .page-main {
+    padding: 16px 0;
+    gap: 12px;
+  }
+
+  /* Header */
+  .dash-header {
+    gap: 10px;
+  }
+  .dash-header-left h1 {
+    font-size: 20px;
+  }
+  .dash-header-left p {
+    font-size: 13px;
+  }
+  .dash-header-actions {
+    flex-direction: column;
+  }
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    padding: 13px 16px;
+    font-size: 14px;
+  }
+
+  /* KPI */
+  .kpi-grid {
+    gap: 8px;
+  }
+  .kpi-card {
+    padding: 14px 12px;
+    gap: 10px;
+    border-radius: 12px;
+  }
+  .kpi-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+  .kpi-val {
+    font-size: 20px;
+  }
+  .kpi-lbl {
+    font-size: 11px;
+  }
+
+  /* Panel */
+  .panel {
+    padding: 14px;
+    border-radius: 14px;
+    gap: 12px;
+  }
+  .panel-header h2 {
+    font-size: 14px;
+  }
+
+  /* Campaign list */
+  .campaign-scroll-area {
+    max-height: 40vh;
+  }
+  .campaign-item {
+    padding: 12px;
+    border-radius: 12px;
+  }
+  .ci-name {
+    font-size: 13px;
+  }
+  .ci-subject {
+    font-size: 11px;
+  }
+
+  /* Preview */
+  .preview-frame-wrap {
+    height: 260px;
+    padding: 0 8px 8px;
+  }
+  .preview-header {
+    padding: 14px 16px 10px;
+  }
+  .preview-name {
+    font-size: 14px;
+  }
+  .preview-actions {
+    padding: 10px 14px;
+    gap: 6px;
+  }
+  .btn-action {
+    font-size: 11px;
+    padding: 9px 10px;
+    min-height: 40px;
+  }
+  .ps-val {
+    font-size: 16px;
+  }
+  .ps-lbl {
+    font-size: 9px;
+  }
+  .ps-item {
+    padding: 12px 6px;
+  }
+
+  /* Activity */
+  .activity-card {
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+  .ac-name {
+    font-size: 12px;
+  }
+  .ac-email {
+    font-size: 10px;
+  }
+  .ac-campaign {
+    font-size: 10px;
+  }
+  .ac-time {
+    font-size: 10px;
   }
 }
 </style>

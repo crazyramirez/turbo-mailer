@@ -102,4 +102,24 @@ async function pick(name: string) {
 .tpl-info { padding: 12px 16px; }
 .tpl-name { font-size: 14px; font-weight: 700; color: #fff; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tpl-sub { font-size: 10px; color: var(--text-dim); font-weight: 800; text-transform: uppercase; letter-spacing: .05em; margin-top: 2px; display: block; }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .lib-window { width: 98%; border-radius: 20px; max-height: 90vh; }
+  .lib-header { padding: 18px 20px; }
+  .lib-header h2 { font-size: 17px; }
+  .lib-grid { padding: 16px; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+  .tpl-thumb { height: 130px; }
+}
+
+@media (max-width: 480px) {
+  .lib-window { border-radius: 16px; max-height: 92vh; }
+  .lib-header { padding: 14px 16px; }
+  .lib-header h2 { font-size: 15px; }
+  .lib-header p { font-size: 12px; }
+  .lib-grid { padding: 12px; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .tpl-thumb { height: 110px; }
+  .tpl-info { padding: 10px 12px; }
+  .tpl-name { font-size: 12px; }
+}
 </style>

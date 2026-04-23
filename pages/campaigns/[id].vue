@@ -1059,4 +1059,135 @@ onUnmounted(() => clearTimeout(saveTimer));
   opacity: 0;
   transform: scale(0.96) translateY(8px);
 }
+
+/* ── Responsive ──────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .cpage-header {
+    padding: 20px 24px 16px;
+  }
+  .cpage-body {
+    padding: 20px 24px 32px;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 900px) {
+  .cpage-body {
+    grid-template-columns: 1fr;
+    padding: 20px 20px 32px;
+  }
+  .right-preview {
+    position: static;
+  }
+  .cpage-header {
+    padding: 18px 20px 14px;
+  }
+  .hdr-name {
+    font-size: 18px;
+  }
+  .name-input {
+    font-size: 18px;
+    max-width: 260px;
+  }
+}
+
+@media (max-width: 640px) {
+  .cpage-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px 16px 12px;
+    gap: 12px;
+  }
+  .hdr-left {
+    width: 100%;
+    gap: 10px;
+  }
+  .hdr-actions {
+    width: 100%;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .btn-send {
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+  }
+  .btn-ghost {
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+  }
+  .hdr-name {
+    font-size: 17px;
+  }
+  .hdr-warning {
+    width: 100%;
+    font-size: 11px;
+  }
+  .cpage-body {
+    padding: 16px 14px 28px;
+    gap: 16px;
+  }
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .stat-card {
+    padding: 14px 16px;
+    gap: 10px;
+  }
+  .stat-num {
+    font-size: 22px;
+  }
+  .stat-icon-wrap {
+    width: 36px;
+    height: 36px;
+  }
+  .table-wrap {
+    max-height: calc(100vh - 280px);
+    border-radius: 12px;
+  }
+  .data-table th,
+  .data-table td {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+  .data-table th:nth-child(3),
+  .data-table td:nth-child(3) {
+    display: none;
+  }
+  .tpl-btns {
+    grid-template-columns: 1fr;
+  }
+  .config-card {
+    padding: 14px 16px;
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cpage-header {
+    padding: 14px 12px 10px;
+  }
+  .cpage-body {
+    padding: 12px 12px 24px;
+  }
+  .hdr-name {
+    font-size: 16px;
+  }
+  .btn-delete {
+    width: 44px;
+    height: 44px;
+  }
+  .stats-grid {
+    gap: 8px;
+  }
+  .stat-card {
+    padding: 12px 14px;
+  }
+  .stat-num {
+    font-size: 20px;
+  }
+}
 </style>

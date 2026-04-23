@@ -1,6 +1,6 @@
 import { db } from '~/server/db/index'
-import { contacts, listContacts } from '~/server/db/schema'
-import { eq, like, and, sql, desc } from 'drizzle-orm'
+import { contacts, listContacts, lists } from '~/server/db/schema'
+import { eq, like, and, sql, desc, inArray } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
@@ -47,8 +47,29 @@ export default defineEventHandler(async (event) => {
 
   const [{ count }] = await countQuery
 
+  const mainContacts: any[] = listId ? rows.map((r: any) => r.contacts ?? r) : rows
+
+  let contactListMap: Record<number, { id: number; name: string; color: string }[]> = {}
+  if (mainContacts.length > 0) {
+    const ids = mainContacts.map((c: any) => c.id)
+    const memberships = await db
+      .select({
+        contactId: listContacts.contactId,
+        listId: lists.id,
+        listName: lists.name,
+        listColor: lists.color,
+      })
+      .from(listContacts)
+      .innerJoin(lists, eq(lists.id, listContacts.listId))
+      .where(inArray(listContacts.contactId, ids))
+    for (const m of memberships) {
+      if (!contactListMap[m.contactId]) contactListMap[m.contactId] = []
+      contactListMap[m.contactId].push({ id: m.listId, name: m.listName, color: m.listColor ?? '#6366f1' })
+    }
+  }
+
   return {
-    data: listId ? rows.map((r: any) => r.contacts ?? r) : rows,
+    data: mainContacts.map((c: any) => ({ ...c, lists: contactListMap[c.id] ?? [] })),
     total: count,
     page,
     perPage,

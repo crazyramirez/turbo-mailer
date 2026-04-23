@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Tag,
+  UserMinus,
 } from "lucide-vue-next";
 import * as XLSX from "xlsx";
 
@@ -33,6 +34,7 @@ const loading = ref(false);
 
 const selectedContactIds = ref<Set<number>>(new Set());
 const dragOverListId = ref<number | null>(null);
+const removingIds = ref<Set<number>>(new Set());
 
 const showContactModal = ref(false);
 const editContact = ref<any>(null);
@@ -1289,5 +1291,172 @@ label {
 }
 .list-check-item input {
   accent-color: var(--accent);
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+
+/* Tablet ≤900px */
+@media (max-width: 900px) {
+  .sidebar {
+    width: 200px;
+  }
+  .contacts-main {
+    padding: 24px 24px;
+  }
+}
+
+/* Mobile ≤768px — sidebar becomes horizontal scroll strip */
+@media (max-width: 768px) {
+  .contacts-layout {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    padding: 10px 12px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    gap: 6px;
+    flex-shrink: 0;
+    min-height: unset;
+  }
+  .sidebar::-webkit-scrollbar {
+    display: none;
+  }
+  .sidebar-header {
+    display: none;
+  }
+  .list-item {
+    flex-shrink: 0;
+    border-radius: 20px;
+    padding: 7px 14px;
+    white-space: nowrap;
+    min-height: 36px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.03);
+    font-size: 12px;
+    gap: 7px;
+  }
+  .list-item.active {
+    background: rgba(99, 102, 241, 0.12);
+    border-color: rgba(99, 102, 241, 0.35);
+  }
+  .list-actions {
+    display: none !important;
+  }
+  .contacts-main {
+    padding: 20px 16px;
+    min-height: unset;
+  }
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .page-header h1 {
+    font-size: 22px;
+  }
+  .header-actions {
+    width: 100%;
+    gap: 8px;
+  }
+  .header-actions .btn-primary,
+  .header-actions .btn-secondary {
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+  }
+  .filters-bar {
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .filter-tabs {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+  .filter-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .filter-tab {
+    flex-shrink: 0;
+    min-height: 40px;
+  }
+}
+
+/* Mobile ≤640px — table columns collapse */
+@media (max-width: 640px) {
+  .contacts-main {
+    padding: 16px 12px;
+  }
+  .page-header h1 {
+    font-size: 20px;
+  }
+  .header-actions {
+    flex-direction: column;
+  }
+  .header-actions .btn-primary,
+  .header-actions .btn-secondary {
+    width: 100%;
+  }
+  .table-wrap {
+    border-radius: 12px;
+  }
+  .data-table th:nth-child(4),
+  .data-table td:nth-child(4),
+  .data-table th:nth-child(5),
+  .data-table td:nth-child(5) {
+    display: none;
+  }
+  .data-table th,
+  .data-table td {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+  .cell-email {
+    font-size: 11px;
+  }
+  .pagination {
+    gap: 8px;
+    padding: 14px 0 0;
+  }
+  .btn-page {
+    width: 36px;
+    height: 36px;
+  }
+  .modal-box {
+    width: 98%;
+    border-radius: 18px;
+  }
+  .modal-body {
+    padding: 16px;
+    max-height: 55vh;
+  }
+  .modal-head {
+    padding: 16px 18px;
+  }
+  .modal-footer {
+    padding: 12px 18px;
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+  .modal-footer .btn-primary,
+  .modal-footer .btn-secondary {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .full-width {
+    grid-column: 1;
+  }
 }
 </style>

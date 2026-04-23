@@ -402,4 +402,82 @@ onMounted(fetchCampaigns);
   filter: brightness(1.1);
   transform: translateY(-1px);
 }
+
+/* ── Responsive ──────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .page-layout {
+    margin: 0 20px;
+  }
+  .page-main {
+    padding: 32px 0;
+  }
+  .page-header h1 {
+    font-size: 24px;
+  }
+  .campaigns-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-layout {
+    margin: 0 16px;
+  }
+  .page-main {
+    padding: 24px 0;
+  }
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .page-header h1 {
+    font-size: 22px;
+  }
+  .btn-primary {
+    min-height: 44px;
+    width: 100%;
+    justify-content: center;
+  }
+  .campaigns-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .campaign-card {
+    padding: 18px;
+    border-radius: 16px;
+  }
+  .card-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 12px 0;
+  }
+  .card-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .btn-action {
+    flex: 1;
+    justify-content: center;
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-layout {
+    margin: 0 12px;
+  }
+  .campaign-card {
+    padding: 16px;
+  }
+  .card-name {
+    font-size: 15px;
+  }
+  .stat-val {
+    font-size: 14px;
+  }
+}
 </style>
