@@ -12,8 +12,6 @@
 >
 > El uso de esta aplicación implica la aceptación total de las políticas de uso de Gmail/Google, la normativa vigente (GDPR, CAN-SPAM Act, LSSI-CE) y las leyes de privacidad aplicables en tu país. **El desarrollador de Turbo-Mailer PRO no asume ninguna responsabilidad por el uso indebido de la herramienta**, incluyendo el incumplimiento de dichas normativas, bloqueos de cuenta o consecuencias legales derivadas de un uso no autorizado.
 
-> 📱 **Nota sobre Responsividad:** Esta aplicación **aún no es Responsive**. La interfaz está diseñada para su uso en **Desktop**. El soporte completo para dispositivos móviles (responsividad) está planificado para futuras versiones.
-
 Turbo-Mailer PRO es una plataforma de email marketing de alto rendimiento construida con **Nuxt 3**. Incluye gestión completa de contactos y listas, editor visual de plantillas HTML con bloques drag & drop, sistema de campañas con tracking de aperturas y clics, analytics en tiempo real, integración con IA para copywriting e interfaz multiidioma (ES/EN). Todo con persistencia real en base de datos SQLite y envío masivo vía Gmail SMTP.
 
 ![Turbo-Mailer PRO — Dashboard preview](public/images/ogimage.jpg)
@@ -297,11 +295,12 @@ Encuentra una plantilla de ejemplo profesional en: `docs/email_demo.html`
 This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
 
 ### 🔑 Key Requirements
+
 - **Copyleft**: Any modifications must be released under the same license.
 - **Network Interaction**: If you run a modified version as a service (SaaS), you **must** provide the source code to your users.
 - **Commercial Use**: Free for personal and open-source projects. For commercial use without opening your source code, a **private commercial license** is required.
 
-For commercial licensing inquiries, please contact: `drleria@gmail.com`
+For commercial licensing inquiries, please contact me
 
 ---
 
