@@ -13,7 +13,7 @@
   top: -150px;
   right: -120px;
   background: #ff8000;
-  opacity: 0.2;
+  opacity: 0.15;
   animation: orb-float-1 12s infinite alternate ease-in-out;
 }
 
@@ -23,7 +23,7 @@
   bottom: -150px;
   left: -140px;
   background: #3b82f6;
-  opacity: 0.2;
+  opacity: 0.15;
   animation: orb-float-2 15s infinite alternate ease-in-out;
   animation-delay: -4s;
 }
@@ -35,7 +35,7 @@
   left: 50%;
   transform: translate(-50%, -50%);
   background: #a855f7;
-  opacity: 0.14;
+  opacity: 0.12;
   animation: orb-float-3 10s infinite alternate ease-in-out;
   animation-delay: -6s;
 }
@@ -44,10 +44,10 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.09) 1px, transparent 1px),
-    linear-gradient(rgba(99, 102, 241, 0.06) 2px, transparent 2px),
-    linear-gradient(90deg, rgba(99, 102, 241, 0.06) 2px, transparent 2px);
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(rgba(99, 102, 241, 0.03) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.03) 2px, transparent 2px);
   background-size:
     32px 32px,
     32px 32px,

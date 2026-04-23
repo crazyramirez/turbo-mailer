@@ -9,6 +9,7 @@ import {
   Globe,
   Edit3,
   StickyNote,
+  UserMinus,
 } from 'lucide-vue-next'
 
 export interface EditorBlock {
@@ -214,6 +215,18 @@ export const editorBlocks: EditorBlock[] = [
         </td>
       </tr>
     </table>
+  </div>`,
+  },
+  {
+    id: 'unsubscribe',
+    name: 'Unsuscribir',
+    icon: UserMinus,
+    content: `<div class="unsubscribe-block editable-block" data-type="Unsuscribir" style="padding:24px 32px;background:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;">
+    <div data-toggle="subtitle" style="font-family:Arial;font-size:12px;line-height:1.8;color:#94a3b8;">
+      Has recibido este email porque te suscribiste a nuestra lista.<br>
+      Si no deseas recibir más comunicaciones,
+      <a href="{{UNSUBSCRIBE_URL}}" style="color:#6366f1;text-decoration:underline;">haz clic aquí para darte de baja</a>.
+    </div>
   </div>`,
   },
   {

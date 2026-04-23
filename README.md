@@ -1,6 +1,6 @@
 # 🚀 Turbo-Mailer PRO
 
-**Dashboard de Envío Inteligente de Emails**
+**Plataforma Completa de Email Marketing con CRM, Analytics y Tracking**
 
 > ⚠️ **Uso Responsable — Leer antes de usar**
 >
@@ -10,9 +10,9 @@
 >
 > El uso de esta aplicación implica la aceptación total de las políticas de uso de Gmail/Google, la normativa vigente (GDPR, CAN-SPAM Act, LSSI-CE) y las leyes de privacidad aplicables en tu país. **El desarrollador de Turbo-Mailer PRO no asume ninguna responsabilidad por el uso indebido de la herramienta**, incluyendo el incumplimiento de dichas normativas, bloqueos de cuenta o consecuencias legales derivadas de un uso no autorizado.
 
-Turbo-Mailer PRO es una solución de escritorio/PWA de alto rendimiento para envío masivo de correos personalizados. Construido con **Nuxt 3**, permite gestionar campañas completas con importación directa desde Excel, editor visual de plantillas HTML, previsualización en tiempo real e integración con IA para mejorar los textos.
+> 📱 **Nota sobre Responsividad:** Esta aplicación **aún no es Responsive**. La interfaz está diseñada para su uso en **Desktop**. El soporte completo para dispositivos móviles (responsividad) está planificado para futuras versiones.
 
-> 💡 **Nota Técnica:** Esta aplicación **no utiliza bases de datos** ni almacena el historial de envíos. No es un gestor de contactos (CRM) completo; su función es puramente operativa: procesar un archivo estructurado (XLSX, XLS o CSV) y despachar los correos de forma inmediata y personalizada. Los datos cargados se mantienen únicamente en memoria durante la sesión.
+Turbo-Mailer PRO es una plataforma de email marketing de alto rendimiento construida con **Nuxt 3**. Incluye gestión completa de contactos y listas, editor visual de plantillas HTML con bloques drag & drop, sistema de campañas con tracking de aperturas y clics, analytics en tiempo real, integración con IA para copywriting e interfaz multiidioma (ES/EN). Todo con persistencia real en base de datos SQLite y envío masivo vía Gmail SMTP.
 
 ![Turbo-Mailer PRO — Dashboard preview](public/images/ogimage.jpg)
 
@@ -33,54 +33,121 @@ Turbo-Mailer PRO es una solución de escritorio/PWA de alto rendimiento para env
 
 ## ✨ Características Principales
 
-- **📊 Importación Inteligente**: Soporte para `.xlsx`, `.xls` y `.csv`. Detección automática de columnas para correo, empresa, contacto, LinkedIn, URL, YouTube e Instagram.
-- **🎨 Live Preview en Tiempo Real**: Visualiza el correo personalizado con los datos reales del primer contacto antes de enviar. Toggle desktop / móvil / modo oscuro.
-- **🏷️ Variables Dinámicas**: Personalización en asunto y cuerpo con `{{Empresa}}`, `{{Contacto}}`, `{{URL}}`, `{{Linkedin}}`, `{{Instagram}}`, `{{Youtube}}`.
-- **🛠️ Motor SMTP Gmail**: Envío masivo vía Nodemailer + Gmail App Password con reporte en tiempo real de éxitos y fallos por destinatario.
-- **🎨 Editor de Plantillas Visual**: Editor Drag & Drop con bloques (Header, Hero, Card, Botones, Imagen, Texto, Separador, Footer), panel de fuentes, panel de capas y controles de estilo por bloque.
-- **🤖 IA Copywriting Assistant**: Integración con OpenAI (GPT-4o-mini / GPT-4o) para mejorar el texto de bloques individuales o toda la plantilla con un clic. Preserva el HTML y las variables.
-- **📂 Galería de Plantillas**: Biblioteca integrada para guardar, cargar, renombrar y eliminar plantillas HTML propias. Persistencia en servidor.
-- **🔒 Acceso Protegido**: Login con contraseña maestra configurable. Rate limiting por IP: 10 intentos fallidos bloquean el acceso durante 15 minutos.
-- **📱 PWA & Mobile First**: Instalable como app nativa en Windows / iOS / Android con soporte offline vía Service Worker.
-- **💎 Diseño de Vanguardia**: UI ultramoderna con tipografía _Plus Jakarta Sans_, glassmorfismo, animaciones y flujo de trabajo en 4 pasos guiados.
+### 👥 CRM de Contactos
+
+- Base de datos SQLite con **contactos completos**: email, nombre, empresa, teléfono, LinkedIn, URL, YouTube, Instagram, etiquetas (tags) y estado (`activo / dado de baja / rebotado`)
+- Gestión de **listas de distribución** con nombre, descripción y color personalizable
+- Búsqueda en tiempo real por email, nombre o empresa
+- Filtrado por lista y por estado de suscripción
+- Paginación (50 por página), selección múltiple y drag-to-list
+- **Importación masiva** desde Excel (`.xlsx`, `.xls`, `.csv`) con autodetección de columnas
+- **Exportación CSV** de contactos completa
+- CRUD completo de contactos y listas desde la UI
+
+### 📣 Gestión de Campañas
+
+- Wizard de 4 pasos: nombre + asunto → selección de lista → plantilla → revisión y envío
+- Estados de campaña: `borrador / programado / enviando / enviado / pausado`
+- Vista de detalle por campaña con listado de destinatarios, sus estados y métricas individuales
+- Inyección automática de **pixel de tracking** (apertura) y **enlaces trackeados** (clics) en el HTML antes del envío
+- Variables dinámicas: `{{Empresa}}`, `{{Contacto}}`, `{{URL}}`, `{{Linkedin}}`, `{{Instagram}}`, `{{Youtube}}`
+- Envío masivo vía Gmail SMTP con reporte en tiempo real de éxitos y fallos
+
+### 📊 Analytics
+
+- Dashboard con KPIs: total de contactos, campañas enviadas, tasa media de apertura y tasa media de clics
+- **Últimas 10 aperturas** con detección de dispositivo (desktop / móvil / tablet)
+- **Top campañas** ordenadas por número de aperturas
+- Tracking de eventos individuales: opens y clicks registrados con IP, user-agent y timestamp
+
+### 📡 Tracking de Emails
+
+- Pixel 1×1 transparente (GIF) servido por `/api/track/open` — registra apertura e incrementa contador de campaña
+- Redirect trackeado en `/api/track/click` — registra clic, incrementa contador y redirige al destino original
+- Tabla `trackingEvents` en SQLite con `sendId`, `campaignId`, `contactId`, `eventType`, `url`, `ip`, `userAgent`
+
+### 🔕 Baja de Suscripción
+
+- Enlace de baja personalizado por destinatario en cada correo
+- Página `/unsubscribe` con confirmación de baja, estado ya-dado-de-baja y manejo de errores
+- Correo de confirmación automático al darse de baja
+- Marca el contacto como `unsubscribed` en la base de datos
+
+### 🎨 Editor Visual de Plantillas
+
+- Accesible desde `/editor`
+- **Bloques disponibles**: Header, Hero, Card (standard/premium), Botones, Imagen, Texto, Separador, Footer
+- Panel de edición: fuente, tamaño, color de texto y fondo, alineación por bloque
+- Panel de capas: árbol visual con reordenamiento drag & drop
+- **IA por bloque**: mejora el texto de un bloque individual con un clic
+- **IA masiva**: mejora todos los bloques de la plantilla a la vez
+- **Atajos de teclado**: `Ctrl+S` guardar · `Ctrl+Z` deshacer · `Ctrl+Y` rehacer · `Delete` eliminar bloque
+- Autosave al detectar cambios
+- **Galería de Plantillas**: biblioteca para guardar, cargar, renombrar y eliminar plantillas HTML propias
+- Live Preview con toggle desktop / móvil / modo oscuro
+
+### 🤖 IA Copywriting Assistant
+
+- Integración con OpenAI (GPT-4o-mini configurable a GPT-4o)
+- Mejora bloques individuales preservando el HTML y las variables dinámicas
+
+### 🌐 Multiidioma (i18n)
+
+- Interfaz completa en **Español** e **Inglés**
+- Cambio de idioma en tiempo real sin recarga
+- Traducción de toda la UI: navegación, pasos, contactos, campañas, analytics, baja de suscripción
+
+### 🔒 Seguridad y Acceso
+
+- Login con contraseña maestra configurable en variable de entorno
+- Sesión en cookie `httpOnly` + `SameSite=strict` con TTL de 24 horas
+- Rate limiting por IP: 10 intentos fallidos → bloqueo de 15 minutos con contador visible
+- Middleware global que redirige a `/login` si la sesión no es válida
+
+### 📱 PWA & Mobile First
+
+- Instalable como app nativa en Windows, iOS y Android
+- Soporte offline vía Service Worker (autoUpdate + workbox navigation fallback)
 
 ---
 
 ## 🛠️ Tecnologías
 
-- **Framework**: [Nuxt 3](https://nuxt.com/) — SPA mode (`ssr: false`)
-- **Emailing**: [Nodemailer](https://nodemailer.com/) — Gmail SMTP
-- **Data Handling**: [XLSX (SheetJS)](https://sheetjs.com/)
-- **IA**: [OpenAI API](https://platform.openai.com/) — GPT-4o-mini (configurable)
-- **Icons**: [Lucide Vue Next](https://lucide.dev/)
-- **Offline/PWA**: `@vite-pwa/nuxt`
+| Área          | Tecnología                                                                     |
+| ------------- | ------------------------------------------------------------------------------ |
+| Framework     | [Nuxt 3](https://nuxt.com/) — SPA mode (`ssr: false`)                          |
+| Base de datos | [SQLite](https://www.sqlite.org/) vía [Drizzle ORM](https://orm.drizzle.team/) |
+| Emailing      | [Nodemailer](https://nodemailer.com/) — Gmail SMTP                             |
+| Data Handling | [XLSX (SheetJS)](https://sheetjs.com/)                                         |
+| IA            | [OpenAI API](https://platform.openai.com/) — GPT-4o-mini (configurable)        |
+| i18n          | [@nuxtjs/i18n](https://i18n.nuxtjs.org/)                                       |
+| Icons         | [Lucide Vue Next](https://lucide.dev/)                                         |
+| PWA           | `@vite-pwa/nuxt`                                                               |
+
+---
+
+## 🗄️ Base de Datos
+
+SQLite en `./data/turbomailer.db` gestionada con Drizzle ORM. Tablas principales:
+
+| Tabla            | Descripción                                             |
+| ---------------- | ------------------------------------------------------- |
+| `contacts`       | Contactos con todos sus campos y estado de suscripción  |
+| `lists`          | Listas de distribución con nombre, descripción y color  |
+| `listContacts`   | Relación M×N contactos ↔ listas (cascade delete)        |
+| `campaigns`      | Campañas con estado, contadores y timestamps            |
+| `sends`          | Envíos individuales por destinatario con estado y error |
+| `trackingEvents` | Eventos de apertura y clic con metadata                 |
 
 ---
 
 ## 🚀 Flujo de Trabajo
 
-La app guía el envío en **4 pasos**:
-
-1. **Contactos** — Arrastra tu archivo Excel. La app detecta automáticamente las columnas de correo, empresa, nombre y redes sociales.
-2. **Asunto** — Escribe el asunto de la campaña. Usa los botones de variables para personalización dinámica.
-3. **Plantilla** — Sube un archivo `.html` listo o abre el **Turbo Editor Visual** para construir tu diseño desde cero con bloques drag & drop.
-4. **Envío** — Revisa la previsualización en tiempo real y envía. Verás el resultado (enviados / fallidos) por destinatario al instante.
-
-> **Nota:** Los datos de contactos y asunto se mantienen en memoria. No persisten si recargas la página. Las plantillas sí se guardan en servidor.
-
----
-
-## 🎨 Editor Visual de Plantillas
-
-Accesible desde `/editor`. Funciones clave:
-
-- **Bloques disponibles**: Header, Hero, Card (standard/premium), Botones, Imagen, Texto, Separador, Footer
-- **Panel de edición**: Fuente, tamaño, color de texto y fondo, alineación por bloque
-- **Panel de capas**: Árbol visual de bloques con reordenamiento drag & drop
-- **IA por bloque**: Selecciona un bloque y mejora su texto con un clic
-- **IA masiva**: Mejora todos los bloques de la plantilla a la vez
-- **Atajos de teclado**: `Ctrl+S` guardar · `Ctrl+Z` deshacer · `Ctrl+Y` rehacer · `Delete` eliminar bloque
-- **Autosave**: Guardado automático al detectar cambios
+1. **Contactos** — Importa desde Excel o añade manualmente. Organiza en listas con colores.
+2. **Campaña** — Crea una campaña en el wizard de 4 pasos: nombre, lista, plantilla, revisión.
+3. **Editor** — Diseña tu plantilla en el editor visual o carga una existente de la galería.
+4. **Envío** — Previsualiza y envía. El tracking se inyecta automáticamente.
+5. **Analytics** — Monitoriza aperturas, clics y rendimiento por campaña en el dashboard.
 
 ---
 
@@ -114,9 +181,30 @@ Accesible desde `/editor`. Funciones clave:
    # Inteligencia Artificial (opcional)
    OPENAI_API_KEY=sk-...
    OPENAI_MODEL=gpt-4o-mini
+
+   # Tracking (URL base de la app, para generar pixels y links trackeados)
+   TRACKING_BASE_URL=http://localhost:3000
    ```
 
-4. **Iniciar en desarrollo**
+4. **Base de datos — dos opciones**
+
+   **Opción A — Demo preconfigurada** (recomendado para probar la app rápidamente):
+
+   Renombra el archivo de demo incluido en el repositorio:
+
+   ```bash
+   mv data/turbomailer_demo.db data/turbomailer.db
+   ```
+
+   Contiene 15 contactos, 3 listas, 4 campañas (3 enviadas + 1 borrador) y eventos de tracking listos para explorar el dashboard.
+
+   **Opción B — Base de datos vacía** (para uso real):
+
+   ```bash
+   npx drizzle-kit push
+   ```
+
+5. **Iniciar en desarrollo**
 
    ```bash
    npm run dev
@@ -135,25 +223,90 @@ La app usa Gmail SMTP con una contraseña de aplicación de 16 dígitos (no tu c
 
 ---
 
+## 📡 API Reference
+
+### Auth
+
+| Método | Ruta               | Descripción                  |
+| ------ | ------------------ | ---------------------------- |
+| POST   | `/api/auth/login`  | Login con contraseña maestra |
+| GET    | `/api/auth/check`  | Verificar sesión activa      |
+| POST   | `/api/auth/logout` | Cerrar sesión                |
+
+### Contactos
+
+| Método | Ruta                   | Descripción                              |
+| ------ | ---------------------- | ---------------------------------------- |
+| GET    | `/api/contacts`        | Listar con búsqueda, filtro y paginación |
+| POST   | `/api/contacts`        | Crear contacto                           |
+| GET    | `/api/contacts/[id]`   | Detalle con listas asociadas             |
+| PUT    | `/api/contacts/[id]`   | Actualizar campos y tags                 |
+| DELETE | `/api/contacts/[id]`   | Eliminar contacto                        |
+| POST   | `/api/contacts/import` | Importación masiva desde array           |
+| GET    | `/api/contacts/export` | Exportar CSV completo                    |
+
+### Listas
+
+| Método | Ruta                                   | Descripción                         |
+| ------ | -------------------------------------- | ----------------------------------- |
+| GET    | `/api/lists`                           | Listar con conteo de contactos      |
+| POST   | `/api/lists`                           | Crear lista                         |
+| PUT    | `/api/lists/[id]`                      | Actualizar nombre/descripción/color |
+| DELETE | `/api/lists/[id]`                      | Eliminar lista (cascade)            |
+| POST   | `/api/lists/[id]/contacts`             | Añadir contactos en batch           |
+| DELETE | `/api/lists/[id]/contacts/[contactId]` | Quitar contacto de lista            |
+
+### Campañas
+
+| Método | Ruta                        | Descripción                         |
+| ------ | --------------------------- | ----------------------------------- |
+| GET    | `/api/campaigns`            | Listar campañas (filtro por estado) |
+| POST   | `/api/campaigns`            | Crear borrador                      |
+| GET    | `/api/campaigns/[id]`       | Detalle con métricas                |
+| PUT    | `/api/campaigns/[id]`       | Actualizar campaña                  |
+| DELETE | `/api/campaigns/[id]`       | Eliminar campaña                    |
+| POST   | `/api/campaigns/[id]/send`  | Lanzar envío                        |
+| GET    | `/api/campaigns/[id]/sends` | Listado de envíos individuales      |
+
+### Tracking & Analytics
+
+| Método | Ruta               | Descripción                 |
+| ------ | ------------------ | --------------------------- |
+| GET    | `/api/track/open`  | Pixel de apertura (GIF 1×1) |
+| GET    | `/api/track/click` | Redirect trackeado          |
+| GET    | `/api/analytics`   | KPIs del dashboard          |
+| GET    | `/api/unsubscribe` | Baja de suscripción         |
+
+---
+
 ## 🛡️ Seguridad
 
 - Contraseña maestra almacenada en variable de entorno (nunca en código)
 - Sesión en cookie `httpOnly` + `SameSite=strict` con TTL de 24 horas
 - Rate limiting por IP: 10 intentos fallidos → bloqueo de 15 minutos con contador visible
 - Middleware global que redirige a `/login` si la sesión no es válida
+- Los datos de contactos persisten en SQLite local — no salen del servidor
 
 ---
 
 ## 📄 Plantillas de Demo
 
-Encuentra una plantilla de ejemplo profesional en:
-`docs/email_demo.html`
+Encuentra una plantilla de ejemplo profesional en: `docs/email_demo.html`
+
+---
+
+## 📝 ToDo / Pendiente
+
+- [ ] **Campañas** — Revisar funcionalidades completas (wizard, envío, estados, tracking inyectado). Funcional y testeado básicamente, pero requiere testing en profundidad.
+- [ ] **Contactos** — Revisar CRUD, importación Excel, exportación CSV, drag-to-list, paginación y filtros. Funcional y testeado básicamente, pero requiere testing en profundidad.
+- [ ] **Analíticas** — Revisar KPIs, últimas aperturas, top campañas y eventos de tracking. Funcional y testeado básicamente, pero requiere testing en profundidad.
+- [ ] **Responsividad** — Adaptar toda la interfaz para dispositivos móviles (actualmente optimizado para Desktop).
 
 ---
 
 ## ⚖️ Aviso Legal
 
-Este proyecto es una herramienta de desarrollo. El uso indebido para comunicaciones no solicitadas (SPAM) está prohibido. Asegúrate de cumplir con las normativas locales (GDPR, CAN-SPAM Act) antes de realizar envíos masivos.
+Este proyecto es una herramienta de desarrollo. El uso indebido para comunicaciones no solicitadas (SPAM) está prohibido. Asegúrate de cumplir con las normativas locales (GDPR, CAN-SPAM Act, LSSI-CE) antes de realizar envíos masivos.
 
 ---
 

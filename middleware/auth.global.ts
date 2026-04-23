@@ -1,5 +1,5 @@
 export default defineNuxtRouteMiddleware(async (to) => {
-  if (to.path === '/login') return
+  if (to.path === '/login' || to.path === '/unsubscribe') return
 
   const isAuthed = useState<boolean | null>('isAuthed', () => null)
 

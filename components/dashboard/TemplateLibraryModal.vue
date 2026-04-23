@@ -75,7 +75,7 @@ const handleRename = async (name: string) => {
                   class="btn-action-small"
                   title="Renombrar"
                 >
-                  <Pencil :size="14" />
+                  <Pencil :size="20" />
                 </button>
                 <button
                   @click.stop="deleteTemplate(t.name)"

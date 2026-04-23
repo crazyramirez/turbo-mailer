@@ -7,9 +7,25 @@ export default defineNuxtConfig({
   runtimeConfig: {
     openaiApiKey: process.env.OPENAI_API_KEY,
     openaiModel: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+    trackingBaseUrl: process.env.TRACKING_BASE_URL || 'http://localhost:3000',
   },
 
-  modules: ["@vite-pwa/nuxt"],
+  css: [
+    '@/assets/css/main.css',
+    '@/assets/css/bg-orbs.css',
+  ],
+
+  modules: ["@vite-pwa/nuxt", "@nuxtjs/i18n"],
+
+  i18n: {
+    locales: [
+      { code: 'es', file: 'es.json', name: 'Español' },
+      { code: 'en', file: 'en.json', name: 'English' },
+    ],
+    defaultLocale: 'es',
+    strategy: 'no_prefix',
+    langDir: 'locales/',
+  },
 
   app: {
     head: {
@@ -62,8 +78,9 @@ export default defineNuxtConfig({
   
   vite: {
     server: {
+      allowedHosts: true,
       watch: {
-        ignored: ['**/data/templates/**']
+        ignored: ['**/data/templates/**', '**/data/*.db', '**/data/*.db-wal', '**/data/*.db-shm']
       }
     }
   }

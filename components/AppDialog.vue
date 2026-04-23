@@ -32,12 +32,12 @@ const confirm = () => {
           </div>
           <h3>{{ dialogState.title }}</h3>
           <p v-if="dialogState.message">{{ dialogState.message }}</p>
-          
+
           <div v-if="dialogState.type === 'prompt'" class="prompt-input-wrapper">
-            <input 
-              v-model="dialogState.value" 
-              type="text" 
-              class="premium-input" 
+            <input
+              v-model="dialogState.value"
+              type="text"
+              class="premium-input"
               @keyup.enter="confirm"
               autofocus
             />

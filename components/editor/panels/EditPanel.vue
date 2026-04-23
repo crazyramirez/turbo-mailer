@@ -22,8 +22,13 @@ import {
 import { useEditorState } from "~/composables/useEditorState";
 import { useBlockEditor } from "~/composables/useBlockEditor";
 
-const { selectedElement, selectedSubElement, fontSizeRef, logoWidthRef, gridImageHeightRef } =
-  useEditorState();
+const {
+  selectedElement,
+  selectedSubElement,
+  fontSizeRef,
+  logoWidthRef,
+  gridImageHeightRef,
+} = useEditorState();
 
 const {
   deleteSelectedBlock,

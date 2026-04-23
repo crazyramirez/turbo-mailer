@@ -1,4 +1,5 @@
-<!-- app.vue root component -->
 <template>
-  <NuxtPage />
+  <NuxtLayout>
+    <NuxtPage />
+  </NuxtLayout>
 </template>
