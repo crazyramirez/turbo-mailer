@@ -9,8 +9,8 @@ dist/
 docs/
 docs/*
 
-!data/templates
 data/templates/*
+!data/templates
 data/*.db
 data/*.db-wal
 data/*.db-shm
