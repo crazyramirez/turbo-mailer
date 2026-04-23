@@ -92,12 +92,12 @@ Turbo-Mailer PRO es una plataforma de email marketing de alto rendimiento constr
 
 ### 🤖 IA Copywriting Assistant
 
-- Integración con OpenAI (GPT-4o-mini configurable a GPT-4o)
+- Integración con OpenAI (GPT-4o-mini configurable a otros modelos de OpenAI)
 - Mejora bloques individuales preservando el HTML y las variables dinámicas
 
 ### 🌐 Multiidioma (i18n)
 
-- Interfaz completa en **Español** e **Inglés**
+- Interfaz completa en **Español** e **Inglés** (i18n)
 - Cambio de idioma en tiempo real sin recarga
 - Traducción de toda la UI: navegación, pasos, contactos, campañas, analytics, baja de suscripción
 
@@ -110,7 +110,7 @@ Turbo-Mailer PRO es una plataforma de email marketing de alto rendimiento constr
 
 ### 📱 PWA & Mobile First
 
-- Instalable como app nativa en Windows, iOS y Android
+- Instalable como webapp en Windows, iOS y Android
 - Soporte offline vía Service Worker (autoUpdate + workbox navigation fallback)
 
 ---
