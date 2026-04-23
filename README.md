@@ -291,6 +291,7 @@ Encuentra una plantilla de ejemplo profesional en: `docs/email_demo.html`
 - [x] **Contactos** — Revisar CRUD, importación Excel, exportación CSV, drag-to-list, paginación y filtros. Funcional y testeado básicamente, pero requiere testing en profundidad.
 - [x] **Analíticas** — Revisar KPIs, últimas aperturas, top campañas y eventos de tracking. Funcional y testeado básicamente, pero requiere testing en profundidad.
 - [ ] **Responsive** — Adaptar toda la interfaz para dispositivos móviles (actualmente optimizado para Desktop).
+- [ ] **Internacionalizar Editor** — Falta internacionalizar el visor de editor (actualmente solo en español).
 
 ---
 
