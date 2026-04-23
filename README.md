@@ -2,8 +2,8 @@
 
 **Dashboard de Envío Inteligente de Emails**
 
-##WIP -- En breve esta webapp va a cambiar radicalmente, si todo va bien voy a añadirle muchas opciones (Gestión de contactos, importador, Gestión de campañas, analíticas, tracking de visualización, tracking de clicks...)
-Nada... Un par de días como mucho
+**WIP -- En breve esta webapp va a cambiar radicalmente, si todo va bien voy a añadirle muchas opciones (Gestión de contactos, importador, Gestión de campañas, analíticas, tracking de visualización, tracking de clicks...)
+Nada... Un par de días como mucho**
 
 > ⚠️ **Uso Responsable — Leer antes de usar**
 >
