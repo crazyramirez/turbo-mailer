@@ -286,7 +286,7 @@ Encuentra una plantilla de ejemplo profesional en: `docs/email_demo.html`
 - [ ] **Campañas** — Revisar funcionalidades completas (wizard, envío, estados, tracking inyectado). Funcional y testeado básicamente, pero requiere testing en profundidad.
 - [ ] **Contactos** — Revisar CRUD, importación Excel, exportación CSV, drag-to-list, paginación y filtros. Funcional y testeado básicamente, pero requiere testing en profundidad.
 - [ ] **Analíticas** — Revisar KPIs, últimas aperturas, top campañas y eventos de tracking. Funcional y testeado básicamente, pero requiere testing en profundidad.
-- [ ] **Responsividad** — Adaptar toda la interfaz para dispositivos móviles (actualmente optimizado para Desktop).
+- [ ] **Responsive** — Adaptar toda la interfaz para dispositivos móviles (actualmente optimizado para Desktop).
 
 ---
 
