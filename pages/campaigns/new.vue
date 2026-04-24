@@ -458,7 +458,7 @@ onMounted(() => {
 .btn-close-wizard {
   position: absolute;
   top: 24px;
-  right: 24px;
+  left: 24px;
   width: 40px;
   height: 40px;
   border-radius: 12px;
@@ -1088,6 +1088,7 @@ label {
   }
   .steps-nav {
     gap: 0;
+    margin-top: 30px;
   }
   .step-label {
     display: none;

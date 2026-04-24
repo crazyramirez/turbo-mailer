@@ -240,7 +240,7 @@ onMounted(fetchCampaigns);
           <!-- Actions -->
           <div class="card-actions">
             <NuxtLink :to="`/campaigns/${c.id}`" class="btn-action">
-              <Eye :size="13" />{{ t("campaigns_page.view") }}
+              <Eye :size="13" /><span>{{ t("campaigns_page.view") }}</span>
             </NuxtLink>
             <button
               class="btn-action"
@@ -608,7 +608,8 @@ onMounted(fetchCampaigns);
   .page-header h1 {
     font-size: 18px;
   }
-  .btn-primary span {
+  .btn-primary span,
+  .btn-action span {
     display: none;
   }
   .btn-primary {
