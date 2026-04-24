@@ -442,11 +442,19 @@ watch([search, statusFilter], () => {
             style="display: none"
             @change="doImport"
           />
-          <button class="btn-secondary" @click="xlsxInputRef?.click()" :title="t('contacts_page.import')">
+          <button
+            class="btn-secondary"
+            @click="xlsxInputRef?.click()"
+            :title="t('contacts_page.import')"
+          >
             <Upload :size="15" stroke-width="2.5" />
             <span>{{ t("contacts_page.import") }}</span>
           </button>
-          <button class="btn-secondary" @click="doExport" :title="t('contacts_page.export')">
+          <button
+            class="btn-secondary"
+            @click="doExport"
+            :title="t('contacts_page.export')"
+          >
             <Download :size="15" stroke-width="2.5" />
             <span>{{ t("contacts_page.export") }}</span>
           </button>
@@ -975,6 +983,7 @@ watch([search, statusFilter], () => {
   color: var(--text);
   font-size: 13px;
   outline: none;
+  backdrop-filter: blur(5px);
 }
 .search-input:focus {
   border-color: var(--accent);

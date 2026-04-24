@@ -145,8 +145,8 @@ function openEditor() {
 
 // ─── Subject vars ────────────────────────────────────────────
 const displayVars = computed(() => [
-  `{{${t('variables.name')}}}`,
-  `{{${t('variables.company')}}}`,
+  `{{${t("variables.name")}}}`,
+  `{{${t("variables.company")}}}`,
   "{{URL}}",
   "{{Linkedin}}",
   "{{Instagram}}",
@@ -263,7 +263,11 @@ onMounted(async () => {
   await Promise.all([fetchCampaign(), fetchSends(), fetchLists()]);
 
   // Auto-sync template content if it was updated in the editor (only for non-sent campaigns)
-  if (campaign.value && campaign.value.templateName && campaign.value.status !== 'sent') {
+  if (
+    campaign.value &&
+    campaign.value.templateName &&
+    campaign.value.status !== "sent"
+  ) {
     try {
       const data = await $fetch<any>("/api/templates", {
         query: { name: campaign.value.templateName },
@@ -845,6 +849,7 @@ onUnmounted(() => clearTimeout(saveTimer));
   background: rgb(0 0 0 / 3%);
   border: 1px solid var(--border);
   border-radius: 16px;
+  backdrop-filter: blur(5px);
 }
 .stat-icon-wrap {
   width: 40px;
@@ -1063,6 +1068,7 @@ select.field-input option {
 .table-wrap {
   background: rgb(0 0 0 / 2%);
   border: 1px solid var(--border);
+  backdrop-filter: blur(5px);
   border-radius: 14px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -1143,6 +1149,7 @@ select.field-input option {
 .right-preview {
   position: sticky;
   top: 20px;
+  backdrop-filter: blur(5px);
 }
 
 /* Transitions */
