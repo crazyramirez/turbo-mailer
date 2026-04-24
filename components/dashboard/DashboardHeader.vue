@@ -12,6 +12,18 @@ import {
   LayoutDashboard,
 } from "lucide-vue-next";
 import { APP_VERSION } from "~/utils/version";
+import { useRoute } from "vue-router";
+
+const route = useRoute();
+const navRef = ref<HTMLElement | null>(null);
+const indicatorStyle = ref({
+  width: "0px",
+  transform: "translateX(0px)",
+  opacity: "0",
+});
+const isInitialLoad = ref(true);
+
+
 
 const { emails, emailSubject, htmlBody, lastSentCount } = useDashboardState();
 const { resetAll, logout } = useCampaignSender();
@@ -42,8 +54,68 @@ onMounted(() => {
     if (e.key === "Escape") closeMenu();
   };
   window.addEventListener("keydown", onKey);
-  onUnmounted(() => window.removeEventListener("keydown", onKey));
+  window.addEventListener("resize", updateIndicator);
+  onUnmounted(() => {
+    window.removeEventListener("keydown", onKey);
+    window.removeEventListener("resize", updateIndicator);
+  });
+
+
+  // Initialize indicator position
+  setTimeout(updateIndicator, 100);
 });
+
+function updateIndicator() {
+  if (!navRef.value) return;
+
+  // Small delay to let Nuxt/Vue-Router apply classes
+  nextTick(() => {
+    setTimeout(() => {
+      if (!navRef.value) return;
+      
+      // Try to find by class first
+      let activeLink = navRef.value.querySelector(".nav-link.router-link-active") as HTMLElement;
+      
+      // Fallback: match by current path if class is not yet applied
+      if (!activeLink) {
+        const links = navRef.value.querySelectorAll(".nav-link");
+        activeLink = Array.from(links).find((link) => {
+          const path = (link as HTMLAnchorElement).pathname;
+          if (path === '/') return route.path === '/';
+          return route.path.startsWith(path);
+        }) as HTMLElement;
+      }
+
+      if (activeLink) {
+        indicatorStyle.value = {
+          width: `${activeLink.offsetWidth}px`,
+          transform: `translateX(${activeLink.offsetLeft}px)`,
+          opacity: "1",
+        };
+        
+        // After the first position is set, enable transitions
+        if (isInitialLoad.value) {
+          setTimeout(() => {
+            isInitialLoad.value = false;
+          }, 50);
+        }
+      } else {
+        indicatorStyle.value.opacity = "0";
+      }
+    }, 40);
+  });
+}
+
+
+
+watch(
+  [() => route.path, () => locale.value],
+  () => {
+    updateIndicator();
+  }
+);
+
+
 </script>
 
 <template>
@@ -83,31 +155,55 @@ onMounted(() => {
       </Transition>
 
       <!-- Desktop nav -->
-      <nav class="header-nav hide-mobile">
-        <NuxtLink to="/" class="nav-link" :title="t('nav.dashboard')">
+      <nav ref="navRef" class="header-nav hide-mobile">
+        <!-- Active indicator pill -->
+        <div
+          class="nav-indicator"
+          :class="{ 'no-transition': isInitialLoad }"
+          :style="indicatorStyle"
+        />
+
+
+        <NuxtLink
+          to="/"
+          class="nav-link"
+          active-class="router-link-active"
+          exact-active-class="router-link-active"
+          :title="t('nav.dashboard')"
+        >
           <LayoutDashboard :size="15" stroke-width="2.5" />
           <span>{{ t("nav.dashboard") }}</span>
         </NuxtLink>
-        <NuxtLink to="/contacts" class="nav-link" :title="t('nav.contacts')">
+        <NuxtLink
+          to="/contacts"
+          class="nav-link"
+          active-class="router-link-active"
+          :title="t('nav.contacts')"
+        >
           <Users :size="15" stroke-width="2.5" />
           <span>{{ t("nav.contacts") }}</span>
         </NuxtLink>
         <NuxtLink
           to="/campaigns"
           class="nav-link"
-          :class="{
-            'router-link-active': $route.path.startsWith('/campaigns'),
-          }"
+          active-class="router-link-active"
           :title="t('nav.campaigns')"
         >
           <Mail :size="15" stroke-width="2.5" />
           <span>{{ t("nav.campaigns") }}</span>
         </NuxtLink>
-        <NuxtLink to="/analytics" class="nav-link" :title="t('nav.analytics')">
+        <NuxtLink
+          to="/analytics"
+          class="nav-link"
+          active-class="router-link-active"
+          :title="t('nav.analytics')"
+        >
           <BarChart2 :size="15" stroke-width="2.5" />
           <span>{{ t("nav.analytics") }}</span>
         </NuxtLink>
+
       </nav>
+
 
       <!-- Desktop right actions -->
       <div class="header-right">
@@ -375,9 +471,32 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 4px;
+  position: relative;
+}
+
+.nav-indicator {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 38px; /* Matching nav-link height approx */
+  margin-top: -19px;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 60px;
+  transition:
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.2s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.nav-indicator.no-transition {
+  transition: none !important;
 }
 
 .nav-link {
+
   display: flex;
   align-items: center;
   gap: 6px;
@@ -387,21 +506,20 @@ onMounted(() => {
   font-weight: 600;
   color: var(--text-muted);
   text-decoration: none;
-  transition: all 0.2s;
+  transition: color 0.2s;
   border: 1px solid transparent;
+  position: relative;
+  z-index: 1;
 }
 
 .nav-link:hover {
-  background: rgba(255, 255, 255, 0.05);
   color: var(--text);
-  border-color: var(--border);
 }
 
 .nav-link.router-link-active {
-  background: rgba(99, 102, 241, 0.1);
   color: var(--accent-light);
-  border-color: rgba(99, 102, 241, 0.2);
 }
+
 
 .btn-lang {
   display: flex;
