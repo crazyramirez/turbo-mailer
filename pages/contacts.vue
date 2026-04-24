@@ -977,13 +977,12 @@ watch([search, statusFilter], () => {
 .search-input {
   width: 100%;
   padding: 9px 12px 9px 36px;
-  background: var(--surface);
+  background: rgb(0 0 0 / 30%);
   border: 1px solid var(--border);
   border-radius: 10px;
   color: var(--text);
   font-size: 13px;
   outline: none;
-  backdrop-filter: blur(5px);
 }
 .search-input:focus {
   border-color: var(--accent);
@@ -994,15 +993,16 @@ watch([search, statusFilter], () => {
   gap: 4px;
 }
 .filter-tab {
-  padding: 7px 14px;
+  padding: 10px 14px;
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
   border: 1px solid var(--border);
-  background: transparent;
+  background: rgb(0 0 0 / 30%);
   color: var(--text-muted);
   cursor: pointer;
   transition: all 0.2s;
+  backdrop-filter: blur(5px);
 }
 .filter-tab:hover {
   background: rgb(0 0 0 / 5%);
