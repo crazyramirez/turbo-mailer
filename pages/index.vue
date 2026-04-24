@@ -335,7 +335,10 @@ async function duplicateCampaign() {
       </div>
 
       <!-- Main 2-col grid -->
-      <div class="dash-main-grid" :class="{ 'empty-grid': recentCampaigns.length === 0 }">
+      <div
+        class="dash-main-grid"
+        :class="{ 'empty-grid': recentCampaigns.length === 0 }"
+      >
         <!-- Campaign List Panel -->
         <div class="panel campaign-list-panel">
           <div class="panel-header">
@@ -362,7 +365,10 @@ async function duplicateCampaign() {
             </div>
           </div>
 
-          <div v-else-if="recentCampaigns.length === 0" class="empty-placeholder">
+          <div
+            v-else-if="recentCampaigns.length === 0"
+            class="empty-placeholder"
+          >
             <div class="empty-placeholder-icon">
               <Mail :size="40" stroke-width="1.2" />
             </div>
