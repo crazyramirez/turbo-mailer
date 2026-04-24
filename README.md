@@ -12,7 +12,7 @@ Turbo-Mailer PRO es una plataforma de email marketing de alto rendimiento constr
 
 ## 🛡️ Tu Información, Solo Tuya (Soberanía de Datos)
 
-Lo que hace a **Turbo-Mailer PRO** una herramienta extremadamente potente es la **privacidad total**. Al ser una aplicación auto-alojada en tu propio servidor:
+Lo que hace a **Turbo-Mailer PRO** una herramienta extremadamente potente es la **privacidad**. Al ser una aplicación auto-alojada en tu propio servidor:
 
 - **Eliminas Intermediarios**: No entregas la información valiosa de tu empresa, negocio o clientes a ninguna plataforma externa.
 - **Privacidad Profesional**: Solo existe la conexión directa entre tu instancia privada y el servicio de GMail.
@@ -306,7 +306,7 @@ La app usa Gmail SMTP con una contraseña de aplicación de 16 dígitos (no tu c
 - Sesión en cookie `httpOnly` + `SameSite=strict` con TTL de 24 horas
 - Rate limiting por IP: 10 intentos fallidos → bloqueo de 15 minutos con contador visible
 - Middleware global que redirige a `/login` si la sesión no es válida
-- **Privacidad Total**: Los datos de contactos y campañas persisten en tu base de datos SQLite local. Tus datos **nunca** salen de tu servidor ni son accesibles por terceros.
+- **Privacidad**: Los datos de contactos y campañas persisten en tu base de datos SQLite local. Tus datos **nunca** salen de tu servidor ni son accesibles por terceros.
 
 ---
 

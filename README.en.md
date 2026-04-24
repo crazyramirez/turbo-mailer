@@ -12,7 +12,7 @@ Turbo-Mailer PRO is a high-performance email marketing platform built with **Nux
 
 ## 🛡️ Your Information, Only Yours (Data Sovereignty)
 
-What makes **Turbo-Mailer PRO** an extremely powerful tool is its **total privacy**. Being a self-hosted application on your own server:
+What makes **Turbo-Mailer PRO** an extremely powerful tool is its **privacy**. Being a self-hosted application on your own server:
 
 - **Eliminate Intermediaries**: You don't hand over your company's, business's, or clients' valuable information to any external platform.
 - **Professional Privacy**: There is only a direct connection between your private instance and the GMail service.
@@ -146,14 +146,14 @@ To ensure your data privacy and prevent the platform from appearing in search en
 
 SQLite in `./data/turbomailer.db` managed with Drizzle ORM. Main tables:
 
-| Table            | Description                                              |
-| ---------------- | -------------------------------------------------------- |
-| `contacts`       | Contacts with all their fields and subscription status   |
-| `lists`          | Distribution lists with name, description, and color     |
-| `listContacts`   | M×N relationship contacts ↔ lists (cascade delete)       |
-| `campaigns`      | Campaigns with status, counters, and timestamps          |
-| `sends`          | Individual sends per recipient with status and error     |
-| `trackingEvents` | Open and click events with metadata                      |
+| Table            | Description                                            |
+| ---------------- | ------------------------------------------------------ |
+| `contacts`       | Contacts with all their fields and subscription status |
+| `lists`          | Distribution lists with name, description, and color   |
+| `listContacts`   | M×N relationship contacts ↔ lists (cascade delete)     |
+| `campaigns`      | Campaigns with status, counters, and timestamps        |
+| `sends`          | Individual sends per recipient with status and error   |
+| `trackingEvents` | Open and click events with metadata                    |
 
 ---
 
@@ -247,56 +247,56 @@ The app uses Gmail SMTP with a 16-digit app password (not your normal password).
 
 ### Auth
 
-| Method | Route              | Description                  |
-| ------ | ------------------ | ---------------------------- |
-| POST   | `/api/auth/login`  | Login with master password   |
-| GET    | `/api/auth/check`  | Check active session         |
-| POST   | `/api/auth/logout` | Log out                      |
+| Method | Route              | Description                |
+| ------ | ------------------ | -------------------------- |
+| POST   | `/api/auth/login`  | Login with master password |
+| GET    | `/api/auth/check`  | Check active session       |
+| POST   | `/api/auth/logout` | Log out                    |
 
 ### Contacts
 
-| Method | Route                  | Description                               |
-| ------ | ---------------------- | ----------------------------------------- |
-| GET    | `/api/contacts`        | List with search, filter, and pagination  |
-| POST   | `/api/contacts`        | Create contact                            |
-| GET    | `/api/contacts/[id]`   | Detail with associated lists              |
-| PUT    | `/api/contacts/[id]`   | Update fields and tags                    |
-| DELETE | `/api/contacts/[id]`   | Delete contact                            |
-| POST   | `/api/contacts/import` | Bulk import from array                    |
-| GET    | `/api/contacts/export` | Export full CSV                           |
+| Method | Route                  | Description                              |
+| ------ | ---------------------- | ---------------------------------------- |
+| GET    | `/api/contacts`        | List with search, filter, and pagination |
+| POST   | `/api/contacts`        | Create contact                           |
+| GET    | `/api/contacts/[id]`   | Detail with associated lists             |
+| PUT    | `/api/contacts/[id]`   | Update fields and tags                   |
+| DELETE | `/api/contacts/[id]`   | Delete contact                           |
+| POST   | `/api/contacts/import` | Bulk import from array                   |
+| GET    | `/api/contacts/export` | Export full CSV                          |
 
 ### Lists
 
-| Method | Route                                  | Description                         |
-| ------ | -------------------------------------- | ----------------------------------- |
-| GET    | `/api/lists`                           | List with contact count             |
-| POST   | `/api/lists`                           | Create list                         |
-| PUT    | `/api/lists/[id]`                      | Update name/description/color       |
-| DELETE | `/api/lists/[id]`                      | Delete list (cascade)               |
-| POST   | `/api/lists/[id]/contacts`             | Add contacts in batch               |
-| DELETE | `/api/lists/[id]/contacts/[contactId]` | Remove contact from list            |
+| Method | Route                                  | Description                   |
+| ------ | -------------------------------------- | ----------------------------- |
+| GET    | `/api/lists`                           | List with contact count       |
+| POST   | `/api/lists`                           | Create list                   |
+| PUT    | `/api/lists/[id]`                      | Update name/description/color |
+| DELETE | `/api/lists/[id]`                      | Delete list (cascade)         |
+| POST   | `/api/lists/[id]/contacts`             | Add contacts in batch         |
+| DELETE | `/api/lists/[id]/contacts/[contactId]` | Remove contact from list      |
 
 ### Campaigns
 
-| Method | Route                       | Description                         |
-| ------ | --------------------------- | ----------------------------------- |
-| GET    | `/api/campaigns`            | List campaigns (filter by status)   |
-| POST   | `/api/campaigns`            | Create draft                        |
-| GET    | `/api/campaigns/[id]`       | Detail with metrics                 |
-| PUT    | `/api/campaigns/[id]`       | Update campaign                     |
-| DELETE | `/api/campaigns/[id]`       | Delete campaign                     |
-| POST   | `/api/campaigns/[id]/send`  | Launch send                         |
-| GET    | `/api/campaigns/[id]/sends` | List individual sends               |
+| Method | Route                       | Description                       |
+| ------ | --------------------------- | --------------------------------- |
+| GET    | `/api/campaigns`            | List campaigns (filter by status) |
+| POST   | `/api/campaigns`            | Create draft                      |
+| GET    | `/api/campaigns/[id]`       | Detail with metrics               |
+| PUT    | `/api/campaigns/[id]`       | Update campaign                   |
+| DELETE | `/api/campaigns/[id]`       | Delete campaign                   |
+| POST   | `/api/campaigns/[id]/send`  | Launch send                       |
+| GET    | `/api/campaigns/[id]/sends` | List individual sends             |
 
 ### Tracking & Analytics
 
-| Method | Route              | Description                |
-| ------ | ------------------ | -------------------------- |
-| GET    | `/api/track/open`  | Open pixel (GIF 1×1)       |
-| GET    | `/api/track/click` | Tracked redirect           |
-| GET    | `/api/analytics`   | Dashboard KPIs             |
-| GET    | `/api/unsubscribe` | Unsubscribe                |
-| DELETE | `/api/reset`       | Selective data reset       |
+| Method | Route              | Description          |
+| ------ | ------------------ | -------------------- |
+| GET    | `/api/track/open`  | Open pixel (GIF 1×1) |
+| GET    | `/api/track/click` | Tracked redirect     |
+| GET    | `/api/analytics`   | Dashboard KPIs       |
+| GET    | `/api/unsubscribe` | Unsubscribe          |
+| DELETE | `/api/reset`       | Selective data reset |
 
 ---
 
@@ -306,7 +306,7 @@ The app uses Gmail SMTP with a 16-digit app password (not your normal password).
 - Session in `httpOnly` cookie + `SameSite=strict` with 24-hour TTL
 - Rate limiting per IP: 10 failed attempts → 15-minute lockout with visible timer
 - Global middleware redirects to `/login` if session is invalid
-- **Total Privacy**: Contact and campaign data persist in your local SQLite database. Your data **never** leaves your server and is not accessible by third parties.
+- **Privacy**: Contact and campaign data persist in your local SQLite database. Your data **never** leaves your server and is not accessible by third parties.
 
 ---
 
