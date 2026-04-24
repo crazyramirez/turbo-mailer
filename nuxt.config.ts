@@ -6,8 +6,13 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     appPassword: process.env.APP_PASSWORD,
-    gmailUser: process.env.GMAIL_USER,
-    gmailAppPassword: process.env.GMAIL_APP_PASSWORD,
+    smtpHost: process.env.SMTP_HOST,
+    smtpPort: process.env.SMTP_PORT || 465,
+    smtpUser: process.env.SMTP_USER,
+    smtpPass: process.env.SMTP_PASS,
+    smtpSecure: process.env.SMTP_SECURE !== 'false', // Default to true
+    smtpFromName: process.env.SMTP_FROM_NAME || 'Turbo-Mailer PRO',
+    smtpFromEmail: process.env.SMTP_FROM_EMAIL,
     openaiApiKey: process.env.OPENAI_API_KEY,
     openaiModel: process.env.OPENAI_MODEL || 'gpt-4o-mini',
     trackingBaseUrl: process.env.TRACKING_BASE_URL || 'http://localhost:3000',

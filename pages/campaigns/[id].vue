@@ -23,6 +23,7 @@ import CampaignLibraryModal from "~/components/campaigns/CampaignLibraryModal.vu
 definePageMeta({ layout: "app" });
 
 const { showToast, showDialog } = useDashboardState();
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const id = Number(route.params.id);
@@ -143,14 +144,14 @@ function openEditor() {
 }
 
 // ─── Subject vars ────────────────────────────────────────────
-const VARS = [
-  "{{Nombre}}",
-  "{{Empresa}}",
+const displayVars = computed(() => [
+  `{{${t('variables.name')}}}`,
+  `{{${t('variables.company')}}}`,
   "{{URL}}",
   "{{Linkedin}}",
   "{{Instagram}}",
   "{{Youtube}}",
-];
+]);
 function insertVar(v: string) {
   const el = subjectRef.value;
   if (!el) {
@@ -414,7 +415,7 @@ onUnmounted(() => clearTimeout(saveTimer));
               </div>
               <div class="var-chips">
                 <button
-                  v-for="v in VARS"
+                  v-for="v in displayVars"
                   :key="v"
                   @click="insertVar(v)"
                   class="var-chip"

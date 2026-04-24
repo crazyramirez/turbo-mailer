@@ -161,7 +161,7 @@ export const iframeEditorStyles = `
   }
   .module-remove-reveal { animation: moduleRemove 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards; pointer-events: none; }
   
-  /* Dark Mode Simulation (Gmail-like) */
+  /* Dark Mode Simulation (Email-like) */
   body { transition: filter 0.5s ease, background-color 0.5s ease; }
   .dark-mode-simulation {
     filter: invert(100%) hue-rotate(180deg) !important;

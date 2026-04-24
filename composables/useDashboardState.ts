@@ -85,21 +85,70 @@ function showToast(message: string, type: 'success' | 'error' | 'info' = 'info')
 // ─── Computed ──────────────────────────────────────────────────────────────────
 
 function applyVars(template: string, row: Record<string, any>): string {
+  if (!template) return ''
   let result = template
-  // Global mapping support (legacy/shortcuts)
-  result = result
-    .replace(/\{\{\s*Empresa\s*\}\}/gi, row[empresaColumn.value] || '')
-    .replace(/\{\{\s*Nombre\s*\}\}/gi, row[nombreColumn.value] || '')
-    .replace(/\{\{\s*Email\s*\}\}/gi, row[selectedColumn.value] || '')
-    .replace(/\{\{\s*Linkedin\s*\}\}/gi, row[linkedinColumn.value] || '')
-    .replace(/\{\{\s*URL\s*\}\}/gi, row[urlColumn.value] || '')
-    .replace(/\{\{\s*Youtube\s*\}\}/gi, row[youtubeColumn.value] || '')
-    .replace(/\{\{\s*Instagram\s*\}\}/gi, row[instagramColumn.value] || '')
-  
-  // Dynamic column support
+
+  const VAR_MAP: Record<string, string[]> = {
+    name: ['Nombre', 'Name', 'FirstName', 'First Name', 'Contacto', 'Contact'],
+    company: ['Empresa', 'Company', 'Business', 'Organization'],
+    url: ['URL', 'Link', 'Web', 'Website'],
+    linkedin: ['Linkedin', 'LinkedIn'],
+    instagram: ['Instagram', 'IG'],
+    youtube: ['Youtube', 'YouTube', 'YT'],
+    phone: ['Telefono', 'Teléfono', 'Phone', 'Cell', 'Mobile'],
+    email: ['Email', 'Correo', 'Mail']
+  }
+
+  // Support for specific column mapping from the XLSX UI
+  const fieldMapping: Record<string, string> = {
+    name: nombreColumn.value,
+    company: empresaColumn.value,
+    email: selectedColumn.value,
+    linkedin: linkedinColumn.value,
+    url: urlColumn.value,
+    youtube: youtubeColumn.value,
+    instagram: instagramColumn.value,
+  }
+
+  // Iterate over our defined mappings
+  for (const [field, aliases] of Object.entries(VAR_MAP)) {
+    // Try to find the value
+    const colName = fieldMapping[field]
+    let value = colName ? row[colName] : row[field]
+
+    if (value === undefined) {
+      for (const alias of aliases) {
+        if (row[alias] !== undefined) {
+          value = row[alias]
+          break
+        }
+        // Try case-insensitive key lookup
+        const ciKey = Object.keys(row).find(k => k.toLowerCase() === alias.toLowerCase())
+        if (ciKey) {
+          value = row[ciKey]
+          break
+        }
+      }
+    }
+    
+    const finalValue = value === null || value === undefined ? '' : String(value)
+
+    // Replace all aliases (case-insensitive)
+    for (const alias of aliases) {
+      const reg = new RegExp(`\\{\\{\\s*${alias}\\s*\\}\\}`, 'gi')
+      result = result.replace(reg, finalValue)
+    }
+
+    // Also replace the field name itself
+    const fieldReg = new RegExp(`\\{\\{\\s*${field}\\s*\\}\\}`, 'gi')
+    result = result.replace(fieldReg, finalValue)
+  }
+
+  // Dynamic column support (XLSX columns or any key in row)
   Object.keys(row).forEach(key => {
+    const finalValue = row[key] === null || row[key] === undefined ? '' : String(row[key])
     const regex = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'gi')
-    result = result.replace(regex, row[key] || '')
+    result = result.replace(regex, finalValue)
   })
   
   return result

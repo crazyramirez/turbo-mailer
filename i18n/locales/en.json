@@ -423,5 +423,9 @@
     "yes": "Yes",
     "no": "No",
     "unknown": "Unknown"
+  },
+  "variables": {
+    "name": "Name",
+    "company": "Company"
   }
 }

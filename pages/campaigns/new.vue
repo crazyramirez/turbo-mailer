@@ -187,8 +187,8 @@ onMounted(() => {
               <div class="var-chips">
                 <button
                   v-for="v in [
-                    '{{Nombre}}',
-                    '{{Empresa}}',
+                    `{{${t('variables.name')}}}`,
+                    `{{${t('variables.company')}}}`,
                     '{{URL}}',
                     '{{Linkedin}}',
                     '{{Instagram}}',

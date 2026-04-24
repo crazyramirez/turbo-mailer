@@ -125,7 +125,7 @@ async function copyHtml() {
     ]);
 
     copied.value = true;
-    showToast("Diseño copiado para Gmail", "success");
+    showToast("Diseño copiado al portapapeles", "success");
     setTimeout(() => (copied.value = false), 2000);
   } catch {
     // Fallback: select + execCommand
@@ -142,7 +142,7 @@ async function copyHtml() {
         selection?.removeAllRanges();
 
         copied.value = true;
-        showToast("Diseño copiado para Gmail", "success");
+        showToast("Diseño copiado al portapapeles", "success");
         setTimeout(() => (copied.value = false), 2000);
       }
     } catch {
@@ -210,7 +210,7 @@ async function copyHtml() {
             <button
               @click="copyHtml"
               class="btn-copy-preview"
-              title="Copiar HTML para Gmail"
+              title="Copiar HTML"
             >
               <Copy :size="14" v-if="!copied" />
               <Check :size="14" v-else />

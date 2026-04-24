@@ -1,14 +1,22 @@
 import nodemailer from 'nodemailer'
+import { applyVars } from '~/server/utils/template'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
-  const gmailUser = config.gmailUser
-  const gmailPassword = config.gmailAppPassword
+  const {
+    smtpHost,
+    smtpPort,
+    smtpUser,
+    smtpPass,
+    smtpSecure,
+    smtpFromName,
+    smtpFromEmail
+  } = config
 
-  if (!gmailUser || !gmailPassword) {
+  if (!smtpHost || !smtpUser || !smtpPass) {
     throw createError({
       statusCode: 500,
-      statusMessage: 'Credenciales Gmail no configuradas en el servidor (.env)',
+      statusMessage: 'Configuración SMTP incompleta en el servidor (.env)',
     })
   }
 
@@ -20,22 +28,15 @@ export default defineEventHandler(async (event) => {
   }
 
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: smtpHost,
+    port: Number(smtpPort),
+    secure: smtpSecure,
     auth: {
-      user: gmailUser,
-      pass: gmailPassword,
+      user: smtpUser,
+      pass: smtpPass,
     },
   })
 
-  /** Helper to substitute variables */
-  const applyVars = (tpl: string, vars: Record<string, string>) => {
-    let result = tpl
-    for (const [key, value] of Object.entries(vars)) {
-      const reg = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'gi')
-      result = result.replace(reg, value || '')
-    }
-    return result
-  }
 
   const results: { email: string; status: 'sent' | 'failed'; error?: string }[] = []
 
@@ -45,8 +46,9 @@ export default defineEventHandler(async (event) => {
       const personalizedSubject = applyVars(subject, vars)
       const personalizedHtml = applyVars(htmlBody, vars)
 
+      const senderEmail = smtpFromEmail || smtpUser
       await transporter.sendMail({
-        from: `"${gmailUser}" <${gmailUser}>`,
+        from: `"${smtpFromName}" <${senderEmail}>`,
         to: email,
         subject: personalizedSubject,
         html: personalizedHtml,
@@ -57,5 +59,5 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  return { results, sender: gmailUser }
+  return { results, sender: smtpFromEmail || smtpUser }
 })

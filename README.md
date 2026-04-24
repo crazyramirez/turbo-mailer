@@ -8,14 +8,14 @@
 
 > ⚠️ **Uso Responsable:** Diseñado para envíos legítimos y con permiso (newsletters, B2B). **Prohibido para spam.** Al usarlo, aceptas las normas de Google y leyes de privacidad (GDPR, etc.) bajo tu propia responsabilidad.
 
-Turbo-Mailer PRO es una plataforma de email marketing de alto rendimiento construida con **Nuxt 3**. Incluye gestión completa de contactos y listas, editor visual de plantillas HTML con bloques drag & drop, sistema de campañas con tracking de aperturas y clics, analytics en tiempo real, integración con IA para copywriting e interfaz multiidioma (ES/EN). Todo con persistencia real en base de datos SQLite y envío masivo vía Gmail SMTP.
+Turbo-Mailer PRO es una plataforma de email marketing de alto rendimiento construida con **Nuxt 3**. Incluye gestión completa de contactos y listas, editor visual de plantillas HTML con bloques drag & drop, sistema de campañas con tracking de aperturas y clics, analytics en tiempo real, integración con IA para copywriting e interfaz multiidioma (ES/EN). Todo con persistencia real en base de datos SQLite y envío masivo vía cualquier servicio SMTP (Gmail, Outlook, Amazon SES, etc.).
 
 ## 🛡️ Tu Información, Solo Tuya (Soberanía de Datos)
 
 Lo que hace a **Turbo-Mailer PRO** una herramienta extremadamente potente es la **privacidad**. Al ser una aplicación auto-alojada en tu propio servidor:
 
 - **Eliminas Intermediarios**: No entregas la información valiosa de tu empresa, negocio o clientes a ninguna plataforma externa.
-- **Privacidad Profesional**: Solo existe la conexión directa entre tu instancia privada y el servicio de GMail.
+- **Privacidad Profesional**: Solo existe la conexión directa entre tu instancia privada y tu servicio de correo elegido.
 
 ![Turbo-Mailer PRO — Dashboard preview](public/images/ogimage.jpg)
 
@@ -58,7 +58,7 @@ Lo que hace a **Turbo-Mailer PRO** una herramienta extremadamente potente es la 
 - Vista de detalle por campaña con listado de destinatarios, sus estados y métricas individuales
 - Inyección automática de **pixel de tracking** (apertura) y **enlaces trackeados** (clics) en el HTML antes del envío
 - Variables dinámicas: `{{Empresa}}`, `{{Nombre}}`, `{{URL}}`, `{{Linkedin}}`, `{{Instagram}}`, `{{Youtube}}`
-- Envío masivo vía Gmail SMTP con reporte en tiempo real de éxitos y fallos
+- Envío masivo vía SMTP con reporte en tiempo real de éxitos y fallos
 
 ### 📊 Analytics
 
@@ -132,7 +132,7 @@ Para garantizar la privacidad de tus datos y evitar que la plataforma aparezca e
 | ------------- | ------------------------------------------------------------------------------ |
 | Framework     | [Nuxt 3](https://nuxt.com/) — SPA mode (`ssr: false`)                          |
 | Base de datos | [SQLite](https://www.sqlite.org/) vía [Drizzle ORM](https://orm.drizzle.team/) |
-| Emailing      | [Nodemailer](https://nodemailer.com/) — Gmail SMTP                             |
+| Emailing      | [Nodemailer](https://nodemailer.com/) — SMTP (Gmail, Outlook, etc.)           |
 | Data Handling | [XLSX (SheetJS)](https://sheetjs.com/)                                         |
 | IA            | [OpenAI API](https://platform.openai.com/) — GPT-4o-mini (configurable)        |
 | i18n          | [@nuxtjs/i18n](https://i18n.nuxtjs.org/)                                       |
@@ -189,9 +189,14 @@ SQLite en `./data/turbomailer.db` gestionada con Drizzle ORM. Tablas principales
    # Acceso a la Aplicación (requerido)
    APP_PASSWORD=tu-contraseña-de-acceso
 
-   # Gmail SMTP (requerido para enviar)
-   GMAIL_USER=tu-correo@gmail.com
-   GMAIL_APP_PASSWORD=tu-app-password-de-16-caracteres
+   # Configuración SMTP (requerido para enviar)
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=465
+   SMTP_USER=tu-correo@gmail.com
+   SMTP_PASS=tu-password-de-aplicacion
+   SMTP_SECURE=true
+   SMTP_FROM_NAME=Turbo-Mailer PRO
+   SMTP_FROM_EMAIL=tu-correo@gmail.com
 
    # Inteligencia Artificial (opcional)
    OPENAI_API_KEY=sk-...
@@ -231,14 +236,14 @@ Pulsa **"Empezar desde cero"** para comenzar directamente con la base de datos v
 
 ---
 
-## 🔑 Cómo crear una App Password de Gmail
+## 🔑 Ejemplo: Configuración con Gmail
 
 La app usa Gmail SMTP con una contraseña de aplicación de 16 dígitos (no tu contraseña normal).
 
 1. **Activar Verificación en 2 Pasos**: [Cuenta de Google → Seguridad](https://myaccount.google.com/security)
 2. **Generar contraseña**: Accede a [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
 3. Escribe un nombre (ej. `Turbo Mailer`) y haz clic en **Crear**
-4. Copia el código de 16 caracteres (sin espacios) y pégalo en `GMAIL_APP_PASSWORD`
+4. Copia el código de 16 caracteres (sin espacios) y pégalo en `SMTP_PASS`. Asegúrate de que `SMTP_HOST` sea `smtp.gmail.com` y `SMTP_PORT` sea `465`.
 
 ---
 

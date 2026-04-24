@@ -2,15 +2,8 @@ import nodemailer from 'nodemailer'
 import { db } from '~/server/db/index'
 import { campaigns, contacts, listContacts, sends } from '~/server/db/schema'
 import { eq, and } from 'drizzle-orm'
+import { applyVars } from '~/server/utils/template'
 
-function applyVars(tpl: string, vars: Record<string, string>) {
-  let result = tpl
-  for (const [key, value] of Object.entries(vars)) {
-    const reg = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'gi')
-    result = result.replace(reg, value || '')
-  }
-  return result
-}
 
 function injectTracking(html: string, sendId: number, campaignId: number, baseUrl: string): string {
   // Wrap links with click tracking
@@ -34,11 +27,18 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const baseUrl = config.trackingBaseUrl || 'http://localhost:3000'
 
-  const gmailUser = config.gmailUser
-  const gmailPassword = config.gmailAppPassword
+  const {
+    smtpHost,
+    smtpPort,
+    smtpUser,
+    smtpPass,
+    smtpSecure,
+    smtpFromName,
+    smtpFromEmail
+  } = config
 
-  if (!gmailUser || !gmailPassword) {
-    throw createError({ statusCode: 500, statusMessage: 'Gmail credentials not configured' })
+  if (!smtpHost || !smtpUser || !smtpPass) {
+    throw createError({ statusCode: 500, statusMessage: 'SMTP credentials not configured' })
   }
 
   // Load campaign
@@ -76,10 +76,10 @@ export default defineEventHandler(async (event) => {
   }).where(eq(campaigns.id, campaignId))
 
   const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    auth: { user: gmailUser, pass: gmailPassword },
+    host: smtpHost,
+    port: Number(smtpPort),
+    secure: smtpSecure,
+    auth: { user: smtpUser, pass: smtpPass },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any)
 
@@ -96,21 +96,11 @@ export default defineEventHandler(async (event) => {
       status: 'pending',
     }).returning()
 
-    const vars: Record<string, string> = {
-      Email: contact.email,
-      Contacto: contact.name || '',
-      Empresa: contact.company || '',
-      Linkedin: contact.linkedin || '',
-      URL: contact.url || '',
-      Youtube: contact.youtube || '',
-      Instagram: contact.instagram || '',
-    }
-
     try {
-      const personalizedSubject = applyVars(campaign.subject, vars)
+      const personalizedSubject = applyVars(campaign.subject, contact)
       // Apply UNSUBSCRIBE_URL after tracking injection so it bypasses click tracking
       const trackedHtml = injectTracking(
-        applyVars(campaign.templateHtml, vars),
+        applyVars(campaign.templateHtml, contact),
         sendRow.id,
         campaignId,
         baseUrl
@@ -118,8 +108,9 @@ export default defineEventHandler(async (event) => {
       const unsubscribeUrl = `${baseUrl}/unsubscribe?s=${sendRow.id}`
       const personalizedHtml = trackedHtml.replace(/\{\{\s*UNSUBSCRIBE_URL\s*\}\}/gi, unsubscribeUrl)
 
+      const senderEmail = smtpFromEmail || smtpUser
       await transporter.sendMail({
-        from: `"${gmailUser}" <${gmailUser}>`,
+        from: `"${smtpFromName}" <${senderEmail}>`,
         to: contact.email,
         subject: personalizedSubject,
         html: personalizedHtml,
