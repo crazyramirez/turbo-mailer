@@ -213,7 +213,7 @@ SQLite in `./data/turbomailer.db` managed with Drizzle ORM. Main tables:
 
 When opening the app for the first time (or after a full reset), the dashboard automatically detects that the database is empty and shows a welcome screen with two options:
 
-### Option A — Load sample data (recommended)
+### Option A — Load sample data (Explore the app)
 
 Click **"Sample Data"** in the welcome modal. The app automatically copies `data/turbomailer_demo.db` over `data/turbomailer.db` and reloads the page. You will immediately see:
 

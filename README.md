@@ -213,7 +213,7 @@ SQLite en `./data/turbomailer.db` gestionada con Drizzle ORM. Tablas principales
 
 Al abrir la app por primera vez (o tras un reset completo), el dashboard detecta automáticamente que la base de datos está vacía y muestra una pantalla de bienvenida con dos opciones:
 
-### Opción A — Cargar datos de ejemplo (recomendado)
+### Opción A — Cargar datos de ejemplo (Explorar la app)
 
 Pulsa **"Datos de ejemplo"** en el modal de bienvenida. La app copia automáticamente `data/turbomailer_demo.db` sobre `data/turbomailer.db` y recarga la página. Verás de inmediato:
 
