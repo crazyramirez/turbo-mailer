@@ -540,7 +540,7 @@ function injectIframeContent() {
     const parent = mainCard.parentElement
     if (parent && parent !== doc.body) {
       // Adjusted to 0px lateral padding for edge-to-edge mobile experience as requested
-      parent.style.padding = '10px 0px'
+      // parent.style.padding = '10px 0px'
       parent.style.boxSizing = 'border-box'
     }
   }
