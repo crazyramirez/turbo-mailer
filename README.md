@@ -2,11 +2,21 @@
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
+**[English version](README.en.md)**
+
 **Plataforma Completa de Email Marketing con CRM simple, Editor de plantillas HTML, IA, Analytics, Tracking y mucho más.**
 
 > ⚠️ **Uso Responsable:** Diseñado para envíos legítimos y con permiso (newsletters, B2B). **Prohibido para spam.** Al usarlo, aceptas las normas de Google y leyes de privacidad (GDPR, etc.) bajo tu propia responsabilidad.
 
 Turbo-Mailer PRO es una plataforma de email marketing de alto rendimiento construida con **Nuxt 3**. Incluye gestión completa de contactos y listas, editor visual de plantillas HTML con bloques drag & drop, sistema de campañas con tracking de aperturas y clics, analytics en tiempo real, integración con IA para copywriting e interfaz multiidioma (ES/EN). Todo con persistencia real en base de datos SQLite y envío masivo vía Gmail SMTP.
+
+## 🛡️ Tu Información, Solo Tuya (Soberanía de Datos)
+
+Lo que hace a **Turbo-Mailer PRO** una herramienta extremadamente potente es la **privacidad total**. Al ser una aplicación auto-alojada en tu propio servidor:
+
+- **Eliminas Intermediarios**: No entregas la información valiosa de tu empresa, negocio o clientes a ninguna plataforma externa.
+- **Privacidad Profesional**: Solo existe la conexión directa entre tu instancia privada y el servicio de GMail.
+- **Sin "Middlemen"**: Evitas que terceros tengan acceso a tus bases de datos de contactos o al contenido de tus campañas. Es la opción perfecta para quienes buscan potencia profesional con máxima seguridad y control.
 
 ![Turbo-Mailer PRO — Dashboard preview](public/images/ogimage.jpg)
 
@@ -296,7 +306,7 @@ La app usa Gmail SMTP con una contraseña de aplicación de 16 dígitos (no tu c
 - Sesión en cookie `httpOnly` + `SameSite=strict` con TTL de 24 horas
 - Rate limiting por IP: 10 intentos fallidos → bloqueo de 15 minutos con contador visible
 - Middleware global que redirige a `/login` si la sesión no es válida
-- Los datos de contactos persisten en SQLite local — no salen del servidor
+- **Privacidad Total**: Los datos de contactos y campañas persisten en tu base de datos SQLite local. Tus datos **nunca** salen de tu servidor ni son accesibles por terceros.
 
 ---
 
