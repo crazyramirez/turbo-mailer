@@ -60,7 +60,7 @@ onMounted(async () => {
   await loadTemplates();
 
   const lastTemplate = localStorage.getItem("last_edited_template");
-  if (lastTemplate && lastTemplate !== "email_demo") {
+  if (lastTemplate) {
     await loadTemplate(lastTemplate, false);
   } else {
     injectIframeContent();

@@ -116,7 +116,7 @@ onMounted(() => {
           :title="locale === 'es' ? 'Switch to English' : 'Cambiar a Español'"
           @click="toggleLocale"
         >
-          <Globe :size="14" stroke-width="2.5" />
+          <Globe :size="18" stroke-width="2.5" />
           <span>{{ locale.toUpperCase() }}</span>
         </button>
         <NuxtLink to="/editor" class="btn-editor-link hide-mobile">
@@ -129,7 +129,7 @@ onMounted(() => {
           :aria-label="t('nav.logout_full')"
           @click="logout"
         >
-          <LogOut :size="16" stroke-width="2.5" />
+          <LogOut :size="18" stroke-width="2.5" />
           <span>{{ t("nav.logout") }}</span>
         </button>
 
@@ -381,8 +381,8 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  border-radius: 10px;
+  padding: 10px 18px;
+  border-radius: 60px;
   font-size: 13px;
   font-weight: 600;
   color: var(--text-muted);
@@ -406,8 +406,8 @@ onMounted(() => {
 .btn-lang {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 12px 20px;
+  gap: 6px;
+  padding: 10px 20px;
   border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--surface);

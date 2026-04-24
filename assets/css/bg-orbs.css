@@ -44,10 +44,10 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(rgba(99, 102, 241, 0.03) 2px, transparent 2px),
-    linear-gradient(90deg, rgba(99, 102, 241, 0.03) 2px, transparent 2px);
+    linear-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.12) 1px, transparent 1px),
+    linear-gradient(rgba(99, 102, 241, 0.08) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.08) 2px, transparent 2px);
   background-size:
     32px 32px,
     32px 32px,
@@ -67,14 +67,11 @@
 @media (max-width: 768px) {
   .bg-orb-1,
   .bg-orb-2 {
-    opacity: 0.12;
+    display: none;
   }
-  .bg-orb-3 {
-    opacity: 0.1;
-  }
-
   .bg-grid {
-    opacity: 0.5;
+    mask-image: none;
+    opacity: 0.8;
   }
 }
 

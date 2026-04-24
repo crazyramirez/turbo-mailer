@@ -275,6 +275,14 @@ onMounted(() => {
   overflow: visible;
   animation: bounce 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
+@media (max-width: 768px) {
+  .cp-canvas.mobile {
+    width: 320px;
+    height: 640px;
+  }
+}
+
 .cp-canvas.morphing {
   filter: blur(4px);
   opacity: 0.9;

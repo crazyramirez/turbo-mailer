@@ -334,7 +334,7 @@ async function duplicateCampaign() {
       </div>
 
       <!-- Main 2-col grid -->
-      <div class="dash-main-grid">
+      <div class="dash-main-grid" :class="{ 'empty-grid': recentCampaigns.length === 0 }">
         <!-- Campaign List Panel -->
         <div class="panel campaign-list-panel">
           <div class="panel-header">
@@ -361,9 +361,12 @@ async function duplicateCampaign() {
             </div>
           </div>
 
-          <div v-else-if="recentCampaigns.length === 0" class="empty-state">
-            <Mail :size="40" class="empty-icon" />
+          <div v-else-if="recentCampaigns.length === 0" class="empty-placeholder">
+            <div class="empty-placeholder-icon">
+              <Mail :size="40" stroke-width="1.2" />
+            </div>
             <p>{{ t("campaigns_page.no_campaigns") }}</p>
+            <span>{{ t("campaigns_page.no_campaigns_sub") }}</span>
           </div>
 
           <div v-else class="campaign-scroll-area">
@@ -410,9 +413,9 @@ async function duplicateCampaign() {
         <!-- Preview Panel -->
         <div class="panel preview-panel">
           <Transition name="preview-swap" mode="out-in">
-            <div v-if="!selectedCampaign" key="empty" class="preview-empty">
-              <div class="preview-empty-icon">
-                <Mail :size="42" stroke-width="1.2" />
+            <div v-if="!selectedCampaign" key="empty" class="empty-placeholder">
+              <div class="empty-placeholder-icon">
+                <Mail :size="40" stroke-width="1.2" />
               </div>
               <p>{{ t("dashboard.preview_empty_title") }}</p>
               <span>{{ t("dashboard.preview_empty_sub") }}</span>
@@ -694,37 +697,58 @@ async function duplicateCampaign() {
 /* ── Main grid ───────────────────────────────────────────── */
 .dash-main-grid {
   display: grid;
-  grid-template-columns: 4fr 5fr;
-  gap: 20px;
-  align-items: start;
+  grid-template-columns: 420px 1fr;
+  gap: 24px;
+  align-items: stretch;
   max-width: 100%;
+}
+
+@media (max-width: 1200px) {
+  .dash-main-grid {
+    grid-template-columns: 380px 1fr;
+    gap: 20px;
+  }
 }
 
 /* ── Panel base ──────────────────────────────────────────── */
 .panel {
-  background: rgb(0 0 0 / 6%);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 22px;
+  background: rgba(15, 17, 26, 0.4);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  max-height: 700px;
+  box-shadow:
+    0 4px 24px -1px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
 }
 
-.campaign-list-panel {
-  min-height: 300px;
+.panel:hover {
+  border-color: rgba(99, 102, 241, 0.2);
+  box-shadow:
+    0 12px 40px -12px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(99, 102, 241, 0.1) inset;
 }
 
+.campaign-list-panel,
 .preview-panel {
-  min-height: 300px;
+  height: calc(100vh - 300px);
+  min-height: 680px;
+  max-height: 960px;
+  transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.empty-grid .campaign-list-panel,
+.empty-grid .preview-panel {
+  height: auto;
+  min-height: 320px;
 }
 
 @media (max-width: 1400px) {
-  .panel {
-    height: auto;
-  }
 }
 
 .panel-header {
@@ -753,55 +777,84 @@ async function duplicateCampaign() {
   text-align: center;
   padding: 24px 0;
 }
-.empty-state {
+.empty-placeholder {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
-  padding: 48px 0;
+  justify-content: center;
+  gap: 16px;
+  padding: 40px;
+  text-align: center;
   color: var(--text-dim);
 }
-.empty-icon {
-  opacity: 0.5;
-}
-.empty-state p {
-  font-size: 14px;
+.empty-placeholder-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--text-muted);
-  text-align: center;
+}
+.empty-placeholder p {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin: 0;
+}
+.empty-placeholder span {
+  font-size: 13px;
+  color: var(--text-dim);
+  max-width: 240px;
 }
 
 /* ── Campaign list ───────────────────────────────────────── */
 .campaign-scroll-area {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: calc(100vh - 420px);
+  gap: 10px;
   overflow-y: auto;
-  scrollbar-width: none;
+  padding-right: 6px;
+  margin-right: -6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
 .campaign-scroll-area::-webkit-scrollbar {
-  display: none;
+  width: 4px;
+}
+.campaign-scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
 }
 
 .campaign-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 13px 15px;
-  border-radius: 14px;
+  padding: 14px 18px;
+  border-radius: 16px;
   cursor: pointer;
-  border: 1px solid var(--border);
-  transition:
-    border-color 0.2s,
-    background 0.2s;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.02);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .campaign-item:hover:not(.selected) {
-  background: rgba(30 34 43 / 0.43);
+  background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.12);
+  transform: translateX(4px);
 }
 .campaign-item.selected {
-  border-color: var(--accent);
-  background: rgba(99, 102, 241, 0.07);
+  border-color: rgba(99, 102, 241, 0.5);
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.12) 0%,
+    rgba(139, 92, 246, 0.08) 100%
+  );
+  box-shadow: 0 8px 24px -8px rgba(99, 102, 241, 0.3);
 }
 .ci-left {
   flex: 1;
@@ -867,47 +920,17 @@ async function duplicateCampaign() {
 
 /* ── Preview panel ───────────────────────────────────────── */
 .preview-panel {
-  position: sticky;
-  top: 20px;
-  min-height: 300px;
+  position: relative;
   padding: 0;
   overflow: hidden;
-}
-.preview-empty {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 60px 32px;
-  text-align: center;
-  color: var(--text-dim);
-  min-height: 300px;
-}
-.preview-empty-icon {
-  width: 72px;
-  height: 72px;
-  border-radius: 20px;
-  background: rgb(0 0 0 / 8%);
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.preview-empty p {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-muted);
-  margin: 0;
-}
-.preview-empty span {
-  font-size: 13px;
-  color: var(--text-dim);
-  max-width: 240px;
 }
 .preview-content {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 .preview-header {
   display: flex;
@@ -915,6 +938,7 @@ async function duplicateCampaign() {
   gap: 10px;
   padding: 18px 20px 12px;
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 .preview-name {
   font-size: 15px;
@@ -927,11 +951,19 @@ async function duplicateCampaign() {
   flex: 1;
 }
 .preview-frame-wrap {
-  height: 580px;
-  padding: 0 12px 12px;
+  flex: 1;
+  padding: 0 20px 20px;
+  min-height: 0;
 }
-.preview-frame-wrap > * {
+.preview-frame-wrap :deep(.cp-root) {
+  border: none;
+  background: rgba(0, 0, 0, 0.15);
+}
+.preview-frame-wrap :deep(.cp-canvas.desktop) {
   height: 100%;
+}
+.preview-frame-wrap :deep(.cp-viewport) {
+  padding: 20px;
 }
 .preview-no-template {
   display: flex;
@@ -947,8 +979,9 @@ async function duplicateCampaign() {
   display: flex;
   gap: 8px;
   padding: 12px 20px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 .btn-action {
   display: flex;
@@ -972,7 +1005,9 @@ async function duplicateCampaign() {
 .preview-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  border-top: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
 }
 .ps-item {
   display: flex;
@@ -1172,6 +1207,16 @@ async function duplicateCampaign() {
   }
   .dash-main-grid {
     grid-template-columns: 1fr;
+    align-items: start;
+  }
+  .campaign-list-panel,
+  .preview-panel {
+    height: auto;
+    min-height: 500px;
+  }
+  .preview-frame-wrap {
+    height: 600px;
+    flex: none;
   }
   .kpi-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -1246,7 +1291,7 @@ async function duplicateCampaign() {
 
   /* Campaign list */
   .campaign-scroll-area {
-    max-height: 45vh;
+    /* max-height: 45vh; */
     overscroll-behavior: contain;
   }
   .campaign-item {
@@ -1349,10 +1394,6 @@ async function duplicateCampaign() {
     font-size: 14px;
   }
 
-  /* Campaign list */
-  .campaign-scroll-area {
-    max-height: 40vh;
-  }
   .campaign-item {
     padding: 12px;
     border-radius: 12px;
@@ -1366,7 +1407,7 @@ async function duplicateCampaign() {
 
   /* Preview */
   .preview-frame-wrap {
-    height: 640px;
+    height: 780px;
     padding: 0 8px 8px;
   }
   .preview-header {

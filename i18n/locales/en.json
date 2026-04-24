@@ -151,6 +151,7 @@
     "duplicate": "Duplicate",
     "delete": "Delete",
     "no_campaigns": "You have no campaigns yet.",
+    "no_campaigns_sub": "Start by creating your first campaign to see activity here.",
     "open_rate": "Open rate",
     "click_rate": "Click rate",
     "failed": "Failed",
