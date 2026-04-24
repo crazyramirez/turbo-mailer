@@ -1304,6 +1304,7 @@ watch([search, statusFilter], () => {
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
+  backdrop-filter: blur(5px);
 }
 .btn-primary:hover {
   filter: brightness(1.1);
@@ -1322,6 +1323,7 @@ watch([search, statusFilter], () => {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  backdrop-filter: blur(5px);
 }
 .btn-secondary:hover {
   background: rgb(0 0 0 / 5%);

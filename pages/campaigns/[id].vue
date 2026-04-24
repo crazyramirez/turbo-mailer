@@ -779,6 +779,7 @@ onUnmounted(() => clearTimeout(saveTimer));
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
+  backdrop-filter: blur(5px);
 }
 .btn-send:hover:not(:disabled) {
   filter: brightness(1.12);
@@ -819,6 +820,7 @@ onUnmounted(() => clearTimeout(saveTimer));
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
+  backdrop-filter: blur(5px);
 }
 .btn-delete:hover {
   background: rgba(239, 68, 68, 0.15);

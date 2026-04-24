@@ -644,6 +644,7 @@ async function duplicateCampaign() {
   cursor: pointer;
   transition: all 0.2s;
   text-decoration: none;
+  backdrop-filter: blur(5px);
 }
 .btn-reset:hover {
   background: rgba(239, 68, 68, 0.08);

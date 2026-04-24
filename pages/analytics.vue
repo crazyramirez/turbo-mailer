@@ -244,6 +244,7 @@ onUnmounted(() => clearInterval(timer));
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
+  backdrop-filter: blur(5px);
 }
 .btn-refresh:hover {
   background: rgb(0 0 0 / 6%);

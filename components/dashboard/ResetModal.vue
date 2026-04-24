@@ -127,7 +127,6 @@ function onOverlayClick(e: MouseEvent) {
     <Transition name="rm-fade">
       <div class="rm-overlay" @click="onOverlayClick">
         <div class="rm-window" role="dialog" aria-modal="true">
-
           <!-- ── Backup confirmation (post-reset) ──────────────── -->
           <Transition name="rm-confirm-slide">
             <div v-if="backupPath" class="rm-backup-done">
@@ -135,8 +134,12 @@ function onOverlayClick(e: MouseEvent) {
                 <ShieldCheck :size="22" />
               </div>
               <div class="rm-backup-body">
-                <span class="rm-backup-title">{{ t("reset_modal.backup_title") }}</span>
-                <span class="rm-backup-desc">{{ t("reset_modal.backup_desc") }}</span>
+                <span class="rm-backup-title">{{
+                  t("reset_modal.backup_title")
+                }}</span>
+                <span class="rm-backup-desc">{{
+                  t("reset_modal.backup_desc")
+                }}</span>
                 <div class="rm-backup-path">
                   <FolderOpen :size="12" />
                   <code>{{ backupPath }}</code>
@@ -481,6 +484,7 @@ function onOverlayClick(e: MouseEvent) {
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s;
+  backdrop-filter: blur(5px);
 }
 
 .rm-btn-delete:hover:not(:disabled) {
@@ -614,7 +618,9 @@ function onOverlayClick(e: MouseEvent) {
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: filter 0.15s, transform 0.15s;
+  transition:
+    filter 0.15s,
+    transform 0.15s;
   box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
 }
 
