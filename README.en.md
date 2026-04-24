@@ -57,7 +57,7 @@ What makes **Turbo-Mailer PRO** an extremely powerful tool is its **privacy**. B
 - Campaign statuses: `draft / scheduled / sending / sent / paused`
 - Detailed campaign view with recipient list, their statuses, and individual metrics
 - Automatic injection of **tracking pixel** (opens) and **tracked links** (clicks) into the HTML before sending
-- Dynamic variables (Spanish/English): `{{Company}}`, `{{Name}}`, `{{URL}}`, `{{Linkedin}}`, `{{Instagram}}`, `{{Youtube}}`
+- Dynamic variables (English/Spanish): `{{Company}} / {{Empresa}}`, `{{Name}} / {{Nombre}}`, `{{URL}}`, `{{Linkedin}}`, `{{Instagram}}`, `{{Youtube}}`
 - Bulk sending via SMTP with real-time success and failure reporting
 
 ### 📊 Analytics

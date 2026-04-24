@@ -57,7 +57,7 @@ Lo que hace a **Turbo-Mailer PRO** una herramienta extremadamente potente es la 
 - Estados de campaña: `borrador / programado / enviando / enviado / pausado`
 - Vista de detalle por campaña con listado de destinatarios, sus estados y métricas individuales
 - Inyección automática de **pixel de tracking** (apertura) y **enlaces trackeados** (clics) en el HTML antes del envío
-- Variables dinámicas (Español/Inglés): `{{Empresa}}`, `{{Nombre}}`, `{{URL}}`, `{{Linkedin}}`, `{{Instagram}}`, `{{Youtube}}`
+- Variables dinámicas (Español/Inglés): `{{Empresa}}`/`{{Company}}`, `{{Nombre}}`/`{{Name}}`, `{{URL}}`, `{{Linkedin}}`, `{{Instagram}}`, `{{Youtube}}`
 - Envío masivo vía SMTP con reporte en tiempo real de éxitos y fallos
 
 ### 📊 Analytics
