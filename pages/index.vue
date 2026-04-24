@@ -93,8 +93,9 @@ function dismissWelcome() {
 // ── Computed ─────────────────────────────────────────────────────
 const recentCampaigns = computed(() => campaigns.value.slice(0, 12));
 const activityItems = computed(
-  () => analyticsData.value?.recentOpens.slice(0, 6) ?? [],
+  () => analyticsData.value?.recentOpens.slice(0, 18) ?? [],
 );
+
 const formattedDate = computed(() =>
   new Date().toLocaleDateString(locale.value === "es" ? "es-ES" : "en-US", {
     weekday: "long",
@@ -1044,18 +1045,24 @@ async function duplicateCampaign() {
 /* ── Activity ────────────────────────────────────────────── */
 .activity-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 12px;
+  max-height: 160px; /* Height for ~2 rows of cards */
+  overflow: hidden;
+  position: relative;
 }
+
 .activity-card {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
-  padding: 12px 14px;
-  background: rgb(0 0 0 / 5%);
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
+  height: 72px; /* Fixed height to ensure 2 rows fit perfectly in 160px */
 }
+
 .ac-avatar {
   width: 24px;
   height: 24px;

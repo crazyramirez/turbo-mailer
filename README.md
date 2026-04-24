@@ -228,7 +228,7 @@ La app usa Gmail SMTP con una contraseña de aplicación de 16 dígitos (no tu c
 
 1. **Activar Verificación en 2 Pasos**: [Cuenta de Google → Seguridad](https://myaccount.google.com/security)
 2. **Generar contraseña**: Accede a [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
-3. Escribe un nombre (ej. `Turbo Mailer PRO`) y haz clic en **Crear**
+3. Escribe un nombre (ej. `Turbo Mailer`) y haz clic en **Crear**
 4. Copia el código de 16 caracteres (sin espacios) y pégalo en `GMAIL_APP_PASSWORD`
 
 ---

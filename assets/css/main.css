@@ -1733,14 +1733,14 @@ select option {
   line-height: 1.6;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
   .header {
     position: relative !important;
     height: 72px;
     padding: 0;
   }
   .header-inner {
-    padding: 0 16px;
+    padding: 0 40px;
     width: 100%;
   }
   .header-logo {
@@ -1752,9 +1752,6 @@ select option {
   }
   .logo-title {
     font-size: 15px;
-  }
-  .logo-sub {
-    display: none;
   }
 
   .header-right {
@@ -1856,10 +1853,21 @@ select option {
   }
 }
 
+@media (max-width: 900px) {
+  .header-inner {
+    padding: 0 20px;
+  }
+}
+
 @media (max-width: 480px) {
   .main {
     padding: 12px;
   }
+
+  .header-inner {
+    padding: 0 16px;
+  }
+
   .card-header {
     gap: 12px;
   }

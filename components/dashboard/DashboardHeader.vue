@@ -23,8 +23,6 @@ const indicatorStyle = ref({
 });
 const isInitialLoad = ref(true);
 
-
-
 const { emails, emailSubject, htmlBody, lastSentCount } = useDashboardState();
 const { resetAll, logout } = useCampaignSender();
 const { t, locale, setLocale } = useI18n();
@@ -60,7 +58,6 @@ onMounted(() => {
     window.removeEventListener("resize", updateIndicator);
   });
 
-
   // Initialize indicator position
   setTimeout(updateIndicator, 100);
 });
@@ -72,16 +69,18 @@ function updateIndicator() {
   nextTick(() => {
     setTimeout(() => {
       if (!navRef.value) return;
-      
+
       // Try to find by class first
-      let activeLink = navRef.value.querySelector(".nav-link.router-link-active") as HTMLElement;
-      
+      let activeLink = navRef.value.querySelector(
+        ".nav-link.router-link-active",
+      ) as HTMLElement;
+
       // Fallback: match by current path if class is not yet applied
       if (!activeLink) {
         const links = navRef.value.querySelectorAll(".nav-link");
         activeLink = Array.from(links).find((link) => {
           const path = (link as HTMLAnchorElement).pathname;
-          if (path === '/') return route.path === '/';
+          if (path === "/") return route.path === "/";
           return route.path.startsWith(path);
         }) as HTMLElement;
       }
@@ -92,7 +91,7 @@ function updateIndicator() {
           transform: `translateX(${activeLink.offsetLeft}px)`,
           opacity: "1",
         };
-        
+
         // After the first position is set, enable transitions
         if (isInitialLoad.value) {
           setTimeout(() => {
@@ -106,16 +105,9 @@ function updateIndicator() {
   });
 }
 
-
-
-watch(
-  [() => route.path, () => locale.value],
-  () => {
-    updateIndicator();
-  }
-);
-
-
+watch([() => route.path, () => locale.value], () => {
+  updateIndicator();
+});
 </script>
 
 <template>
@@ -132,7 +124,7 @@ watch(
         </div>
         <div class="logo-text-group">
           <span class="logo-title">
-            Turbo-Mailer <span class="logo-accent">PRO</span>
+            Turbo-Mailer
             <span class="version-badge">{{ APP_VERSION }}</span>
           </span>
           <span class="logo-sub">{{ t("app.subtitle") }}</span>
@@ -162,7 +154,6 @@ watch(
           :class="{ 'no-transition': isInitialLoad }"
           :style="indicatorStyle"
         />
-
 
         <NuxtLink
           to="/"
@@ -201,9 +192,7 @@ watch(
           <BarChart2 :size="15" stroke-width="2.5" />
           <span>{{ t("nav.analytics") }}</span>
         </NuxtLink>
-
       </nav>
-
 
       <!-- Desktop right actions -->
       <div class="header-right">
@@ -275,10 +264,7 @@ watch(
               />
             </div>
             <div>
-              <span class="drawer-title"
-                >Turbo-Mailer
-                <span class="logo-accent">PRO</span>
-              </span>
+              <span class="drawer-title">Turbo-Mailer</span>
               <span class="drawer-sub">{{ t("app.subtitle") }}</span>
             </div>
           </div>
@@ -413,15 +399,18 @@ watch(
 
 <style scoped>
 .version-badge {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--text-dim);
   background: rgba(255, 255, 255, 0.05);
-  padding: 1px 6px;
+  padding: 4px 6px;
   border-radius: 6px;
   margin-left: 6px;
   vertical-align: middle;
   border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .logo-icon-wrapper {
@@ -496,7 +485,6 @@ watch(
 }
 
 .nav-link {
-
   display: flex;
   align-items: center;
   gap: 6px;
@@ -519,7 +507,6 @@ watch(
 .nav-link.router-link-active {
   color: var(--accent-light);
 }
-
 
 .btn-lang {
   display: flex;
@@ -566,7 +553,7 @@ watch(
   border-color: var(--border-hi);
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
   .btn-hamburger {
     display: flex;
   }
