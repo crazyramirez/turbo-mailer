@@ -57,7 +57,7 @@ Lo que hace a **Turbo-Mailer PRO** una herramienta extremadamente potente es la 
 - Estados de campaña: `borrador / programado / enviando / enviado / pausado`
 - Vista de detalle por campaña con listado de destinatarios, sus estados y métricas individuales
 - Inyección automática de **pixel de tracking** (apertura) y **enlaces trackeados** (clics) en el HTML antes del envío
-- Variables dinámicas: `{{Empresa}}`, `{{Nombre}}`, `{{URL}}`, `{{Linkedin}}`, `{{Instagram}}`, `{{Youtube}}`
+- Variables dinámicas (Español/Inglés): `{{Empresa}}`, `{{Nombre}}`, `{{URL}}`, `{{Linkedin}}`, `{{Instagram}}`, `{{Youtube}}`
 - Envío masivo vía SMTP con reporte en tiempo real de éxitos y fallos
 
 ### 📊 Analytics
@@ -132,7 +132,7 @@ Para garantizar la privacidad de tus datos y evitar que la plataforma aparezca e
 | ------------- | ------------------------------------------------------------------------------ |
 | Framework     | [Nuxt 3](https://nuxt.com/) — SPA mode (`ssr: false`)                          |
 | Base de datos | [SQLite](https://www.sqlite.org/) vía [Drizzle ORM](https://orm.drizzle.team/) |
-| Emailing      | [Nodemailer](https://nodemailer.com/) — SMTP (Gmail, Outlook, etc.)           |
+| Emailing      | [Nodemailer](https://nodemailer.com/) — SMTP (Gmail, Outlook, etc.)            |
 | Data Handling | [XLSX (SheetJS)](https://sheetjs.com/)                                         |
 | IA            | [OpenAI API](https://platform.openai.com/) — GPT-4o-mini (configurable)        |
 | i18n          | [@nuxtjs/i18n](https://i18n.nuxtjs.org/)                                       |
