@@ -1735,7 +1735,7 @@ select option {
 
 @media (max-width: 1200px) {
   .header {
-    position: relative !important;
+    position: sticky !important;
     height: 72px;
     padding: 0;
   }
