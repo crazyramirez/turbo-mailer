@@ -461,9 +461,6 @@ async function duplicateCampaign() {
                 >
                   <Eye :size="13" />{{ t("dashboard.view_details") }}
                 </NuxtLink>
-                <button class="btn-action" @click="duplicateCampaign">
-                  <Copy :size="13" />{{ t("dashboard.duplicate") }}
-                </button>
               </div>
 
               <div
@@ -930,7 +927,7 @@ async function duplicateCampaign() {
   flex: 1;
 }
 .preview-frame-wrap {
-  height: 510px;
+  height: 580px;
   padding: 0 12px 12px;
 }
 .preview-frame-wrap > * {
