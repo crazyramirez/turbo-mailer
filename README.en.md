@@ -16,7 +16,6 @@ What makes **Turbo-Mailer PRO** an extremely powerful tool is its **privacy**. B
 
 - **Eliminate Intermediaries**: You don't hand over your company's, business's, or clients' valuable information to any external platform.
 - **Professional Privacy**: There is only a direct connection between your private instance and the GMail service.
-- **No "Middlemen"**: Prevent third parties from having access to your contact databases or campaign content. It's the perfect choice for those seeking professional power with maximum security and control.
 
 ![Turbo-Mailer PRO — Dashboard preview](public/images/ogimage.jpg)
 
