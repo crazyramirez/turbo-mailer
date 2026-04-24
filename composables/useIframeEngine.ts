@@ -605,8 +605,6 @@ function updateHtml() {
 // ─── Autosave ────────────────────────────────────────────────────────────────
 
 function triggerAutosave(immediate = false) {
-  const { currentTemplate } = useEditorState()
-  if (currentTemplate.value === 'email_demo') return
   updateHtml()
 
   if (immediate) {

@@ -19,7 +19,7 @@ const { showToast } = useToast()
 async function loadTemplates() {
   try {
     const all = await $fetch<{ name: string; path: string }[]>('/api/templates')
-    templates.value = (all || []).filter((t) => t.name !== 'email_demo')
+    templates.value = all || []
   } catch {
     templates.value = []
   }
@@ -135,7 +135,7 @@ async function saveTemplate(silent = false) {
 }
 
 async function handleSave() {
-  if (!currentTemplate.value || currentTemplate.value === 'email_demo') {
+  if (!currentTemplate.value) {
     showTemplateModal.value = true
     return
   }

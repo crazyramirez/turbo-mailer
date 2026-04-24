@@ -5,7 +5,7 @@ import path from 'node:path';
 export default defineEventHandler(async (event) => {
   const method = event.method;
   const templatesDir = path.resolve(process.cwd(), 'data/templates');
-  const baseTemplatePath = path.resolve(process.cwd(), 'docs/email_demo.html');
+  const baseTemplatePath = path.resolve(process.cwd(), 'data/demo/email_demo.html');
 
   // Ensure templates directory exists
   try {
@@ -55,7 +55,7 @@ export default defineEventHandler(async (event) => {
     // List templates
     const files = await fs.readdir(templatesDir);
     const templates = files
-      .filter(f => f.endsWith('.html') && f !== 'email_demo.html')
+      .filter(f => f.endsWith('.html'))
       .map(f => ({
         name: f.replace('.html', ''),
         path: `/api/templates?name=${f.replace('.html', '')}&preview=1`

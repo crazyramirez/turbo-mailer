@@ -28,10 +28,9 @@ const { handleSidebarDragStart, handleSidebarDragEnd } = useBlockEditor()
             class="nav-item"
           >
             <div class="nav-item-content">
-              <span>{{ t.name === 'email_demo' ? 'Base Template' : t.name }}</span>
-              <Lock v-if="t.name === 'email_demo'" :size="10" class="lock-muted" />
+              <span>{{ t.name }}</span>
             </div>
-            <div v-if="t.name !== 'email_demo'" class="nav-item-actions">
+            <div class="nav-item-actions">
               <button @click.stop="renameTemplate(t.name)" class="btn-item-action" title="Renombrar">
                 <Edit3 :size="12" />
               </button>

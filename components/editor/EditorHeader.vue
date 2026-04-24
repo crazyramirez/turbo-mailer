@@ -26,7 +26,7 @@ const { undo, redo } = useIframeEngine();
 const { handleSave, saveTemplate } = useTemplateManager();
 
 async function handleBack() {
-  if (currentTemplate.value && currentTemplate.value !== "email_demo") {
+  if (currentTemplate.value) {
     await saveTemplate(true);
   }
   const router = useRouter();
@@ -118,16 +118,7 @@ async function handleBack() {
         <Clock :size="12" /> <span>{{ lastSavedTime }}</span>
       </div>
       <div class="active-template-tag">
-        <Lock
-          v-if="currentTemplate === 'email_demo'"
-          :size="12"
-          class="demo-lock"
-        />
-        <span>{{
-          currentTemplate === "email_demo"
-            ? "Base Template"
-            : currentTemplate + ".html"
-        }}</span>
+        <span>{{ currentTemplate ? currentTemplate + ".html" : "" }}</span>
       </div>
 
       <button @click="handleSave" :disabled="isSaving" class="btn-premium-save">
