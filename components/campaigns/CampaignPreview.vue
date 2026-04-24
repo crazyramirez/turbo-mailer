@@ -17,7 +17,7 @@ function updateScale() {
     return;
   }
 
-  const padding = 32; // 16px each side
+  const padding = 28; // 14px each side
   const availW = viewport.value.clientWidth - padding;
   const availH = viewport.value.clientHeight - padding * 1.5;
   const designW = 360;
@@ -276,7 +276,7 @@ onUnmounted(() => {
   display: flex;
   justify-content: center;
   padding: 24px;
-  overflow-y: auto;
+  overflow-y: hidden;
 }
 .scroll-hide::-webkit-scrollbar {
   display: none;
@@ -314,7 +314,7 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .cp-canvas.mobile {
     width: 320px;
-    /* height: 640px; */
+    height: 640px;
   }
 }
 
@@ -464,9 +464,6 @@ onUnmounted(() => {
     padding: 0 10px;
     gap: 0;
   }
-  .cp-viewport {
-    padding: 16px;
-  }
   .cp-canvas.desktop {
     height: calc(100vh - 340px);
     min-height: 300px;
@@ -492,9 +489,6 @@ onUnmounted(() => {
   .cp-canvas.desktop {
     height: calc(100vh - 300px);
     min-height: 260px;
-  }
-  .cp-canvas.mobile {
-    width: min(320px, calc(100% - 32px));
   }
 }
 </style>

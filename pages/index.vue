@@ -1232,9 +1232,9 @@ async function duplicateCampaign() {
     height: auto;
     min-height: 500px;
   }
+  /* Preview */
   .preview-frame-wrap {
-    height: 600px;
-    flex: none;
+    padding: 0 5px 5px;
   }
   .kpi-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -1317,11 +1317,6 @@ async function duplicateCampaign() {
     touch-action: manipulation;
     width: 100%;
     min-width: 0;
-  }
-
-  /* Preview */
-  .preview-frame-wrap {
-    height: 700px;
   }
   .preview-actions {
     flex-wrap: wrap;
@@ -1425,11 +1420,6 @@ async function duplicateCampaign() {
     font-size: 11px;
   }
 
-  /* Preview */
-  .preview-frame-wrap {
-    height: 780px;
-    padding: 0 8px 8px;
-  }
   .preview-header {
     padding: 14px 16px 10px;
   }

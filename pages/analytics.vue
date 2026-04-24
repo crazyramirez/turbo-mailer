@@ -366,6 +366,16 @@ onUnmounted(() => clearInterval(timer));
   display: flex;
   flex-direction: column;
   gap: 12px;
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+.event-list::-webkit-scrollbar {
+  width: 4px;
+}
+.event-list::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
 }
 .event-row {
   display: flex;
@@ -435,6 +445,16 @@ onUnmounted(() => clearInterval(timer));
   display: flex;
   flex-direction: column;
   gap: 12px;
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+.campaign-list::-webkit-scrollbar {
+  width: 4px;
+}
+.campaign-list::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
 }
 .campaign-row {
   display: flex;
