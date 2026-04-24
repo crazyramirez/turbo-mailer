@@ -58,6 +58,7 @@ function updateIframeContent() {
         } 
         html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
         img { max-width: 100% !important; height: auto !important; }
+        a, button { cursor: default !important; }
         ${darkModeSimulationStyles}
       </style>` + personalizedPreviewHtml.value,
     );
@@ -67,6 +68,16 @@ function updateIframeContent() {
     if (darkModePreview.value) {
       doc.body.classList.add("dark-mode-simulation");
     }
+
+    // Prevent navigation and clicks while allowing scroll
+    doc.addEventListener(
+      "click",
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      },
+      true,
+    );
   }
 }
 

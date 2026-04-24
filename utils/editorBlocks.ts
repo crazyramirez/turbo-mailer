@@ -76,9 +76,13 @@ export const editorBlocks: EditorBlock[] = [
     name: 'Botón',
     icon: MousePointer2,
     content: `<div class="cta-block editable-block" data-type="Botón" style="padding:20px;background:#f6faff;text-align:center;">
-    <div class="buttons-row" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;flex-direction:row;">
-      <a href="#" data-toggle="button" style="display:inline-block;background:#6366f1;border-radius:14px;padding:18px 32px;font-family:Arial;font-size:17px;font-weight:700;color:#ffffff;text-decoration:none;text-align:center;min-width:200px;box-sizing:border-box;"><span class="btn-text">Llamada a la Acción →</span></a>
-    </div>
+    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="width:100%;border-collapse:collapse;">
+      <tr>
+        <td align="center" class="buttons-row" style="text-align:center;padding:0;">
+          <a href="#" data-toggle="button" style="display:inline-block;background:#6366f1;border-radius:14px;padding:18px 32px;font-family:Arial;font-size:17px;font-weight:700;color:#ffffff;text-decoration:none;text-align:center;min-width:200px;box-sizing:border-box;margin:6px;"><span class="btn-text">Llamada a la Acción →</span></a>
+        </td>
+      </tr>
+    </table>
   </div>`,
   },
   {

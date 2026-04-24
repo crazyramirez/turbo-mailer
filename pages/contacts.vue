@@ -139,7 +139,8 @@ async function onDropList(e: DragEvent, listId: number) {
     body: { contactIds: ids },
   });
   showToast(`${ids.length} contacto(s) asignado(s)`, "success");
-  fetchLists();
+  selectedContactIds.value = new Set();
+  await Promise.all([fetchLists(), fetchContacts()]);
 }
 
 // ── Contact CRUD ──────────────────────────────────────────────────────────
@@ -441,17 +442,17 @@ watch([search, statusFilter], () => {
             style="display: none"
             @change="doImport"
           />
-          <button class="btn-secondary" @click="xlsxInputRef?.click()">
+          <button class="btn-secondary" @click="xlsxInputRef?.click()" :title="t('contacts_page.import')">
             <Upload :size="15" stroke-width="2.5" />
-            {{ t("contacts_page.import") }}
+            <span>{{ t("contacts_page.import") }}</span>
           </button>
-          <button class="btn-secondary" @click="doExport">
+          <button class="btn-secondary" @click="doExport" :title="t('contacts_page.export')">
             <Download :size="15" stroke-width="2.5" />
-            {{ t("contacts_page.export") }}
+            <span>{{ t("contacts_page.export") }}</span>
           </button>
           <button class="btn-primary" @click="openNewContact">
             <Plus :size="15" stroke-width="2.5" />
-            {{ t("contacts_page.new_contact") }}
+            <span>{{ t("contacts_page.new_contact") }}</span>
           </button>
         </div>
       </div>
@@ -579,7 +580,7 @@ watch([search, statusFilter], () => {
                         @click.stop="removeFromList(c.id, list.id)"
                         :title="`Quitar de ${list.name}`"
                       >
-                        <X :size="9" />
+                        <X :size="12" />
                       </button>
                     </span>
                     <span v-if="c.lists.length > 3" class="chip-more">
@@ -1135,6 +1136,7 @@ watch([search, statusFilter], () => {
 .contact-chip {
   display: inline-flex;
   align-items: center;
+  align-content: center;
   gap: 5px;
   padding: 3px 9px 3px 6px;
   background: rgba(255, 255, 255, 0.04);
@@ -1583,13 +1585,24 @@ select.form-input option {
   }
   .header-actions {
     width: 100%;
+    display: flex;
+    flex-direction: row;
     gap: 8px;
+    flex-wrap: nowrap;
   }
   .header-actions .btn-primary,
   .header-actions .btn-secondary {
     flex: 1;
     justify-content: center;
-    min-height: 44px;
+    min-height: 38px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+  .header-actions .btn-secondary span {
+    display: none;
+  }
+  .header-actions .btn-primary {
+    flex: 2;
   }
   .filters-bar {
     gap: 10px;
@@ -1629,11 +1642,15 @@ select.form-input option {
     font-size: 20px;
   }
   .header-actions {
-    flex-direction: column;
+    gap: 6px;
+  }
+  .header-actions .btn-primary span {
+    display: none;
   }
   .header-actions .btn-primary,
   .header-actions .btn-secondary {
-    width: 100%;
+    flex: 1;
+    width: auto;
   }
   .table-wrap {
     border-radius: 12px;

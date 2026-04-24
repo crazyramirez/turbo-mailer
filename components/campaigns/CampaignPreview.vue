@@ -25,10 +25,21 @@ function render() {
     html,body{background:#fff;overflow-x:hidden;margin:0;word-break:break-word;scrollbar-width:none;}
     html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
     img{max-width:100%!important;height:auto!important;}
+    a, button { cursor: default !important; }
     ${darkStyles}
   </style>${props.html}`);
   doc.close();
   if (darkMode.value) doc.body?.classList.add("dark-sim");
+
+  // Prevent navigation and button clicks while allowing scroll
+  doc.addEventListener(
+    "click",
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    },
+    true,
+  );
 }
 
 watch(
@@ -258,7 +269,7 @@ onMounted(() => {
 }
 .cp-canvas.mobile {
   width: 360px;
-  height: 640px;
+  height: 720px;
   margin: 10px auto;
   position: relative;
   overflow: visible;
@@ -308,7 +319,7 @@ onMounted(() => {
   height: 100%;
   position: relative;
   background: #fff;
-  padding: 16px;
+  /* padding: 16px; */
   border-radius: 16px;
 }
 .dark-env .cp-host {
@@ -442,7 +453,7 @@ onMounted(() => {
   }
   .cp-canvas.mobile {
     width: min(340px, calc(100vw - 44px));
-    height: 560px;
+    height: 660px;
   }
 }
 </style>

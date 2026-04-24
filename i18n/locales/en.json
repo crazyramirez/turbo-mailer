@@ -150,7 +150,7 @@
     "view": "View details",
     "duplicate": "Duplicate",
     "delete": "Delete",
-    "no_campaigns": "You have no campaigns yet. Create your first campaign.",
+    "no_campaigns": "You have no campaigns yet.",
     "open_rate": "Open rate",
     "click_rate": "Click rate",
     "failed": "Failed",

@@ -16,21 +16,13 @@ definePageMeta({ layout: "app" });
 const { t } = useI18n();
 const router = useRouter();
 
-const step = ref(1);
+const { step, form, resetWizard } = useCampaignWizardState();
 const lists = ref<any[]>([]);
 const showLibrary = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
 const htmlDragging = ref(false);
 const isSaving = ref(false);
 const subjectRef = ref<HTMLInputElement | null>(null);
-
-const form = ref({
-  name: "",
-  subject: "",
-  listId: null as number | null,
-  templateName: "",
-  templateHtml: "",
-});
 
 async function fetchLists() {
   lists.value = await $fetch<any[]>("/api/lists");
@@ -109,12 +101,26 @@ async function save() {
     });
     // Artificial delay to show the premium overlay
     await new Promise((r) => setTimeout(r, 2000));
+    resetWizard(); // Reset after successful save
     router.push(`/campaigns/${campaign.id}`);
   } catch (err) {
     isSaving.value = false;
     console.error(err);
   }
 }
+
+function handleCancel() {
+  resetWizard();
+  router.push("/campaigns");
+}
+
+const isResuming = computed(() => {
+  return (
+    step.value > 1 ||
+    form.value.name.trim() !== "" ||
+    form.value.subject.trim() !== ""
+  );
+});
 
 onMounted(() => {
   fetchLists();
@@ -128,7 +134,7 @@ onMounted(() => {
         class="wizard-card"
         :class="{ 'card-wide': step === 3 && form.templateHtml }"
       >
-        <button class="btn-close-wizard" @click="router.push('/campaigns')" title="Cancelar">
+        <button class="btn-close-wizard" @click="handleCancel" title="Cancelar">
           <X :size="20" />
         </button>
         <div class="wizard-wrap">
@@ -153,7 +159,13 @@ onMounted(() => {
 
           <!-- Step 1: Name & Subject -->
           <div v-if="step === 1" class="step-panel">
-            <h2>{{ t("campaigns_page.step1_title") }}</h2>
+            <h2>
+              {{
+                isResuming
+                  ? "Continuar Campaña"
+                  : t("campaigns_page.step1_title")
+              }}
+            </h2>
             <label
               >{{ t("campaigns_page.campaign_name") }}
               <input
@@ -431,6 +443,14 @@ onMounted(() => {
     transparent
   );
 }
+
+@media (max-width: 768px) {
+  .wizard-card {
+    padding: 24px;
+    border-radius: 12px;
+  }
+}
+
 .card-wide {
   max-width: 1000px;
 }
@@ -457,6 +477,16 @@ onMounted(() => {
   color: #ef4444;
   border-color: rgba(239, 68, 68, 0.2);
   transform: rotate(90deg);
+}
+
+@media (max-width: 768px) {
+  .btn-close-wizard {
+    top: 14px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+  }
 }
 
 .wizard-wrap {
@@ -1124,7 +1154,7 @@ label {
     gap: 4px;
   }
   .wizard-nav {
-    flex-direction: column;
+    flex-direction: row;
   }
   .btn-primary,
   .btn-secondary {

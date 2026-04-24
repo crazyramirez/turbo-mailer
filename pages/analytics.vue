@@ -512,7 +512,6 @@ onUnmounted(() => clearInterval(timer));
     gap: 16px;
   }
   .page-header {
-    flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }

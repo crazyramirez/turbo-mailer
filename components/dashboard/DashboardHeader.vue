@@ -92,7 +92,14 @@ onMounted(() => {
           <Users :size="15" stroke-width="2.5" />
           <span>{{ t("nav.contacts") }}</span>
         </NuxtLink>
-        <NuxtLink to="/campaigns" class="nav-link" :title="t('nav.campaigns')">
+        <NuxtLink
+          to="/campaigns"
+          class="nav-link"
+          :class="{
+            'router-link-active': $route.path.startsWith('/campaigns'),
+          }"
+          :title="t('nav.campaigns')"
+        >
           <Mail :size="15" stroke-width="2.5" />
           <span>{{ t("nav.campaigns") }}</span>
         </NuxtLink>
@@ -218,7 +225,14 @@ onMounted(() => {
             </span>
             <span>{{ t("nav.contacts") }}</span>
           </NuxtLink>
-          <NuxtLink to="/campaigns" class="drawer-link" @click="closeMenu">
+          <NuxtLink
+            to="/campaigns"
+            class="drawer-link"
+            :class="{
+              'router-link-active': $route.path.startsWith('/campaigns'),
+            }"
+            @click="closeMenu"
+          >
             <span class="drawer-link-icon">
               <Mail :size="17" stroke-width="2" />
             </span>

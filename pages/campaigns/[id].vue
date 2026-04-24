@@ -261,8 +261,8 @@ const SEND_LABEL: Record<string, string> = {
 onMounted(async () => {
   await Promise.all([fetchCampaign(), fetchSends(), fetchLists()]);
 
-  // Auto-sync template content if it was updated in the editor
-  if (campaign.value && campaign.value.templateName) {
+  // Auto-sync template content if it was updated in the editor (only for non-sent campaigns)
+  if (campaign.value && campaign.value.templateName && campaign.value.status !== 'sent') {
     try {
       const data = await $fetch<any>("/api/templates", {
         query: { name: campaign.value.templateName },
@@ -343,11 +343,16 @@ onUnmounted(() => clearTimeout(saveTimer));
           <div
             v-if="isDraft && subjectInput.trim().length === 0"
             class="hdr-warning"
+            title="Escribe un asunto"
           >
-            <AlertCircle :size="13" /> Escribe un asunto
+            <AlertCircle :size="13" /> <span>Escribe un asunto</span>
           </div>
-          <div v-if="isDraft && !campaign.listId" class="hdr-warning">
-            <AlertCircle :size="13" /> Asigna una lista
+          <div
+            v-if="isDraft && !campaign.listId"
+            class="hdr-warning"
+            title="Asigna una lista"
+          >
+            <AlertCircle :size="13" /> <span>Asigna una lista</span>
           </div>
           <button
             v-if="isDraft"
@@ -355,17 +360,18 @@ onUnmounted(() => clearTimeout(saveTimer));
             @click="openEditor"
             title="Editor de plantillas"
           >
-            <ExternalLink :size="14" /> Editor
+            <ExternalLink :size="14" /> <span>Editor</span>
           </button>
           <button
             v-if="canSend"
             class="btn-send"
             :disabled="sending"
             @click="sendCampaign"
+            title="Enviar campaña"
           >
             <Loader2 v-if="sending" :size="15" class="spin" />
             <Send v-else :size="15" />
-            {{ sending ? "Enviando…" : "Enviar campaña" }}
+            <span>{{ sending ? "Enviando…" : "Enviar campaña" }}</span>
           </button>
           <button
             class="btn-delete"
@@ -1178,44 +1184,38 @@ select.field-input option {
 @media (max-width: 640px) {
   .cpage-header {
     flex-wrap: wrap;
-    align-items: flex-start;
+    align-items: center;
     gap: 12px;
   }
   .hdr-left {
     flex: 1;
-    min-width: 240px;
+    min-width: 0;
     gap: 10px;
   }
   .hdr-actions {
-    flex: 1;
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
     gap: 8px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
   .hdr-warning {
-    width: 100%;
-    flex: 0 0 100%;
-    font-size: 11px;
-    order: -1;
+    display: none;
   }
-  .btn-send {
-    flex: 1;
-    justify-content: center;
-    min-height: 44px;
-    order: 1;
-    min-width: 140px;
-  }
+  .btn-send,
   .btn-ghost {
-    flex: 1;
-    justify-content: center;
-    min-height: 44px;
-    order: 0;
-    min-width: 100px;
+    flex: none;
+    min-width: auto;
+    min-height: 38px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+  .hdr-actions span {
+    display: none;
   }
   .btn-delete {
-    order: 2;
+    width: 38px;
+    height: 38px;
     flex-shrink: 0;
   }
   .hdr-name {
@@ -1281,8 +1281,8 @@ select.field-input option {
     font-size: 16px;
   }
   .btn-delete {
-    width: 44px;
-    height: 44px;
+    width: 38px;
+    height: 38px;
   }
   .stats-grid {
     gap: 8px;

@@ -201,7 +201,10 @@ function toggleButtonLayout() {
   selectedElement.value.setAttribute('data-layout', next)
 
   const row = selectedElement.value.querySelector('.buttons-row') as HTMLElement
-  if (row) row.style.flexDirection = next === 'full' ? 'column' : 'row'
+  if (row) {
+    row.style.textAlign = 'center'
+    row.setAttribute('align', 'center')
+  }
 
   selectedElement.value.querySelectorAll('[data-toggle="button"]').forEach((b) => {
     ;(b as HTMLElement).style.display = next === 'full' ? 'block' : 'inline-block'

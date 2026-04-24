@@ -20,6 +20,15 @@ definePageMeta({ layout: "app" });
 const { t } = useI18n();
 const router = useRouter();
 const { showDialog } = useDashboardState();
+const { form, step, resetWizard } = useCampaignWizardState();
+
+const hasDraft = computed(() => {
+  return (
+    form.value.name.trim() !== "" ||
+    form.value.subject.trim() !== "" ||
+    form.value.templateHtml !== ""
+  );
+});
 
 const campaigns = ref<any[]>([]);
 const loading = ref(false);
@@ -96,7 +105,13 @@ function fmtDate(d: any) {
   if (!d) return "—";
   return new Date(typeof d === "number" ? d * 1000 : d).toLocaleString(
     "es-ES",
-    { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" },
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    },
   );
 }
 
@@ -111,15 +126,17 @@ onMounted(fetchCampaigns);
           <h1>{{ t("campaigns_page.title") }}</h1>
           <p>{{ t("campaigns_page.subtitle") }}</p>
         </div>
-        <NuxtLink to="/campaigns/new" class="btn-primary">
-          <Plus :size="15" stroke-width="2.5" />
-          {{ t("campaigns_page.new_campaign") }}
-        </NuxtLink>
+        <div class="header-actions">
+          <NuxtLink to="/campaigns/new" class="btn-primary">
+            <Plus :size="15" stroke-width="2.5" />
+            <span>{{ t("campaigns_page.new_campaign") }}</span>
+          </NuxtLink>
+        </div>
       </div>
 
       <div v-if="loading" class="loading-state">{{ t("common.loading") }}</div>
 
-      <div v-else-if="campaigns.length === 0" class="empty-state">
+      <div v-else-if="campaigns.length === 0 && !hasDraft" class="empty-state">
         <Mail :size="48" class="empty-icon" />
         <p>{{ t("campaigns_page.no_campaigns") }}</p>
         <NuxtLink to="/campaigns/new" class="btn-primary">
@@ -133,6 +150,45 @@ onMounted(fetchCampaigns);
         v-else
         class="campaigns-grid"
       >
+        <!-- Virtual Draft Card -->
+        <div
+          v-if="hasDraft"
+          key="wizard-draft"
+          class="campaign-card draft-wizard-card"
+        >
+          <div class="card-top">
+            <span class="badge badge-draft-wizard">
+              <FileEdit :size="11" />
+              Borrador actual
+            </span>
+            <span class="card-date">Paso {{ step }} de 4</span>
+          </div>
+          <h3 class="card-name">{{ form.name || "Nueva Campaña" }}</h3>
+          <p class="card-subject">{{ form.subject || "Sin asunto aún..." }}</p>
+
+          <div class="draft-wizard-progress">
+            <div class="progress-bar-bg">
+              <div
+                class="progress-bar-fill"
+                :style="{ width: (step / 4) * 100 + '%' }"
+              ></div>
+            </div>
+          </div>
+
+          <div class="card-actions">
+            <NuxtLink to="/campaigns/new" class="btn-action-resume">
+              <Send :size="13" /> Continuar edición
+            </NuxtLink>
+            <button
+              class="btn-action danger"
+              @click="resetWizard"
+              title="Descartar borrador"
+            >
+              <Trash2 :size="13" />
+            </button>
+          </div>
+        </div>
+
         <div
           v-for="c in campaigns"
           :key="c.id"
@@ -210,6 +266,59 @@ onMounted(fetchCampaigns);
 </template>
 
 <style scoped>
+.draft-wizard-card {
+  background: linear-gradient(
+    145deg,
+    rgba(99, 102, 241, 0.12),
+    rgba(15, 17, 35, 0.4)
+  ) !important;
+  border-color: rgba(99, 102, 241, 0.3) !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+.badge-draft-wizard {
+  background: rgba(99, 102, 241, 0.2);
+  color: var(--accent-light);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.draft-wizard-progress {
+  margin: 10px 0;
+}
+.progress-bar-bg {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 10px;
+  box-shadow: 0 0 12px var(--accent);
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-action-resume {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.btn-action-resume:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
 .page-layout {
   min-height: calc(100vh - 80px);
   color: var(--text);
@@ -449,17 +558,23 @@ onMounted(fetchCampaigns);
     padding: 24px 0;
   }
   .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 14px;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
     margin-bottom: 24px;
   }
   .page-header h1 {
-    font-size: 22px;
+    font-size: 20px;
+  }
+  .header-actions {
+    flex-shrink: 0;
   }
   .btn-primary {
     min-height: 44px;
-    width: 100%;
+    min-width: 44px;
+    width: auto;
+    padding: 0 10px;
+    font-size: 12px;
     justify-content: center;
   }
   .campaigns-grid {
@@ -471,7 +586,7 @@ onMounted(fetchCampaigns);
     border-radius: 16px;
   }
   .card-stats {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 10px;
     padding: 12px 0;
   }
@@ -489,6 +604,15 @@ onMounted(fetchCampaigns);
 @media (max-width: 480px) {
   .page-layout {
     margin: 0 12px;
+  }
+  .page-header h1 {
+    font-size: 18px;
+  }
+  .btn-primary span {
+    display: none;
+  }
+  .btn-primary {
+    padding: 0 10px;
   }
   .campaign-card {
     padding: 16px;

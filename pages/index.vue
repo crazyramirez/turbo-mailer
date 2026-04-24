@@ -243,18 +243,22 @@ async function duplicateCampaign() {
           <p>{{ formattedDate }}</p>
         </div>
         <div class="dash-header-actions">
-          <NuxtLink to="/campaigns/new" class="btn-primary">
-            <Plus :size="15" stroke-width="2.5" />
-            {{ t("dashboard.new_campaign") }}
-          </NuxtLink>
-          <NuxtLink to="/campaigns" class="btn-secondary">
+          <NuxtLink
+            to="/campaigns"
+            class="btn-secondary"
+            :title="t('dashboard.all_campaigns')"
+          >
             <Mail :size="14" />
-            {{ t("dashboard.all_campaigns") }}
+            <span>{{ t("dashboard.all_campaigns") }}</span>
             <ArrowRight :size="13" />
           </NuxtLink>
-          <button class="btn-reset" @click="showResetModal = true">
+          <button
+            class="btn-reset"
+            @click="showResetModal = true"
+            :title="t('dashboard.reset_btn')"
+          >
             <Trash2 :size="14" />
-            {{ t("dashboard.reset_btn") }}
+            <span>{{ t("dashboard.reset_btn") }}</span>
           </button>
         </div>
       </div>
@@ -360,9 +364,6 @@ async function duplicateCampaign() {
           <div v-else-if="recentCampaigns.length === 0" class="empty-state">
             <Mail :size="40" class="empty-icon" />
             <p>{{ t("campaigns_page.no_campaigns") }}</p>
-            <NuxtLink to="/campaigns/new" class="btn-primary">
-              <Plus :size="14" />{{ t("dashboard.new_campaign") }}
-            </NuxtLink>
           </div>
 
           <div v-else class="campaign-scroll-area">
@@ -504,7 +505,7 @@ async function duplicateCampaign() {
       </div>
 
       <!-- Activity Strip -->
-      <div class="panel activity-strip">
+      <div class="panel activity-strip" v-if="activityItems.length > 0">
         <div class="panel-header">
           <h2>{{ t("dashboard.recent_activity") }}</h2>
         </div>
@@ -699,6 +700,7 @@ async function duplicateCampaign() {
   grid-template-columns: 4fr 5fr;
   gap: 20px;
   align-items: start;
+  max-width: 100%;
 }
 
 /* ── Panel base ──────────────────────────────────────────── */
@@ -712,6 +714,14 @@ async function duplicateCampaign() {
   flex-direction: column;
   gap: 16px;
   max-height: 700px;
+}
+
+.campaign-list-panel {
+  min-height: 300px;
+}
+
+.preview-panel {
+  min-height: 300px;
 }
 
 @media (max-width: 1400px) {
@@ -1197,14 +1207,24 @@ async function duplicateCampaign() {
   }
   .dash-header-actions {
     width: 100%;
+    display: flex;
+    flex-direction: row;
     gap: 8px;
+    flex-wrap: nowrap;
   }
   .btn-primary,
-  .btn-secondary {
+  .btn-secondary,
+  .btn-reset {
     flex: 1;
     justify-content: center;
-    min-height: 44px;
-    border-radius: 14px;
+    min-height: 40px;
+    padding: 0 10px;
+    font-size: 12px;
+    border-radius: 12px;
+  }
+  .dash-header-actions span,
+  .dash-header-actions .btn-secondary svg:last-child {
+    display: none;
   }
 
   /* KPI */
@@ -1290,13 +1310,15 @@ async function duplicateCampaign() {
     font-size: 13px;
   }
   .dash-header-actions {
-    flex-direction: column;
+    flex-direction: row;
+    gap: 6px;
   }
   .btn-primary,
-  .btn-secondary {
-    width: 100%;
-    padding: 13px 16px;
-    font-size: 14px;
+  .btn-secondary,
+  .btn-reset {
+    width: auto;
+    flex: 1;
+    padding: 0 8px;
   }
 
   /* KPI */
