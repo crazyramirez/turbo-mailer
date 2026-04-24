@@ -549,6 +549,7 @@ async function duplicateCampaign() {
   flex-direction: column;
   position: relative;
   margin: 0 40px;
+  overflow-x: hidden;
 }
 .page-main {
   flex: 1;
@@ -722,6 +723,7 @@ async function duplicateCampaign() {
   box-shadow:
     0 4px 24px -1px rgba(0, 0, 0, 0.2),
     0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+  overflow: hidden;
   transition:
     border-color 0.3s,
     box-shadow 0.3s;
@@ -1208,6 +1210,8 @@ async function duplicateCampaign() {
   .dash-main-grid {
     grid-template-columns: 1fr;
     align-items: start;
+    width: 100%;
+    overflow: hidden;
   }
   .campaign-list-panel,
   .preview-panel {
@@ -1252,7 +1256,7 @@ async function duplicateCampaign() {
     display: flex;
     flex-direction: row;
     gap: 8px;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
   }
   .btn-primary,
   .btn-secondary,
@@ -1297,6 +1301,8 @@ async function duplicateCampaign() {
   .campaign-item {
     padding: 13px 14px;
     touch-action: manipulation;
+    width: 100%;
+    min-width: 0;
   }
 
   /* Preview */

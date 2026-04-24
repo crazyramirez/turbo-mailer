@@ -460,7 +460,7 @@ onMounted(() => {
     min-height: 260px;
   }
   .cp-canvas.mobile {
-    width: min(340px, calc(100vw - 44px));
+    width: min(320px, calc(100% - 32px));
     height: 660px;
   }
 }
