@@ -48,8 +48,8 @@ const { selectElement, moveLayer, handleLayerDragStart, handleLayerDragEnd, hand
 
     <div v-if="layerList.length === 0" class="empty-layers-placeholder">
       <MousePointer2 :size="40" class="p-icon" />
-      <h4>Estructura Vacía</h4>
-      <p>Arrastra módulos desde la izquierda para comenzar tu diseño</p>
+      <h4>{{ $t('editor.layers_empty_title') }}</h4>
+      <p>{{ $t('editor.layers_empty_desc') }}</p>
     </div>
   </div>
 </template>

@@ -13,6 +13,7 @@ import {
 } from "lucide-vue-next";
 import { APP_VERSION } from "~/utils/version";
 
+const { t } = useI18n()
 const {
   viewMode,
   undoStack,
@@ -42,7 +43,7 @@ async function handleBack() {
   <header class="editor-header" style="user-select: none">
     <div class="header-section left">
       <button @click="handleBack" class="btn-action-back">
-        <ArrowLeft :size="18" /> <span>Volver</span>
+        <ArrowLeft :size="18" /> <span>{{ t('editor.back') }}</span>
       </button>
       <div class="h-divider"></div>
       <div class="editor-brand">
@@ -83,14 +84,10 @@ async function handleBack() {
         @click="darkModePreview = !darkModePreview"
         class="btn-dark-mode"
         :class="{ active: darkModePreview }"
-        :title="
-          darkModePreview
-            ? 'Desactivar Modo Oscuro'
-            : 'Previsualizar Modo Oscuro'
-        "
+        :title="darkModePreview ? t('editor.dark_mode_off') : t('editor.dark_mode_on')"
       >
         <component :is="darkModePreview ? Sun : Moon" :size="16" />
-        <span class="d-label">{{ darkModePreview ? "Light" : "Dark" }}</span>
+        <span class="d-label">{{ darkModePreview ? t('editor.light') : t('editor.dark') }}</span>
       </button>
       <div class="h-divider" style="margin: 0 12px"></div>
       <div class="history-controls">
@@ -98,7 +95,7 @@ async function handleBack() {
           @click="undo"
           :disabled="undoStack.length <= 1"
           class="btn-history"
-          title="Deshacer (Ctrl+Z)"
+          :title="t('editor.undo')"
         >
           <Undo :size="16" />
         </button>
@@ -106,7 +103,7 @@ async function handleBack() {
           @click="redo"
           :disabled="redoStack.length === 0"
           class="btn-history"
-          title="Rehacer (Ctrl+Y)"
+          :title="t('editor.redo')"
         >
           <Redo :size="16" />
         </button>
@@ -123,7 +120,7 @@ async function handleBack() {
 
       <button @click="handleSave" :disabled="isSaving" class="btn-premium-save">
         <Save v-if="!isSaving" :size="16" />
-        <span>{{ isSaving ? "Guardando" : "Guardar" }}</span>
+        <span>{{ isSaving ? t('editor.saving') : t('editor.save') }}</span>
       </button>
     </div>
   </header>

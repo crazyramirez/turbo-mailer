@@ -14,8 +14,8 @@ const { createNewTemplate } = useTemplateManager()
       <div class="modal-window">
         <div class="modal-header">
           <div class="header-info">
-            <h2>Nueva Plantilla</h2>
-            <p>Comienza un nuevo diseño desde cero</p>
+            <h2>{{ $t('editor.template_modal_title') }}</h2>
+            <p>{{ $t('editor.template_modal_subtitle') }}</p>
           </div>
           <button @click="showTemplateModal = false" class="btn-close-minimal">
             <X :size="20" />
@@ -26,15 +26,15 @@ const { createNewTemplate } = useTemplateManager()
             <input
               v-model="newTemplateName"
               type="text"
-              placeholder="ej: campaña_verano"
+              :placeholder="$t('editor.template_modal_placeholder')"
               @keyup.enter="createNewTemplate"
               autofocus
             />
             <FileJson :size="18" class="input-icon" />
           </div>
           <div class="modal-footer-actions">
-            <button @click="showTemplateModal = false" class="btn-modal-secondary">Cancelar</button>
-            <button @click="createNewTemplate" class="premium-button">Crear Plantilla</button>
+            <button @click="showTemplateModal = false" class="btn-modal-secondary">{{ $t('editor.template_modal_cancel') }}</button>
+            <button @click="createNewTemplate" class="premium-button">{{ $t('editor.template_modal_create') }}</button>
           </div>
         </div>
       </div>

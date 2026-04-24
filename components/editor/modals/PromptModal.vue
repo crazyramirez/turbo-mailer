@@ -74,7 +74,7 @@ function handleHexInput() {
                   />
                 </div>
                 <label for="nat-pick" class="btn-open-system">
-                  <Pipette :size="14" /> Avanzado
+                  <Pipette :size="14" /> {{ $t('editor.prompt_advanced') }}
                 </label>
                 <input
                   v-model="promptData.value"
@@ -87,7 +87,7 @@ function handleHexInput() {
             </div>
             <div class="palette-sections custom-scrollbar">
               <div class="palette-group">
-                <span class="p-title">Sistemas y Marca</span>
+                <span class="p-title">{{ $t('editor.prompt_brand_colors') }}</span>
                 <div class="p-grid">
                   <button
                     class="swatch-transparent"
@@ -110,7 +110,7 @@ function handleHexInput() {
                 </div>
               </div>
               <div class="palette-group">
-                <span class="p-title">Neutros Professional</span>
+                <span class="p-title">{{ $t('editor.prompt_neutral_colors') }}</span>
                 <div class="p-grid">
                   <button
                     v-for="c in colorPalettes.neutrals"
@@ -125,7 +125,7 @@ function handleHexInput() {
                 </div>
               </div>
               <div class="palette-group">
-                <span class="p-title">Fondos Soft (Pastel)</span>
+                <span class="p-title">{{ $t('editor.prompt_soft_colors') }}</span>
                 <div class="p-grid">
                   <button
                     v-for="c in colorPalettes.softPastels"
@@ -157,7 +157,7 @@ function handleHexInput() {
           <!-- Confirm -->
           <div v-if="promptData.mode === 'confirm'" class="confirm-message">
             <AlertCircle :size="32" class="warn-icon" />
-            <p>Esta acción eliminará permanentemente la plantilla.</p>
+            <p>{{ $t('editor.prompt_confirm_delete') }}</p>
           </div>
 
           <div class="modal-footer-actions">

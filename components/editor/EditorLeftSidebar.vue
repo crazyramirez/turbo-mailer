@@ -15,7 +15,7 @@ const { handleSidebarDragStart, handleSidebarDragEnd } = useBlockEditor()
     <!-- Templates -->
     <div class="nav-group">
       <div class="group-header">
-        <h3>Plantillas</h3>
+        <h3>{{ $t('editor.sidebar_templates') }}</h3>
         <button @click="showTemplateModal = true" class="btn-small-add">
           <Plus :size="14" />
         </button>
@@ -31,10 +31,10 @@ const { handleSidebarDragStart, handleSidebarDragEnd } = useBlockEditor()
               <span>{{ t.name }}</span>
             </div>
             <div class="nav-item-actions">
-              <button @click.stop="renameTemplate(t.name)" class="btn-item-action" title="Renombrar">
+              <button @click.stop="renameTemplate(t.name)" class="btn-item-action" :title="$t('editor.sidebar_rename')">
                 <Edit3 :size="12" />
               </button>
-              <button @click.stop="deleteTemplate(t.name)" class="btn-item-action delete" title="Eliminar">
+              <button @click.stop="deleteTemplate(t.name)" class="btn-item-action delete" :title="$t('editor.sidebar_delete')">
                 <Trash2 :size="12" />
               </button>
             </div>
@@ -45,7 +45,7 @@ const { handleSidebarDragStart, handleSidebarDragEnd } = useBlockEditor()
 
     <!-- Modules -->
     <div class="nav-group modules">
-      <div class="group-header"><h3>Módulos</h3></div>
+      <div class="group-header"><h3>{{ $t('editor.sidebar_modules') }}</h3></div>
       <div class="modules-grid custom-scrollbar">
         <div
           v-for="block in editorBlocks"
@@ -56,7 +56,7 @@ const { handleSidebarDragStart, handleSidebarDragEnd } = useBlockEditor()
           class="module-card"
         >
           <component :is="block.icon" :size="20" class="mod-icon" />
-          <span>{{ block.name }}</span>
+          <span>{{ $t('editor.module_' + block.id) }}</span>
         </div>
       </div>
     </div>

@@ -52,15 +52,16 @@ async function loadTemplate(name: string, animate = true) {
     currentTemplate.value = ''
     localStorage.removeItem('last_edited_template')
     useIframeEngine().injectIframeContent()
-    showToast('Error al cargar plantilla, se inició lienzo vacío', 'error')
+    showToast((useNuxtApp().$i18n as any).t('editor.template_load_error'), 'error')
   }
 }
 
 async function deleteTemplate(name: string) {
   const { openPrompt } = await import('~/composables/usePrompt').then((m) => m.usePrompt())
+  const i18n = (useNuxtApp().$i18n as any)
   openPrompt(
-    'Eliminar Plantilla',
-    `¿Deseas eliminar "${name}" permanentemente?`,
+    i18n.t('editor.template_delete_title'),
+    i18n.t('editor.template_delete_label', { name }),
     '',
     'confirm',
     async () => {
@@ -73,19 +74,20 @@ async function deleteTemplate(name: string) {
           htmlContent.value = ''
           useIframeEngine().injectIframeContent()
         }
-        showToast('Plantilla eliminada', 'info')
+        showToast(i18n.t('editor.template_deleted'), 'info')
       } catch {
-        showToast('Error al eliminar', 'error')
+        showToast(i18n.t('editor.template_delete_error'), 'error')
       }
     },
     'danger',
-    'Eliminar',
+    i18n.t('editor.template_delete_confirm'),
   )
 }
 
 async function renameTemplate(oldName: string) {
   const { openPrompt } = await import('~/composables/usePrompt').then((m) => m.usePrompt())
-  openPrompt('Renombrar Plantilla', 'Nuevo nombre del archivo:', oldName, 'text', async (newName) => {
+  const i18n = (useNuxtApp().$i18n as any)
+  openPrompt(i18n.t('editor.template_rename_title'), i18n.t('editor.template_rename_label'), oldName, 'text', async (newName) => {
     if (!newName || newName === oldName) return
     try {
       await $fetch('/api/templates', { method: 'PATCH', body: { oldName, newName } })
@@ -94,9 +96,9 @@ async function renameTemplate(oldName: string) {
         localStorage.setItem('last_edited_template', newName)
       }
       await loadTemplates()
-      showToast('Plantilla renombrada', 'success')
+      showToast(i18n.t('editor.template_renamed'), 'success')
     } catch {
-      showToast('Error al renombrar', 'error')
+      showToast(i18n.t('editor.template_rename_error'), 'error')
     }
   })
 }
@@ -122,13 +124,13 @@ async function saveTemplate(silent = false) {
 
     if (!silent) {
       await loadTemplates()
-      showToast('Plantilla guardada', 'success')
+      showToast((useNuxtApp().$i18n as any).t('editor.template_saved'), 'success')
     }
 
     const now = new Date()
     lastSavedTime.value = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0')
   } catch {
-    if (!silent) showToast('Error al guardar', 'error')
+    if (!silent) showToast((useNuxtApp().$i18n as any).t('editor.template_save_error'), 'error')
   } finally {
     if (!silent) isSaving.value = false
   }
@@ -206,14 +208,14 @@ async function autoCreateTemplate() {
   
   const now = new Date()
   const timestamp = now.toLocaleDateString().replace(/\//g, '-') + '-' + now.getHours() + now.getMinutes()
-  const defaultName = `Campaña sin título ${timestamp}`
+  const defaultName = (useNuxtApp().$i18n as any).t('editor.template_default_name', { timestamp })
   
   currentTemplate.value = defaultName
   localStorage.setItem('last_edited_template', defaultName)
   
   await saveTemplate(true)
   await loadTemplates()
-  showToast('Nueva plantilla vinculada automáticamente', 'info')
+  showToast((useNuxtApp().$i18n as any).t('editor.template_auto_linked'), 'info')
 }
 
 export function useTemplateManager() {

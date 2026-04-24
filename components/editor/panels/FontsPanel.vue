@@ -12,7 +12,7 @@ const { applyFont, previewFont, cancelFontSelection } = useBlockEditor()
   <div class="fonts-sidebar-panel">
     <div class="panel-header-minimal">
       <button @click="cancelFontSelection" class="btn-back-panel">
-        <ChevronLeft :size="16" /> Editar Bloque
+        <ChevronLeft :size="16" /> {{ $t('editor.fonts_back') }}
       </button>
     </div>
     <div class="fonts-scrollable custom-scrollbar">

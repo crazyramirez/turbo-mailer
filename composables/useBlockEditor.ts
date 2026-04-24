@@ -253,28 +253,30 @@ function updateBgColor() {
   if (!selectedElement.value) return
   const current = rgbToHex(selectedElement.value.style.backgroundColor || 'transparent')
   originalColorBeforePreview.value = current
-  openPrompt('Color de Fondo', 'Elige un tono institucional:', current, 'color', (val) => {
+  const i18n = (useNuxtApp().$i18n as any)
+  openPrompt(i18n.t('editor.color_bg_title'), i18n.t('editor.color_bg_label'), current, 'color', (val) => {
     if (val) {
       previewBlockColor(val)
       import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave())
     } else {
       previewBlockColor(originalColorBeforePreview.value)
     }
-  })
+  }, 'primary', undefined, 'block')
 }
 
 function updateTextColor() {
   if (!selectedElement.value) return
   const current = rgbToHex(selectedElement.value.style.color || 'inherit')
   originalColorBeforePreview.value = current
-  openPrompt('Color del Texto', 'Define el color de la tipografía:', current, 'color', (val) => {
+  const i18n = (useNuxtApp().$i18n as any)
+  openPrompt(i18n.t('editor.color_text_title'), i18n.t('editor.color_text_label'), current, 'color', (val) => {
     if (val) {
       previewTextColor(val)
       import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave())
     } else {
       previewTextColor(originalColorBeforePreview.value)
     }
-  })
+  }, 'primary', undefined, 'text')
 }
 
 function updateFont() {
@@ -384,27 +386,30 @@ function updateButtonColor() {
   const buttons = selectedElement.value.querySelectorAll('[data-toggle="button"]')
   if (buttons.length === 0) return
   const current = (buttons[0] as HTMLElement).style.background || '#6366f1'
-  openPrompt('Color del Bloque', 'Color para todos los botones del bloque:', current, 'color', (color) => {
+  const i18n = (useNuxtApp().$i18n as any)
+  openPrompt(i18n.t('editor.color_block_title'), i18n.t('editor.color_block_label'), current, 'color', (color) => {
     buttons.forEach((b) => ((b as HTMLElement).style.background = color))
     import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
-  })
+  }, 'primary', undefined, 'block')
 }
 
 function updateThisButtonColor() {
   const btn = selectedSubElement.value?.closest('[data-toggle="button"]') as HTMLElement
   if (!btn) return
   const current = rgbToHex(btn.style.background || '#6366f1')
-  openPrompt('Color de Botón', 'Elige el color para este botón específico:', current, 'color', (color) => {
+  const i18n = (useNuxtApp().$i18n as any)
+  openPrompt(i18n.t('editor.color_btn_title'), i18n.t('editor.color_btn_label'), current, 'color', (color) => {
     btn.style.background = color
     import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
-  })
+  }, 'primary', undefined, 'button')
 }
 
 function updateButtonLink() {
   const btn = selectedSubElement.value?.closest('[data-toggle="button"]') as HTMLElement
   if (!btn) return
   const current = btn.getAttribute('href') || '#'
-  openPrompt('Enlace del Botón', 'URL o enlace para este botón:', current, 'text', (url) => {
+  const i18n = (useNuxtApp().$i18n as any)
+  openPrompt(i18n.t('editor.btn_link_title'), i18n.t('editor.btn_link_label'), current, 'text', (url) => {
     btn.setAttribute('href', url)
     import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
   })
@@ -414,13 +419,14 @@ function removeThisButton() {
   const btn = selectedSubElement.value?.closest('[data-toggle="button"]') as HTMLElement
   if (!btn) return
   const count = selectedElement.value?.querySelectorAll('[data-toggle="button"]')?.length || 0
+  const i18n = (useNuxtApp().$i18n as any)
   if (count <= 1) {
-    showToast('El módulo debe tener al menos un botón', 'info')
+    showToast(i18n.t('editor.btn_min_error'), 'info')
     return
   }
   openPrompt(
-    'Eliminar Botón',
-    '¿Estás seguro de que quieres eliminar este botón?',
+    i18n.t('editor.btn_delete_title'),
+    i18n.t('editor.btn_delete_label'),
     '',
     'confirm',
     () => {
@@ -429,7 +435,7 @@ function removeThisButton() {
       import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
     },
     'danger',
-    'Confirmar Eliminación',
+    i18n.t('editor.btn_delete_confirm'),
   )
 }
 
@@ -450,7 +456,8 @@ function updateImage() {
   if (!selectedElement.value) return
   const img = selectedElement.value.querySelector('img')
   if (!img) return
-  openPrompt('Editar Imagen', 'URL del recurso visual:', img.src, 'text', (val) => {
+  const i18n = (useNuxtApp().$i18n as any)
+  openPrompt(i18n.t('editor.image_edit_title'), i18n.t('editor.image_edit_label'), img.src, 'text', (val) => {
     if (val) img.src = val
   })
 }
@@ -463,13 +470,14 @@ async function improveBlockWithAI(el?: HTMLElement) {
 
   const textToImprove = target.innerHTML
 
+  const i18n = (useNuxtApp().$i18n as any)
   if (!textToImprove || target.innerText.trim().length < 5) {
-    showToast('No hay suficiente texto para mejorar', 'info')
+    showToast(i18n.t('editor.ai_no_text'), 'info')
     return
   }
 
   isImprovingAI.value = true
-  showToast('Optimizando textos con IA...', 'info')
+  showToast(i18n.t('editor.ai_improving'), 'info')
   
   // Añadir efecto visual al bloque
   target.classList.add('ai-improving')
@@ -483,7 +491,7 @@ async function improveBlockWithAI(el?: HTMLElement) {
     if (improvedText) {
       // Aplicamos el HTML mejorado manteniendo la estructura
       target.innerHTML = improvedText
-      showToast('Texto optimizado con éxito', 'success')
+      showToast(i18n.t('editor.ai_success'), 'success')
       
       import('~/composables/useIframeEngine').then(({ useIframeEngine }) => {
         useIframeEngine().refreshLayers()
@@ -491,7 +499,7 @@ async function improveBlockWithAI(el?: HTMLElement) {
       })
     }
   } catch (err: any) {
-    showToast(err.statusMessage || 'Error al conectar con OpenAI', 'error')
+    showToast(err.statusMessage || i18n.t('editor.ai_error'), 'error')
   } finally {
     isImprovingAI.value = false
     target.classList.remove('ai-improving')
@@ -505,7 +513,8 @@ async function improveAllWithAI() {
   const blocks = doc.querySelectorAll('.editable-block')
   if (blocks.length === 0) return
 
-  showToast('Mejorando toda la plantilla...', 'info')
+  const i18n = (useNuxtApp().$i18n as any)
+  showToast(i18n.t('editor.ai_improving_all'), 'info')
   isImprovingAI.value = true
 
   try {
@@ -532,13 +541,13 @@ async function improveAllWithAI() {
         el.classList.remove('ai-improving')
       }
     }
-    showToast('Plantilla mejorada al completo', 'success')
+    showToast(i18n.t('editor.ai_success_all'), 'success')
     import('~/composables/useIframeEngine').then(({ useIframeEngine }) => {
       useIframeEngine().refreshLayers()
       useIframeEngine().triggerAutosave(true)
     })
   } catch (err: any) {
-    showToast('Error durante la mejora global', 'error')
+    showToast(i18n.t('editor.ai_error_all'), 'error')
   } finally {
     isImprovingAI.value = false
   }

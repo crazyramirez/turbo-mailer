@@ -13,13 +13,13 @@ const { switchToEditPanel } = useBlockEditor()
   <aside class="side-nav right">
     <div class="tab-switcher">
       <button @click="activePanel = 'layers'" :class="{ active: activePanel === 'layers' }">
-        Capas
+        {{ $t('editor.panel_layers') }}
       </button>
       <button
         @click="switchToEditPanel"
         :class="{ active: activePanel === 'edit' || activePanel === 'fonts' }"
       >
-        Edición
+        {{ $t('editor.panel_edit') }}
       </button>
     </div>
 

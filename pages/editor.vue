@@ -16,6 +16,7 @@ import PromptModal from "~/components/editor/modals/PromptModal.vue";
 import ImageModal from "~/components/editor/modals/ImageModal.vue";
 import TemplateModal from "~/components/editor/modals/TemplateModal.vue";
 
+const { t } = useI18n();
 const { editorDragState, resetEditorState } = useEditorState();
 const { injectIframeContent, triggerAutosave, setupEditorWatches } =
   useIframeEngine();
@@ -69,8 +70,8 @@ onMounted(async () => {
   (window as any).editorState = editorDragState;
   (window as any).openLinkPrompt = (callback: (val: string) => void) => {
     openPrompt(
-      "Insertar Enlace",
-      "URL del hipervínculo:",
+      t("editor.prompt_link_title"),
+      t("editor.prompt_link_label"),
       "https://",
       "text",
       callback,
@@ -78,11 +79,14 @@ onMounted(async () => {
   };
   (window as any).openColorPrompt = (callback: (val: string) => void) => {
     openPrompt(
-      "Color de Selección",
-      "Elige un color para el texto resaltado:",
+      t("editor.prompt_color_title"),
+      t("editor.prompt_color_label"),
       "#000000",
       "color",
       callback,
+      "primary",
+      undefined,
+      "text",
     );
   };
   (window as any).triggerAutosave = () => triggerAutosave(true);
@@ -165,7 +169,7 @@ onUnmounted(() => {
     top: 0;
     left: 0;
     width: 100vw;
-    height: 100vh;
+    height: 100%;
     z-index: 999999;
     background: rgba(10, 10, 15, 0.75);
     backdrop-filter: blur(24px);

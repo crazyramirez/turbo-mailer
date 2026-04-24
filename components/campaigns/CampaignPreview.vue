@@ -8,6 +8,24 @@ const viewMode = ref<"desktop" | "mobile">("desktop");
 const darkMode = ref(false);
 const isMorphing = ref(false);
 const frame = ref<HTMLIFrameElement | null>(null);
+const viewport = ref<HTMLElement | null>(null);
+const mobileScale = ref(1);
+
+function updateScale() {
+  if (!viewport.value || viewMode.value !== "mobile") {
+    mobileScale.value = 1;
+    return;
+  }
+
+  const padding = 32; // 16px each side
+  const availW = viewport.value.clientWidth - padding;
+  const availH = viewport.value.clientHeight - padding * 1.5;
+  const designW = 360;
+  const designH = 720;
+  mobileScale.value = Math.min(availW / designW, availH / designH, 1);
+}
+
+let observer: ResizeObserver | null = null;
 
 const darkStyles = `
   body { transition: filter .5s ease; }
@@ -63,10 +81,20 @@ watch(darkMode, (val) => {
 watch(viewMode, () => {
   isMorphing.value = true;
   setTimeout(() => (isMorphing.value = false), 500);
+  nextTick(updateScale);
 });
 
 onMounted(() => {
   if (props.html) render();
+  if (import.meta.client && viewport.value) {
+    observer = new ResizeObserver(updateScale);
+    observer.observe(viewport.value);
+    updateScale();
+  }
+});
+
+onUnmounted(() => {
+  observer?.disconnect();
 });
 </script>
 
@@ -105,8 +133,14 @@ onMounted(() => {
       </div>
     </div>
 
-    <div v-if="html" class="cp-viewport scroll-hide">
-      <div class="cp-canvas" :class="[viewMode, { morphing: isMorphing }]">
+    <div v-if="html" ref="viewport" class="cp-viewport scroll-hide">
+      <div
+        class="cp-canvas"
+        :class="[viewMode, { morphing: isMorphing }]"
+        :style="
+          viewMode === 'mobile' ? { transform: `scale(${mobileScale})` } : {}
+        "
+      >
         <div class="cp-host">
           <div v-if="viewMode === 'mobile'" class="phone-frame">
             <div class="phone-top"><div class="phone-notch"></div></div>
@@ -259,13 +293,15 @@ onMounted(() => {
     width 0.7s cubic-bezier(0.34, 1.56, 0.64, 1),
     height 0.7s cubic-bezier(0.34, 1.56, 0.64, 1),
     filter 0.4s,
-    opacity 0.4s;
+    opacity 0.4s,
+    transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
   transform-origin: top center;
 }
 .cp-canvas.desktop {
   width: 100%;
   max-width: 820px;
   height: calc(100vh - 380px);
+  transform: scale(1);
 }
 .cp-canvas.mobile {
   width: 360px;
@@ -273,20 +309,18 @@ onMounted(() => {
   margin: 10px auto;
   position: relative;
   overflow: visible;
-  animation: bounce 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @media (max-width: 768px) {
   .cp-canvas.mobile {
     width: 320px;
-    height: 640px;
+    /* height: 640px; */
   }
 }
 
 .cp-canvas.morphing {
   filter: blur(4px);
   opacity: 0.9;
-  transform: scale(0.97) translateY(4px);
 }
 .cp-canvas.morphing::after {
   content: "";
@@ -461,7 +495,6 @@ onMounted(() => {
   }
   .cp-canvas.mobile {
     width: min(320px, calc(100% - 32px));
-    height: 660px;
   }
 }
 </style>

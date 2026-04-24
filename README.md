@@ -4,13 +4,7 @@
 
 **Plataforma Completa de Email Marketing con CRM simple, Editor de plantillas HTML, IA, Analytics, Tracking y mucho más.**
 
-> ⚠️ **Uso Responsable — Leer antes de usar**
->
-> Turbo-Mailer PRO es una herramienta diseñada exclusivamente para **envíos de email legítimos, controlados y con consentimiento previo**: comunicaciones corporativas, newsletters opt-in, campañas B2B entre contactos propios y notificaciones transaccionales.
->
-> **No está diseñada, ni debe usarse, para spam o envíos masivos no solicitados.**
->
-> El uso de esta aplicación implica la aceptación total de las políticas de uso de Gmail/Google, la normativa vigente (GDPR, CAN-SPAM Act, LSSI-CE) y las leyes de privacidad aplicables en tu país. **El desarrollador de Turbo-Mailer PRO no asume ninguna responsabilidad por el uso indebido de la herramienta**, incluyendo el incumplimiento de dichas normativas, bloqueos de cuenta o consecuencias legales derivadas de un uso no autorizado.
+> ⚠️ **Uso Responsable:** Diseñado para envíos legítimos y con permiso (newsletters, B2B). **Prohibido para spam.** Al usarlo, aceptas las normas de Google y leyes de privacidad (GDPR, etc.) bajo tu propia responsabilidad.
 
 Turbo-Mailer PRO es una plataforma de email marketing de alto rendimiento construida con **Nuxt 3**. Incluye gestión completa de contactos y listas, editor visual de plantillas HTML con bloques drag & drop, sistema de campañas con tracking de aperturas y clics, analytics en tiempo real, integración con IA para copywriting e interfaz multiidioma (ES/EN). Todo con persistencia real en base de datos SQLite y envío masivo vía Gmail SMTP.
 
@@ -308,7 +302,8 @@ La app usa Gmail SMTP con una contraseña de aplicación de 16 dígitos (no tu c
 
 ## 📄 Plantillas de Demo
 
-Encuentra una plantilla de ejemplo profesional en: `docs/email_demo.html`
+Encuentra una plantilla de ejemplo profesional en: `data/demo/email_demo.html`
+También dispones de dos listas de contactos para pruebas: `data/demo/contacts_demo.csv` y `data/demo/contacts_demo.xlsx`.
 
 ---
 
@@ -317,8 +312,8 @@ Encuentra una plantilla de ejemplo profesional en: `docs/email_demo.html`
 - [x] **Campañas** — Revisar funcionalidades completas (wizard, envío, estados, tracking inyectado). Funcional y testeado básicamente, pero requiere testing en profundidad.
 - [x] **Contactos** — Revisar CRUD, importación Excel, exportación CSV, drag-to-list, paginación y filtros. Funcional y testeado básicamente, pero requiere testing en profundidad.
 - [x] **Analíticas** — Revisar KPIs, últimas aperturas, top campañas y eventos de tracking. Funcional y testeado básicamente, pero requiere testing en profundidad.
-- [ ] **Responsive** — Adaptar toda la interfaz para dispositivos móviles (actualmente optimizado para Desktop).
-- [ ] **Internacionalizar Editor** — Falta internacionalizar el visor de editor (actualmente solo en español).
+- [x] **Internacionalizar Editor** — Falta internacionalizar el visor de editor (actualmente solo en español).
+- [ ] **Editor Responsive** — Es complejo y no muy útil en móvil porque tiene muchas opciones, realmente el editor está diseñado para usarlo en escritorio.
 
 ---
 
@@ -342,4 +337,4 @@ Este proyecto es una herramienta de desarrollo. El uso indebido para comunicacio
 
 ---
 
-**Desarrollado con ❤️ por crazyramirez mientras me zampo tropecientos podcasts en Youtube de fondo.**
+**Desarrollado con ❤️ por Crazyramirez mientras me zampo tropecientos podcasts en Youtube de fondo.**

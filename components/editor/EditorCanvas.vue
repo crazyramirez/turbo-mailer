@@ -3,6 +3,8 @@ import { MousePointer2, Sparkles } from "lucide-vue-next";
 import { useEditorState } from "~/composables/useEditorState";
 import { useIframeEngine } from "~/composables/useIframeEngine";
 
+const { t } = useI18n();
+
 const {
   iframeRef,
   viewMode,
@@ -54,12 +56,8 @@ const { injectIframeContent } = useIframeEngine();
               </div>
             </div>
             <div class="g-content">
-              <h3>Composición Interactiva</h3>
-              <p>
-                El lienzo está optimizado para diseños de alto impacto,
-                visualmente funcional en gestores de correo. Arrastra módulos
-                para comenzar.
-              </p>
+              <h3>{{ t('editor.canvas_empty_title') }}</h3>
+              <p>{{ t('editor.canvas_empty_desc') }}</p>
             </div>
             <div class="g-badges">
               <span class="g-badge">820px</span>
@@ -80,7 +78,7 @@ const { injectIframeContent } = useIframeEngine();
               <div class="drag-icon-premium">
                 <MousePointer2 :size="48" stroke-width="1" />
               </div>
-              <span>Suelta para insertar módulo</span>
+              <span>{{ t('editor.canvas_drop_hint') }}</span>
             </div>
           </div>
         </Transition>

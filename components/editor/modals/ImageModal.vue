@@ -14,8 +14,8 @@ const { applyImageSettings } = useBlockEditor()
       <div class="modal-window wide-modal">
         <div class="modal-header">
           <div class="header-info">
-            <h2>Configurar Recurso</h2>
-            <p>Gestiona el enlace y la fuente visual del elemento</p>
+            <h2>{{ $t('editor.image_modal_title') }}</h2>
+            <p>{{ $t('editor.image_modal_subtitle') }}</p>
           </div>
           <button @click="imageModal.visible = false" class="btn-close-minimal">
             <X :size="20" />
@@ -29,20 +29,20 @@ const { applyImageSettings } = useBlockEditor()
                 class="premium-img-preview"
                 :style="{ backgroundImage: `url(${imageModal.src})` }"
               >
-                <div v-if="!imageModal.src" class="no-img-msg">Sin imagen</div>
+                <div v-if="!imageModal.src" class="no-img-msg">{{ $t('editor.image_modal_no_image') }}</div>
               </div>
-              <div class="preview-tag">VISTA PREVIA</div>
+              <div class="preview-tag">{{ $t('editor.image_modal_preview') }}</div>
             </div>
             <div class="settings-form-side">
               <div class="premium-field-group">
-                <label>URL del Recurso</label>
+                <label>{{ $t('editor.image_modal_url') }}</label>
                 <div class="premium-input-box">
                   <ImageIcon :size="18" class="field-icon" />
                   <input v-model="imageModal.src" type="text" placeholder="https://..." />
                 </div>
               </div>
               <div class="premium-field-group">
-                <label>Enlace de Destino</label>
+                <label>{{ $t('editor.image_modal_link') }}</label>
                 <div class="premium-input-box">
                   <MousePointer2 :size="18" class="field-icon" />
                   <input v-model="imageModal.link" type="text" placeholder="https://..." />
@@ -50,23 +50,23 @@ const { applyImageSettings } = useBlockEditor()
               </div>
               <div class="premium-toggle-card">
                 <div class="toggle-info">
-                  <span class="t-label">Nueva Pestaña</span>
-                  <span class="t-sub">Abrir en target="_blank"</span>
+                  <span class="t-label">{{ $t('editor.image_modal_new_tab') }}</span>
+                  <span class="t-sub">{{ $t('editor.image_modal_new_tab_sub') }}</span>
                 </div>
                 <button
                   @click="imageModal.target = imageModal.target === '_blank' ? '_self' : '_blank'"
                   :class="{ active: imageModal.target === '_blank' }"
                   class="premium-switch"
                 >
-                  {{ imageModal.target === '_blank' ? 'ACTIVADO' : 'DESACTIVADO' }}
+                  {{ imageModal.target === '_blank' ? $t('editor.image_modal_on') : $t('editor.image_modal_off') }}
                 </button>
               </div>
             </div>
           </div>
           <div class="modal-footer-actions">
-            <button @click="imageModal.visible = false" class="btn-modal-secondary">Cancelar</button>
+            <button @click="imageModal.visible = false" class="btn-modal-secondary">{{ $t('editor.image_modal_cancel') }}</button>
             <button @click="applyImageSettings" class="premium-button" style="margin-top: 0">
-              Actualizar Recurso
+              {{ $t('editor.image_modal_update') }}
             </button>
           </div>
         </div>

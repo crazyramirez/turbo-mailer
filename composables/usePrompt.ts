@@ -9,7 +9,8 @@ function openPrompt(
   mode: 'text' | 'color' | 'font' | 'confirm',
   callback: (val: string) => void,
   variant: 'primary' | 'danger' = 'primary',
-  confirmLabel = 'Aplicar',
+  confirmLabel?: string,
+  colorTarget?: 'block' | 'text' | 'button',
 ) {
   promptData.title = title
   promptData.label = label
@@ -17,7 +18,8 @@ function openPrompt(
   promptData.mode = mode
   promptData.callback = callback
   promptData.variant = variant
-  promptData.confirmLabel = confirmLabel
+  promptData.confirmLabel = confirmLabel ?? (useNuxtApp().$i18n as any).t('editor.prompt_apply')
+  promptData.colorTarget = colorTarget ?? ''
   promptData.visible = true
 }
 
@@ -47,12 +49,11 @@ function handlePromptInput(val: string) {
     const { previewBlockColor, previewTextColor } = useBlockEditor()
     const { selectedSubElement } = useEditorState()
 
-    const title = promptData.title.toLowerCase()
-    if (title.includes('texto')) {
+    if (promptData.colorTarget === 'text') {
       previewTextColor(val)
-    } else if (title.includes('fondo') || title.includes('bloque')) {
+    } else if (promptData.colorTarget === 'block') {
       previewBlockColor(val)
-    } else if (title.includes('botón')) {
+    } else if (promptData.colorTarget === 'button') {
       const btn = selectedSubElement.value?.closest('[data-toggle="button"]') as HTMLElement
       if (btn) {
         const isValidHex = /^#([0-9A-F]{3}){1,2}$/i.test(val)

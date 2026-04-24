@@ -84,25 +84,25 @@ const editableTypes = [
         class="control-group"
         v-if="selectedElement.dataset.type === 'Tarjeta'"
       >
-        <label>Estilo de Tarjeta</label>
+        <label>{{ $t('editor.edit_card_style') }}</label>
         <div class="layout-pill-selector">
           <button
             @click="toggleCardLayout"
             :class="{ active: getCardLayout() === 'standard' }"
           >
-            <Square :size="14" /> <span>Clásica</span>
+            <Square :size="14" /> <span>{{ $t('editor.edit_card_classic') }}</span>
           </button>
           <button
             @click="toggleCardLayout"
             :class="{ active: getCardLayout() === 'premium' }"
           >
-            <Sparkles :size="14" /> <span>Premium</span>
+            <Sparkles :size="14" /> <span>{{ $t('editor.edit_card_premium') }}</span>
           </button>
         </div>
       </div>
 
       <div class="control-group">
-        <label>Configuración de Módulo</label>
+        <label>{{ $t('editor.edit_module_config') }}</label>
 
         <!-- Button Layout -->
         <div
@@ -114,13 +114,13 @@ const editableTypes = [
             @click="toggleButtonLayout"
             :class="{ active: getButtonLayout() === 'auto' }"
           >
-            <Layout :size="14" /> <span>Ajuste Auto</span>
+            <Layout :size="14" /> <span>{{ $t('editor.edit_btn_auto') }}</span>
           </button>
           <button
             @click="toggleButtonLayout"
             :class="{ active: getButtonLayout() === 'full' }"
           >
-            <Monitor :size="14" /> <span>Expandido (100%)</span>
+            <Monitor :size="14" /> <span>{{ $t('editor.edit_btn_full') }}</span>
           </button>
         </div>
 
@@ -134,33 +134,33 @@ const editableTypes = [
             v-if="selectedElement.dataset.type === 'Texto'"
             class="toggle-item full-width-toggle"
           >
-            <span class="label">Alineación de Texto</span>
+            <span class="label">{{ $t('editor.edit_text_align') }}</span>
             <div class="layout-pill-selector mini">
               <button
                 @click="updateTextAlign('left')"
                 :class="{ active: getTextAlign() === 'left' }"
-                title="Izquierda"
+                :title="$t('editor.edit_align_left')"
               >
                 <AlignLeft :size="14" />
               </button>
               <button
                 @click="updateTextAlign('center')"
                 :class="{ active: getTextAlign() === 'center' }"
-                title="Centro"
+                :title="$t('editor.edit_align_center')"
               >
                 <AlignCenter :size="14" />
               </button>
               <button
                 @click="updateTextAlign('right')"
                 :class="{ active: getTextAlign() === 'right' }"
-                title="Derecha"
+                :title="$t('editor.edit_align_right')"
               >
                 <AlignRight :size="14" />
               </button>
               <button
                 @click="updateTextAlign('justify')"
                 :class="{ active: getTextAlign() === 'justify' }"
-                title="Justificado"
+                :title="$t('editor.edit_align_justify')"
               >
                 <AlignJustify :size="14" />
               </button>
@@ -173,7 +173,7 @@ const editableTypes = [
               v-if="selectedElement.dataset.type === 'Header'"
               class="toggle-item"
             >
-              <span class="label">Logotipo</span>
+              <span class="label">{{ $t('editor.edit_logo') }}</span>
               <button
                 @click="toggleVisibility('logo')"
                 :class="{ active: isVisible('logo') }"
@@ -192,7 +192,7 @@ const editableTypes = [
             >
               <div class="slider-row" style="width: 100%; margin-top: 8px">
                 <div class="slider-header">
-                  <span class="s-label">Tamaño del Logo</span>
+                  <span class="s-label">{{ $t('editor.edit_logo_size') }}</span>
                   <span class="s-value">{{ logoWidthRef }}px</span>
                 </div>
                 <input
@@ -212,7 +212,7 @@ const editableTypes = [
             >
               <div class="slider-row" style="width: 100%; margin-top: 8px">
                 <div class="slider-header">
-                  <span class="s-label">Altura de Imágenes (Grid)</span>
+                  <span class="s-label">{{ $t('editor.edit_grid_height') }}</span>
                   <span class="s-value">{{ gridImageHeightRef }}px</span>
                 </div>
                 <input
@@ -232,8 +232,8 @@ const editableTypes = [
             >
               <span class="label">{{
                 selectedElement.dataset.type === "Firma"
-                  ? "Logo"
-                  : "Imagen / Recurso"
+                  ? $t('editor.edit_logo')
+                  : $t('editor.edit_image_resource')
               }}</span>
               <button
                 @click="toggleVisibility('image')"
@@ -250,8 +250,8 @@ const editableTypes = [
             >
               <span class="label">{{
                 selectedElement.dataset.type === "Firma"
-                  ? "Nota Posdata"
-                  : "Etiqueta / Badge"
+                  ? $t('editor.edit_ps_note')
+                  : $t('editor.edit_badge')
               }}</span>
               <button
                 @click="toggleVisibility('badge')"
@@ -266,7 +266,7 @@ const editableTypes = [
               v-if="selectedElement.querySelector('[data-toggle=\'ps\']')"
               class="toggle-item"
             >
-              <span class="label">Nota Posdata (P.D.)</span>
+              <span class="label">{{ $t('editor.edit_ps_note_full') }}</span>
               <button
                 @click="toggleVisibility('ps')"
                 :class="{ active: isVisible('ps') }"
@@ -280,7 +280,7 @@ const editableTypes = [
               v-if="selectedElement.querySelector('[data-toggle=\'contact\']')"
               class="toggle-item"
             >
-              <span class="label">Datos de Contacto</span>
+              <span class="label">{{ $t('editor.edit_contact_data') }}</span>
               <button
                 @click="toggleVisibility('contact')"
                 :class="{ active: isVisible('contact') }"
@@ -296,8 +296,8 @@ const editableTypes = [
             >
               <span class="label">{{
                 selectedElement.dataset.type === "Firma"
-                  ? "Nombre / Firma"
-                  : "Títulos Principales"
+                  ? $t('editor.edit_name_signature')
+                  : $t('editor.edit_titles')
               }}</span>
               <button
                 @click="toggleVisibility('title')"
@@ -314,8 +314,8 @@ const editableTypes = [
             >
               <span class="label">{{
                 selectedElement.dataset.type === "Firma"
-                  ? "Cargo / Empresa"
-                  : "Subtítulos / Descr."
+                  ? $t('editor.edit_position')
+                  : $t('editor.edit_subtitles')
               }}</span>
               <button
                 @click="toggleVisibility('subtitle')"
@@ -332,17 +332,17 @@ const editableTypes = [
 
     <!-- Typography -->
     <div class="control-group">
-      <label>Texto y Tipografía</label>
+      <label>{{ $t('editor.edit_typography') }}</label>
       <div class="typography-controls">
         <button @click="updateFont" class="c-btn full-width">
-          <CaseSensitive :size="16" /> Tipografía:
+          <CaseSensitive :size="16" /> {{ $t('editor.edit_font_label') }}
           <span class="font-active-name">{{
             selectedElement.style.fontFamily.split(",")[0] || "Arial"
           }}</span>
         </button>
         <div class="slider-row">
           <div class="slider-header">
-            <span class="s-label">Tamaño Base (Jerárquico)</span>
+            <span class="s-label">{{ $t('editor.edit_font_size') }}</span>
             <span class="s-value">{{ fontSizeRef }}px</span>
           </div>
           <input
@@ -365,7 +365,7 @@ const editableTypes = [
         selectedElement.dataset.type !== 'Imagen'
       "
     >
-      <label>IA Copywriting</label>
+      <label>{{ $t('editor.edit_ai_copy') }}</label>
       <div class="ai-controls">
         <button
           @click="improveBlockWithAI()"
@@ -374,7 +374,7 @@ const editableTypes = [
         >
           <Sparkles :size="14" :class="{ 'anim-spin': isImprovingAI }" />
           <span>{{
-            isImprovingAI ? "Mejorando..." : "Optimizar Texto con IA"
+            isImprovingAI ? $t('editor.edit_ai_improving') : $t('editor.edit_ai_optimize')
           }}</span>
         </button>
       </div>
@@ -382,17 +382,17 @@ const editableTypes = [
 
     <!-- Visual Style -->
     <div class="control-group">
-      <label>Estilo Visual</label>
+      <label>{{ $t('editor.edit_visual_style') }}</label>
       <div class="control-grid">
         <button @click="updateBgColor" class="c-btn">
-          <Palette :size="14" /> Fondo
+          <Palette :size="14" /> {{ $t('editor.edit_bg') }}
         </button>
         <button
           v-if="selectedElement.querySelector('img')"
           @click="updateImage"
           class="c-btn"
         >
-          <ImageIcon :size="14" /> Imagen
+          <ImageIcon :size="14" /> {{ $t('editor.edit_image') }}
         </button>
 
         <template v-if="selectedElement.dataset.type === 'Botón'">
@@ -403,7 +403,7 @@ const editableTypes = [
             <div class="sub-edit-header">
               <MousePointer2 :size="12" />
               <span>
-                Botón: "<strong
+                {{ $t('editor.edit_btn_prefix') }} "<strong
                   >{{ (selectedSubElement?.innerText || "").substring(0, 30)
                   }}{{
                     (selectedSubElement?.innerText || "").length > 30
@@ -414,30 +414,28 @@ const editableTypes = [
               </span>
             </div>
             <button @click="updateThisButtonColor" class="c-btn highlight-btn">
-              <Palette :size="14" /> Color
+              <Palette :size="14" /> {{ $t('editor.edit_color') }}
             </button>
             <button @click="updateButtonLink" class="c-btn highlight-btn">
-              <Code :size="14" /> Enlace
+              <Code :size="14" /> {{ $t('editor.edit_link') }}
             </button>
             <button @click="removeThisButton" class="c-btn btn-danger-soft">
-              <Trash2 :size="14" /> Borrar
+              <Trash2 :size="14" /> {{ $t('editor.edit_delete_btn') }}
             </button>
           </div>
           <div v-else class="info-badge-premium">
             <Zap :size="14" />
-            <span
-              >Toca un botón en el diseño para editar su color y enlace</span
-            >
+            <span>{{ $t('editor.edit_btn_hint') }}</span>
           </div>
           <button @click="addButton" class="c-btn full-width mt-10">
-            <Plus :size="14" /> Nuevo Botón
+            <Plus :size="14" /> {{ $t('editor.edit_add_btn') }}
           </button>
         </template>
       </div>
     </div>
 
     <button @click="deleteSelectedBlock" class="btn-block-remove">
-      Eliminar Bloque
+      {{ $t('editor.edit_delete_block') }}
     </button>
   </div>
 </template>
