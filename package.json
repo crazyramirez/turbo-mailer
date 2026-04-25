@@ -9,7 +9,9 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push"
   },
   "dependencies": {
     "@nuxtjs/i18n": "^10.2.4",
@@ -20,13 +22,13 @@
     "nodemailer": "^6.9.16",
     "nuxt": "^3.14.0",
     "vue": "^3.5.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "drizzle-kit": "^0.31.10"
   },
   "devDependencies": {
     "@types/archiver": "^7.0.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/nodemailer": "^6.4.17",
-    "@vite-pwa/nuxt": "^1.1.1",
-    "drizzle-kit": "^0.31.10"
+    "@vite-pwa/nuxt": "^1.1.1"
   }
 }

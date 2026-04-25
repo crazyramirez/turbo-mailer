@@ -49,6 +49,7 @@ What makes **Turbo-Mailer PRO** an extremely powerful tool is its **privacy**. B
 - Pagination (50 per page), multiple selection, and drag-to-list
 - **Bulk import** from Excel (`.xlsx`, `.xls`, `.csv`) with column auto-detection
 - Complete **CSV export** of contacts
+- **Smart Database**: Fully automatic schema generation and synchronization. No manual migration commands required.
 - Full CRUD for contacts and lists from the UI
 
 ### 📣 Campaign Management
@@ -141,7 +142,12 @@ To ensure your data privacy and prevent the platform from appearing in search en
 
 ---
 
-## 🗄️ Database
+## 🗄️ Database (Zero-CLI)
+
+Turbo-Mailer PRO manages the database **100% automatically**.
+- **Auto-Installation**: On the first start, it creates the SQLite file and all tables.
+- **Auto-Migration**: If you edit the schema in the code, the app detects changes and updates the database upon restart.
+- **Auto-Recreation**: If you delete the `.db` file, the app regenerates it instantly.
 
 SQLite in `./data/turbomailer.db` managed with Drizzle ORM. Main tables:
 
@@ -206,11 +212,13 @@ SQLite in `./data/turbomailer.db` managed with Drizzle ORM. Main tables:
    TRACKING_BASE_URL=http://localhost:3000
    ```
 
-4. **Start in development**
+4. **Start the application**
 
    ```bash
    npm run dev
    ```
+
+   *You don't need to run database commands or migrations. The application will detect the schema and configure SQLite automatically upon startup.*
 
 ---
 

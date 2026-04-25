@@ -93,5 +93,38 @@ export default defineNuxtConfig({
         ignored: ['**/data/templates/**', '**/data/*.db', '**/data/*.db-wal', '**/data/*.db-shm']
       }
     }
+  },
+
+  hooks: {
+    'ready': async () => {
+      if (process.env.NODE_ENV === 'development') {
+        const { execSync } = await import('node:child_process')
+        try {
+          console.log('自动 [DB] Generating migrations...')
+          execSync('npx drizzle-kit generate', { stdio: 'inherit' })
+        } catch (e) {
+          console.error('Failed to auto-generate migrations:', e)
+        }
+      }
+    },
+    'build:before': async () => {
+      try {
+        console.log('自动 [DB] Generating migrations for build...')
+        const { execSync } = await import('node:child_process')
+        execSync('npx drizzle-kit generate', { stdio: 'inherit' })
+      } catch (e) {
+        console.error('Failed to auto-generate migrations during build:', e)
+      }
+    }
+  },
+
+  nitro: {
+    // Ensure migrations are copied to the build output
+    serverAssets: [
+      {
+        baseName: 'migrations',
+        dir: './server/db/migrations'
+      }
+    ]
   }
 });

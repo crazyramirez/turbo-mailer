@@ -49,6 +49,7 @@ Lo que hace a **Turbo-Mailer PRO** una herramienta extremadamente potente es la 
 - Paginación (50 por página), selección múltiple y drag-to-list
 - **Importación masiva** desde Excel (`.xlsx`, `.xls`, `.csv`) con autodetección de columnas
 - **Exportación CSV** de contactos completa
+- **Base de datos inteligente**: Autogeneración y sincronización de esquema totalmente automática. No requiere comandos manuales de migración.
 - CRUD completo de contactos y listas desde la UI
 
 ### 📣 Gestión de Campañas
@@ -141,7 +142,12 @@ Para garantizar la privacidad de tus datos y evitar que la plataforma aparezca e
 
 ---
 
-## 🗄️ Base de Datos
+## 🗄️ Base de Datos (Zero-CLI)
+
+Turbo-Mailer PRO gestiona la base de datos de forma **100% automática**. 
+- **Auto-Instalación**: Al arrancar por primera vez, crea el archivo SQLite y todas las tablas.
+- **Auto-Migración**: Si editas el esquema en el código, la app detecta los cambios y actualiza la base de datos al reiniciar.
+- **Auto-Recreación**: Si borras el archivo `.db`, la app lo regenera al instante.
 
 SQLite en `./data/turbomailer.db` gestionada con Drizzle ORM. Tablas principales:
 
@@ -206,11 +212,13 @@ SQLite en `./data/turbomailer.db` gestionada con Drizzle ORM. Tablas principales
    TRACKING_BASE_URL=http://localhost:3000
    ```
 
-4. **Iniciar en desarrollo**
+4. **Iniciar la aplicación**
 
    ```bash
    npm run dev
    ```
+
+   *No necesitas ejecutar comandos de base de datos o migraciones. La aplicación detectará el esquema y configurará SQLite automáticamente al arrancar.*
 
 ---
 
