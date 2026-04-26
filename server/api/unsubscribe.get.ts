@@ -92,7 +92,10 @@ export default defineEventHandler(async (event) => {
     const [contact] = await db.select().from(contacts).where(eq(contacts.email, send.email))
     if (!contact) return { status: 'error', message: 'Contact not found' }
 
-    if (contact.status === 'unsubscribed') return { status: 'already' }
+    if (contact.status === 'unsubscribed') {
+      const resubToken = signResubscribeToken(sendId, config.unsubscribeSecret as string)
+      return { status: 'already', resubToken }
+    }
 
     await db.update(contacts).set({ status: 'unsubscribed', updatedAt: new Date() })
       .where(eq(contacts.id, contact.id))

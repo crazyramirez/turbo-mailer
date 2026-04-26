@@ -16,7 +16,7 @@ onMounted(async () => {
   }
   try {
     const res = await $fetch<any>(`/api/unsubscribe?s=${sendId}&t=${token}`);
-    if (res.status === "ok" && res.resubToken) {
+    if (res.resubToken) {
       resubUrl.value = `/resubscribe?s=${sendId}&t=${res.resubToken}`;
     }
     status.value =
@@ -51,6 +51,9 @@ onMounted(async () => {
         <AlertCircle :size="48" class="state-icon" />
         <h1>{{ t("unsubscribe_page.title") }}</h1>
         <p>{{ t("unsubscribe_page.already") }}</p>
+        <NuxtLink v-if="resubUrl" :to="resubUrl" class="btn-resub">{{
+          t("unsubscribe_page.resubscribe_link")
+        }}</NuxtLink>
       </div>
       <div v-else class="state error">
         <AlertCircle :size="48" class="state-icon" />
