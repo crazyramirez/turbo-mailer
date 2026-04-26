@@ -46,9 +46,6 @@ onMounted(async () => {
         <NuxtLink v-if="resubUrl" :to="resubUrl" class="btn-resub">{{
           t("unsubscribe_page.resubscribe_link")
         }}</NuxtLink>
-        <NuxtLink to="/" class="btn-home">{{
-          t("unsubscribe_page.back_home")
-        }}</NuxtLink>
       </div>
       <div v-else class="state error">
         <AlertCircle :size="48" class="state-icon" />
