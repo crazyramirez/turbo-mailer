@@ -126,11 +126,26 @@ async function fetchAll() {
   campaignsLoading.value = false;
 }
 
-onMounted(() => {
-  fetchAll();
-  refreshTimer = setInterval(fetchAll, 60_000);
+let refreshTimeout: ReturnType<typeof setTimeout> | null = null;
+async function startSmartRefresh() {
+  if (refreshTimeout) clearTimeout(refreshTimeout);
+  
+  const hasSending = campaigns.value.some((c) => c.status === "sending");
+  const delay = hasSending ? 5000 : 60000;
+  
+  refreshTimeout = setTimeout(async () => {
+    await fetchAll();
+    startSmartRefresh();
+  }, delay);
+}
+
+onMounted(async () => {
+  await fetchAll();
+  startSmartRefresh();
 });
-onUnmounted(() => clearInterval(refreshTimer));
+onUnmounted(() => {
+  if (refreshTimeout) clearTimeout(refreshTimeout);
+});
 
 // ── Helpers ──────────────────────────────────────────────────────
 function openRatePct(c: Campaign): string {

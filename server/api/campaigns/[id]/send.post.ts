@@ -257,5 +257,5 @@ export default defineEventHandler(async (event) => {
       .catch(() => {})
   })
 
-  return { queued: true, campaignId }
+  return { queued: true, campaignId, sentCount: 0, failCount: 0 }
 })

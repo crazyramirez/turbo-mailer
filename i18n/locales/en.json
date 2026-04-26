@@ -174,7 +174,9 @@
     "finish": "Finish",
     "confirm_send_title": "Launch campaign now?",
     "confirm_send_msg": "Will be sent to all contacts in the selected list.",
-    "confirm_delete_title": "Delete campaign?"
+    "confirm_delete_title": "Delete campaign?",
+    "sending_in_progress": "Your campaign is being processed in real-time.",
+    "view_dashboard": "View Dashboard"
   },
   "analytics_page": {
     "title": "Analytics",

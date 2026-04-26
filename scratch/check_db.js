@@ -1,12 +1,14 @@
 import Database from 'better-sqlite3';
-import { resolve } from 'node:path';
+import { resolve } from 'path';
 
-const dbPath = resolve(process.cwd(), 'data', 'turbomailer.db');
-try {
-  const db = new Database(dbPath);
-  const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
-  console.log(JSON.stringify(tables));
-  db.close();
-} catch (e) {
-  console.error(e);
-}
+const dbPath = resolve(process.cwd(), 'data/turbomailer.db');
+const db = new Database(dbPath);
+
+const tables = ['campaigns', 'sends', 'tracking_events', 'list_contacts'];
+tables.forEach(t => {
+  console.log(`--- ${t} schema ---`);
+  const row = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name=?").get(t);
+  console.log(row?.sql);
+});
+
+db.close();

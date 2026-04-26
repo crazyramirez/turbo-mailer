@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { X, Check } from "lucide-vue-next";
+const { t } = useI18n();
 
 const emit = defineEmits<{
   select: [html: string, name: string];
@@ -10,14 +11,28 @@ const emit = defineEmits<{
 interface Tpl {
   name: string;
   path: string;
+  content?: string;
 }
 const templates = ref<Tpl[]>([]);
 const loading = ref(true);
 const picking = ref("");
 
 onMounted(async () => {
-  templates.value = await $fetch<Tpl[]>("/api/templates");
+  const list = await $fetch<Tpl[]>("/api/templates");
+  templates.value = list;
   loading.value = false;
+
+  // Cargar el contenido de las plantillas para la previsualización (srcdoc es más fiable que src)
+  templates.value.forEach(async (t) => {
+    try {
+      const data = await $fetch<{ content: string }>(
+        `/api/templates?name=${encodeURIComponent(t.name)}`,
+      );
+      t.content = data.content;
+    } catch (e) {
+      console.error(`Error loading preview for ${t.name}`, e);
+    }
+  });
 });
 
 async function pick(name: string) {
@@ -39,8 +54,8 @@ async function pick(name: string) {
     <div class="lib-window">
       <div class="lib-header">
         <div>
-          <h2>Biblioteca de Plantillas</h2>
-          <p>Selecciona un diseño para esta campaña</p>
+          <h2>{{ t("template_library.title") }}</h2>
+          <p>{{ t("template_library.subtitle") }}</p>
         </div>
         <button @click="emit('close')" class="btn-close">
           <X :size="18" />
@@ -48,9 +63,9 @@ async function pick(name: string) {
       </div>
 
       <div class="lib-body">
-        <div v-if="loading" class="lib-state">Cargando plantillas...</div>
+        <div v-if="loading" class="lib-state">{{ t("common.loading") }}</div>
         <div v-else-if="templates.length === 0" class="lib-state">
-          No hay plantillas guardadas. Crea una en el editor.
+          {{ t("template_library.empty") }}
         </div>
         <div v-else class="lib-grid">
           <div
@@ -61,26 +76,28 @@ async function pick(name: string) {
             @click="pick(t.name)"
           >
             <div class="tpl-thumb">
-              <div class="mock-bar"><span /><span /><span /></div>
               <div class="iframe-wrap">
                 <iframe
-                  :src="t.path"
+                  :srcdoc="`<style>body { margin: 0; padding: 0; overflow: hidden; background: white; }</style>${t.content || ''}`"
                   class="mini-frame"
                   scrolling="no"
+                  loading="lazy"
                 ></iframe>
               </div>
               <div class="tpl-overlay">
                 <button class="btn-use">
                   <Check :size="16" />
                   <span>{{
-                    picking === t.name ? "Aplicando..." : "Usar esta"
+                    picking === t.name
+                      ? t("common.loading")
+                      : t("template_library.use_this")
                   }}</span>
                 </button>
               </div>
             </div>
             <div class="tpl-info">
               <span class="tpl-name">{{ t.name }}</span>
-              <span class="tpl-sub">HTML Email</span>
+              <span class="tpl-sub">{{ t("template_library.html_label") }}</span>
             </div>
           </div>
         </div>
@@ -179,31 +196,19 @@ async function pick(name: string) {
   display: flex;
   flex-direction: column;
 }
-.mock-bar {
-  padding: 6px 10px;
-  display: flex;
-  gap: 4px;
-  background: rgba(255, 255, 255, 0.05);
-  flex-shrink: 0;
-}
-.mock-bar span {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--border-hi, #2d3155);
-}
 .iframe-wrap {
   flex: 1;
   overflow: hidden;
   background: #fff;
 }
 .mini-frame {
-  width: 1200px;
-  height: 900px;
+  width: 800px;
+  height: 1200px;
   border: none;
-  transform: scale(0.18);
+  transform: scale(0.28);
   transform-origin: 0 0;
   pointer-events: none;
+  background: white;
 }
 .tpl-overlay {
   position: absolute;

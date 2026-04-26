@@ -68,9 +68,9 @@ export const sessions = sqliteTable('sessions', {
 
 export const trackingEvents = sqliteTable('tracking_events', {
   id: integer('id').primaryKey({ autoIncrement: true }),
-  sendId: integer('send_id').references(() => sends.id),
-  campaignId: integer('campaign_id').references(() => campaigns.id),
-  contactId: integer('contact_id').references(() => contacts.id),
+  sendId: integer('send_id').references(() => sends.id, { onDelete: 'cascade' }),
+  campaignId: integer('campaign_id').references(() => campaigns.id, { onDelete: 'cascade' }),
+  contactId: integer('contact_id').references(() => contacts.id, { onDelete: 'cascade' }),
   eventType: text('event_type', { enum: ['open', 'click'] }).notNull(),
   url: text('url'),
   ip: text('ip'),

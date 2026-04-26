@@ -48,8 +48,15 @@ async function deleteCampaign(c: any) {
     title: `¿Eliminar campaña "${c.name}"?`,
   });
   if (!ok) return;
-  await $fetch(`/api/campaigns/${c.id}`, { method: "DELETE" });
-  fetchCampaigns(false);
+  try {
+    await $fetch(`/api/campaigns/${c.id}`, { method: "DELETE" });
+    // Actualizar la lista localmente de inmediato para mejorar la respuesta visual
+    campaigns.value = campaigns.value.filter((item) => item.id !== c.id);
+    showToast("Campaña eliminada", "success");
+    fetchCampaigns(false);
+  } catch (e: any) {
+    showToast("Error al eliminar la campaña", "error");
+  }
 }
 
 const duplicatingId = ref<number | null>(null);
@@ -58,7 +65,7 @@ async function duplicateCampaign(c: any) {
   duplicatingId.value = c.id;
   try {
     const full = await $fetch<any>(`/api/campaigns/${c.id}`);
-    await $fetch("/api/campaigns", {
+    const res = await $fetch<any>("/api/campaigns", {
       method: "POST",
       body: {
         name: `${full.name} (copia)`,
@@ -68,6 +75,12 @@ async function duplicateCampaign(c: any) {
         listId: full.listId,
       },
     });
+
+    // Añadir a la lista manualmente con el nombre de la lista del original para evitar el hueco visual
+    campaigns.value.unshift({ ...res, listName: c.listName });
+    showToast("Campaña duplicada", "success");
+
+    // Sincronizar la lista completa (para traer datos finales del servidor)
     await fetchCampaigns(false);
   } finally {
     duplicatingId.value = null;
@@ -115,7 +128,30 @@ function fmtDate(d: any) {
   );
 }
 
-onMounted(fetchCampaigns);
+onMounted(async () => {
+  await fetchCampaigns();
+  if (campaigns.value.some((c) => c.status === "sending")) {
+    startPolling();
+  }
+});
+
+let pollTimer: ReturnType<typeof setInterval> | null = null;
+function startPolling() {
+  if (pollTimer) return;
+  pollTimer = setInterval(async () => {
+    await fetchCampaigns(false);
+    const hasSending = campaigns.value.some((c) => c.status === "sending");
+    if (!hasSending) stopPolling();
+  }, 5000);
+}
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+}
+
+onUnmounted(stopPolling);
 </script>
 
 <template>
@@ -627,16 +663,25 @@ onMounted(fetchCampaigns);
 }
 
 /* Premium List Transitions & Animations */
-.premium-list-move,
-.premium-list-enter-active,
+.premium-list-move {
+  transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.premium-list-enter-active {
+  transition: all 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 .premium-list-leave-active {
-  transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.15); /* Subtle bounce */
+  transition: all 0.5s cubic-bezier(0.32, 0, 0.67, 0);
+  position: absolute;
+  width: 100%;
+  max-width: 350px;
 }
 
 .premium-list-enter-from {
   opacity: 0;
-  transform: scale(0.85) translateY(30px);
-  filter: blur(4px);
+  transform: scale(0.5) translateY(-100px) rotate(-8deg);
+  filter: blur(12px) brightness(3) saturate(1.5);
 }
 
 .premium-list-leave-to {

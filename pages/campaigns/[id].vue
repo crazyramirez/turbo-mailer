@@ -42,6 +42,7 @@ const subjectInput = ref("");
 const subjectRef = ref<HTMLInputElement | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 const showLibrary = ref(false);
+const dismissOverlay = ref(false);
 
 const isDraft = computed(() =>
   ["draft", "paused"].includes(campaign.value?.status),
@@ -196,15 +197,34 @@ async function sendCampaign() {
     const res = await $fetch<any>(`/api/campaigns/${id}/send`, {
       method: "POST",
     });
-    showToast(
-      `Enviados: ${res.sentCount} · Fallidos: ${res.failCount}`,
-      "success",
-    );
+    showToast("Enviando campaña...", "info");
     await Promise.all([fetchCampaign(), fetchSends()]);
+    if (campaign.value?.status === "sending") {
+      startPolling();
+    }
   } catch (e: any) {
     showToast(`Error: ${e.data?.statusMessage || e.message}`, "error");
   } finally {
     sending.value = false;
+    dismissOverlay.value = false; // Reset overlay when starting a new send
+  }
+}
+
+// ─── Polling ─────────────────────────────────────────────────
+let pollTimer: ReturnType<typeof setInterval> | null = null;
+function startPolling() {
+  if (pollTimer) return;
+  pollTimer = setInterval(async () => {
+    await Promise.all([fetchCampaign(), fetchSends()]);
+    if (campaign.value?.status !== "sending") {
+      stopPolling();
+    }
+  }, 3000);
+}
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
   }
 }
 
@@ -215,8 +235,13 @@ async function deleteCampaign() {
     message: campaign.value?.name,
   });
   if (!ok) return;
-  await $fetch(`/api/campaigns/${id}`, { method: "DELETE" });
-  router.push("/campaigns");
+  try {
+    await $fetch(`/api/campaigns/${id}`, { method: "DELETE" });
+    showToast("Campaña eliminada", "success");
+    router.push("/campaigns");
+  } catch (e: any) {
+    showToast("Error al eliminar la campaña", "error");
+  }
 }
 
 // ─── Formatters ──────────────────────────────────────────────
@@ -289,8 +314,16 @@ onMounted(async () => {
   }
 
   loading.value = false;
+
+  if (campaign.value?.status === "sending") {
+    dismissOverlay.value = false;
+    startPolling();
+  }
 });
-onUnmounted(() => clearTimeout(saveTimer));
+onUnmounted(() => {
+  clearTimeout(saveTimer);
+  stopPolling();
+});
 </script>
 
 <template>
@@ -481,20 +514,21 @@ onUnmounted(() => clearTimeout(saveTimer));
 
           <!-- SENT: stats + sends table -->
           <template v-else>
-            <div class="stats-grid">
-              <div class="stat-card">
+            <div class="stats-grid" :class="{ 'sending-mode': campaign.status === 'sending' }">
+              <div class="stat-card" :class="{ 'is-active': campaign.status === 'sending' }">
                 <div class="stat-icon-wrap si-gray"><Mail :size="18" /></div>
                 <div class="stat-body">
                   <span class="stat-num">{{ campaign.sentCount ?? 0 }}</span>
-                  <span class="stat-lbl">Enviados</span>
+                  <span class="stat-lbl">{{ t("results.sent") }}</span>
                 </div>
+                <div v-if="campaign.status === 'sending'" class="stat-pulse"></div>
               </div>
               <div class="stat-card">
                 <div class="stat-icon-wrap si-purple"><Eye :size="18" /></div>
                 <div class="stat-body">
                   <span class="stat-num">{{ campaign.openCount ?? 0 }}</span>
                   <span class="stat-lbl"
-                    >Aperturas ·
+                    >{{ t("campaigns_page.open_rate") }} ·
                     <strong>{{
                       pct(campaign.openCount, campaign.sentCount)
                     }}</strong></span
@@ -508,18 +542,18 @@ onUnmounted(() => clearTimeout(saveTimer));
                 <div class="stat-body">
                   <span class="stat-num">{{ campaign.clickCount ?? 0 }}</span>
                   <span class="stat-lbl"
-                    >Clicks ·
+                    >{{ t("campaigns_page.click_rate") }} ·
                     <strong>{{
                       pct(campaign.clickCount, campaign.sentCount)
                     }}</strong></span
                   >
                 </div>
               </div>
-              <div class="stat-card">
+              <div class="stat-card" :class="{ 'has-errors': campaign.failCount > 0 }">
                 <div class="stat-icon-wrap si-red"><XCircle :size="18" /></div>
                 <div class="stat-body">
                   <span class="stat-num">{{ campaign.failCount ?? 0 }}</span>
-                  <span class="stat-lbl">Fallidos</span>
+                  <span class="stat-lbl">{{ t("results.failed") }}</span>
                 </div>
               </div>
             </div>
@@ -570,6 +604,48 @@ onUnmounted(() => clearTimeout(saveTimer));
           @select="applyTemplate"
           @close="showLibrary = false"
         />
+      </Transition>
+
+      <!-- Sending Overlay -->
+      <Transition name="overlay-fade">
+        <div
+          v-if="campaign.status === 'sending' && !dismissOverlay"
+          class="sending-overlay"
+        >
+          <div class="overlay-content">
+            <div class="magic-core">
+              <div class="pulse-ring r1"></div>
+              <div class="core-icon">
+                <Send :size="42" />
+              </div>
+            </div>
+
+            <div class="overlay-text">
+              <div class="live-indicator">
+                <span class="live-dot"></span>
+                <span>{{ t("campaigns_page.status_sending") }}</span>
+              </div>
+              <h2>{{ campaign.name }}</h2>
+              <p>{{ t("campaigns_page.sending_in_progress") }}</p>
+            </div>
+
+            <div class="overlay-stats">
+              <div class="o-stat">
+                <span class="o-val">{{ campaign.sentCount + campaign.failCount }}</span>
+                <span class="o-lbl">{{ t("results.sent") }}</span>
+              </div>
+              <div class="o-divider"></div>
+              <div class="o-stat">
+                <span class="o-val">{{ campaign.totalRecipients }}</span>
+                <span class="o-lbl">{{ t("campaigns_page.recipients") }}</span>
+              </div>
+            </div>
+
+            <button class="btn-minimize" @click="dismissOverlay = true">
+              {{ t("campaigns_page.view_dashboard") }}
+            </button>
+          </div>
+        </div>
       </Transition>
     </template>
   </div>
@@ -843,19 +919,49 @@ onUnmounted(() => clearTimeout(saveTimer));
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
+.stats-grid.sending-mode {
+  gap: 16px;
+}
+
 .stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 20px 24px;
+  border-radius: 18px;
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 18px 20px;
-  background: rgb(0 0 0 / 3%);
-  border: 1px solid var(--border);
-  border-radius: 16px;
+  gap: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
   backdrop-filter: blur(5px);
 }
+.stat-card.is-active {
+  border-color: var(--accent);
+  background: rgba(99, 102, 241, 0.05);
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.1);
+}
+.stat-card.has-errors {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.stat-pulse {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: scan-line 2s linear infinite;
+}
+@keyframes scan-line {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
 .stat-icon-wrap {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -863,35 +969,342 @@ onUnmounted(() => clearTimeout(saveTimer));
   flex-shrink: 0;
 }
 .si-gray {
-  background: rgba(148, 163, 184, 0.1);
-  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
 }
 .si-purple {
-  background: rgba(99, 102, 241, 0.12);
-  color: var(--accent-light);
+  background: rgba(168, 85, 247, 0.1);
+  color: #a855f7;
 }
 .si-blue {
-  background: rgba(56, 189, 248, 0.12);
-  color: #38bdf8;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
 }
 .si-red {
   background: rgba(239, 68, 68, 0.1);
   color: #ef4444;
 }
+.stat-body {
+  display: flex;
+  flex-direction: column;
+}
 .stat-num {
   font-size: 26px;
   font-weight: 800;
-  display: block;
+  color: #fff;
   line-height: 1;
 }
 .stat-lbl {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-top: 3px;
-  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 4px;
 }
 .stat-lbl strong {
   color: var(--text);
+}
+
+/* Sending Status Card */
+.sending-status-container {
+  margin-bottom: 24px;
+  animation: slide-down 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.sending-status-card {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(0, 0, 0, 0.2));
+  border: 1px solid var(--accent);
+  border-radius: 20px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+.ssc-hdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.ssc-label-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ssc-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.live-dot {
+  width: 6px;
+  height: 6px;
+  background: #ef4444;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #ef4444;
+  animation: live-pulse 1.5s infinite;
+}
+@keyframes live-pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 0.5; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.ssc-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  opacity: 0.9;
+}
+.ssc-pct {
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--accent-light);
+  font-family: monospace;
+}
+
+.ssc-progress-track {
+  height: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  position: relative;
+}
+.ssc-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  border-radius: 10px;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+.ssc-progress-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmer-swipe 2s infinite;
+}
+@keyframes shimmer-swipe {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+.ssc-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ssc-count {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.ssc-current { font-size: 18px; font-weight: 800; color: #fff; }
+.ssc-separator { font-size: 14px; opacity: 0.3; }
+.ssc-total { font-size: 14px; font-weight: 600; opacity: 0.6; }
+.ssc-unit { font-size: 11px; margin-left: 8px; opacity: 0.4; text-transform: uppercase; font-weight: 700; }
+
+.ssc-engine-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-dim);
+  background: rgba(0,0,0,0.2);
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Sending Overlay */
+.sending-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(5, 6, 14, 0.7);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.overlay-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  background: rgba(13, 16, 23, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 32px 24px;
+  border-radius: 24px;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.7);
+}
+
+.magic-core {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.core-icon {
+  position: relative;
+  z-index: 5;
+  color: var(--accent-light);
+  filter: drop-shadow(0 0 15px rgba(99, 102, 241, 0.4));
+  animation: core-pulse-slow 3s ease-in-out infinite;
+}
+
+@keyframes core-pulse-slow {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+
+.pulse-ring {
+  position: absolute;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  animation: ring-pulse-elegant 4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+@keyframes ring-pulse-elegant {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { opacity: 0.3; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+.r1 { width: 100%; height: 100%; animation-delay: 0s; }
+.r2 { width: 100%; height: 100%; animation-delay: 1s; }
+.r3 { width: 100%; height: 100%; animation-delay: 2s; }
+
+@keyframes ring-pulse {
+  0% { transform: scale(0.5); opacity: 0; }
+  20% { opacity: 0.4; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+.overlay-text h2 {
+  font-size: 24px;
+  font-weight: 800;
+  color: #fff;
+  margin: 12px 0 6px;
+  letter-spacing: -0.01em;
+}
+
+.overlay-text p {
+  color: var(--text-dim);
+  font-size: 14px;
+  max-width: 260px;
+  margin: 0 auto 24px;
+}
+
+.live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.overlay-stats {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  margin-bottom: 32px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 16px 32px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.o-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.o-val {
+  font-size: 22px;
+  font-weight: 900;
+  color: #fff;
+  font-family: monospace;
+}
+
+.o-lbl {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.o-divider {
+  width: 1px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-minimize {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-minimize:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  border-color: var(--text-dim);
+}
+
+/* Transitions */
+.overlay-fade-enter-active,
+.overlay-fade-leave-active {
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.overlay-fade-enter-from,
+.overlay-fade-leave-to {
+  opacity: 0;
+}
+.overlay-fade-enter-from .overlay-content {
+  transform: scale(0.95) translateY(10px);
 }
 
 /* Body */

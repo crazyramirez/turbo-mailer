@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "b76a2972-3cc0-4a3a-a0cb-72ebfc87179b",
-  "prevId": "ba2556cb-dda5-4e28-a669-bff2d98972a9",
+  "id": "8d866675-d78a-49fd-a630-1e78a1834490",
+  "prevId": "b76a2972-3cc0-4a3a-a0cb-72ebfc87179b",
   "tables": {
     "campaigns": {
       "name": "campaigns",
@@ -565,7 +565,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "tracking_events_campaign_id_campaigns_id_fk": {
@@ -578,7 +578,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "tracking_events_contact_id_contacts_id_fk": {
@@ -591,7 +591,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },

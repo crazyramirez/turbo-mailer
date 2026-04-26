@@ -1,4 +1,4 @@
-import { defineEventHandler, readBody } from 'h3';
+import { defineEventHandler, readBody, send } from 'h3';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
@@ -15,7 +15,9 @@ function sanitizeName(raw: string): string | null {
 
 function safePath(name: string): string | null {
   const resolved = path.resolve(templatesDir, `${name}.html`)
-  if (!resolved.startsWith(templatesDir + path.sep) && resolved !== templatesDir) return null
+  const relative = path.relative(templatesDir, resolved)
+  // Ensure the resolved path is inside templatesDir and not the directory itself
+  if (relative.startsWith('..') || path.isAbsolute(relative) || relative === '') return null
   return resolved
 }
 
@@ -34,13 +36,13 @@ export default defineEventHandler(async (event) => {
       if (!name) throw createError({ statusCode: 400, message: 'Invalid template name' })
 
       const filePath = safePath(name)
-      if (!filePath) throw createError({ statusCode: 400, message: 'Invalid template name' })
+      if (!filePath) throw createError({ statusCode: 400, message: 'Invalid template path' })
 
       try {
+        console.log(`[templates] Reading: ${filePath}`)
         const content = await fs.readFile(filePath, 'utf-8');
         if (isPreview) {
-          setResponseHeader(event, 'Content-Type', 'text/html');
-          return content;
+          return send(event, content, 'text/html');
         }
         return { content };
       } catch {
@@ -68,10 +70,13 @@ export default defineEventHandler(async (event) => {
     const files = await fs.readdir(templatesDir);
     return files
       .filter(f => f.endsWith('.html'))
-      .map(f => ({
-        name: f.replace('.html', ''),
-        path: `/api/templates?name=${f.replace('.html', '')}&preview=1`
-      }));
+      .map(f => {
+        const name = f.replace('.html', '');
+        return {
+          name,
+          path: `/api/templates?name=${encodeURIComponent(name)}&preview=1`
+        };
+      });
   }
 
   if (method === 'POST') {
