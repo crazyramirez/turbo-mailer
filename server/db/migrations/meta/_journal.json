@@ -29,6 +29,13 @@
       "when": 1777218628576,
       "tag": "0003_left_epoch",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1777218973619,
+      "tag": "0004_strong_praxagora",
+      "breakpoints": true
     }
   ]
 }

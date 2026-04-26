@@ -79,6 +79,21 @@ try {
   console.error('Failed to run database migrations:', error)
 }
 
+// Apply incremental schema changes that may not be covered by migrations (legacy DBs)
+try {
+  const campaignCols = (sqlite.prepare('PRAGMA table_info(campaigns)').all() as any[]).map((c: any) => c.name)
+  const contactCols = (sqlite.prepare('PRAGMA table_info(contacts)').all() as any[]).map((c: any) => c.name)
+
+  if (!campaignCols.includes('unsub_email_subject')) sqlite.exec(`ALTER TABLE campaigns ADD COLUMN unsub_email_subject TEXT`)
+  if (!campaignCols.includes('unsub_email_message')) sqlite.exec(`ALTER TABLE campaigns ADD COLUMN unsub_email_message TEXT`)
+  if (!campaignCols.includes('resub_email_subject')) sqlite.exec(`ALTER TABLE campaigns ADD COLUMN resub_email_subject TEXT`)
+  if (!campaignCols.includes('resub_email_message')) sqlite.exec(`ALTER TABLE campaigns ADD COLUMN resub_email_message TEXT`)
+  if (!contactCols.includes('sub_change_count'))      sqlite.exec(`ALTER TABLE contacts ADD COLUMN sub_change_count INTEGER DEFAULT 0`)
+  if (!contactCols.includes('sub_change_window_start')) sqlite.exec(`ALTER TABLE contacts ADD COLUMN sub_change_window_start INTEGER`)
+} catch (err) {
+  console.error('Schema migration patch failed:', err)
+}
+
 // Recover campaigns stuck in 'sending' after a crash/restart
 try {
   sqlite.prepare(
