@@ -8,9 +8,10 @@ const status = ref<'loading' | 'ok' | 'already' | 'error'>('loading')
 
 onMounted(async () => {
   const sendId = route.query.s
-  if (!sendId) { status.value = 'error'; return }
+  const token = route.query.t
+  if (!sendId || !token) { status.value = 'error'; return }
   try {
-    const res = await $fetch<any>(`/api/unsubscribe?s=${sendId}`)
+    const res = await $fetch<any>(`/api/unsubscribe?s=${sendId}&t=${token}`)
     status.value = res.status === 'ok' ? 'ok' : res.status === 'already' ? 'already' : 'error'
   } catch {
     status.value = 'error'
