@@ -145,6 +145,7 @@ To ensure your data privacy and prevent the platform from appearing in search en
 ## 🗄️ Database (Zero-CLI)
 
 Turbo-Mailer PRO manages the database **100% automatically**.
+
 - **Auto-Installation**: On the first start, it creates the SQLite file and all tables.
 - **Auto-Migration**: If you edit the schema in the code, the app detects changes and updates the database upon restart.
 - **Auto-Recreation**: If you delete the `.db` file, the app regenerates it instantly.
@@ -218,7 +219,7 @@ SQLite in `./data/turbomailer.db` managed with Drizzle ORM. Main tables:
    npm run dev
    ```
 
-   *You don't need to run database commands or migrations. The application will detect the schema and configure SQLite automatically upon startup.*
+   _You don't need to run database commands or migrations. The application will detect the schema and configure SQLite automatically upon startup._
 
 ---
 
