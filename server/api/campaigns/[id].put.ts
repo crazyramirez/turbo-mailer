@@ -5,7 +5,8 @@ import { eq } from 'drizzle-orm'
 export default defineEventHandler(async (event) => {
   const id = Number(getRouterParam(event, 'id'))
   const body = await readBody(event)
-  const { name, subject, templateName, templateHtml, listId, status, scheduledAt } = body
+  const { name, subject, templateName, templateHtml, listId, status, scheduledAt,
+    unsubEmailSubject, unsubEmailMessage, resubEmailSubject, resubEmailMessage } = body
 
   const CAMPAIGN_STATUSES = ['draft', 'scheduled', 'paused'] as const
   type CampaignStatus = typeof CAMPAIGN_STATUSES[number]
@@ -20,6 +21,10 @@ export default defineEventHandler(async (event) => {
     listId: listId ? Number(listId) : null,
     status: safeStatus,
     scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
+    unsubEmailSubject: unsubEmailSubject?.trim() || null,
+    unsubEmailMessage: unsubEmailMessage?.trim() || null,
+    resubEmailSubject: resubEmailSubject?.trim() || null,
+    resubEmailMessage: resubEmailMessage?.trim() || null,
   }).where(eq(campaigns.id, id)).returning()
 
   if (!row) throw createError({ statusCode: 404, statusMessage: 'Campaign not found' })

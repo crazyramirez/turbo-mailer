@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
 
 export const contacts = sqliteTable('contacts', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -12,6 +12,10 @@ export const contacts = sqliteTable('contacts', {
   instagram: text('instagram'),
   tags: text('tags', { mode: 'json' }).$type<string[]>().default([]),
   status: text('status', { enum: ['active', 'unsubscribed', 'bounced'] }).notNull().default('active'),
+  unsubEmailSubject: text('unsub_email_subject'),
+  unsubEmailMessage: text('unsub_email_message'),
+  resubEmailSubject: text('resub_email_subject'),
+  resubEmailMessage: text('resub_email_message'),
   subChangeCount: integer('sub_change_count').default(0),
   subChangeWindowStart: integer('sub_change_window_start', { mode: 'timestamp' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),

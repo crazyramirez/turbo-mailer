@@ -24,6 +24,10 @@ export default defineEventHandler(async (event) => {
       openCount: campaigns.openCount,
       clickCount: campaigns.clickCount,
       failCount: campaigns.failCount,
+      unsubEmailSubject: campaigns.unsubEmailSubject,
+      unsubEmailMessage: campaigns.unsubEmailMessage,
+      resubEmailSubject: campaigns.resubEmailSubject,
+      resubEmailMessage: campaigns.resubEmailMessage,
     })
     .from(campaigns)
     .leftJoin(lists, eq(lists.id, campaigns.listId))

@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer'
 import { db } from '~/server/db/index'
-import { sends, contacts } from '~/server/db/schema'
+import { sends, contacts, campaigns } from '~/server/db/schema'
 import { eq } from 'drizzle-orm'
 import { verifyUnsubscribeToken, signResubscribeToken } from '~/server/utils/auth'
 import { emailT } from '~/server/utils/email-locale'
@@ -12,6 +12,8 @@ async function sendConfirmationEmail(
   resubUrl: string,
   config: any,
   lang = 'es',
+  customSubject?: string | null,
+  customMessage?: string | null,
 ) {
   const { smtpHost, smtpPort, smtpUser, smtpPass, smtpSecure, smtpFromName, smtpFromEmail } = config
 
@@ -30,11 +32,13 @@ async function sendConfirmationEmail(
   const senderEmail = smtpFromEmail || smtpUser
 
   const t = (key: string, vars?: Record<string, string>) => emailT(lang, `emails.${key}`, vars)
+  const subject = customSubject || t('unsub_subject')
+  const message = customMessage || t('unsub_message')
 
   await transporter.sendMail({
     from: `"${smtpFromName}" <${senderEmail}>`,
     to: email,
-    subject: t('unsub_subject'),
+    subject,
     html: `<!DOCTYPE html>
 <html>
 <body style="margin:0;padding:0;background:#f8fafc;font-family:Arial,sans-serif;">
@@ -48,7 +52,7 @@ async function sendConfirmationEmail(
               <h1 style="font-size:22px;font-weight:700;color:#0f172a;margin:0 0 12px;">${t('unsub_title')}</h1>
               <p style="font-size:15px;color:#64748b;line-height:1.7;margin:0 0 24px;">
                 ${t('unsub_greeting', { name: displayName })}<br>
-                ${t('unsub_message')}
+                ${message}
               </p>
               <p style="font-size:13px;color:#94a3b8;margin:0 0 20px;">
                 ${t('unsub_resub_text')}
@@ -111,7 +115,12 @@ export default defineEventHandler(async (event) => {
     const baseUrl = String(config.trackingBaseUrl || 'http://localhost:3000')
     const resubUrl = `${baseUrl}/resubscribe?s=${sendId}&t=${resubToken}`
 
-    sendConfirmationEmail(contact.email, contact.name, resubUrl, config).catch(() => {})
+    const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, send.campaignId)) as any[]
+
+    sendConfirmationEmail(
+      contact.email, contact.name, resubUrl, config,
+      'es', campaign?.unsubEmailSubject, campaign?.unsubEmailMessage,
+    ).catch(() => {})
 
     return { status: 'ok', resubToken }
   } catch {

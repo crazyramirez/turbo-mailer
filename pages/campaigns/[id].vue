@@ -43,6 +43,7 @@ const subjectRef = ref<HTMLInputElement | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 const showLibrary = ref(false);
 const dismissOverlay = ref(false);
+const showEmailConfig = ref(false);
 
 const isDraft = computed(() =>
   ["draft", "paused"].includes(campaign.value?.status),
@@ -194,7 +195,7 @@ async function sendCampaign() {
   if (!ok) return;
   sending.value = true;
   try {
-    const res = await $fetch<any>(`/api/campaigns/${id}/send`, {
+    await $fetch<any>(`/api/campaigns/${id}/send`, {
       method: "POST",
     });
     showToast("Enviando campaña...", "info");
@@ -509,6 +510,53 @@ onUnmounted(() => {
                 <AlertCircle :size="13" />
                 <span>Sin plantilla · elige una de la biblioteca</span>
               </div>
+            </div>
+            <!-- Subscription emails (optional) -->
+            <div class="config-card">
+              <button class="cc-toggle" @click="showEmailConfig = !showEmailConfig">
+                <span class="cc-label" style="margin:0">Emails de suscripción</span>
+                <span class="cc-toggle-hint">{{ showEmailConfig ? '▲' : '▼' }} opcional</span>
+              </button>
+              <template v-if="showEmailConfig">
+                <div class="email-cfg-grid">
+                  <div class="email-cfg-group">
+                    <div class="cc-sublabel">Asunto — email de baja</div>
+                    <input
+                      v-model="campaign.unsubEmailSubject"
+                      @input="scheduleSave"
+                      type="text"
+                      class="field-input"
+                      placeholder="Predeterminado: Has sido dado de baja"
+                    />
+                    <div class="cc-sublabel" style="margin-top:8px">Mensaje — email de baja</div>
+                    <textarea
+                      v-model="campaign.unsubEmailMessage"
+                      @input="scheduleSave"
+                      class="field-input field-textarea"
+                      placeholder="Predeterminado: hemos procesado tu solicitud…"
+                      rows="3"
+                    />
+                  </div>
+                  <div class="email-cfg-group">
+                    <div class="cc-sublabel">Asunto — email de alta</div>
+                    <input
+                      v-model="campaign.resubEmailSubject"
+                      @input="scheduleSave"
+                      type="text"
+                      class="field-input"
+                      placeholder="Predeterminado: Suscripción restaurada"
+                    />
+                    <div class="cc-sublabel" style="margin-top:8px">Mensaje — email de alta</div>
+                    <textarea
+                      v-model="campaign.resubEmailMessage"
+                      @input="scheduleSave"
+                      class="field-input field-textarea"
+                      placeholder="Predeterminado: Hemos restaurado tu suscripción…"
+                      rows="3"
+                    />
+                  </div>
+                </div>
+              </template>
             </div>
           </template>
 
@@ -1471,6 +1519,51 @@ select.field-input option {
   background: rgb(0 0 0 / 5%);
   color: var(--text-dim);
   border: 1px solid var(--border);
+}
+
+.cc-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 0;
+}
+.cc-toggle-hint {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+.cc-sublabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 5px;
+}
+.email-cfg-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.email-cfg-group {
+  display: flex;
+  flex-direction: column;
+}
+.field-textarea {
+  resize: vertical;
+  min-height: 72px;
+  font-family: inherit;
+  line-height: 1.5;
+  padding-top: 8px;
+  padding-bottom: 8px;
 }
 
 /* Sends table */
