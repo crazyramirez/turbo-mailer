@@ -8,7 +8,7 @@
 
 > ⚠️ **Responsible Use:** Designed for legitimate and permission-based mailings (newsletters, B2B). **Spam is strictly prohibited.** By using this tool, you agree to comply with Google's policies and privacy laws (GDPR, etc.) under your own responsibility.
 
-Turbo-Mailer PRO is a high-performance email marketing platform built with **Nuxt 3**. It includes complete contact and list management, a visual HTML template editor with drag & drop blocks, a campaign system with open and click tracking, real-time analytics, AI integration for copywriting, and a multi-language interface (ES/EN). All with real persistence in a SQLite database and mass sending via any SMTP service (Gmail, Outlook, Amazon SES, etc.).
+Turbo-Mailer PRO is a **self-hosted, single-account application designed for VPS deployment**, providing a high-performance email marketing platform built with **Nuxt 3**. It is a secure, robust tool with a well-structured architecture focused on data sovereignty. It includes complete contact and list management, a visual HTML template editor with drag & drop blocks, a campaign system with open and click tracking, real-time analytics, AI integration for copywriting, and a multi-language interface (ES/EN). All with real persistence in a SQLite database and mass sending via any SMTP service (Gmail, Outlook, Amazon SES, etc.).
 
 ## 🛡️ Your Information, Only Yours (Data Sovereignty)
 
@@ -319,6 +319,7 @@ The app uses Gmail SMTP with a 16-digit app password (not your normal password).
 - Session in `httpOnly` cookie + `SameSite=strict` with 24-hour TTL
 - Rate limiting per IP: 10 failed attempts → 15-minute lockout with visible timer
 - Global middleware redirects to `/login` if session is invalid
+- **Single-Account Instance**: Designed as a single-account application for total control and simplified security on your own server.
 - **Privacy**: Contact and campaign data persist in your local SQLite database. Your data **never** leaves your server and is not accessible by third parties.
 
 ---

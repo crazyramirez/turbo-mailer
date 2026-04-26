@@ -8,7 +8,7 @@
 
 > ⚠️ **Uso Responsable:** Diseñado para envíos legítimos y con permiso (newsletters, B2B). **Prohibido para spam.** Al usarlo, aceptas las normas de Google y leyes de privacidad (GDPR, etc.) bajo tu propia responsabilidad.
 
-Turbo-Mailer PRO es una plataforma de email marketing de alto rendimiento construida con **Nuxt 3**. Incluye gestión completa de contactos y listas, editor visual de plantillas HTML con bloques drag & drop, sistema de campañas con tracking de aperturas y clics, analytics en tiempo real, integración con IA para copywriting e interfaz multiidioma (ES/EN). Todo con persistencia real en base de datos SQLite y envío masivo vía cualquier servicio SMTP (Gmail, Outlook, Amazon SES, etc.).
+Turbo-Mailer PRO es una aplicación **self-hosted de una sola cuenta diseñada para ser desplegada en un VPS**, ofreciendo una plataforma de email marketing de alto rendimiento construida con **Nuxt 3**. Es una herramienta segura, robusta y con una arquitectura bien planteada para garantizar la soberanía de tus datos. Incluye gestión completa de contactos y listas, editor visual de plantillas HTML con bloques drag & drop, sistema de campañas con tracking de aperturas y clics, analytics en tiempo real, integración con IA para copywriting e interfaz multiidioma (ES/EN). Todo con persistencia real en base de datos SQLite y envío masivo vía cualquier servicio SMTP (Gmail, Outlook, Amazon SES, etc.).
 
 ## 🛡️ Tu Información, Solo Tuya (Soberanía de Datos)
 
@@ -319,6 +319,7 @@ La app usa Gmail SMTP con una contraseña de aplicación de 16 dígitos (no tu c
 - Sesión en cookie `httpOnly` + `SameSite=strict` con TTL de 24 horas
 - Rate limiting por IP: 10 intentos fallidos → bloqueo de 15 minutos con contador visible
 - Middleware global que redirige a `/login` si la sesión no es válida
+- **Instancia Única**: Diseñada como una aplicación de una sola cuenta para control total y seguridad simplificada en tu propio servidor.
 - **Privacidad**: Los datos de contactos y campañas persisten en tu base de datos SQLite local. Tus datos **nunca** salen de tu servidor ni son accesibles por terceros.
 
 ---
