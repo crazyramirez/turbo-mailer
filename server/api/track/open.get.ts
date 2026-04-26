@@ -1,6 +1,6 @@
 import { db } from '~/server/db/index'
 import { sends, campaigns, trackingEvents } from '~/server/db/schema'
-import { eq, sql } from 'drizzle-orm'
+import { and, eq, ne, sql } from 'drizzle-orm'
 import { verifyOpenToken } from '~/server/utils/auth'
 
 const PIXEL_GIF = Buffer.from(
@@ -46,8 +46,12 @@ export default defineEventHandler(async (event) => {
           createdAt: new Date(),
         })
 
-        if (send.status !== 'opened') {
-          await db.update(sends).set({ status: 'opened' }).where(eq(sends.id, sendId))
+        const [marked] = await db.update(sends)
+          .set({ status: 'opened' })
+          .where(and(eq(sends.id, sendId), ne(sends.status, 'opened')))
+          .returning({ id: sends.id })
+
+        if (marked) {
           await db.update(campaigns)
             .set({ openCount: sql`${campaigns.openCount} + 1` })
             .where(eq(campaigns.id, campaignId))
