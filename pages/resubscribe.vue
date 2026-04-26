@@ -6,6 +6,7 @@ const route = useRoute();
 
 const status = ref<"loading" | "ok" | "already" | "rate_limited" | "error">("loading");
 const rateLimitHours = ref(24);
+const customMessage = ref<string | null>(null);
 
 onMounted(async () => {
   const sendId = route.query.s;
@@ -17,6 +18,7 @@ onMounted(async () => {
   try {
     const res = await $fetch<any>(`/api/resubscribe?s=${sendId}&t=${token}`);
     if (res.resetInHours) rateLimitHours.value = res.resetInHours;
+    if (res.customMessage) customMessage.value = res.customMessage;
     status.value =
       res.status === "ok"
         ? "ok"
@@ -42,12 +44,12 @@ onMounted(async () => {
       <div v-else-if="status === 'ok'" class="state success">
         <CheckCircle :size="48" class="state-icon" />
         <h1>{{ t("resubscribe_page.title") }}</h1>
-        <p>{{ t("resubscribe_page.message") }}</p>
+        <p>{{ customMessage || t("resubscribe_page.message") }}</p>
       </div>
       <div v-else-if="status === 'already'" class="state warn">
         <AlertCircle :size="48" class="state-icon" />
         <h1>{{ t("resubscribe_page.title") }}</h1>
-        <p>{{ t("resubscribe_page.already") }}</p>
+        <p>{{ customMessage || t("resubscribe_page.already") }}</p>
       </div>
       <div v-else-if="status === 'rate_limited'" class="state error">
         <AlertCircle :size="48" class="state-icon" />

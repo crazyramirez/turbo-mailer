@@ -93,7 +93,12 @@ export default defineEventHandler(async (event) => {
     const [contact] = await db.select().from(contacts).where(eq(contacts.email, send.email))
     if (!contact) return { status: 'error', message: 'Contact not found' }
 
-    if (contact.status === 'active') return { status: 'already' }
+    const [campaignForMsg] = await db.select().from(campaigns).where(eq(campaigns.id, send.campaignId)) as any[]
+
+    if (contact.status === 'active') return {
+      status: 'already',
+      customMessage: campaignForMsg?.resubEmailMessage || null,
+    }
 
     const limit = await checkAndIncrementSubLimit(contact.id)
     if (!limit.allowed) {
@@ -104,14 +109,15 @@ export default defineEventHandler(async (event) => {
     await db.update(contacts).set({ status: 'active', updatedAt: new Date() })
       .where(eq(contacts.id, contact.id))
 
-    const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, send.campaignId)) as any[]
-
     sendResubConfirmationEmail(
       contact.email, contact.name, config,
-      'es', campaign?.resubEmailSubject, campaign?.resubEmailMessage,
+      'es', campaignForMsg?.resubEmailSubject, campaignForMsg?.resubEmailMessage,
     ).catch(() => {})
 
-    return { status: 'ok' }
+    return {
+      status: 'ok',
+      customMessage: campaignForMsg?.resubEmailMessage || null,
+    }
   } catch {
     return { status: 'error', message: 'Server error' }
   }

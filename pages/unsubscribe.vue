@@ -7,6 +7,7 @@ const route = useRoute();
 const status = ref<"loading" | "ok" | "already" | "rate_limited" | "error">("loading");
 const resubUrl = ref<string | null>(null);
 const rateLimitHours = ref(24);
+const customMessage = ref<string | null>(null);
 
 onMounted(async () => {
   const sendId = route.query.s;
@@ -21,6 +22,7 @@ onMounted(async () => {
       resubUrl.value = `/resubscribe?s=${sendId}&t=${res.resubToken}`;
     }
     if (res.resetInHours) rateLimitHours.value = res.resetInHours;
+    if (res.customMessage) customMessage.value = res.customMessage;
     status.value =
       res.status === "ok"
         ? "ok"
@@ -46,7 +48,7 @@ onMounted(async () => {
       <div v-else-if="status === 'ok'" class="state success">
         <CheckCircle :size="48" class="state-icon" />
         <h1>{{ t("unsubscribe_page.title") }}</h1>
-        <p>{{ t("unsubscribe_page.message") }}</p>
+        <p>{{ customMessage || t("unsubscribe_page.message") }}</p>
         <NuxtLink v-if="resubUrl" :to="resubUrl" class="btn-resub">{{
           t("unsubscribe_page.resubscribe_link")
         }}</NuxtLink>
@@ -54,7 +56,7 @@ onMounted(async () => {
       <div v-else-if="status === 'already'" class="state warn">
         <AlertCircle :size="48" class="state-icon" />
         <h1>{{ t("unsubscribe_page.title") }}</h1>
-        <p>{{ t("unsubscribe_page.already") }}</p>
+        <p>{{ customMessage || t("unsubscribe_page.already") }}</p>
         <NuxtLink v-if="resubUrl" :to="resubUrl" class="btn-resub">{{
           t("unsubscribe_page.resubscribe_link")
         }}</NuxtLink>

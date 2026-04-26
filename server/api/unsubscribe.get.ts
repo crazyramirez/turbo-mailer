@@ -97,9 +97,15 @@ export default defineEventHandler(async (event) => {
     const [contact] = await db.select().from(contacts).where(eq(contacts.email, send.email))
     if (!contact) return { status: 'error', message: 'Contact not found' }
 
+    const [campaignForMsg] = await db.select().from(campaigns).where(eq(campaigns.id, send.campaignId)) as any[]
+
     if (contact.status === 'unsubscribed') {
       const resubToken = signResubscribeToken(sendId, config.unsubscribeSecret as string)
-      return { status: 'already', resubToken }
+      return {
+        status: 'already',
+        resubToken,
+        customMessage: campaignForMsg?.unsubEmailMessage || null,
+      }
     }
 
     const limit = await checkAndIncrementSubLimit(contact.id)
@@ -115,14 +121,16 @@ export default defineEventHandler(async (event) => {
     const baseUrl = String(config.trackingBaseUrl || 'http://localhost:3000')
     const resubUrl = `${baseUrl}/resubscribe?s=${sendId}&t=${resubToken}`
 
-    const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, send.campaignId)) as any[]
-
     sendConfirmationEmail(
       contact.email, contact.name, resubUrl, config,
-      'es', campaign?.unsubEmailSubject, campaign?.unsubEmailMessage,
+      'es', campaignForMsg?.unsubEmailSubject, campaignForMsg?.unsubEmailMessage,
     ).catch(() => {})
 
-    return { status: 'ok', resubToken }
+    return {
+      status: 'ok',
+      resubToken,
+      customMessage: campaignForMsg?.unsubEmailMessage || null,
+    }
   } catch {
     return { status: 'error', message: 'Server error' }
   }
