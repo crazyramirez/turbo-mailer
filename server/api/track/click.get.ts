@@ -6,10 +6,15 @@ import { verifyClickToken } from '~/server/utils/auth'
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const sendId = Number(query.s)
-  const targetUrl = query.u ? decodeURIComponent(String(query.u)) : null
+  const rawU = String(query.u ?? '')
+  // H3 already URL-decodes query params; avoid double-decode by not calling decodeURIComponent again
+  const targetUrl = rawU || null
   const sig = String(query.sig ?? '')
 
+  console.log('[track/click] incoming s=%s u=%s sig=%s...', query.s, rawU?.slice(0, 80), sig?.slice(0, 16))
+
   if (!targetUrl) {
+    console.log('[track/click] 400: missing u param')
     throw createError({ statusCode: 400, statusMessage: 'Missing target URL' })
   }
 
@@ -19,16 +24,20 @@ export default defineEventHandler(async (event) => {
       throw new Error('Invalid protocol')
     }
   } catch {
+    console.log('[track/click] 400: invalid URL "%s"', targetUrl?.slice(0, 100))
     throw createError({ statusCode: 400, statusMessage: 'Invalid redirect URL' })
   }
 
   const config = useRuntimeConfig()
   if (!config.unsubscribeSecret) {
+    console.log('[track/click] 500: UNSUBSCRIBE_SECRET not configured')
     throw createError({ statusCode: 500, statusMessage: 'UNSUBSCRIBE_SECRET not configured' })
   }
   if (!verifyClickToken(sendId, targetUrl, sig, config.unsubscribeSecret as string)) {
+    console.log('[track/click] 403: HMAC failed for sendId=%s url=%s', sendId, targetUrl?.slice(0, 80))
     throw createError({ statusCode: 403, statusMessage: 'Invalid or missing link signature' })
   }
+  console.log('[track/click] HMAC OK sendId=%s → %s', sendId, targetUrl?.slice(0, 80))
 
   if (sendId) {
     try {

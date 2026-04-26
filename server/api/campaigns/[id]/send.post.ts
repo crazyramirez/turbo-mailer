@@ -9,15 +9,19 @@ const MAX_SEND_RETRIES = 3
 const RETRY_BASE_DELAY_MS = 5_000
 
 function injectTracking(html: string, sendId: number, baseUrl: string, secret: string): string {
+  let linkCount = 0
   // Sign each click URL with HMAC so the redirect cannot be abused for open redirects
   const tracked = html.replace(
     /<a\s+([^>]*?)href="(https?:\/\/[^"]+)"([^>]*?)>/gi,
     (_match, pre, url, post) => {
+      linkCount++
       const sig = signClickToken(sendId, url, secret)
-      const trackUrl = `${baseUrl}/api/track/click?s=${sendId}&u=${encodeURIComponent(url)}&sig=${sig}`
+      // Use &amp; for valid HTML; browsers decode it back to & before the request
+      const trackUrl = `${baseUrl}/api/track/click?s=${sendId}&amp;u=${encodeURIComponent(url)}&amp;sig=${sig}`
       return `<a ${pre}href="${trackUrl}"${post}>`
     }
   )
+  console.log('[injectTracking] sendId=%s found %d trackable links', sendId, linkCount)
 
   const openSig = signOpenToken(sendId, secret)
   const pixel = `<img src="${baseUrl}/api/track/open?s=${sendId}&sig=${openSig}" width="1" height="1" border="0" style="width:1px;height:1px;overflow:hidden;position:absolute;" alt="" />`
