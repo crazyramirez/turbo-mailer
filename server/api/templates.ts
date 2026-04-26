@@ -1,4 +1,4 @@
-import { defineEventHandler, readBody, send } from 'h3';
+import { defineEventHandler, readBody, send, getQuery, createError, setResponseHeader } from 'h3';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 

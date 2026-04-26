@@ -18,21 +18,26 @@ const loading = ref(true);
 const picking = ref("");
 
 onMounted(async () => {
-  const list = await $fetch<Tpl[]>("/api/templates");
-  templates.value = list;
-  loading.value = false;
+  try {
+    const list = await $fetch<Tpl[]>("/api/templates");
+    templates.value = list;
 
-  // Cargar el contenido de las plantillas para la previsualización (srcdoc es más fiable que src)
-  templates.value.forEach(async (t) => {
-    try {
-      const data = await $fetch<{ content: string }>(
-        `/api/templates?name=${encodeURIComponent(t.name)}`,
-      );
-      t.content = data.content;
-    } catch (e) {
-      console.error(`Error loading preview for ${t.name}`, e);
-    }
-  });
+    // Cargar el contenido de las plantillas para la previsualización (srcdoc es más fiable que src)
+    templates.value.forEach(async (t) => {
+      try {
+        const data = await $fetch<{ content: string }>(
+          `/api/templates?name=${encodeURIComponent(t.name)}`,
+        );
+        t.content = data.content;
+      } catch (e) {
+        console.error(`Error loading preview for ${t.name}`, e);
+      }
+    });
+  } catch (e) {
+    console.error("Error loading templates list", e);
+  } finally {
+    loading.value = false;
+  }
 });
 
 async function pick(name: string) {
@@ -69,16 +74,16 @@ async function pick(name: string) {
         </div>
         <div v-else class="lib-grid">
           <div
-            v-for="t in templates"
-            :key="t.name"
+            v-for="tpl in templates"
+            :key="tpl.name"
             class="tpl-card"
-            :class="{ picking: picking === t.name }"
-            @click="pick(t.name)"
+            :class="{ picking: picking === tpl.name }"
+            @click="pick(tpl.name)"
           >
             <div class="tpl-thumb">
               <div class="iframe-wrap">
                 <iframe
-                  :srcdoc="`<style>body { margin: 0; padding: 0; overflow: hidden; background: white; }</style>${t.content || ''}`"
+                  :srcdoc="`<style>body { margin: 0; padding: 0; overflow: hidden; background: white; }</style>${tpl.content || ''}`"
                   class="mini-frame"
                   scrolling="no"
                   loading="lazy"
@@ -88,7 +93,7 @@ async function pick(name: string) {
                 <button class="btn-use">
                   <Check :size="16" />
                   <span>{{
-                    picking === t.name
+                    picking === tpl.name
                       ? t("common.loading")
                       : t("template_library.use_this")
                   }}</span>
@@ -96,7 +101,7 @@ async function pick(name: string) {
               </div>
             </div>
             <div class="tpl-info">
-              <span class="tpl-name">{{ t.name }}</span>
+              <span class="tpl-name">{{ tpl.name }}</span>
               <span class="tpl-sub">{{ t("template_library.html_label") }}</span>
             </div>
           </div>
