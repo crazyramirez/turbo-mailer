@@ -102,7 +102,7 @@ export default defineEventHandler(async (event) => {
 
     const limit = await checkAndIncrementSubLimit(contact.id)
     if (!limit.allowed) {
-      const resetInHours = limit.resetAt ? Math.ceil((limit.resetAt.getTime() - Date.now()) / 3_600_000) : 24
+      const resetInHours = limit.resetAt ? Math.ceil((limit.resetAt.getTime() - Date.now()) / 3_600_000) : 1
       return { status: 'rate_limited', resetInHours }
     }
 

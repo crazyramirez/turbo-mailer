@@ -3,7 +3,7 @@ import { contacts } from '~/server/db/schema'
 import { eq } from 'drizzle-orm'
 
 const MAX_CHANGES = 5
-const WINDOW_MS = 24 * 60 * 60 * 1000 // 24h
+const WINDOW_MS = 60 * 60 * 1000 // 1h
 
 export async function checkAndIncrementSubLimit(contactId: number): Promise<{ allowed: boolean; resetAt?: Date }> {
   const [contact] = await db
