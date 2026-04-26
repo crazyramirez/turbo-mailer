@@ -12,10 +12,14 @@ export default defineEventHandler(async (event) => {
   if (!fields.email) throw createError({ statusCode: 400, statusMessage: 'email is required' })
   if (!isValidEmail(fields.email)) throw createError({ statusCode: 400, statusMessage: 'Invalid email format' })
 
+  const CONTACT_STATUSES = ['active', 'unsubscribed', 'bounced'] as const
+  type ContactStatus = typeof CONTACT_STATUSES[number]
+  const safeStatus: ContactStatus = CONTACT_STATUSES.includes(status) ? status : 'active'
+
   const [row] = await db.update(contacts).set({
     ...fields,
     tags: Array.isArray(tags) ? tags : [],
-    status: status || 'active',
+    status: safeStatus,
     updatedAt: new Date(),
   }).where(eq(contacts.id, id)).returning()
 
