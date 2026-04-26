@@ -37,7 +37,7 @@ sqlite.pragma('foreign_keys = ON')
 
 export const db = drizzle(sqlite, { schema })
 
-// Ensure sessions table exists regardless of migration state
+// Ensure runtime tables exist regardless of migration state
 sqlite.exec(`
   CREATE TABLE IF NOT EXISTS sessions (
     token TEXT PRIMARY KEY NOT NULL,
@@ -46,6 +46,17 @@ sqlite.exec(`
     expires_at INTEGER NOT NULL
   )
 `)
+
+sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS login_attempts (
+    ip TEXT PRIMARY KEY NOT NULL,
+    count INTEGER NOT NULL DEFAULT 0,
+    first_attempt INTEGER NOT NULL,
+    blocked_until INTEGER
+  )
+`)
+
+export { sqlite }
 
 // Auto-run migrations on startup
 // NOTE: sessions table also ensured above via CREATE TABLE IF NOT EXISTS

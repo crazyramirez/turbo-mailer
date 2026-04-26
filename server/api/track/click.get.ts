@@ -1,11 +1,13 @@
 import { db } from '~/server/db/index'
 import { sends, campaigns, trackingEvents } from '~/server/db/schema'
 import { eq, sql } from 'drizzle-orm'
+import { verifyClickToken } from '~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const sendId = Number(query.s)
   const targetUrl = query.u ? decodeURIComponent(String(query.u)) : null
+  const sig = String(query.sig ?? '')
 
   if (!targetUrl) {
     throw createError({ statusCode: 400, statusMessage: 'Missing target URL' })
@@ -20,14 +22,17 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Invalid redirect URL' })
   }
 
+  const config = useRuntimeConfig()
+  if (!verifyClickToken(sendId, targetUrl, sig, config.unsubscribeSecret as string)) {
+    throw createError({ statusCode: 403, statusMessage: 'Invalid or missing link signature' })
+  }
+
   if (sendId) {
     try {
       const ip = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown'
       const userAgent = getHeader(event, 'user-agent') || ''
 
-      console.log('[track/click] sendId:', sendId, 'url:', targetUrl)
       const [send] = await db.select().from(sends).where(eq(sends.id, sendId))
-      console.log('[track/click] send found:', !!send)
       if (send) {
         await db.insert(trackingEvents).values({
           sendId,
