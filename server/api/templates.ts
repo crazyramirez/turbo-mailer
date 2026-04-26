@@ -6,8 +6,10 @@ const templatesDir = path.resolve(process.cwd(), 'data/templates');
 const baseTemplatePath = path.resolve(process.cwd(), 'data/demo/email_demo.html');
 
 function sanitizeName(raw: string): string | null {
-  const name = String(raw).replace(/\.html$/i, '')
-  if (!/^[a-zA-Z0-9_-]{1,100}$/.test(name)) return null
+  const name = String(raw).replace(/\.html$/i, '').trim()
+  if (name.length === 0 || name.length > 100) return null
+  // Evitar caracteres peligrosos para nombres de archivo en cualquier OS
+  if (/[<>:"/\\|?*]/.test(name)) return null
   return name
 }
 
