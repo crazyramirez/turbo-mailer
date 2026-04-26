@@ -199,7 +199,28 @@
     "message": "Has sido dado de baja correctamente. No recibirás más emails de nuestra parte.",
     "already": "Ya estabas dado de baja.",
     "error": "No pudimos procesar tu solicitud. Inténtalo de nuevo.",
+    "back_home": "Volver al inicio",
+    "resubscribe_link": "Fue un error, quiero volver a suscribirme"
+  },
+  "resubscribe_page": {
+    "title": "Suscripción restaurada",
+    "message": "Tu suscripción ha sido restaurada. Volverás a recibir nuestros emails.",
+    "already": "Ya estabas suscrito.",
+    "error": "No pudimos procesar tu solicitud. Inténtalo de nuevo.",
     "back_home": "Volver al inicio"
+  },
+  "emails": {
+    "unsub_subject": "Has sido dado de baja correctamente",
+    "unsub_title": "Baja confirmada",
+    "unsub_greeting": "Hola {name},",
+    "unsub_message": "hemos procesado tu solicitud. No volverás a recibir emails de nuestra parte.",
+    "unsub_resub_text": "Si esto fue un error, puedes volver a suscribirte pulsando el enlace:",
+    "unsub_resub_button": "Volver a suscribirme",
+    "resub_subject": "Suscripción restaurada correctamente",
+    "resub_title": "Bienvenido de nuevo",
+    "resub_greeting": "Hola {name},",
+    "resub_message": "Hemos restaurado tu suscripción. Volverás a recibir nuestros emails.",
+    "resub_footer": "Si no fuiste tú, contacta con nosotros respondiendo a este email."
   },
   "login": {
     "title": "Acceso Turbo-Mailer",

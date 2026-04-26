@@ -199,7 +199,28 @@
     "message": "You have been successfully unsubscribed. You will not receive any more emails from us.",
     "already": "You were already unsubscribed.",
     "error": "We could not process your request. Please try again.",
+    "back_home": "Back to home",
+    "resubscribe_link": "That was a mistake, re-subscribe me"
+  },
+  "resubscribe_page": {
+    "title": "Subscription restored",
+    "message": "Your subscription has been restored. You will receive our emails again.",
+    "already": "You were already subscribed.",
+    "error": "We could not process your request. Please try again.",
     "back_home": "Back to home"
+  },
+  "emails": {
+    "unsub_subject": "You have been successfully unsubscribed",
+    "unsub_title": "Unsubscribe confirmed",
+    "unsub_greeting": "Hi {name},",
+    "unsub_message": "we have processed your request. You will no longer receive emails from us.",
+    "unsub_resub_text": "If this was a mistake, you can re-subscribe by clicking the link:",
+    "unsub_resub_button": "Re-subscribe",
+    "resub_subject": "Subscription successfully restored",
+    "resub_title": "Welcome back",
+    "resub_greeting": "Hi {name},",
+    "resub_message": "We have restored your subscription. You will start receiving our emails again.",
+    "resub_footer": "If this wasn't you, please contact us by replying to this email."
   },
   "login": {
     "title": "Turbo-Mailer Access",

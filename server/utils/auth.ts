@@ -160,3 +160,19 @@ export function verifyOpenToken(sendId: number, token: string, secret: string): 
     return false
   }
 }
+
+export function signResubscribeToken(sendId: number, secret: string): string {
+  return createHmac('sha256', secret).update(`resub:${sendId}`).digest('hex')
+}
+
+export function verifyResubscribeToken(sendId: number, token: string, secret: string): boolean {
+  try {
+    const expected = signResubscribeToken(sendId, secret)
+    const a = Buffer.from(expected, 'hex')
+    const b = Buffer.from(token, 'hex')
+    if (a.length !== b.length) return false
+    return timingSafeEqual(a, b)
+  } catch {
+    return false
+  }
+}

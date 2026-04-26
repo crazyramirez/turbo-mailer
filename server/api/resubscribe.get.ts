@@ -2,13 +2,12 @@ import nodemailer from 'nodemailer'
 import { db } from '~/server/db/index'
 import { sends, contacts } from '~/server/db/schema'
 import { eq } from 'drizzle-orm'
-import { verifyUnsubscribeToken, signResubscribeToken } from '~/server/utils/auth'
+import { verifyResubscribeToken } from '~/server/utils/auth'
 import { emailT } from '~/server/utils/email-locale'
 
-async function sendConfirmationEmail(
+async function sendResubConfirmationEmail(
   email: string,
   name: string | null,
-  resubUrl: string,
   config: any,
   lang = 'es',
 ) {
@@ -33,7 +32,7 @@ async function sendConfirmationEmail(
   await transporter.sendMail({
     from: `"${smtpFromName}" <${senderEmail}>`,
     to: email,
-    subject: t('unsub_subject'),
+    subject: t('resub_subject'),
     html: `<!DOCTYPE html>
 <html>
 <body style="margin:0;padding:0;background:#f8fafc;font-family:Arial,sans-serif;">
@@ -43,18 +42,15 @@ async function sendConfirmationEmail(
         <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;">
           <tr>
             <td style="padding:40px 48px;text-align:center;">
-              <div style="font-size:40px;margin-bottom:16px;">✓</div>
-              <h1 style="font-size:22px;font-weight:700;color:#0f172a;margin:0 0 12px;">${t('unsub_title')}</h1>
+              <div style="font-size:40px;margin-bottom:16px;">👋</div>
+              <h1 style="font-size:22px;font-weight:700;color:#0f172a;margin:0 0 12px;">${t('resub_title')}</h1>
               <p style="font-size:15px;color:#64748b;line-height:1.7;margin:0 0 24px;">
-                ${t('unsub_greeting', { name: displayName })}<br>
-                ${t('unsub_message')}
+                ${t('resub_greeting', { name: displayName })}<br>
+                ${t('resub_message')}
               </p>
-              <p style="font-size:13px;color:#94a3b8;margin:0 0 20px;">
-                ${t('unsub_resub_text')}
+              <p style="font-size:13px;color:#94a3b8;margin:0;">
+                ${t('resub_footer')}
               </p>
-              <a href="${resubUrl}" style="display:inline-block;padding:12px 28px;background:#6366f1;color:#ffffff;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none;">
-                ${t('unsub_resub_button')}
-              </a>
             </td>
           </tr>
         </table>
@@ -81,7 +77,7 @@ export default defineEventHandler(async (event) => {
     return { status: 'error', message: 'Invalid link' }
   }
 
-  if (!verifyUnsubscribeToken(sendId, token, config.unsubscribeSecret as string)) {
+  if (!verifyResubscribeToken(sendId, token, config.unsubscribeSecret as string)) {
     return { status: 'error', message: 'Invalid link' }
   }
 
@@ -92,18 +88,14 @@ export default defineEventHandler(async (event) => {
     const [contact] = await db.select().from(contacts).where(eq(contacts.email, send.email))
     if (!contact) return { status: 'error', message: 'Contact not found' }
 
-    if (contact.status === 'unsubscribed') return { status: 'already' }
+    if (contact.status === 'active') return { status: 'already' }
 
-    await db.update(contacts).set({ status: 'unsubscribed', updatedAt: new Date() })
+    await db.update(contacts).set({ status: 'active', updatedAt: new Date() })
       .where(eq(contacts.id, contact.id))
 
-    const resubToken = signResubscribeToken(sendId, config.unsubscribeSecret as string)
-    const baseUrl = String(config.trackingBaseUrl || 'http://localhost:3000')
-    const resubUrl = `${baseUrl}/resubscribe?s=${sendId}&t=${resubToken}`
+    sendResubConfirmationEmail(contact.email, contact.name, config).catch(() => {})
 
-    sendConfirmationEmail(contact.email, contact.name, resubUrl, config).catch(() => {})
-
-    return { status: 'ok', resubToken }
+    return { status: 'ok' }
   } catch {
     return { status: 'error', message: 'Server error' }
   }
