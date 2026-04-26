@@ -1,4 +1,7 @@
-import { randomBytes } from 'crypto'
+import { randomBytes, createHmac, timingSafeEqual } from 'crypto'
+import { db } from '~/server/db/index'
+import { sessions } from '~/server/db/schema'
+import { eq, lt } from 'drizzle-orm'
 
 const MAX_ATTEMPTS = 10
 const BLOCK_DURATION = 15 * 60 * 1000
@@ -11,13 +14,7 @@ interface AttemptRecord {
   blockedUntil?: number
 }
 
-interface Session {
-  createdAt: number
-  ip: string
-}
-
 const attempts = new Map<string, AttemptRecord>()
-const sessions = new Map<string, Session>()
 
 export function getClientIp(event: Parameters<typeof import('h3').getHeader>[0]): string {
   const forwarded = getHeader(event, 'x-forwarded-for')
@@ -71,30 +68,42 @@ export function clearAttempts(ip: string): void {
   attempts.delete(ip)
 }
 
-export function createSession(ip: string): string {
+export async function createSession(ip: string): Promise<string> {
   const token = randomBytes(32).toString('hex')
-  sessions.set(token, { createdAt: Date.now(), ip })
-  cleanupSessions()
+  const now = new Date()
+  const expiresAt = new Date(now.getTime() + SESSION_TTL)
+  await db.insert(sessions).values({ token, ip, createdAt: now, expiresAt })
+  // Prune expired sessions on create (low-frequency cleanup)
+  await db.delete(sessions).where(lt(sessions.expiresAt, now)).catch(() => {})
   return token
 }
 
-export function validateSession(token: string): boolean {
-  const session = sessions.get(token)
+export async function validateSession(token: string): Promise<boolean> {
+  const [session] = await db.select().from(sessions).where(eq(sessions.token, token))
   if (!session) return false
-  if (Date.now() - session.createdAt > SESSION_TTL) {
-    sessions.delete(token)
+  if (session.expiresAt < new Date()) {
+    await db.delete(sessions).where(eq(sessions.token, token)).catch(() => {})
     return false
   }
   return true
 }
 
-export function destroySession(token: string): void {
-  sessions.delete(token)
+export async function destroySession(token: string): Promise<void> {
+  await db.delete(sessions).where(eq(sessions.token, token))
 }
 
-function cleanupSessions(): void {
-  const now = Date.now()
-  for (const [token, session] of sessions) {
-    if (now - session.createdAt > SESSION_TTL) sessions.delete(token)
+export function signUnsubscribeToken(sendId: number, secret: string): string {
+  return createHmac('sha256', secret).update(String(sendId)).digest('hex')
+}
+
+export function verifyUnsubscribeToken(sendId: number, token: string, secret: string): boolean {
+  try {
+    const expected = signUnsubscribeToken(sendId, secret)
+    const a = Buffer.from(expected, 'hex')
+    const b = Buffer.from(token, 'hex')
+    if (a.length !== b.length) return false
+    return timingSafeEqual(a, b)
+  } catch {
+    return false
   }
 }

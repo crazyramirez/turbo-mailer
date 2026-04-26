@@ -7,7 +7,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     appPassword: process.env.APP_PASSWORD,
     smtpHost: process.env.SMTP_HOST,
-    smtpPort: process.env.SMTP_PORT || 465,
+    smtpPort: process.env.SMTP_PORT || '465',
     smtpUser: process.env.SMTP_USER,
     smtpPass: process.env.SMTP_PASS,
     smtpSecure: process.env.SMTP_SECURE !== 'false', // Default to true
@@ -16,6 +16,7 @@ export default defineNuxtConfig({
     openaiApiKey: process.env.OPENAI_API_KEY,
     openaiModel: process.env.OPENAI_MODEL || 'gpt-4o-mini',
     trackingBaseUrl: process.env.TRACKING_BASE_URL || 'http://localhost:3000',
+    unsubscribeSecret: process.env.UNSUBSCRIBE_SECRET || 'change-me-in-production',
   },
 
   css: [

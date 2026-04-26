@@ -59,6 +59,13 @@ export const sends = sqliteTable('sends', {
   errorMsg: text('error_msg'),
 })
 
+export const sessions = sqliteTable('sessions', {
+  token: text('token').primaryKey(),
+  ip: text('ip').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+})
+
 export const trackingEvents = sqliteTable('tracking_events', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   sendId: integer('send_id').references(() => sends.id),

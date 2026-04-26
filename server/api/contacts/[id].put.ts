@@ -1,22 +1,20 @@
 import { db } from '~/server/db/index'
 import { contacts, listContacts } from '~/server/db/schema'
 import { eq } from 'drizzle-orm'
+import { isValidEmail, sanitizeContactFields } from '~/server/utils/validate'
 
 export default defineEventHandler(async (event) => {
   const id = Number(getRouterParam(event, 'id'))
   const body = await readBody(event)
-  const { email, name, company, phone, linkedin, url, youtube, instagram, tags, status, listIds } = body
+  const fields = sanitizeContactFields(body)
+  const { tags, status, listIds } = body
+
+  if (!fields.email) throw createError({ statusCode: 400, statusMessage: 'email is required' })
+  if (!isValidEmail(fields.email)) throw createError({ statusCode: 400, statusMessage: 'Invalid email format' })
 
   const [row] = await db.update(contacts).set({
-    email: email?.trim().toLowerCase(),
-    name: name?.trim() || null,
-    company: company?.trim() || null,
-    phone: phone?.trim() || null,
-    linkedin: linkedin?.trim() || null,
-    url: url?.trim() || null,
-    youtube: youtube?.trim() || null,
-    instagram: instagram?.trim() || null,
-    tags: tags || [],
+    ...fields,
+    tags: Array.isArray(tags) ? tags : [],
     status: status || 'active',
     updatedAt: new Date(),
   }).where(eq(contacts.id, id)).returning()

@@ -152,7 +152,7 @@ function initBlock(el: HTMLElement, doc: Document) {
       return
     }
 
-    const hasDirectText = Array.from(child.childNodes).some(
+    const hasDirectText = Array.from<ChildNode>(child.childNodes as NodeListOf<ChildNode>).some(
       (n) => n.nodeType === 3 && (n.textContent || '').trim().length > 0,
     )
     const hasElements = child.children.length > 0

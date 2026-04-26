@@ -5,10 +5,11 @@ export default defineEventHandler(async (event) => {
   const { text } = body
 
   if (!text) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'Text is required'
-    })
+    throw createError({ statusCode: 400, statusMessage: 'Text is required' })
+  }
+
+  if (typeof text !== 'string' || text.length > 100_000) {
+    throw createError({ statusCode: 400, statusMessage: 'Text too large (max 100KB)' })
   }
 
   const config = useRuntimeConfig()

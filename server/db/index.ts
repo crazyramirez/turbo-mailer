@@ -37,7 +37,18 @@ sqlite.pragma('foreign_keys = ON')
 
 export const db = drizzle(sqlite, { schema })
 
+// Ensure sessions table exists regardless of migration state
+sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS sessions (
+    token TEXT PRIMARY KEY NOT NULL,
+    ip TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL
+  )
+`)
+
 // Auto-run migrations on startup
+// NOTE: sessions table also ensured above via CREATE TABLE IF NOT EXISTS
 try {
   console.log('Checking database migrations...')
   
@@ -55,6 +66,16 @@ try {
   }
 } catch (error) {
   console.error('Failed to run database migrations:', error)
+}
+
+// Recover campaigns stuck in 'sending' after a crash/restart
+try {
+  sqlite.prepare(
+    `UPDATE campaigns SET status = 'paused', finished_at = ? WHERE status = 'sending'`
+  ).run(Math.floor(Date.now() / 1000))
+  console.log('Recovered any stuck campaigns.')
+} catch {
+  // Non-fatal — campaigns table may not exist yet on first run
 }
 
 export default db

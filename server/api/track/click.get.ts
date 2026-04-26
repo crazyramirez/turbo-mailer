@@ -11,6 +11,15 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Missing target URL' })
   }
 
+  try {
+    const parsed = new URL(targetUrl)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      throw new Error('Invalid protocol')
+    }
+  } catch {
+    throw createError({ statusCode: 400, statusMessage: 'Invalid redirect URL' })
+  }
+
   if (sendId) {
     try {
       const ip = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown'

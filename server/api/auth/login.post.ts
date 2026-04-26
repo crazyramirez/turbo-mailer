@@ -1,4 +1,13 @@
+import { timingSafeEqual } from 'crypto'
 import { checkRateLimit, recordFailedAttempt, clearAttempts, createSession, getClientIp } from '~/server/utils/auth'
+
+function safePasswordCompare(input: string, expected: string): boolean {
+  const a = Buffer.alloc(256)
+  const b = Buffer.alloc(256)
+  Buffer.from(input).copy(a, 0, 0, Math.min(input.length, 256))
+  Buffer.from(expected).copy(b, 0, 0, Math.min(expected.length, 256))
+  return timingSafeEqual(a, b) && input.length === expected.length
+}
 
 export default defineEventHandler(async (event) => {
   const ip = getClientIp(event)
@@ -22,7 +31,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, message: 'APP_PASSWORD no configurado' })
   }
 
-  if (password !== correctPassword) {
+  if (!safePasswordCompare(password, correctPassword)) {
     const result = recordFailedAttempt(ip)
     if (result.blocked) {
       throw createError({
@@ -39,7 +48,7 @@ export default defineEventHandler(async (event) => {
   }
 
   clearAttempts(ip)
-  const token = createSession(ip)
+  const token = await createSession(ip)
 
   setCookie(event, 'tm_session', token, {
     httpOnly: true,

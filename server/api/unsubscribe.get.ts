@@ -2,6 +2,7 @@ import nodemailer from 'nodemailer'
 import { db } from '~/server/db/index'
 import { sends, contacts } from '~/server/db/schema'
 import { eq } from 'drizzle-orm'
+import { verifyUnsubscribeToken } from '~/server/utils/auth'
 
 async function sendConfirmationEmail(email: string, name: string | null, config: any) {
   const {
@@ -62,8 +63,13 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const query = getQuery(event)
   const sendId = Number(query.s)
+  const token = String(query.t || '')
 
-  if (!sendId) {
+  if (!sendId || !token) {
+    return { status: 'error', message: 'Invalid link' }
+  }
+
+  if (!verifyUnsubscribeToken(sendId, token, config.unsubscribeSecret as string)) {
     return { status: 'error', message: 'Invalid link' }
   }
 

@@ -483,7 +483,7 @@ async function improveBlockWithAI(el?: HTMLElement) {
   target.classList.add('ai-improving')
 
   try {
-    const { improvedText } = await $fetch('/api/ai/improve', {
+    const { improvedText } = await $fetch<{ improvedText: string }>('/api/ai/improve', {
       method: 'POST',
       body: { text: textToImprove }
     })
@@ -527,7 +527,7 @@ async function improveAllWithAI() {
       el.classList.add('ai-improving')
 
       try {
-        const { improvedText } = await $fetch('/api/ai/improve', {
+        const { improvedText } = await $fetch<{ improvedText: string }>('/api/ai/improve', {
           method: 'POST',
           body: { text: html }
         })

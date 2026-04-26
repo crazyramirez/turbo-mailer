@@ -154,7 +154,7 @@ function applyVars(template: string, row: Record<string, any>): string {
   return result
 }
 
-const contactRows = computed(() =>
+const contactRows = computed<Array<Record<string, any>>>(() =>
   rawRows.value.map((row) => ({
     ...row,
     email: String(row[selectedColumn.value] || '').trim(),

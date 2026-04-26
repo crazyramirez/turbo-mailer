@@ -37,12 +37,11 @@ export default defineEventHandler(async (event) => {
 
         if (send.status !== 'opened') {
           await db.update(sends).set({ status: 'opened' }).where(eq(sends.id, sendId))
+          // Only count first open — subsequent pixel loads are bot rechecks / preview panes
+          await db.update(campaigns)
+            .set({ openCount: sql`${campaigns.openCount} + 1` })
+            .where(eq(campaigns.id, campaignId))
         }
-
-        // Increment campaign open count
-        await db.update(campaigns)
-          .set({ openCount: sql`${campaigns.openCount} + 1` })
-          .where(eq(campaigns.id, campaignId))
       }
     } catch {
       // Never fail the pixel request — silently swallow tracking errors

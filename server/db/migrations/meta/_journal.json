@@ -8,6 +8,13 @@
       "when": 1777117480578,
       "tag": "0000_dusty_proudstar",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1777196914177,
+      "tag": "0002_flaky_joshua_kane",
+      "breakpoints": true
     }
   ]
 }

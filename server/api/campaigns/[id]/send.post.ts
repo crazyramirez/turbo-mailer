@@ -3,6 +3,7 @@ import { db } from '~/server/db/index'
 import { campaigns, contacts, listContacts, sends } from '~/server/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { applyVars } from '~/server/utils/template'
+import { signUnsubscribeToken } from '~/server/utils/auth'
 
 
 function injectTracking(html: string, sendId: number, campaignId: number, baseUrl: string): string {
@@ -83,6 +84,7 @@ export default defineEventHandler(async (event) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any)
 
+  const smtpDelay = Number(process.env.SMTP_SEND_DELAY_MS ?? 200)
   let sentCount = 0
   let failCount = 0
 
@@ -105,7 +107,8 @@ export default defineEventHandler(async (event) => {
         campaignId,
         baseUrl
       )
-      const unsubscribeUrl = `${baseUrl}/unsubscribe?s=${sendRow.id}`
+      const unsubToken = signUnsubscribeToken(sendRow.id, config.unsubscribeSecret as string)
+      const unsubscribeUrl = `${baseUrl}/unsubscribe?s=${sendRow.id}&t=${unsubToken}`
       const personalizedHtml = trackedHtml.replace(/\{\{\s*UNSUBSCRIBE_URL\s*\}\}/gi, unsubscribeUrl)
 
       const senderEmail = smtpFromEmail || smtpUser
@@ -131,6 +134,8 @@ export default defineEventHandler(async (event) => {
       }).where(eq(sends.id, sendRow.id))
       failCount++
     }
+
+    if (smtpDelay > 0) await new Promise(r => setTimeout(r, smtpDelay))
   }
 
   // Mark campaign as sent
