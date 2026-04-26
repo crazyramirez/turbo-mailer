@@ -11,9 +11,10 @@ const RETRY_BASE_DELAY_MS = 5_000
 function injectTracking(html: string, sendId: number, baseUrl: string, secret: string): string {
   let linkCount = 0
   // Sign each click URL with HMAC so the redirect cannot be abused for open redirects
+  // Matches both double-quoted and single-quoted href attributes
   const tracked = html.replace(
-    /<a\s+([^>]*?)href="(https?:\/\/[^"]+)"([^>]*?)>/gi,
-    (_match, pre, url, post) => {
+    /<a\s+([^>]*?)href=(["'])(https?:\/\/[^"']+)\2([^>]*?)>/gi,
+    (_match, pre, _quote, url, post) => {
       linkCount++
       const sig = signClickToken(sendId, url, secret)
       // Use &amp; for valid HTML; browsers decode it back to & before the request
