@@ -40,6 +40,11 @@ onMounted(async () => {
         <h1>{{ t("resubscribe_page.title") }}</h1>
         <p>{{ t("resubscribe_page.message") }}</p>
       </div>
+      <div v-else-if="status === 'already'" class="state warn">
+        <AlertCircle :size="48" class="state-icon" />
+        <h1>{{ t("resubscribe_page.title") }}</h1>
+        <p>{{ t("resubscribe_page.already") }}</p>
+      </div>
       <div v-else class="state error">
         <AlertCircle :size="48" class="state-icon" />
         <h1>{{ t("common.error") }}</h1>
