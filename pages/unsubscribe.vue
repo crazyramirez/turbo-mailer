@@ -4,7 +4,9 @@ import { CheckCircle, AlertCircle } from "lucide-vue-next";
 const { t } = useI18n();
 const route = useRoute();
 
-const status = ref<"loading" | "ok" | "already" | "rate_limited" | "error">("loading");
+const status = ref<"loading" | "ok" | "already" | "rate_limited" | "error">(
+  "loading",
+);
 const resubUrl = ref<string | null>(null);
 const rateLimitHours = ref(24);
 const customMessage = ref<string | null>(null);
@@ -64,7 +66,13 @@ onMounted(async () => {
       <div v-else-if="status === 'rate_limited'" class="state error">
         <AlertCircle :size="48" class="state-icon" />
         <h1>{{ t("common.error") }}</h1>
-        <p>{{ t("unsubscribe_page.rate_limited", { hours: String(rateLimitHours) }) }}</p>
+        <p>
+          {{
+            t("unsubscribe_page.rate_limited", {
+              hours: String(rateLimitHours),
+            })
+          }}
+        </p>
       </div>
       <div v-else class="state error">
         <AlertCircle :size="48" class="state-icon" />
