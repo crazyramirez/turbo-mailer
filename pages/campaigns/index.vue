@@ -73,6 +73,10 @@ async function duplicateCampaign(c: any) {
         templateName: full.templateName,
         templateHtml: full.templateHtml,
         listId: full.listId,
+        unsubEmailSubject: full.unsubEmailSubject || null,
+        unsubEmailMessage: full.unsubEmailMessage || null,
+        resubEmailSubject: full.resubEmailSubject || null,
+        resubEmailMessage: full.resubEmailMessage || null,
       },
     });
 
