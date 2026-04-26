@@ -200,14 +200,16 @@
     "already": "You were already unsubscribed.",
     "error": "We could not process your request. Please try again.",
     "back_home": "Back to home",
-    "resubscribe_link": "That was a mistake, re-subscribe me"
+    "resubscribe_link": "That was a mistake, re-subscribe me",
+    "rate_limited": "Too many subscription changes. Try again in {hours} hours."
   },
   "resubscribe_page": {
     "title": "Subscription restored",
     "message": "Your subscription has been restored. You will receive our emails again.",
     "already": "You were already subscribed.",
     "error": "We could not process your request. Please try again.",
-    "back_home": "Back to home"
+    "back_home": "Back to home",
+    "rate_limited": "Too many subscription changes. Try again in {hours} hours."
   },
   "emails": {
     "unsub_subject": "You have been successfully unsubscribed",

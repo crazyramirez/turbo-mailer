@@ -4,6 +4,7 @@ import { sends, contacts } from '~/server/db/schema'
 import { eq } from 'drizzle-orm'
 import { verifyResubscribeToken } from '~/server/utils/auth'
 import { emailT } from '~/server/utils/email-locale'
+import { checkAndIncrementSubLimit } from '~/server/utils/sub-rate-limit'
 
 async function sendResubConfirmationEmail(
   email: string,
@@ -89,6 +90,12 @@ export default defineEventHandler(async (event) => {
     if (!contact) return { status: 'error', message: 'Contact not found' }
 
     if (contact.status === 'active') return { status: 'already' }
+
+    const limit = await checkAndIncrementSubLimit(contact.id)
+    if (!limit.allowed) {
+      const resetInHours = limit.resetAt ? Math.ceil((limit.resetAt.getTime() - Date.now()) / 3_600_000) : 24
+      return { status: 'rate_limited', resetInHours }
+    }
 
     await db.update(contacts).set({ status: 'active', updatedAt: new Date() })
       .where(eq(contacts.id, contact.id))

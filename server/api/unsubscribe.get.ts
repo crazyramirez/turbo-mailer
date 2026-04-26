@@ -4,6 +4,7 @@ import { sends, contacts } from '~/server/db/schema'
 import { eq } from 'drizzle-orm'
 import { verifyUnsubscribeToken, signResubscribeToken } from '~/server/utils/auth'
 import { emailT } from '~/server/utils/email-locale'
+import { checkAndIncrementSubLimit } from '~/server/utils/sub-rate-limit'
 
 async function sendConfirmationEmail(
   email: string,
@@ -95,6 +96,12 @@ export default defineEventHandler(async (event) => {
     if (contact.status === 'unsubscribed') {
       const resubToken = signResubscribeToken(sendId, config.unsubscribeSecret as string)
       return { status: 'already', resubToken }
+    }
+
+    const limit = await checkAndIncrementSubLimit(contact.id)
+    if (!limit.allowed) {
+      const resetInHours = limit.resetAt ? Math.ceil((limit.resetAt.getTime() - Date.now()) / 3_600_000) : 24
+      return { status: 'rate_limited', resetInHours }
     }
 
     await db.update(contacts).set({ status: 'unsubscribed', updatedAt: new Date() })

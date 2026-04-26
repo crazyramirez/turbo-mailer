@@ -12,6 +12,8 @@ export const contacts = sqliteTable('contacts', {
   instagram: text('instagram'),
   tags: text('tags', { mode: 'json' }).$type<string[]>().default([]),
   status: text('status', { enum: ['active', 'unsubscribed', 'bounced'] }).notNull().default('active'),
+  subChangeCount: integer('sub_change_count').default(0),
+  subChangeWindowStart: integer('sub_change_window_start', { mode: 'timestamp' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 })

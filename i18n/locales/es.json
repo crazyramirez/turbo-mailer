@@ -200,14 +200,16 @@
     "already": "Ya estabas dado de baja.",
     "error": "No pudimos procesar tu solicitud. Inténtalo de nuevo.",
     "back_home": "Volver al inicio",
-    "resubscribe_link": "Fue un error, quiero volver a suscribirme"
+    "resubscribe_link": "Fue un error, quiero volver a suscribirme",
+    "rate_limited": "Demasiados cambios de suscripción. Inténtalo de nuevo en {hours} horas."
   },
   "resubscribe_page": {
     "title": "Suscripción restaurada",
     "message": "Tu suscripción ha sido restaurada. Volverás a recibir nuestros emails.",
     "already": "Ya estabas suscrito.",
     "error": "No pudimos procesar tu solicitud. Inténtalo de nuevo.",
-    "back_home": "Volver al inicio"
+    "back_home": "Volver al inicio",
+    "rate_limited": "Demasiados cambios de suscripción. Inténtalo de nuevo en {hours} horas."
   },
   "emails": {
     "unsub_subject": "Has sido dado de baja correctamente",

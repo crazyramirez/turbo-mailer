@@ -4,8 +4,9 @@ import { CheckCircle, AlertCircle } from "lucide-vue-next";
 const { t } = useI18n();
 const route = useRoute();
 
-const status = ref<"loading" | "ok" | "already" | "error">("loading");
+const status = ref<"loading" | "ok" | "already" | "rate_limited" | "error">("loading");
 const resubUrl = ref<string | null>(null);
+const rateLimitHours = ref(24);
 
 onMounted(async () => {
   const sendId = route.query.s;
@@ -19,12 +20,15 @@ onMounted(async () => {
     if (res.resubToken) {
       resubUrl.value = `/resubscribe?s=${sendId}&t=${res.resubToken}`;
     }
+    if (res.resetInHours) rateLimitHours.value = res.resetInHours;
     status.value =
       res.status === "ok"
         ? "ok"
         : res.status === "already"
           ? "already"
-          : "error";
+          : res.status === "rate_limited"
+            ? "rate_limited"
+            : "error";
   } catch {
     status.value = "error";
   }
@@ -54,6 +58,11 @@ onMounted(async () => {
         <NuxtLink v-if="resubUrl" :to="resubUrl" class="btn-resub">{{
           t("unsubscribe_page.resubscribe_link")
         }}</NuxtLink>
+      </div>
+      <div v-else-if="status === 'rate_limited'" class="state error">
+        <AlertCircle :size="48" class="state-icon" />
+        <h1>{{ t("common.error") }}</h1>
+        <p>{{ t("unsubscribe_page.rate_limited", { hours: String(rateLimitHours) }) }}</p>
       </div>
       <div v-else class="state error">
         <AlertCircle :size="48" class="state-icon" />
