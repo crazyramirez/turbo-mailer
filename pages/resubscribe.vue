@@ -39,9 +39,6 @@ onMounted(async () => {
         <CheckCircle :size="48" class="state-icon" />
         <h1>{{ t("resubscribe_page.title") }}</h1>
         <p>{{ t("resubscribe_page.message") }}</p>
-        <NuxtLink to="/" class="btn-home">{{
-          t("resubscribe_page.back_home")
-        }}</NuxtLink>
       </div>
       <div v-else class="state error">
         <AlertCircle :size="48" class="state-icon" />
