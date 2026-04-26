@@ -3,7 +3,7 @@ import { db } from '~/server/db/index'
 import { campaigns, contacts, listContacts, sends } from '~/server/db/schema'
 import { eq, and, inArray } from 'drizzle-orm'
 import { applyVars } from '~/server/utils/template'
-import { signUnsubscribeToken, signClickToken } from '~/server/utils/auth'
+import { signUnsubscribeToken, signClickToken, signOpenToken } from '~/server/utils/auth'
 
 const MAX_SEND_RETRIES = 3
 const RETRY_BASE_DELAY_MS = 5_000
@@ -19,8 +19,8 @@ function injectTracking(html: string, sendId: number, baseUrl: string, secret: s
     }
   )
 
-  // Pixel uses only sendId — campaignId comes from DB in the handler
-  const pixel = `<img src="${baseUrl}/api/track/open?s=${sendId}" width="1" height="1" border="0" style="width:1px;height:1px;overflow:hidden;position:absolute;" alt="" />`
+  const openSig = signOpenToken(sendId, secret)
+  const pixel = `<img src="${baseUrl}/api/track/open?s=${sendId}&sig=${openSig}" width="1" height="1" border="0" style="width:1px;height:1px;overflow:hidden;position:absolute;" alt="" />`
   return tracked.includes('</body>')
     ? tracked.replace('</body>', `${pixel}</body>`)
     : tracked + pixel
@@ -180,6 +180,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: 'SMTP credentials not configured' })
   }
 
+  if (!config.unsubscribeSecret) {
+    throw createError({ statusCode: 500, statusMessage: 'UNSUBSCRIBE_SECRET not configured' })
+  }
+
   const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, campaignId))
   if (!campaign) throw createError({ statusCode: 404, statusMessage: 'Campaign not found' })
   if (campaign.status === 'sending') throw createError({ statusCode: 409, statusMessage: 'Already sending' })
@@ -244,9 +248,14 @@ export default defineEventHandler(async (event) => {
   }
 
   // Process in background — respond immediately so the browser doesn't wait
-  processCampaign(campaignId, cfg).catch(err =>
-    console.error(`[campaign-send] campaignId=${campaignId} error:`, err)
-  )
+  processCampaign(campaignId, cfg).catch(async (err) => {
+    console.error(`[campaign-send] campaignId=${campaignId} fatal error:`, err)
+    // Mark as paused so the user can see it failed and retry from the UI
+    await db.update(campaigns)
+      .set({ status: 'paused' })
+      .where(eq(campaigns.id, campaignId))
+      .catch(() => {})
+  })
 
   return { queued: true, campaignId }
 })

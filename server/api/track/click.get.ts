@@ -23,6 +23,9 @@ export default defineEventHandler(async (event) => {
   }
 
   const config = useRuntimeConfig()
+  if (!config.unsubscribeSecret) {
+    throw createError({ statusCode: 500, statusMessage: 'UNSUBSCRIBE_SECRET not configured' })
+  }
   if (!verifyClickToken(sendId, targetUrl, sig, config.unsubscribeSecret as string)) {
     throw createError({ statusCode: 403, statusMessage: 'Invalid or missing link signature' })
   }

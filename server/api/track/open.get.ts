@@ -1,6 +1,7 @@
 import { db } from '~/server/db/index'
 import { sends, campaigns, trackingEvents } from '~/server/db/schema'
 import { eq, sql } from 'drizzle-orm'
+import { verifyOpenToken } from '~/server/utils/auth'
 
 const PIXEL_GIF = Buffer.from(
   'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
@@ -10,13 +11,23 @@ const PIXEL_GIF = Buffer.from(
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const sendId = Number(query.s)
-  // campaignId comes ONLY from the DB — never trust the query param
+  const sig = String(query.sig ?? '')
 
   setHeader(event, 'Content-Type', 'image/gif')
   setHeader(event, 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
   setHeader(event, 'Pragma', 'no-cache')
 
-  if (sendId) {
+  const config = useRuntimeConfig()
+  if (!config.unsubscribeSecret) {
+    throw createError({ statusCode: 500, statusMessage: 'UNSUBSCRIBE_SECRET not configured' })
+  }
+
+  if (sendId && sig) {
+    if (!verifyOpenToken(sendId, sig, config.unsubscribeSecret as string)) {
+      // Silently return pixel — don't reveal invalid sig to bots
+      return PIXEL_GIF
+    }
+
     try {
       const ip = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown'
       const userAgent = getHeader(event, 'user-agent') || ''
@@ -37,7 +48,6 @@ export default defineEventHandler(async (event) => {
 
         if (send.status !== 'opened') {
           await db.update(sends).set({ status: 'opened' }).where(eq(sends.id, sendId))
-          // Only count first open — subsequent loads (preview panes, bot rechecks) are skipped
           await db.update(campaigns)
             .set({ openCount: sql`${campaigns.openCount} + 1` })
             .where(eq(campaigns.id, campaignId))

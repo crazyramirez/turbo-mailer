@@ -128,15 +128,32 @@ export function verifyUnsubscribeToken(sendId: number, token: string, secret: st
 export function signClickToken(sendId: number, url: string, secret: string): string {
   return createHmac('sha256', secret)
     .update(`click:${sendId}:${url}`)
-    .digest('hex')
-    .slice(0, 16)
+    .digest('hex') // full 64-char hex — no truncation
 }
 
 export function verifyClickToken(sendId: number, url: string, token: string, secret: string): boolean {
   try {
     const expected = signClickToken(sendId, url, secret)
-    const a = Buffer.from(expected, 'utf8')
-    const b = Buffer.from(token, 'utf8')
+    const a = Buffer.from(expected, 'hex')
+    const b = Buffer.from(token, 'hex')
+    if (a.length !== b.length) return false
+    return timingSafeEqual(a, b)
+  } catch {
+    return false
+  }
+}
+
+export function signOpenToken(sendId: number, secret: string): string {
+  return createHmac('sha256', secret)
+    .update(`open:${sendId}`)
+    .digest('hex')
+}
+
+export function verifyOpenToken(sendId: number, token: string, secret: string): boolean {
+  try {
+    const expected = signOpenToken(sendId, secret)
+    const a = Buffer.from(expected, 'hex')
+    const b = Buffer.from(token, 'hex')
     if (a.length !== b.length) return false
     return timingSafeEqual(a, b)
   } catch {

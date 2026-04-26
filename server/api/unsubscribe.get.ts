@@ -23,7 +23,10 @@ async function sendConfirmationEmail(email: string, name: string | null, config:
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any)
 
-  const displayName = name || email
+  const rawName = name || email
+  const displayName = rawName
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#039;')
   const senderEmail = smtpFromEmail || smtpUser
 
   await transporter.sendMail({
@@ -61,6 +64,11 @@ async function sendConfirmationEmail(email: string, name: string | null, config:
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
+
+  if (!config.unsubscribeSecret) {
+    throw createError({ statusCode: 500, statusMessage: 'UNSUBSCRIBE_SECRET not configured' })
+  }
+
   const query = getQuery(event)
   const sendId = Number(query.s)
   const token = String(query.t || '')
