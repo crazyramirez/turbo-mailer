@@ -513,9 +513,16 @@ onUnmounted(() => {
             </div>
             <!-- Subscription emails (optional) -->
             <div class="config-card">
-              <button class="cc-toggle" @click="showEmailConfig = !showEmailConfig">
-                <span class="cc-label" style="margin:0">Emails de suscripción</span>
-                <span class="cc-toggle-hint">{{ showEmailConfig ? '▲' : '▼' }} opcional</span>
+              <button
+                class="cc-toggle"
+                @click="showEmailConfig = !showEmailConfig"
+              >
+                <span class="cc-label" style="margin: 0"
+                  >Emails de suscripción</span
+                >
+                <span class="cc-toggle-hint"
+                  >{{ showEmailConfig ? "▲" : "▼" }} opcional</span
+                >
               </button>
               <template v-if="showEmailConfig">
                 <div class="email-cfg-grid">
@@ -528,7 +535,9 @@ onUnmounted(() => {
                       class="field-input"
                       placeholder="Predeterminado: Has sido dado de baja"
                     />
-                    <div class="cc-sublabel" style="margin-top:8px">Mensaje — email de baja</div>
+                    <div class="cc-sublabel" style="margin-top: 8px">
+                      Mensaje — email de baja
+                    </div>
                     <textarea
                       v-model="campaign.unsubEmailMessage"
                       @input="scheduleSave"
@@ -546,7 +555,9 @@ onUnmounted(() => {
                       class="field-input"
                       placeholder="Predeterminado: Suscripción restaurada"
                     />
-                    <div class="cc-sublabel" style="margin-top:8px">Mensaje — email de alta</div>
+                    <div class="cc-sublabel" style="margin-top: 8px">
+                      Mensaje — email de alta
+                    </div>
                     <textarea
                       v-model="campaign.resubEmailMessage"
                       @input="scheduleSave"
@@ -562,14 +573,23 @@ onUnmounted(() => {
 
           <!-- SENT: stats + sends table -->
           <template v-else>
-            <div class="stats-grid" :class="{ 'sending-mode': campaign.status === 'sending' }">
-              <div class="stat-card" :class="{ 'is-active': campaign.status === 'sending' }">
+            <div
+              class="stats-grid"
+              :class="{ 'sending-mode': campaign.status === 'sending' }"
+            >
+              <div
+                class="stat-card"
+                :class="{ 'is-active': campaign.status === 'sending' }"
+              >
                 <div class="stat-icon-wrap si-gray"><Mail :size="18" /></div>
                 <div class="stat-body">
                   <span class="stat-num">{{ campaign.sentCount ?? 0 }}</span>
                   <span class="stat-lbl">{{ t("results.sent") }}</span>
                 </div>
-                <div v-if="campaign.status === 'sending'" class="stat-pulse"></div>
+                <div
+                  v-if="campaign.status === 'sending'"
+                  class="stat-pulse"
+                ></div>
               </div>
               <div class="stat-card">
                 <div class="stat-icon-wrap si-purple"><Eye :size="18" /></div>
@@ -597,7 +617,10 @@ onUnmounted(() => {
                   >
                 </div>
               </div>
-              <div class="stat-card" :class="{ 'has-errors': campaign.failCount > 0 }">
+              <div
+                class="stat-card"
+                :class="{ 'has-errors': campaign.failCount > 0 }"
+              >
                 <div class="stat-icon-wrap si-red"><XCircle :size="18" /></div>
                 <div class="stat-body">
                   <span class="stat-num">{{ campaign.failCount ?? 0 }}</span>
@@ -679,7 +702,9 @@ onUnmounted(() => {
 
             <div class="overlay-stats">
               <div class="o-stat">
-                <span class="o-val">{{ campaign.sentCount + campaign.failCount }}</span>
+                <span class="o-val">{{
+                  campaign.sentCount + campaign.failCount
+                }}</span>
                 <span class="o-lbl">{{ t("results.sent") }}</span>
               </div>
               <div class="o-divider"></div>
@@ -972,7 +997,8 @@ onUnmounted(() => {
 }
 
 .stat-card {
-  background: var(--bg-card);
+  background: transparent;
+  backdrop-filter: blur(5px);
   border: 1px solid var(--border);
   padding: 20px 24px;
   border-radius: 18px;
@@ -1003,8 +1029,12 @@ onUnmounted(() => {
   animation: scan-line 2s linear infinite;
 }
 @keyframes scan-line {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .stat-icon-wrap {
@@ -1060,12 +1090,22 @@ onUnmounted(() => {
   animation: slide-down 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 @keyframes slide-down {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .sending-status-card {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(0, 0, 0, 0.2));
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.1),
+    rgba(0, 0, 0, 0.2)
+  );
   border: 1px solid var(--accent);
   border-radius: 20px;
   padding: 24px;
@@ -1107,9 +1147,18 @@ onUnmounted(() => {
   animation: live-pulse 1.5s infinite;
 }
 @keyframes live-pulse {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.5); opacity: 0.5; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .ssc-title {
@@ -1143,12 +1192,21 @@ onUnmounted(() => {
 .ssc-progress-shimmer {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
   animation: shimmer-swipe 2s infinite;
 }
 @keyframes shimmer-swipe {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(100%); }
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
 }
 
 .ssc-footer {
@@ -1161,10 +1219,27 @@ onUnmounted(() => {
   align-items: baseline;
   gap: 4px;
 }
-.ssc-current { font-size: 18px; font-weight: 800; color: #fff; }
-.ssc-separator { font-size: 14px; opacity: 0.3; }
-.ssc-total { font-size: 14px; font-weight: 600; opacity: 0.6; }
-.ssc-unit { font-size: 11px; margin-left: 8px; opacity: 0.4; text-transform: uppercase; font-weight: 700; }
+.ssc-current {
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+}
+.ssc-separator {
+  font-size: 14px;
+  opacity: 0.3;
+}
+.ssc-total {
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0.6;
+}
+.ssc-unit {
+  font-size: 11px;
+  margin-left: 8px;
+  opacity: 0.4;
+  text-transform: uppercase;
+  font-weight: 700;
+}
 
 .ssc-engine-status {
   display: flex;
@@ -1172,10 +1247,10 @@ onUnmounted(() => {
   gap: 8px;
   font-size: 11px;
   color: var(--text-dim);
-  background: rgba(0,0,0,0.2);
+  background: rgba(0, 0, 0, 0.2);
   padding: 6px 12px;
   border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* Sending Overlay */
@@ -1227,8 +1302,15 @@ onUnmounted(() => {
 }
 
 @keyframes core-pulse-slow {
-  0%, 100% { transform: scale(1); opacity: 0.9; }
-  50% { transform: scale(1.08); opacity: 1; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
 }
 
 .pulse-ring {
@@ -1242,19 +1324,47 @@ onUnmounted(() => {
 }
 
 @keyframes ring-pulse-elegant {
-  0% { transform: scale(0.8); opacity: 0; }
-  50% { opacity: 0.3; }
-  100% { transform: scale(1.8); opacity: 0; }
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
 }
 
-.r1 { width: 100%; height: 100%; animation-delay: 0s; }
-.r2 { width: 100%; height: 100%; animation-delay: 1s; }
-.r3 { width: 100%; height: 100%; animation-delay: 2s; }
+.r1 {
+  width: 100%;
+  height: 100%;
+  animation-delay: 0s;
+}
+.r2 {
+  width: 100%;
+  height: 100%;
+  animation-delay: 1s;
+}
+.r3 {
+  width: 100%;
+  height: 100%;
+  animation-delay: 2s;
+}
 
 @keyframes ring-pulse {
-  0% { transform: scale(0.5); opacity: 0; }
-  20% { opacity: 0.4; }
-  100% { transform: scale(2.5); opacity: 0; }
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
 }
 
 .overlay-text h2 {
