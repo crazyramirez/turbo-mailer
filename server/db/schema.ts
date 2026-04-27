@@ -83,3 +83,9 @@ export const trackingEvents = sqliteTable('tracking_events', {
   userAgent: text('user_agent'),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 })
+
+export const settings = sqliteTable('settings', {
+  key: text('key').primaryKey(),
+  value: text('value'),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+})

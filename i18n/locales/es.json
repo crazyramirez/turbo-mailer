@@ -452,5 +452,24 @@
   "variables": {
     "name": "Nombre",
     "company": "Empresa"
+  },
+  "ghost": {
+    "title": "Ghost Mode Activado",
+    "portal_subtitle": "El acceso al panel de control está oculto mediante Ghost Mode. Para entrar, usa tu URL secreta. Puedes cambiar esta llave en tu archivo .env (variable PORTAL_KEY):",
+    "feature_invisible": "Invisible",
+    "feature_invisible_desc": "La raíz del dominio muestra una web técnica falsa.",
+    "feature_protected": "Protegido",
+    "feature_protected_desc": "Solo tú conoces esta puerta de entrada.",
+    "feature_secure": "Seguro",
+    "feature_secure_desc": "Tu panel ahora es totalmente anónimo.",
+    "btn_enter": "Entendido, acceder al panel",
+    "decoy_node": "NODE_EU_04 // SMTP_RELAY",
+    "decoy_operational": "STATUS: OPERATIONAL",
+    "decoy_ready": "Ready for incoming requests...",
+    "decoy_waiting": "Waiting for transport layer handshake...",
+    "decoy_encryption": "Encryption: TLS 1.3 Active",
+    "decoy_404_title": "404",
+    "decoy_404_msg": "Recurso no encontrado en este servidor.",
+    "decoy_server_info": "Apache/2.4.41 (Ubuntu) Server at 127.0.0.1 Port 443"
   }
 }

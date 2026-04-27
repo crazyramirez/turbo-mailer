@@ -18,11 +18,38 @@ import {
 import CampaignPreview from "~/components/campaigns/CampaignPreview.vue";
 import ResetModal from "~/components/dashboard/ResetModal.vue";
 import WelcomeModal from "~/components/dashboard/WelcomeModal.vue";
+import GhostWelcomeModal from "~/components/dashboard/GhostWelcomeModal.vue";
 
 definePageMeta({ layout: "app" });
 
 const { t, locale } = useI18n();
 const { showToast } = useDashboardState();
+
+// ── Ghost Mode Welcome ──────────────────────────────────────────
+const showGhostWelcome = ref(false);
+const config = useRuntimeConfig();
+
+onMounted(async () => {
+  try {
+    const data = await $fetch<{ seen: boolean }>('/api/ghost-status', {
+      params: { portal: config.public.portalKey }
+    });
+    if (!data.seen) {
+      showGhostWelcome.value = true;
+    }
+  } catch (e) {
+    console.error("Error fetching ghost status in dashboard:", e);
+  }
+});
+
+function handleGhostWelcomeClose() {
+  showGhostWelcome.value = false;
+  // Ya se marcó como visto en el login o se marcará al cerrar aquí
+  $fetch('/api/ghost-status', {
+    method: 'POST',
+    params: { portal: config.public.portalKey }
+  }).catch(e => console.error(e));
+}
 
 // ── Interfaces ──────────────────────────────────────────────────
 interface RecentOpen {
@@ -281,6 +308,10 @@ async function duplicateCampaign() {
         v-if="showWelcome"
         @close="dismissWelcome"
         @done="dismissWelcome"
+      />
+      <GhostWelcomeModal
+        v-if="showGhostWelcome"
+        @close="handleGhostWelcomeClose"
       />
 
       <!-- KPI Row -->

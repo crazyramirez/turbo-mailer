@@ -1,5 +1,11 @@
 <template>
   <div class="login-wrapper">
+    <!-- Ghost Mode First Run Welcome -->
+    <GhostWelcomeModal 
+      v-if="showSetupWelcome" 
+      @close="showSetupWelcome = false" 
+    />
+
     <!-- Ambient background -->
     <div class="login-bg" aria-hidden="true">
       <div class="bg-grid"></div>
@@ -95,7 +101,10 @@
           <Transition name="err-fade">
             <div
               v-if="
-                remaining !== null && remaining < 10 && remaining > 0 && !blocked
+                remaining !== null &&
+                remaining < 10 &&
+                remaining > 0 &&
+                !blocked
               "
               class="attempts-bar"
             >
@@ -143,14 +152,15 @@
         </p>
       </div>
     </template>
-    
-    <!-- Fake 404 Decoy -->
+
     <template v-else>
       <div class="ghost-404">
-        <h1>404</h1>
-        <p>The requested resource was not found on this server.</p>
+        <h1>{{ t('ghost.decoy_404_title') }}</h1>
+        <p>{{ t('ghost.decoy_404_msg') }}</p>
         <hr class="ghost-hr" />
-        <p class="ghost-server">Apache/2.4.41 (Ubuntu) Server at 127.0.0.1 Port 443</p>
+        <p class="ghost-server">
+          {{ t('ghost.decoy_server_info') }}
+        </p>
       </div>
     </template>
   </div>
@@ -188,9 +198,31 @@ const route = useRoute();
 const config = useRuntimeConfig();
 const isAuthed = useState<boolean | null>("isAuthed", () => null);
 
+const showSetupWelcome = ref(false);
+
+const { t } = useI18n();
+
 // Constante secreta para el acceso configurada en .env
-const ACCESS_KEY = config.public.portalKey; 
-const showPortal = computed(() => route.query.portal === ACCESS_KEY || isAuthed.value);
+const ACCESS_KEY = config.public.portalKey;
+const showPortal = computed(
+  () => route.query.portal === ACCESS_KEY || isAuthed.value,
+);
+
+onMounted(async () => {
+  if (showPortal.value) {
+    try {
+      const data = await $fetch<{ seen: boolean }>("/api/ghost-status", {
+        params: { portal: ACCESS_KEY },
+      });
+      if (!data.seen) {
+        showSetupWelcome.value = true;
+      }
+    } catch (e) {
+      // Si hay error (ej. 404), simplemente no mostramos el mensaje
+      console.error("Error fetching ghost status:", e);
+    }
+  }
+});
 
 function triggerShake() {
   shaking.value = true;
@@ -700,7 +732,7 @@ onUnmounted(() => {
   max-width: 600px;
   color: #fff;
   padding: 40px;
-  font-family: 'Times New Roman', serif;
+  font-family: "Times New Roman", serif;
 }
 .ghost-404 h1 {
   font-size: 32px;

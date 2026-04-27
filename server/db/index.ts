@@ -56,6 +56,7 @@ sqlite.exec(`
   )
 `)
 
+
 export { sqlite }
 
 // Auto-run migrations on startup
@@ -69,8 +70,14 @@ try {
   
   if (hasTables && !hasMigrationTable) {
     console.log('Legacy database detected. Skipping initial migration to avoid conflicts.')
-    // We could manually seed the migration table here, but skipping is safer 
-    // if the schema matches the initial migration.
+    // We manually ensure settings exists in legacy databases
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY NOT NULL,
+        value TEXT,
+        updated_at INTEGER
+      )
+    `)
   } else {
     migrate(db, { migrationsFolder: migrationsPath })
     console.log('Database migrations completed successfully.')

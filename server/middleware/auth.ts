@@ -5,6 +5,7 @@ const PUBLIC_PATHS = [
   '/api/track/open',
   '/api/track/click',
   '/api/unsubscribe',
+  '/api/ghost-status',
 ]
 
 export default defineEventHandler(async (event) => {
