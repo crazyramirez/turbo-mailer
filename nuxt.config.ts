@@ -17,6 +17,8 @@ export default defineNuxtConfig({
     openaiModel: process.env.OPENAI_MODEL || 'gpt-4o-mini',
     trackingBaseUrl: process.env.TRACKING_BASE_URL || 'http://localhost:3000',
     unsubscribeSecret: process.env.UNSUBSCRIBE_SECRET,
+    smtpSendDelayMs: Number(process.env.SMTP_SEND_DELAY_MS || 200),
+    smtpSendJitterMs: Number(process.env.SMTP_SEND_JITTER_MS || 500),
     public: {
       portalKey: process.env.PORTAL_KEY || 'admin',
     }

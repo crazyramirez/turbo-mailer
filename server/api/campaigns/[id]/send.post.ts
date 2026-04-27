@@ -65,6 +65,7 @@ interface SendConfig {
   baseUrl: string
   secret: string
   delayMs: number
+  jitterMs: number
 }
 
 async function processCampaign(campaignId: number, cfg: SendConfig): Promise<void> {
@@ -149,7 +150,14 @@ async function processCampaign(campaignId: number, cfg: SendConfig): Promise<voi
       failDelta++
     }
 
-    if (cfg.delayMs > 0) await new Promise(r => setTimeout(r, cfg.delayMs))
+    if (cfg.delayMs > 0) {
+      // Add random jitter to avoid SMTP detection (perfectly timed sends look like bots)
+      const jitter = cfg.jitterMs > 0
+        ? Math.floor(Math.random() * (cfg.jitterMs * 2)) - cfg.jitterMs
+        : 0
+      const actualDelay = Math.max(50, cfg.delayMs + jitter)
+      await new Promise(r => setTimeout(r, actualDelay))
+    }
   }
 
   // Check final status
@@ -251,7 +259,8 @@ export default defineEventHandler(async (event) => {
     smtpFromEmail: String(smtpFromEmail || smtpUser),
     baseUrl: String(config.trackingBaseUrl || 'http://localhost:3000'),
     secret: String(config.unsubscribeSecret),
-    delayMs: Number(process.env.SMTP_SEND_DELAY_MS ?? 200),
+    delayMs: Number(config.smtpSendDelayMs),
+    jitterMs: Number(config.smtpSendJitterMs),
   }
 
   // Process in background — respond immediately so the browser doesn't wait
