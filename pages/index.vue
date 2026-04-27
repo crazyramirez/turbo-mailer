@@ -12,7 +12,7 @@ const { t } = useI18n();
 
 // Usamos useAsyncData para gestionar todo el estado inicial de forma síncrona para el SSR
 // Esto evita parpadeos (flicker) ya que el HTML generado en el servidor ya vendrá con el estado correcto
-const { data: initData } = await useAsyncData('index-init', async () => {
+const { data: initData } = await useAsyncData("index-init", async () => {
   // 1. Si ya está autenticado, no hay nada que mostrar aquí (el middleware o onMounted redirigirán)
   if (isAuthed.value) {
     return { seen: true, portalKey: "" };
@@ -20,9 +20,12 @@ const { data: initData } = await useAsyncData('index-init', async () => {
 
   // 2. Verificar en la DDBB si es la primera vez (consulta pública inicial)
   try {
-    return await $fetch<{ seen: boolean; portalKey: string }>("/api/ghost-status", {
-      params: { public: "true" },
-    });
+    return await $fetch<{ seen: boolean; portalKey: string }>(
+      "/api/ghost-status",
+      {
+        params: { public: "true" },
+      },
+    );
   } catch (e) {
     return { seen: true, portalKey: "" }; // Por defecto ocultar si hay error
   }

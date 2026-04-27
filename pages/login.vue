@@ -1,9 +1,9 @@
 <template>
   <div class="login-wrapper">
     <!-- Ghost Mode First Run Welcome -->
-    <GhostWelcomeModal 
-      v-if="showSetupWelcome" 
-      @close="showSetupWelcome = false" 
+    <GhostWelcomeModal
+      v-if="showSetupWelcome"
+      @close="showSetupWelcome = false"
     />
 
     <!-- Ambient background -->
@@ -148,18 +148,18 @@
 
         <!-- Footer -->
         <p class="login-footer">
-          Turbo-Mailer PRO {{ APP_VERSION }} &mdash; acceso privado
+          Turbo-Mailer {{ APP_VERSION }} &mdash; acceso privado
         </p>
       </div>
     </template>
 
     <template v-else>
       <div class="ghost-404">
-        <h1>{{ t('ghost.decoy_404_title') }}</h1>
-        <p>{{ t('ghost.decoy_404_msg') }}</p>
+        <h1>{{ t("ghost.decoy_404_title") }}</h1>
+        <p>{{ t("ghost.decoy_404_msg") }}</p>
         <hr class="ghost-hr" />
         <p class="ghost-server">
-          {{ t('ghost.decoy_server_info') }}
+          {{ t("ghost.decoy_server_info") }}
         </p>
       </div>
     </template>

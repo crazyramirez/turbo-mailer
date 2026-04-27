@@ -196,7 +196,7 @@ const insertCampaign = db.prepare(
 
 // id 1 — sent, list 1 (10 recipients, 9 sent, 1 failed)
 insertCampaign.run(
-  'Lanzamiento Q1 2026', '🚀 Novedades Q1 — Turbo-Mailer PRO', 'email_demo', templateHtml,
+  'Lanzamiento Q1 2026', '🚀 Novedades Q1 — Turbo-Mailer', 'email_demo', templateHtml,
   1, 'sent', d(30), d(30), d(32),
   10, 9, 6, 4, 1
 )
@@ -237,16 +237,16 @@ const insertSend = db.prepare(
 
 // Campaign 1 sends (list 1: contacts 1,3,5,6,8,9,11,15,17,18)
 const c1sends = [
-  [1, 1,  'alice@techcorp.io',        '🚀 Novedades Q1 — Turbo-Mailer PRO', 'sent',   d(30), null],
-  [1, 3,  'carol@marketingpro.es',    '🚀 Novedades Q1 — Turbo-Mailer PRO', 'opened', d(30), null],
-  [1, 5,  'eva@consulting.eu',        '🚀 Novedades Q1 — Turbo-Mailer PRO', 'sent',   d(30), null],
-  [1, 6,  'frank@ecommerce.shop',     '🚀 Novedades Q1 — Turbo-Mailer PRO', 'opened', d(30), null],
-  [1, 8,  'hector@fintech.com',       '🚀 Novedades Q1 — Turbo-Mailer PRO', 'opened', d(30), null],
-  [1, 9,  'iris@healthcare.org',      '🚀 Novedades Q1 — Turbo-Mailer PRO', 'sent',   d(30), null],
-  [1, 11, 'kate@saas.dev',            '🚀 Novedades Q1 — Turbo-Mailer PRO', 'opened', d(30), null],
-  [1, 15, 'oscar@logistics.eu',       '🚀 Novedades Q1 — Turbo-Mailer PRO', 'sent',   d(30), null],
-  [1, 17, 'rafael@arquitectura.com',  '🚀 Novedades Q1 — Turbo-Mailer PRO', 'opened', d(30), null],
-  [1, 18, 'sarah@globalhr.com',       '🚀 Novedades Q1 — Turbo-Mailer PRO', 'failed', null,  'SMTP 550: Mailbox unavailable'],
+  [1, 1,  'alice@techcorp.io',        '🚀 Novedades Q1 — Turbo-Mailer', 'sent',   d(30), null],
+  [1, 3,  'carol@marketingpro.es',    '🚀 Novedades Q1 — Turbo-Mailer', 'opened', d(30), null],
+  [1, 5,  'eva@consulting.eu',        '🚀 Novedades Q1 — Turbo-Mailer', 'sent',   d(30), null],
+  [1, 6,  'frank@ecommerce.shop',     '🚀 Novedades Q1 — Turbo-Mailer', 'opened', d(30), null],
+  [1, 8,  'hector@fintech.com',       '🚀 Novedades Q1 — Turbo-Mailer', 'opened', d(30), null],
+  [1, 9,  'iris@healthcare.org',      '🚀 Novedades Q1 — Turbo-Mailer', 'sent',   d(30), null],
+  [1, 11, 'kate@saas.dev',            '🚀 Novedades Q1 — Turbo-Mailer', 'opened', d(30), null],
+  [1, 15, 'oscar@logistics.eu',       '🚀 Novedades Q1 — Turbo-Mailer', 'sent',   d(30), null],
+  [1, 17, 'rafael@arquitectura.com',  '🚀 Novedades Q1 — Turbo-Mailer', 'opened', d(30), null],
+  [1, 18, 'sarah@globalhr.com',       '🚀 Novedades Q1 — Turbo-Mailer', 'failed', null,  'SMTP 550: Mailbox unavailable'],
 ]
 c1sends.forEach(r => insertSend.run(...r))
 // send ids: 1-10

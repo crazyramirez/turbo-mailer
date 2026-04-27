@@ -247,7 +247,7 @@ export default defineEventHandler(async (event) => {
     smtpUser: String(smtpUser),
     smtpPass: String(smtpPass),
     smtpSecure: Boolean(smtpSecure),
-    smtpFromName: String(smtpFromName || 'Turbo-Mailer PRO'),
+    smtpFromName: String(smtpFromName || 'Turbo-Mailer'),
     smtpFromEmail: String(smtpFromEmail || smtpUser),
     baseUrl: String(config.trackingBaseUrl || 'http://localhost:3000'),
     secret: String(config.unsubscribeSecret),

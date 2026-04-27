@@ -8,16 +8,16 @@
 
 > ⚠️ **Uso Responsable:** Diseñado para envíos legítimos y con permiso (newsletters, B2B). **Prohibido para spam.** Al usarlo, aceptas las normas de Google y leyes de privacidad (GDPR, etc.) bajo tu propia responsabilidad.
 
-Turbo-Mailer PRO es una aplicación **self-hosted de una sola cuenta diseñada para ser desplegada en un VPS**, ofreciendo una plataforma de email marketing de alto rendimiento construida con **Nuxt 3**. Es una herramienta segura, robusta y con una arquitectura bien planteada para garantizar la soberanía de tus datos. Incluye gestión completa de contactos y listas, editor visual de plantillas HTML con bloques drag & drop, sistema de campañas con tracking de aperturas y clics, analytics en tiempo real, integración con IA para copywriting e interfaz multiidioma (ES/EN). Todo con persistencia real en base de datos SQLite y envío masivo vía cualquier servicio SMTP (Gmail, Outlook, Amazon SES, etc.).
+Turbo-Mailer es una aplicación **self-hosted de una sola cuenta diseñada para ser desplegada en un VPS**, ofreciendo una plataforma de email marketing de alto rendimiento construida con **Nuxt 3**. Es una herramienta segura, robusta y con una arquitectura bien planteada para garantizar la soberanía de tus datos. Incluye gestión completa de contactos y listas, editor visual de plantillas HTML con bloques drag & drop, sistema de campañas con tracking de aperturas y clics, analytics en tiempo real, integración con IA para copywriting e interfaz multiidioma (ES/EN). Todo con persistencia real en base de datos SQLite y envío masivo vía cualquier servicio SMTP (Gmail, Outlook, Amazon SES, etc.).
 
 ## 🛡️ Tu Información, Solo Tuya (Soberanía de Datos)
 
-Lo que hace a **Turbo-Mailer PRO** una herramienta extremadamente potente es la **privacidad**. Al ser una aplicación auto-alojada en tu propio servidor:
+Lo que hace a **Turbo-Mailer** una herramienta extremadamente potente es la **privacidad**. Al ser una aplicación auto-alojada en tu propio servidor:
 
 - **Eliminas Intermediarios**: No entregas la información valiosa de tu empresa, negocio o clientes a ninguna plataforma externa.
 - **Privacidad Profesional**: Solo existe la conexión directa entre tu instancia privada y tu servicio de correo elegido.
 
-![Turbo-Mailer PRO — Dashboard preview](public/images/ogimage.jpg)
+![Turbo-Mailer — Dashboard preview](public/images/ogimage.jpg)
 
 ## 📸 Interfaz del Proyecto
 
@@ -119,7 +119,7 @@ Desde el Dashboard, el botón de **Reset** abre un visor modal avanzado que perm
 
 ### 🔒 Privacidad y SEO (Anti-Indexación)
 
-Para garantizar la privacidad de tus datos y evitar que la plataforma aparezca en motores de búsqueda, Turbo-Mailer PRO está configurado para **no ser indexado ni cacheado**:
+Para garantizar la privacidad de tus datos y evitar que la plataforma aparezca en motores de búsqueda, Turbo-Mailer está configurado para **no ser indexado ni cacheado**:
 
 - **No-Index**: Se han incluido etiquetas `meta` (`robots` y `googlebot`) con directivas `noindex` y `nofollow`.
 - **Anti-Caché**: Se ha activado la directiva `noarchive` para evitar que Google guarde copias en caché de la interfaz.
@@ -144,7 +144,7 @@ Para garantizar la privacidad de tus datos y evitar que la plataforma aparezca e
 
 ## 🗄️ Base de Datos (Zero-CLI)
 
-Turbo-Mailer PRO gestiona la base de datos de forma **100% automática**.
+Turbo-Mailer gestiona la base de datos de forma **100% automática**.
 
 - **Auto-Instalación**: Al arrancar por primera vez, crea el archivo SQLite y todas las tablas.
 - **Auto-Migración**: Si editas el esquema en el código, la app detecta los cambios y actualiza la base de datos al reiniciar.
@@ -203,7 +203,7 @@ SQLite en `./data/turbomailer.db` gestionada con Drizzle ORM. Tablas principales
    SMTP_USER=tu-correo@gmail.com
    SMTP_PASS=tu-password-de-aplicacion
    SMTP_SECURE=true
-   SMTP_FROM_NAME=Turbo-Mailer PRO
+   SMTP_FROM_NAME=Turbo-Mailer
    SMTP_FROM_EMAIL=tu-correo@gmail.com
 
    # Inteligencia Artificial (opcional)
@@ -248,7 +248,7 @@ Pulsa **"Empezar desde cero"** para comenzar directamente con la base de datos v
 
 ## 👻 Seguridad Invisible (Ghost Mode)
 
-Para garantizar la máxima privacidad, Turbo-Mailer PRO está diseñado para ser invisible ante visitantes curiosos o rastreadores.
+Para garantizar la máxima privacidad, Turbo-Mailer está diseñado para ser invisible ante visitantes curiosos o rastreadores.
 
 1. **Raíz de Señuelo**: Al acceder a la raíz del dominio (`/`), se muestra una página de estado técnica simulando un nodo SMTP operativo. El panel de administración está "escondido" en `/dashboard`.
 2. **Login Oculto (Backdoor)**: Si intentas entrar a `/login` directamente, la aplicación mostrará un **error 404 falso** (Apache/Ubuntu).

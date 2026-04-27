@@ -8,16 +8,16 @@
 
 > ⚠️ **Responsible Use:** Designed for legitimate and permission-based mailings (newsletters, B2B). **Spam is strictly prohibited.** By using this tool, you agree to comply with Google's policies and privacy laws (GDPR, etc.) under your own responsibility.
 
-Turbo-Mailer PRO is a **self-hosted, single-account application designed for VPS deployment**, providing a high-performance email marketing platform built with **Nuxt 3**. It is a secure, robust tool with a well-structured architecture focused on data sovereignty. It includes complete contact and list management, a visual HTML template editor with drag & drop blocks, a campaign system with open and click tracking, real-time analytics, AI integration for copywriting, and a multi-language interface (ES/EN). All with real persistence in a SQLite database and mass sending via any SMTP service (Gmail, Outlook, Amazon SES, etc.).
+Turbo-Mailer is a **self-hosted, single-account application designed for VPS deployment**, providing a high-performance email marketing platform built with **Nuxt 3**. It is a secure, robust tool with a well-structured architecture focused on data sovereignty. It includes complete contact and list management, a visual HTML template editor with drag & drop blocks, a campaign system with open and click tracking, real-time analytics, AI integration for copywriting, and a multi-language interface (ES/EN). All with real persistence in a SQLite database and mass sending via any SMTP service (Gmail, Outlook, Amazon SES, etc.).
 
 ## 🛡️ Your Information, Only Yours (Data Sovereignty)
 
-What makes **Turbo-Mailer PRO** an extremely powerful tool is its **privacy**. Being a self-hosted application on your own server:
+What makes **Turbo-Mailer** an extremely powerful tool is its **privacy**. Being a self-hosted application on your own server:
 
 - **Eliminate Intermediaries**: You don't hand over your company's, business's, or clients' valuable information to any external platform.
 - **Professional Privacy**: There is only a direct connection between your private instance and your chosen email service.
 
-![Turbo-Mailer PRO — Dashboard preview](public/images/ogimage.jpg)
+![Turbo-Mailer — Dashboard preview](public/images/ogimage.jpg)
 
 ## 📸 Project Interface
 
@@ -119,7 +119,7 @@ From the Dashboard, the **Reset** button opens an advanced modal viewer that all
 
 ### 🔒 Privacy and SEO (Anti-Indexing)
 
-To ensure your data privacy and prevent the platform from appearing in search engines, Turbo-Mailer PRO is configured to **not be indexed or cached**:
+To ensure your data privacy and prevent the platform from appearing in search engines, Turbo-Mailer is configured to **not be indexed or cached**:
 
 - **No-Index**: `meta` tags (`robots` and `googlebot`) have been included with `noindex` and `nofollow` directives.
 - **Anti-Cache**: The `noarchive` directive is activated to prevent Google from saving cached copies of the interface.
@@ -144,7 +144,7 @@ To ensure your data privacy and prevent the platform from appearing in search en
 
 ## 🗄️ Database (Zero-CLI)
 
-Turbo-Mailer PRO manages the database **100% automatically**.
+Turbo-Mailer manages the database **100% automatically**.
 
 - **Auto-Installation**: On the first start, it creates the SQLite file and all tables.
 - **Auto-Migration**: If you edit the schema in the code, the app detects changes and updates the database upon restart.
@@ -202,7 +202,7 @@ SQLite in `./data/turbomailer.db` managed with Drizzle ORM. Main tables:
    SMTP_USER=your-email@gmail.com
    SMTP_PASS=your-app-password
    SMTP_SECURE=true
-   SMTP_FROM_NAME=Turbo-Mailer PRO
+   SMTP_FROM_NAME=Turbo-Mailer
    SMTP_FROM_EMAIL=your-email@gmail.com
 
    # Artificial Intelligence (optional)
@@ -247,7 +247,7 @@ Click **"Start from scratch"** to begin directly with an empty database and impo
 
 ## 👻 Invisible Security (Ghost Mode)
 
-To ensure maximum privacy, Turbo-Mailer PRO is designed to be invisible to curious visitors or crawlers.
+To ensure maximum privacy, Turbo-Mailer is designed to be invisible to curious visitors or crawlers.
 
 1. **Decoy Root**: Accessing the domain root (`/`) displays a technical status page simulating an operational SMTP node. The administration panel is "hidden" at `/dashboard`.
 2. **Hidden Login (Backdoor)**: If you try to access `/login` directly, the application will display a **fake 404 error** (Apache/Ubuntu).
