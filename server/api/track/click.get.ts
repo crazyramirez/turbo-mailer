@@ -1,6 +1,6 @@
 import { db } from '~/server/db/index'
 import { sends, campaigns, trackingEvents } from '~/server/db/schema'
-import { eq, sql } from 'drizzle-orm'
+import { eq, sql, and, gt, ne } from 'drizzle-orm'
 import { verifyClickToken } from '~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
@@ -41,25 +41,57 @@ export default defineEventHandler(async (event) => {
 
   if (sendId) {
     try {
-      const ip = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown'
+      const ip = String(getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown').split(',')[0].trim()
       const userAgent = getHeader(event, 'user-agent') || ''
 
-      const [send] = await db.select().from(sends).where(eq(sends.id, sendId))
-      if (send) {
-        await db.insert(trackingEvents).values({
-          sendId,
-          campaignId: send.campaignId,
-          contactId: send.contactId,
-          eventType: 'click',
-          url: targetUrl,
-          ip: String(ip).split(',')[0].trim(),
-          userAgent,
-          createdAt: new Date(),
-        })
+      // Deduplication: skip if exactly the same click was recorded in the last 5 seconds from the same IP
+      // This prevents double counting from browser pre-fetching or user double-clicks.
+      const fiveSecondsAgo = new Date(Date.now() - 5000)
+      const [existing] = await db.select()
+        .from(trackingEvents)
+        .where(and(
+          eq(trackingEvents.sendId, sendId),
+          eq(trackingEvents.eventType, 'click'),
+          eq(trackingEvents.url, targetUrl),
+          eq(trackingEvents.ip, ip),
+          gt(trackingEvents.createdAt, fiveSecondsAgo)
+        ))
+        .limit(1)
 
-        await db.update(campaigns)
-          .set({ clickCount: sql`${campaigns.clickCount} + 1` })
-          .where(eq(campaigns.id, send.campaignId))
+      if (existing) {
+        console.log('[track/click] deduplicated click for sendId=%s', sendId)
+      } else {
+        const [send] = await db.select().from(sends).where(eq(sends.id, sendId))
+        if (send) {
+          await db.insert(trackingEvents).values({
+            sendId,
+            campaignId: send.campaignId,
+            contactId: send.contactId,
+            eventType: 'click',
+            url: targetUrl,
+            ip,
+            userAgent,
+            createdAt: new Date(),
+          })
+
+          await db.update(campaigns)
+            .set({ clickCount: sql`${campaigns.clickCount} + 1` })
+            .where(eq(campaigns.id, send.campaignId))
+          
+          // Also mark as opened if it wasn't already (clicking a link implies opening)
+          if (send.status !== 'opened') {
+             const [marked] = await db.update(sends)
+               .set({ status: 'opened' })
+               .where(and(eq(sends.id, sendId), ne(sends.status, 'opened')))
+               .returning({ id: sends.id })
+             
+             if (marked) {
+               await db.update(campaigns)
+                 .set({ openCount: sql`${campaigns.openCount} + 1` })
+                 .where(eq(campaigns.id, send.campaignId))
+             }
+          }
+        }
       }
     } catch (err) {
       console.error('[track/click] DB error:', err)
@@ -68,3 +100,4 @@ export default defineEventHandler(async (event) => {
 
   await sendRedirect(event, targetUrl, 302)
 })
+

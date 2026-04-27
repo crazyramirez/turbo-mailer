@@ -1,6 +1,6 @@
 import { db } from '~/server/db/index'
 import { sends, campaigns, trackingEvents } from '~/server/db/schema'
-import { and, eq, ne, sql } from 'drizzle-orm'
+import { and, eq, ne, sql, gt } from 'drizzle-orm'
 import { verifyOpenToken } from '~/server/utils/auth'
 
 const PIXEL_GIF = Buffer.from(
@@ -29,32 +29,46 @@ export default defineEventHandler(async (event) => {
     }
 
     try {
-      const ip = getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown'
+      const ip = String(getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown').split(',')[0].trim()
       const userAgent = getHeader(event, 'user-agent') || ''
 
-      const [send] = await db.select().from(sends).where(eq(sends.id, sendId))
-      if (send) {
-        const campaignId = send.campaignId
+      // Deduplication: skip if exactly the same open was recorded in the last 10 seconds from the same IP
+      const tenSecondsAgo = new Date(Date.now() - 10000)
+      const [existing] = await db.select()
+        .from(trackingEvents)
+        .where(and(
+          eq(trackingEvents.sendId, sendId),
+          eq(trackingEvents.eventType, 'open'),
+          eq(trackingEvents.ip, ip),
+          gt(trackingEvents.createdAt, tenSecondsAgo)
+        ))
+        .limit(1)
 
-        await db.insert(trackingEvents).values({
-          sendId,
-          campaignId,
-          contactId: send.contactId,
-          eventType: 'open',
-          ip: String(ip).split(',')[0].trim(),
-          userAgent,
-          createdAt: new Date(),
-        })
+      if (!existing) {
+        const [send] = await db.select().from(sends).where(eq(sends.id, sendId))
+        if (send) {
+          const campaignId = send.campaignId
 
-        const [marked] = await db.update(sends)
-          .set({ status: 'opened' })
-          .where(and(eq(sends.id, sendId), ne(sends.status, 'opened')))
-          .returning({ id: sends.id })
+          await db.insert(trackingEvents).values({
+            sendId,
+            campaignId,
+            contactId: send.contactId,
+            eventType: 'open',
+            ip,
+            userAgent,
+            createdAt: new Date(),
+          })
 
-        if (marked) {
-          await db.update(campaigns)
-            .set({ openCount: sql`${campaigns.openCount} + 1` })
-            .where(eq(campaigns.id, campaignId))
+          const [marked] = await db.update(sends)
+            .set({ status: 'opened' })
+            .where(and(eq(sends.id, sendId), ne(sends.status, 'opened')))
+            .returning({ id: sends.id })
+
+          if (marked) {
+            await db.update(campaigns)
+              .set({ openCount: sql`${campaigns.openCount} + 1` })
+              .where(eq(campaigns.id, campaignId))
+          }
         }
       }
     } catch {
@@ -64,3 +78,4 @@ export default defineEventHandler(async (event) => {
 
   return PIXEL_GIF
 })
+
