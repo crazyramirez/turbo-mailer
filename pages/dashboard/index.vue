@@ -14,16 +14,18 @@ import {
   PauseCircle,
   ArrowRight,
   Trash2,
+  LogOut,
 } from "lucide-vue-next";
 import CampaignPreview from "~/components/campaigns/CampaignPreview.vue";
 import ResetModal from "~/components/dashboard/ResetModal.vue";
 import WelcomeModal from "~/components/dashboard/WelcomeModal.vue";
-import GhostWelcomeModal from "~/components/dashboard/GhostWelcomeModal.vue";
+import GhostWelcomeModal from "~/components/GhostWelcomeModal.vue";
 
 definePageMeta({ layout: "app" });
 
 const { t, locale } = useI18n();
 const { showToast } = useDashboardState();
+const { logout } = useCampaignSender();
 
 // ── Ghost Mode Welcome ──────────────────────────────────────────
 const showGhostWelcome = ref(false);
@@ -31,8 +33,8 @@ const config = useRuntimeConfig();
 
 onMounted(async () => {
   try {
-    const data = await $fetch<{ seen: boolean }>('/api/ghost-status', {
-      params: { portal: config.public.portalKey }
+    const data = await $fetch<{ seen: boolean }>("/api/ghost-status", {
+      params: { portal: config.public.portalKey },
     });
     if (!data.seen) {
       showGhostWelcome.value = true;
@@ -45,10 +47,10 @@ onMounted(async () => {
 function handleGhostWelcomeClose() {
   showGhostWelcome.value = false;
   // Ya se marcó como visto en el login o se marcará al cerrar aquí
-  $fetch('/api/ghost-status', {
-    method: 'POST',
-    params: { portal: config.public.portalKey }
-  }).catch(e => console.error(e));
+  $fetch("/api/ghost-status", {
+    method: "POST",
+    params: { portal: config.public.portalKey },
+  }).catch((e) => console.error(e));
 }
 
 // ── Interfaces ──────────────────────────────────────────────────
@@ -156,10 +158,10 @@ async function fetchAll() {
 let refreshTimeout: ReturnType<typeof setTimeout> | null = null;
 async function startSmartRefresh() {
   if (refreshTimeout) clearTimeout(refreshTimeout);
-  
+
   const hasSending = campaigns.value.some((c) => c.status === "sending");
   const delay = hasSending ? 5000 : 60000;
-  
+
   refreshTimeout = setTimeout(async () => {
     await fetchAll();
     startSmartRefresh();
@@ -295,8 +297,15 @@ async function duplicateCampaign() {
             <span>{{ t("dashboard.all_campaigns") }}</span>
             <ArrowRight :size="13" />
           </NuxtLink>
+          <button
+            class="btn-reset"
+            :title="t('dashboard.reset_btn')"
+            @click="showResetModal = true"
+          >
+            <Trash2 :size="14" />
+            <span>{{ t("dashboard.reset_btn") }}</span>
+          </button>
         </div>
-
       </div>
 
       <ResetModal
@@ -669,7 +678,46 @@ async function duplicateCampaign() {
   background: rgb(0 0 0 / 6%);
   color: var(--text);
 }
-
+.btn-reset {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 18px;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+.btn-reset:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+.btn-logout-dash {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 18px;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+.btn-logout-dash:hover {
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--accent2);
+  border-color: rgba(99, 102, 241, 0.3);
+}
 
 /* ── KPI ─────────────────────────────────────────────────── */
 .kpi-grid {
@@ -1294,7 +1342,8 @@ async function duplicateCampaign() {
   }
   .btn-primary,
   .btn-secondary,
-  .btn-reset {
+  .btn-reset,
+  .btn-logout-dash {
     flex: 1;
     justify-content: center;
     min-height: 40px;
@@ -1392,7 +1441,8 @@ async function duplicateCampaign() {
   }
   .btn-primary,
   .btn-secondary,
-  .btn-reset {
+  .btn-reset,
+  .btn-logout-dash {
     width: auto;
     flex: 1;
     padding: 0 8px;

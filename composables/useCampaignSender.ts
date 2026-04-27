@@ -77,8 +77,9 @@ function performFullReset() {
 }
 
 async function logout() {
+  const config = useRuntimeConfig()
   await $fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
-  window.location.href = '/login'
+  window.location.href = `/login?portal=${config.public.portalKey}`
 }
 
 function insertVar(token: string) {
