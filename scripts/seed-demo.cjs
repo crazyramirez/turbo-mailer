@@ -14,6 +14,7 @@ db.exec(`
   DROP TABLE IF EXISTS list_contacts;
   DROP TABLE IF EXISTS lists;
   DROP TABLE IF EXISTS contacts;
+  DROP TABLE IF EXISTS settings;
 `)
 
 db.exec(`
@@ -32,6 +33,8 @@ db.exec(`
     instagram TEXT,
     tags TEXT DEFAULT '[]',
     status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','unsubscribed','bounced')),
+    sub_change_count INTEGER DEFAULT 0,
+    sub_change_window_start INTEGER,
     created_at INTEGER,
     updated_at INTEGER
   );
@@ -66,7 +69,11 @@ db.exec(`
     sent_count INTEGER DEFAULT 0,
     open_count INTEGER DEFAULT 0,
     click_count INTEGER DEFAULT 0,
-    fail_count INTEGER DEFAULT 0
+    fail_count INTEGER DEFAULT 0,
+    unsub_email_subject TEXT,
+    unsub_email_message TEXT,
+    resub_email_subject TEXT,
+    resub_email_message TEXT
   );
 
   CREATE TABLE sends (
@@ -91,6 +98,14 @@ db.exec(`
     user_agent TEXT,
     created_at INTEGER
   );
+
+  CREATE TABLE settings (
+    key TEXT PRIMARY KEY,
+    value TEXT,
+    updated_at INTEGER
+  );
+
+  INSERT INTO settings (key, value, updated_at) VALUES ('ghost_setup_seen', '1', strftime('%s', 'now') * 1000);
 `)
 
 const now = Date.now()
@@ -142,10 +157,10 @@ const contactsData = [
 ]
 
 const insertContact = db.prepare(
-  'INSERT INTO contacts (email, name, company, phone, linkedin, url, youtube, instagram, tags, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  'INSERT INTO contacts (email, name, company, phone, linkedin, url, youtube, instagram, tags, status, sub_change_count, sub_change_window_start, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
 )
 contactsData.forEach((c, i) => {
-  insertContact.run(...c, d(45 - i * 2), d(3 + i))
+  insertContact.run(...c, 0, null, d(45 - i * 2), d(3 + i))
 })
 
 // ── LISTS (4) ────────────────────────────────────────────────────────────────

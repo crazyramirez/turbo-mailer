@@ -9,6 +9,7 @@ const TABLES_DELETE_ORDER = [
   'campaigns',
   'contacts',
   'lists',
+  'settings',
 ]
 
 const TABLES_INSERT_ORDER = [
@@ -18,6 +19,7 @@ const TABLES_INSERT_ORDER = [
   'list_contacts',
   'sends',
   'tracking_events',
+  'settings',
 ]
 
 export default defineEventHandler(async () => {
@@ -42,10 +44,12 @@ export default defineEventHandler(async () => {
     conn.exec('BEGIN')
 
     for (const table of TABLES_DELETE_ORDER) {
+      console.log(`[Demo] Clearing table: ${table}`)
       conn.exec(`DELETE FROM main."${table}"`)
     }
 
     for (const table of TABLES_INSERT_ORDER) {
+      console.log(`[Demo] Inserting table: ${table}`)
       conn.exec(`INSERT INTO main."${table}" SELECT * FROM demo."${table}"`)
     }
 

@@ -470,6 +470,7 @@
     "decoy_encryption": "Encryption: TLS 1.3 Active",
     "decoy_404_title": "404",
     "decoy_404_msg": "Recurso no encontrado en este servidor.",
-    "decoy_server_info": "Apache/2.4.41 (Ubuntu) Server at 127.0.0.1 Port 443"
+    "decoy_server_info": "Apache/2.4.41 (Ubuntu) Server at 127.0.0.1 Port 443",
+    "once_notice": "Este panel no volverá a aparecer a menos que elimines la base de datos o restaures la aplicación."
   }
 }

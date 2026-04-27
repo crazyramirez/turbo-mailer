@@ -1,5 +1,5 @@
 import { db } from '~/server/db/index'
-import { contacts, lists, listContacts, campaigns, sends, trackingEvents } from '~/server/db/schema'
+import { contacts, lists, listContacts, campaigns, sends, trackingEvents, settings } from '~/server/db/schema'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { createBackup } from '~/server/utils/backup'
@@ -46,6 +46,7 @@ export default defineEventHandler(async (event) => {
     await db.delete(campaigns)
     await db.delete(contacts)
     await db.delete(lists)
+    await db.delete(settings)
 
     if (scope === 'all') {
       const templatesDir = path.resolve(process.cwd(), 'data/templates')

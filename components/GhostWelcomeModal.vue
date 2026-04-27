@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Shield, Copy, Check, ArrowRight } from "lucide-vue-next";
+import { Shield, Copy, Check, ArrowRight, Info } from "lucide-vue-next";
 
 const { t } = useI18n();
 const emit = defineEmits(["close"]);
@@ -56,6 +56,11 @@ async function dismiss() {
             <li><span>🔑</span> <strong>{{ t('ghost.feature_protected') }}:</strong> {{ t('ghost.feature_protected_desc') }}</li>
             <li><span>🚀</span> <strong>{{ t('ghost.feature_secure') }}:</strong> {{ t('ghost.feature_secure_desc') }}</li>
           </ul>
+          
+          <div class="ghost-once-notice">
+            <Info :size="14" />
+            <p>{{ t('ghost.once_notice') }}</p>
+          </div>
         </div>
 
         <button class="btn-ghost-enter" @click="dismiss">
@@ -155,6 +160,33 @@ async function dismiss() {
   font-size: 14px;
   color: #94a3b8;
   margin-bottom: 12px;
+}
+
+
+
+.ghost-once-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(245, 158, 11, 0.05);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  border-radius: 12px;
+  text-align: left;
+  margin-bottom: 24px;
+}
+
+.ghost-once-notice svg {
+  color: #f59e0b;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.ghost-once-notice p {
+  font-size: 12px !important;
+  color: #fbbf24 !important;
+  margin: 0 !important;
+  line-height: 1.5 !important;
 }
 
 .btn-ghost-enter {
