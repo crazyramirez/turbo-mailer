@@ -5,36 +5,38 @@ import { ArrowRight } from "lucide-vue-next";
 definePageMeta({ layout: false });
 
 const isAuthed = useState<boolean | null>("isAuthed", () => null);
-const showSetupWelcome = ref(true); // Forzamos true inicialmente para asegurar que se intente renderizar
+const showSetupWelcome = ref(false);
 const portalKey = ref("");
 
 const { t } = useI18n();
 
-// Si el usuario ya está autenticado, lo llevamos al dashboard real
-onMounted(async () => {
+// Usamos useAsyncData para gestionar todo el estado inicial de forma síncrona para el SSR
+// Esto evita parpadeos (flicker) ya que el HTML generado en el servidor ya vendrá con el estado correcto
+const { data: initData } = await useAsyncData('index-init', async () => {
+  // 1. Si ya está autenticado, no hay nada que mostrar aquí (el middleware o onMounted redirigirán)
   if (isAuthed.value) {
-    showSetupWelcome.value = false;
-    navigateTo("/dashboard");
-    return;
+    return { seen: true, portalKey: "" };
   }
 
-  // Verificar en la DDBB si es la primera vez (consulta pública inicial)
+  // 2. Verificar en la DDBB si es la primera vez (consulta pública inicial)
   try {
-    const data = await $fetch<{ seen: boolean; portalKey: string }>(
-      "/api/ghost-status",
-      {
-        params: { public: "true" },
-      },
-    );
-
-    if (data.seen) {
-      showSetupWelcome.value = false;
-    } else {
-      portalKey.value = data.portalKey;
-      showSetupWelcome.value = true;
-    }
+    return await $fetch<{ seen: boolean; portalKey: string }>("/api/ghost-status", {
+      params: { public: "true" },
+    });
   } catch (e) {
-    // En caso de error, mantenemos el modal por seguridad si es la primera vez
+    return { seen: true, portalKey: "" }; // Por defecto ocultar si hay error
+  }
+});
+
+if (initData.value && !initData.value.seen && !isAuthed.value) {
+  portalKey.value = initData.value.portalKey;
+  showSetupWelcome.value = true;
+}
+
+onMounted(() => {
+  // Redirección inmediata si ya está autenticado
+  if (isAuthed.value) {
+    navigateTo("/dashboard");
   }
 });
 
@@ -51,22 +53,19 @@ function enterPortal() {
       <div class="pulse-ring"></div>
       <div class="status-dot"></div>
       <div class="status-text">
-        <span class="node-id">{{ t('ghost.decoy_node') }}</span>
-        <span class="node-status">{{ t('ghost.decoy_operational') }}</span>
+        <span class="node-id">{{ t("ghost.decoy_node") }}</span>
+        <span class="node-status">{{ t("ghost.decoy_operational") }}</span>
       </div>
     </div>
 
     <div class="terminal-ghost">
-      <p class="line">{{ t('ghost.decoy_ready') }}</p>
-      <p class="line">{{ t('ghost.decoy_waiting') }}</p>
-      <p class="line opacity-40">{{ t('ghost.decoy_encryption') }}</p>
+      <p class="line">{{ t("ghost.decoy_ready") }}</p>
+      <p class="line">{{ t("ghost.decoy_waiting") }}</p>
+      <p class="line opacity-40">{{ t("ghost.decoy_encryption") }}</p>
     </div>
 
     <!-- First Run Welcome Overlay -->
-    <GhostWelcomeModal 
-      v-if="showSetupWelcome" 
-      @close="enterPortal" 
-    />
+    <GhostWelcomeModal v-if="showSetupWelcome" @close="enterPortal" />
   </div>
 </template>
 
@@ -150,5 +149,4 @@ function enterPortal() {
     opacity: 0;
   }
 }
-
 </style>
