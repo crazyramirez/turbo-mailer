@@ -61,7 +61,7 @@
   );
   pointer-events: none;
   z-index: 1;
-  animation: grid-drift 120s linear infinite;
+  opacity: 0.35;
 }
 
 @media (max-width: 768px) {
