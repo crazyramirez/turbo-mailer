@@ -246,6 +246,17 @@ Pulsa **"Empezar desde cero"** para comenzar directamente con la base de datos v
 
 ---
 
+## 👻 Seguridad Invisible (Ghost Mode)
+
+Para garantizar la máxima privacidad, Turbo-Mailer PRO está diseñado para ser invisible ante visitantes curiosos o rastreadores.
+
+1. **Raíz de Señuelo**: Al acceder a la raíz del dominio (`/`), se muestra una página de estado técnica simulando un nodo SMTP operativo. El panel de administración está "escondido" en `/dashboard`.
+2. **Login Oculto (Backdoor)**: Si intentas entrar a `/login` directamente, la aplicación mostrará un **error 404 falso** (Apache/Ubuntu).
+3. **Cómo Acceder**: Debes añadir el parámetro secreto definido en tu archivo `.env` (`PORTAL_KEY`).
+   - **URL de acceso**: `tudominio.com/login?portal=admin` (si usas el valor por defecto).
+
+> **Importante**: Una vez que inicies sesión, podrás navegar normalmente por el panel. Si cierras sesión o la sesión expira, volverás a ver la página de señuelo técnica.
+
 ## 🔑 Ejemplo: Configuración con Gmail
 
 La app usa Gmail SMTP con una contraseña de aplicación de 16 dígitos (no tu contraseña normal).
@@ -314,11 +325,8 @@ La app usa Gmail SMTP con una contraseña de aplicación de 16 dígitos (no tu c
 
 ---
 
-- **Privacidad**: Los datos de contactos y campañas persisten en tu base de datos SQLite local. Tus datos **nunca** salen de tu servidor ni son accesibles por terceros.
-- **Seguridad Avanzada (Ghost Mode)**: La aplicación está diseñada para ser invisible ante visitantes no deseados.
-  - **Raíz Técnica**: Al acceder a la raíz (`/`), se muestra una página de estado técnica simulando un nodo SMTP.
-  - **Login Oculto**: La página de login (`/login`) devuelve un error 404 simulado a menos que se acceda con la llave secreta: `/login?portal=admin`.
-  - **Redirección Silenciosa**: Cualquier acceso no autorizado a rutas internas redirige automáticamente a la raíz técnica, no al login.
+- **Privacy**: Contact and campaign data persist in your local SQLite database. Your data **never** leaves your server and is not accessible by third parties.
+- **Ghost Mode**: High-level obfuscation (see the Ghost Mode section above for access details).
 
 ---
 

@@ -245,6 +245,17 @@ Click **"Start from scratch"** to begin directly with an empty database and impo
 
 ---
 
+## 👻 Invisible Security (Ghost Mode)
+
+To ensure maximum privacy, Turbo-Mailer PRO is designed to be invisible to curious visitors or crawlers.
+
+1. **Decoy Root**: Accessing the domain root (`/`) displays a technical status page simulating an operational SMTP node. The administration panel is "hidden" at `/dashboard`.
+2. **Hidden Login (Backdoor)**: If you try to access `/login` directly, the application will display a **fake 404 error** (Apache/Ubuntu).
+3. **How to Access**: You must add the secret parameter defined in your `.env` file (`PORTAL_KEY`).
+   - **Access URL**: `yourdomain.com/login?portal=admin` (if using the default value).
+
+> **Important**: Once you log in, you can navigate the dashboard normally. If you log out or the session expires, you will see the technical decoy page again.
+
 ## 🔑 Example: Configuration with Gmail
 
 The app uses Gmail SMTP with a 16-digit app password (not your normal password).
@@ -314,10 +325,7 @@ The app uses Gmail SMTP with a 16-digit app password (not your normal password).
 ---
 
 - **Privacy**: Contact and campaign data persist in your local SQLite database. Your data **never** leaves your server and is not accessible by third parties.
-- **Advanced Security (Ghost Mode)**: The application is designed to be invisible to unwanted visitors.
-  - **Technical Root**: Accessing the root (`/`) shows a technical status page simulating an SMTP node.
-  - **Hidden Login**: The login page (`/login`) returns a simulated 404 error unless accessed with the secret key: `/login?portal=admin`.
-  - **Silent Redirection**: Any unauthorized access to internal routes automatically redirects to the technical root, not the login page.
+- **Ghost Mode**: High-level obfuscation for maximum privacy (see the Ghost Mode section above for access details).
 
 ---
 
