@@ -8,6 +8,9 @@ const PIXEL_GIF = Buffer.from(
   'base64'
 )
 
+// In-memory lock to prevent race conditions from rapid-fire open triggers
+const openLock = new Set<string>()
+
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const sendId = Number(query.s)
@@ -18,21 +21,23 @@ export default defineEventHandler(async (event) => {
   setHeader(event, 'Pragma', 'no-cache')
 
   const config = useRuntimeConfig()
-  if (!config.unsubscribeSecret) {
-    throw createError({ statusCode: 500, statusMessage: 'UNSUBSCRIBE_SECRET not configured' })
-  }
-
   if (sendId && sig) {
     if (!verifyOpenToken(sendId, sig, config.unsubscribeSecret as string)) {
-      // Silently return pixel — don't reveal invalid sig to bots
       return PIXEL_GIF
     }
 
     try {
       const ip = String(getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown').split(',')[0].trim()
-      const userAgent = getHeader(event, 'user-agent') || ''
+      
+      // 1. Memory debounce
+      const lockKey = `${sendId}:${ip}`
+      if (openLock.has(lockKey)) {
+        return PIXEL_GIF
+      }
+      openLock.add(lockKey)
+      setTimeout(() => openLock.delete(lockKey), 2000)
 
-      // Deduplication: skip if exactly the same open was recorded in the last 10 seconds from the same IP
+      // 2. DB Deduplication
       const tenSecondsAgo = new Date(Date.now() - 10000)
       const [existing] = await db.select()
         .from(trackingEvents)
@@ -55,7 +60,7 @@ export default defineEventHandler(async (event) => {
             contactId: send.contactId,
             eventType: 'open',
             ip,
-            userAgent,
+            userAgent: getHeader(event, 'user-agent') || '',
             createdAt: new Date(),
           })
 
@@ -72,10 +77,11 @@ export default defineEventHandler(async (event) => {
         }
       }
     } catch {
-      // Never fail the pixel request
+      // Silently fail for pixel
     }
   }
 
   return PIXEL_GIF
 })
+
 
