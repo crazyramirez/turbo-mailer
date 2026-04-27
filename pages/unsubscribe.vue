@@ -148,21 +148,7 @@ onMounted(async () => {
 .btn-resub:hover {
   background: rgba(99, 102, 241, 0.25);
 }
-.btn-home {
-  margin-top: 8px;
-  padding: 10px 24px;
-  background: var(--accent);
-  color: #fff;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 700;
-  text-decoration: none;
-  transition: all 0.2s;
-  display: inline-block;
-}
-.btn-home:hover {
-  filter: brightness(1.1);
-}
+
 
 .spinner {
   width: 36px;

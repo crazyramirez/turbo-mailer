@@ -105,7 +105,7 @@ onUnmounted(() => {
   <div class="editor-container">
     <div class="mobile-overlay">
       <div class="mobile-overlay-content">
-        <NuxtLink to="/" class="mobile-close-btn" :title="$t('common.close')">
+        <NuxtLink to="/dashboard" class="mobile-close-btn" :title="$t('common.close')">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"

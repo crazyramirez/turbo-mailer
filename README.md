@@ -195,6 +195,7 @@ SQLite en `./data/turbomailer.db` gestionada con Drizzle ORM. Tablas principales
    ```env
    # Acceso a la Aplicación (requerido)
    APP_PASSWORD=tu-contraseña-de-acceso
+   PORTAL_KEY=admin
 
    # Configuración SMTP (requerido para enviar)
    SMTP_HOST=smtp.gmail.com
@@ -313,14 +314,11 @@ La app usa Gmail SMTP con una contraseña de aplicación de 16 dígitos (no tu c
 
 ---
 
-## 🛡️ Seguridad
-
-- Contraseña maestra almacenada en variable de entorno (nunca en código)
-- Sesión en cookie `httpOnly` + `SameSite=strict` con TTL de 24 horas
-- Rate limiting por IP: 10 intentos fallidos → bloqueo de 15 minutos con contador visible
-- Middleware global que redirige a `/login` si la sesión no es válida
-- **Instancia Única**: Diseñada como una aplicación de una sola cuenta para control total y seguridad simplificada en tu propio servidor.
 - **Privacidad**: Los datos de contactos y campañas persisten en tu base de datos SQLite local. Tus datos **nunca** salen de tu servidor ni son accesibles por terceros.
+- **Seguridad Avanzada (Ghost Mode)**: La aplicación está diseñada para ser invisible ante visitantes no deseados.
+  - **Raíz Técnica**: Al acceder a la raíz (`/`), se muestra una página de estado técnica simulando un nodo SMTP.
+  - **Login Oculto**: La página de login (`/login`) devuelve un error 404 simulado a menos que se acceda con la llave secreta: `/login?portal=admin`.
+  - **Redirección Silenciosa**: Cualquier acceso no autorizado a rutas internas redirige automáticamente a la raíz técnica, no al login.
 
 ---
 

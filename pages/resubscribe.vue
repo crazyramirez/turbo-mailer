@@ -4,7 +4,9 @@ import { CheckCircle, AlertCircle } from "lucide-vue-next";
 const { t } = useI18n();
 const route = useRoute();
 
-const status = ref<"loading" | "ok" | "already" | "rate_limited" | "error">("loading");
+const status = ref<"loading" | "ok" | "already" | "rate_limited" | "error">(
+  "loading",
+);
 const rateLimitHours = ref(24);
 const customMessage = ref<string | null>(null);
 
@@ -54,7 +56,13 @@ onMounted(async () => {
       <div v-else-if="status === 'rate_limited'" class="state error">
         <AlertCircle :size="48" class="state-icon" />
         <h1>{{ t("common.error") }}</h1>
-        <p>{{ t("resubscribe_page.rate_limited", { hours: String(rateLimitHours) }) }}</p>
+        <p>
+          {{
+            t("resubscribe_page.rate_limited", {
+              hours: String(rateLimitHours),
+            })
+          }}
+        </p>
       </div>
       <div v-else class="state error">
         <AlertCircle :size="48" class="state-icon" />
@@ -112,22 +120,6 @@ onMounted(async () => {
   font-size: 14px;
   color: var(--text-muted);
   line-height: 1.6;
-}
-
-.btn-home {
-  margin-top: 8px;
-  padding: 10px 24px;
-  background: var(--accent);
-  color: #fff;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 700;
-  text-decoration: none;
-  transition: all 0.2s;
-  display: inline-block;
-}
-.btn-home:hover {
-  filter: brightness(1.1);
 }
 
 .spinner {

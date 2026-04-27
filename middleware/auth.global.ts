@@ -1,5 +1,5 @@
 export default defineNuxtRouteMiddleware(async (to) => {
-  if (to.path === '/login' || to.path === '/unsubscribe') return
+  if (to.path === '/login' || to.path === '/unsubscribe' || to.path === '/resubscribe') return
 
   const isAuthed = useState<boolean | null>('isAuthed', () => null)
 
@@ -13,6 +13,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   if (!isAuthed.value) {
-    return navigateTo('/login')
+    if (to.path !== '/') {
+      return navigateTo('/')
+    }
   }
 })

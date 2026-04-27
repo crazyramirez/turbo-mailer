@@ -80,7 +80,7 @@ function updateIndicator() {
         const links = navRef.value.querySelectorAll(".nav-link");
         activeLink = Array.from(links).find((link) => {
           const path = (link as HTMLAnchorElement).pathname;
-          if (path === "/") return route.path === "/";
+          if (path === "/dashboard") return route.path === "/dashboard";
           return route.path.startsWith(path);
         }) as HTMLElement;
       }
@@ -156,7 +156,7 @@ watch([() => route.path, () => locale.value], () => {
         />
 
         <NuxtLink
-          to="/"
+          to="/dashboard"
           class="nav-link"
           active-class="router-link-active"
           exact-active-class="router-link-active"
@@ -295,7 +295,7 @@ watch([() => route.path, () => locale.value], () => {
 
         <!-- Primary nav -->
         <nav class="drawer-nav">
-          <NuxtLink to="/" class="drawer-link" @click="closeMenu">
+          <NuxtLink to="/dashboard" class="drawer-link" @click="closeMenu">
             <span class="drawer-link-icon">
               <LayoutDashboard :size="17" stroke-width="2" />
             </span>

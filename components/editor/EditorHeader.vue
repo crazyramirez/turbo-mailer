@@ -34,7 +34,7 @@ async function handleBack() {
   if (window.history.state && window.history.state.back) {
     router.back();
   } else {
-    navigateTo("/");
+    navigateTo("/dashboard");
   }
 }
 </script>

@@ -1,6 +1,8 @@
 {
-  "name": "TurboMailer",
-  "short_name": "TurboMailer",
+  "name": "SMTP Node Service",
+  "short_name": "SMTP Node",
+  "start_url": "/dashboard",
+  "scope": "/",
   "icons": [
     {
       "src": "/images/icons/web-app-manifest-192x192.png",

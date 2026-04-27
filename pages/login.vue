@@ -8,139 +8,151 @@
       <div class="bg-orb bg-orb-3"></div>
     </div>
 
-    <!-- Card -->
-    <div class="login-card" :class="{ shake: shaking }">
-      <!-- Logo -->
-      <div class="login-logo">
-        <div class="logo-icon-wrap">
-          <img
-            src="/images/icons/web-app-manifest-192x192.png"
-            class="logo-img"
-            alt="Logo"
-          />
-        </div>
-        <div class="logo-text-group">
-          <span class="logo-title">
-            Turbo-Mailer <span class="logo-accent">PRO</span>
-            <span class="version-tag">{{ APP_VERSION }}</span>
-          </span>
-          <span class="logo-sub">Acceso seguro</span>
-        </div>
-      </div>
-
-      <!-- Divider -->
-      <div class="card-divider"></div>
-
-      <!-- Heading -->
-      <div class="login-heading">
-        <h1 class="login-h1">Bienvenido</h1>
-        <p class="login-desc">Introduce tu clave de acceso para continuar</p>
-      </div>
-
-      <!-- Form -->
-      <form @submit.prevent="submit" class="login-form" novalidate>
-        <div class="field-group" :class="{ 'field-error': errorMsg }">
-          <label for="password" class="field-label">Contraseña</label>
-          <div class="field-input-wrap">
-            <Lock
-              :size="16"
-              stroke-width="2"
-              class="field-icon"
-              aria-hidden="true"
+    <template v-if="showPortal">
+      <!-- Card -->
+      <div class="login-card" :class="{ shake: shaking }">
+        <!-- Logo -->
+        <div class="login-logo">
+          <div class="logo-icon-wrap">
+            <img
+              src="/images/icons/web-app-manifest-192x192.png"
+              class="logo-img"
+              alt="Logo"
             />
-            <input
-              id="password"
-              ref="inputRef"
-              v-model="password"
-              :type="showPass ? 'text' : 'password'"
-              class="field-input"
-              placeholder="••••••••••••"
-              autocomplete="current-password"
-              :disabled="loading || blocked"
-              aria-label="Contraseña de acceso"
-              aria-describedby="error-msg"
-              @keydown.enter.prevent="submit"
-            />
-            <button
-              type="button"
-              class="field-eye"
-              :aria-label="
-                showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'
-              "
-              @click="showPass = !showPass"
-              tabindex="0"
-            >
-              <Eye v-if="!showPass" :size="16" stroke-width="2" />
-              <EyeOff v-else :size="16" stroke-width="2" />
-            </button>
+          </div>
+          <div class="logo-text-group">
+            <span class="logo-title">
+              Turbo-Mailer <span class="logo-accent">PRO</span>
+              <span class="version-tag">{{ APP_VERSION }}</span>
+            </span>
+            <span class="logo-sub">Acceso seguro</span>
+          </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="card-divider"></div>
+
+        <!-- Heading -->
+        <div class="login-heading">
+          <h1 class="login-h1">Bienvenido</h1>
+          <p class="login-desc">Introduce tu clave de acceso para continuar</p>
+        </div>
+
+        <!-- Form -->
+        <form @submit.prevent="submit" class="login-form" novalidate>
+          <div class="field-group" :class="{ 'field-error': errorMsg }">
+            <label for="password" class="field-label">Contraseña</label>
+            <div class="field-input-wrap">
+              <Lock
+                :size="16"
+                stroke-width="2"
+                class="field-icon"
+                aria-hidden="true"
+              />
+              <input
+                id="password"
+                ref="inputRef"
+                v-model="password"
+                :type="showPass ? 'text' : 'password'"
+                class="field-input"
+                placeholder="••••••••••••"
+                autocomplete="current-password"
+                :disabled="loading || blocked"
+                aria-label="Contraseña de acceso"
+                aria-describedby="error-msg"
+                @keydown.enter.prevent="submit"
+              />
+              <button
+                type="button"
+                class="field-eye"
+                :aria-label="
+                  showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'
+                "
+                @click="showPass = !showPass"
+                tabindex="0"
+              >
+                <Eye v-if="!showPass" :size="16" stroke-width="2" />
+                <EyeOff v-else :size="16" stroke-width="2" />
+              </button>
+            </div>
+
+            <!-- Error message -->
+            <Transition name="err-fade">
+              <div
+                v-if="errorMsg"
+                id="error-msg"
+                class="error-msg"
+                role="alert"
+                aria-live="assertive"
+              >
+                <AlertTriangle :size="13" stroke-width="2.5" />
+                <span>{{ errorMsg }}</span>
+              </div>
+            </Transition>
           </div>
 
-          <!-- Error message -->
+          <!-- Attempts bar -->
           <Transition name="err-fade">
             <div
-              v-if="errorMsg"
-              id="error-msg"
-              class="error-msg"
-              role="alert"
-              aria-live="assertive"
+              v-if="
+                remaining !== null && remaining < 10 && remaining > 0 && !blocked
+              "
+              class="attempts-bar"
             >
-              <AlertTriangle :size="13" stroke-width="2.5" />
-              <span>{{ errorMsg }}</span>
+              <div class="attempts-track">
+                <div
+                  class="attempts-fill"
+                  :style="{ width: `${(remaining / 10) * 100}%` }"
+                ></div>
+              </div>
+              <span class="attempts-label"
+                >{{ remaining }} intentos restantes</span
+              >
             </div>
           </Transition>
-        </div>
 
-        <!-- Attempts bar -->
-        <Transition name="err-fade">
-          <div
-            v-if="
-              remaining !== null && remaining < 10 && remaining > 0 && !blocked
-            "
-            class="attempts-bar"
-          >
-            <div class="attempts-track">
-              <div
-                class="attempts-fill"
-                :style="{ width: `${(remaining / 10) * 100}%` }"
-              ></div>
+          <!-- Block countdown -->
+          <Transition name="err-fade">
+            <div v-if="blocked" class="block-notice">
+              <ShieldOff :size="14" stroke-width="2.5" />
+              <span>IP bloqueada {{ countdownLabel }}</span>
             </div>
-            <span class="attempts-label"
-              >{{ remaining }} intentos restantes</span
-            >
-          </div>
-        </Transition>
+          </Transition>
 
-        <!-- Block countdown -->
-        <Transition name="err-fade">
-          <div v-if="blocked" class="block-notice">
-            <ShieldOff :size="14" stroke-width="2.5" />
-            <span>IP bloqueada {{ countdownLabel }}</span>
-          </div>
-        </Transition>
+          <!-- CTA -->
+          <button
+            type="submit"
+            class="btn-login"
+            :disabled="loading || blocked || !password"
+            :aria-busy="loading"
+          >
+            <span v-if="!loading" class="btn-label">
+              <LogIn :size="16" stroke-width="2.5" />
+              Acceder
+            </span>
+            <span v-else class="btn-spinner" aria-label="Verificando...">
+              <span class="spinner"></span>
+              Verificando…
+            </span>
+          </button>
+        </form>
 
-        <!-- CTA -->
-        <button
-          type="submit"
-          class="btn-login"
-          :disabled="loading || blocked || !password"
-          :aria-busy="loading"
-        >
-          <span v-if="!loading" class="btn-label">
-            <LogIn :size="16" stroke-width="2.5" />
-            Acceder
-          </span>
-          <span v-else class="btn-spinner" aria-label="Verificando...">
-            <span class="spinner"></span>
-            Verificando…
-          </span>
-        </button>
-      </form>
-
-      <!-- Footer -->
-      <p class="login-footer">
-        Turbo-Mailer PRO {{ APP_VERSION }} &mdash; acceso privado
-      </p>
-    </div>
+        <!-- Footer -->
+        <p class="login-footer">
+          Turbo-Mailer PRO {{ APP_VERSION }} &mdash; acceso privado
+        </p>
+      </div>
+    </template>
+    
+    <!-- Fake 404 Decoy -->
+    <template v-else>
+      <div class="ghost-404">
+        <h1>404</h1>
+        <p>The requested resource was not found on this server.</p>
+        <hr class="ghost-hr" />
+        <p class="ghost-server">Apache/2.4.41 (Ubuntu) Server at 127.0.0.1 Port 443</p>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -172,7 +184,13 @@ const countdownLabel = ref("");
 const inputRef = ref<HTMLInputElement>();
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
 
+const route = useRoute();
+const config = useRuntimeConfig();
 const isAuthed = useState<boolean | null>("isAuthed", () => null);
+
+// Constante secreta para el acceso configurada en .env
+const ACCESS_KEY = config.public.portalKey; 
+const showPortal = computed(() => route.query.portal === ACCESS_KEY || isAuthed.value);
 
 function triggerShake() {
   shaking.value = true;
@@ -224,7 +242,7 @@ async function submit() {
       body: { password: password.value },
     });
     isAuthed.value = true;
-    await navigateTo("/");
+    await navigateTo("/dashboard");
   } catch (err: any) {
     const data = err?.data?.data ?? err?.response?._data?.data ?? {};
     const msg = err?.data?.message ?? err?.message ?? "Error inesperado";
@@ -674,6 +692,31 @@ onUnmounted(() => {
   color: #1e293b;
   margin: 20px 0 0;
   letter-spacing: 0.02em;
+}
+
+/* ── Ghost 404 ── */
+.ghost-404 {
+  text-align: left;
+  max-width: 600px;
+  color: #fff;
+  padding: 40px;
+  font-family: 'Times New Roman', serif;
+}
+.ghost-404 h1 {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+.ghost-404 p {
+  font-size: 16px;
+}
+.ghost-hr {
+  margin: 20px 0;
+  border: 0;
+  border-top: 1px solid #444;
+}
+.ghost-server {
+  font-style: italic;
+  color: #888;
 }
 
 /* ── Responsive ── */

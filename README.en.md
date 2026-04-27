@@ -313,14 +313,11 @@ The app uses Gmail SMTP with a 16-digit app password (not your normal password).
 
 ---
 
-## 🛡️ Security
-
-- Master password stored in environment variable (never in code)
-- Session in `httpOnly` cookie + `SameSite=strict` with 24-hour TTL
-- Rate limiting per IP: 10 failed attempts → 15-minute lockout with visible timer
-- Global middleware redirects to `/login` if session is invalid
-- **Single-Account Instance**: Designed as a single-account application for total control and simplified security on your own server.
 - **Privacy**: Contact and campaign data persist in your local SQLite database. Your data **never** leaves your server and is not accessible by third parties.
+- **Advanced Security (Ghost Mode)**: The application is designed to be invisible to unwanted visitors.
+  - **Technical Root**: Accessing the root (`/`) shows a technical status page simulating an SMTP node.
+  - **Hidden Login**: The login page (`/login`) returns a simulated 404 error unless accessed with the secret key: `/login?portal=admin`.
+  - **Silent Redirection**: Any unauthorized access to internal routes automatically redirects to the technical root, not the login page.
 
 ---
 
