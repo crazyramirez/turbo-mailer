@@ -1,4 +1,4 @@
-# Turbo-Mailer — Project Notes
+# TurboMailer — Project Notes
 
 ## Stack
 

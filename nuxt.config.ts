@@ -11,7 +11,7 @@ export default defineNuxtConfig({
     smtpUser: process.env.SMTP_USER,
     smtpPass: process.env.SMTP_PASS,
     smtpSecure: process.env.SMTP_SECURE !== 'false', // Default to true
-    smtpFromName: process.env.SMTP_FROM_NAME || 'Turbo-Mailer',
+    smtpFromName: process.env.SMTP_FROM_NAME || 'TurboMailer',
     smtpFromEmail: process.env.SMTP_FROM_EMAIL,
     openaiApiKey: process.env.OPENAI_API_KEY,
     openaiModel: process.env.OPENAI_MODEL || 'gpt-4o-mini',
@@ -41,7 +41,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: "Turbo-Mailer",
+      title: "TurboMailer",
       meta: [
         { charset: "utf-8" },
         { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" },
@@ -54,12 +54,12 @@ export default defineNuxtConfig({
         { name: "googlebot", content: "noindex, nofollow, noarchive" },
         // Open Graph / Facebook
         { property: "og:type", content: "website" },
-        { property: "og:title", content: "Turbo-Mailer" },
+        { property: "og:title", content: "TurboMailer" },
         { property: "og:description", content: "Premium Email Marketing & Campaign Management Dashboard" },
         { property: "og:image", content: "/images/ogimage.jpg" },
         // Twitter
         { name: "twitter:card", content: "summary_large_image" },
-        { name: "twitter:title", content: "Turbo-Mailer" },
+        { name: "twitter:title", content: "TurboMailer" },
         { name: "twitter:description", content: "Premium Email Marketing Dashboard" },
         { name: "twitter:image", content: "/images/ogimage.jpg" }
       ],

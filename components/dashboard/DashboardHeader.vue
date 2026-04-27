@@ -124,7 +124,7 @@ watch([() => route.path, () => locale.value], () => {
         </div>
         <div class="logo-text-group">
           <span class="logo-title">
-            Turbo-Mailer
+            TurboMailer
             <span class="version-badge">{{ APP_VERSION }}</span>
           </span>
           <span class="logo-sub">{{ t("app.subtitle") }}</span>
@@ -264,7 +264,7 @@ watch([() => route.path, () => locale.value], () => {
               />
             </div>
             <div>
-              <span class="drawer-title">Turbo-Mailer</span>
+              <span class="drawer-title">TurboMailer</span>
               <span class="drawer-sub">{{ t("app.subtitle") }}</span>
             </div>
           </div>

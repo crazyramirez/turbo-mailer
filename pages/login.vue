@@ -28,7 +28,7 @@
           </div>
           <div class="logo-text-group">
             <span class="logo-title">
-              Turbo-Mailer <span class="logo-accent">PRO</span>
+              TurboMailer <span class="logo-accent">PRO</span>
               <span class="version-tag">{{ APP_VERSION }}</span>
             </span>
             <span class="logo-sub">Acceso seguro</span>
@@ -148,7 +148,7 @@
 
         <!-- Footer -->
         <p class="login-footer">
-          Turbo-Mailer {{ APP_VERSION }} &mdash; acceso privado
+          TurboMailer {{ APP_VERSION }} &mdash; acceso privado
         </p>
       </div>
     </template>

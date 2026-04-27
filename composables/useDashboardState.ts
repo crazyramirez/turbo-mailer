@@ -197,7 +197,7 @@ function stepStatus(i: number) {
 
 function setupTemplateSync(): () => void {
   if (typeof BroadcastChannel === 'undefined') return () => {}
-  const bc = new BroadcastChannel('turbo-mailer-templates')
+  const bc = new BroadcastChannel('TurboMailer-templates')
   bc.onmessage = (e) => {
     if (e.data?.type === 'template-saved' && e.data.name === selectedInternalTemplate.value) {
       htmlBody.value = e.data.content

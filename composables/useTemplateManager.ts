@@ -117,7 +117,7 @@ async function saveTemplate(silent = false) {
     localStorage.setItem('last_edited_template', currentTemplate.value)
 
     if (typeof BroadcastChannel !== 'undefined') {
-      const bc = new BroadcastChannel('turbo-mailer-templates')
+      const bc = new BroadcastChannel('TurboMailer-templates')
       bc.postMessage({ type: 'template-saved', name: currentTemplate.value, content: finalHtml })
       bc.close()
     }
