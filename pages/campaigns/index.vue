@@ -77,6 +77,8 @@ async function duplicateCampaign(c: any) {
         unsubEmailMessage: full.unsubEmailMessage || null,
         resubEmailSubject: full.resubEmailSubject || null,
         resubEmailMessage: full.resubEmailMessage || null,
+        // Stats and state are explicitly NOT included here
+        // and are also protected by the backend.
       },
     });
 

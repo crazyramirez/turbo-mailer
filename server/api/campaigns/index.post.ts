@@ -21,6 +21,15 @@ export default defineEventHandler(async (event) => {
     unsubEmailMessage: unsubEmailMessage?.trim() || null,
     resubEmailSubject: resubEmailSubject?.trim() || null,
     resubEmailMessage: resubEmailMessage?.trim() || null,
+    // Explicitly reset stats and state for new/cloned campaigns
+    totalRecipients: 0,
+    sentCount: 0,
+    openCount: 0,
+    clickCount: 0,
+    failCount: 0,
+    startedAt: null,
+    finishedAt: null,
+    scheduledAt: null,
   }).returning()
 
   return row
