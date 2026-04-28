@@ -28,7 +28,8 @@ export default defineEventHandler(async (event) => {
 
     try {
       const ua = getHeader(event, 'user-agent') || ''
-      const isBot = /bot|crawler|spider|proxy|google|preview|slurp|pingdom|microsoft|office|outlook|fetch|preview/i.test(ua)
+      // Only block known aggressive image proxies and bots, allow common mail clients
+      const isBot = /googleimageproxy|bot|crawler|spider|slurp|pingdom|lighthouse/i.test(ua)
       
       if (isBot) {
         return PIXEL_GIF
@@ -63,8 +64,8 @@ export default defineEventHandler(async (event) => {
           const sentAt = new Date(send.sentAt).getTime()
           const diffSeconds = (now - sentAt) / 1000
 
-          // Professional anti-bot: If it's opened in less than 5 seconds, it's almost certainly a proxy or pre-fetch
-          if (diffSeconds < 5) {
+          // Reduced threshold to 2s: enough to block instant proxies, fast enough for human response
+          if (diffSeconds < 2) {
             return PIXEL_GIF
           }
 
