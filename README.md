@@ -193,25 +193,33 @@ SQLite en `./data/turbomailer.db` gestionada con Drizzle ORM. Tablas principales
    Renombra `.env.template` a `.env` en la raíz del proyecto y completa los campos:
 
    ```env
-   # Acceso a la Aplicación (requerido)
-   APP_PASSWORD=tu-contraseña-de-acceso
-   PORTAL_KEY=admin
+# Acceso a la Aplicación (requerido)
+APP_PASSWORD=tu-contraseña-de-acceso
+PORTAL_KEY=admin
 
-   # Configuración SMTP (requerido para enviar)
-   SMTP_HOST=smtp.gmail.com
-   SMTP_PORT=465
-   SMTP_USER=tu-correo@gmail.com
-   SMTP_PASS=tu-password-de-aplicacion
-   SMTP_SECURE=true
-   SMTP_FROM_NAME=TurboMailer
-   SMTP_FROM_EMAIL=tu-correo@gmail.com
+# SMTP Configuration (requerido para enviar)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_USER=tu-correo@gmail.com
+SMTP_PASS=tu-password-de-aplicacion
+SMTP_SECURE=true
+SMTP_FROM_NAME=TurboMailer
+SMTP_FROM_EMAIL=tu-correo@gmail.com
 
-   # Inteligencia Artificial (opcional)
-   OPENAI_API_KEY=sk-...
-   OPENAI_MODEL=gpt-4o-mini
+# Inteligencia Artificial (opcional)
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4o-mini
 
-   # Tracking (URL base de la app, para generar pixels y links trackeados)
-   TRACKING_BASE_URL=http://localhost:3000
+# Pausa entre emails (ms) para respetar rate limits del proveedor SMTP. Default: 2000ms
+SMTP_SEND_DELAY_MS=2000
+# Variación aleatoria (jitter) en milisegundos para evitar bloqueos por patrones de envío robótico (ej. +/- 500ms)
+SMTP_SEND_JITTER_MS=500
+
+# Seguridad: secreto HMAC para firmar links de unsubscribe (genera uno con: openssl rand -hex 32)
+UNSUBSCRIBE_SECRET=change-me-use-openssl-rand-hex-32
+
+# Pausa entre emails (ms) para respetar rate limits del proveedor SMTP. Default: 200ms
+SMTP_SEND_DELAY_MS=200
    ```
 
 4. **Iniciar la aplicación**
