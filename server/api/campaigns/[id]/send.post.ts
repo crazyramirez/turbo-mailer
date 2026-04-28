@@ -1,186 +1,7 @@
-import nodemailer from 'nodemailer'
 import { db } from '~/server/db/index'
 import { campaigns, contacts, listContacts, sends } from '~/server/db/schema'
-import { eq, and, inArray } from 'drizzle-orm'
-import { applyVars } from '~/server/utils/template'
-import { signUnsubscribeToken, signClickToken, signOpenToken } from '~/server/utils/auth'
-
-const MAX_SEND_RETRIES = 3
-const RETRY_BASE_DELAY_MS = 5_000
-
-function injectTracking(html: string, sendId: number, baseUrl: string, secret: string): string {
-  let linkCount = 0
-  // Sign each click URL with HMAC so the redirect cannot be abused for open redirects
-  // Matches https?:// and bare www. URLs, both single and double quoted
-  const tracked = html.replace(
-    /<a\s+([^>]*?)href=(["'])((?:https?:\/\/|www\.)[^"']+)\2([^>]*?)>/gi,
-    (_match, pre, _quote, url, post) => {
-      linkCount++
-      // Auto-add https:// for bare www. URLs
-      const fullUrl = /^https?:\/\//i.test(url) ? url : `https://${url}`
-      const sig = signClickToken(sendId, fullUrl, secret)
-      // Use &amp; for valid HTML; browsers decode it back to & before the request
-      const trackUrl = `${baseUrl}/api/track/click?s=${sendId}&amp;u=${encodeURIComponent(fullUrl)}&amp;sig=${sig}`
-      return `<a ${pre}href="${trackUrl}"${post}>`
-    }
-  )
-  console.log('[injectTracking] sendId=%s found %d trackable links', sendId, linkCount)
-
-  const openSig = signOpenToken(sendId, secret)
-  const pixel = `<img src="${baseUrl}/api/track/open?s=${sendId}&sig=${openSig}" width="1" height="1" border="0" style="width:1px;height:1px;overflow:hidden;position:absolute;" alt="" />`
-  return tracked.includes('</body>')
-    ? tracked.replace('</body>', `${pixel}</body>`)
-    : tracked + pixel
-}
-
-async function sendWithRetry(
-  transporter: nodemailer.Transporter,
-  mailOptions: nodemailer.SendMailOptions,
-): Promise<void> {
-  let lastErr: Error | null = null
-  for (let attempt = 0; attempt < MAX_SEND_RETRIES; attempt++) {
-    try {
-      await transporter.sendMail(mailOptions)
-      return
-    } catch (err: any) {
-      lastErr = err
-      // 5xx SMTP = permanent failure — don't retry
-      if (err.responseCode >= 500 && err.responseCode < 600) throw err
-      if (attempt < MAX_SEND_RETRIES - 1) {
-        await new Promise(r => setTimeout(r, RETRY_BASE_DELAY_MS * (attempt + 1)))
-      }
-    }
-  }
-  throw lastErr
-}
-
-interface SendConfig {
-  smtpHost: string
-  smtpPort: number
-  smtpUser: string
-  smtpPass: string
-  smtpSecure: boolean
-  smtpFromName: string
-  smtpFromEmail: string
-  baseUrl: string
-  secret: string
-  delayMs: number
-  jitterMs: number
-}
-
-async function processCampaign(campaignId: number, cfg: SendConfig): Promise<void> {
-  const transporter = nodemailer.createTransport({
-    host: cfg.smtpHost,
-    port: cfg.smtpPort,
-    secure: cfg.smtpSecure,
-    auth: { user: cfg.smtpUser, pass: cfg.smtpPass },
-  } as any)
-
-  // Load recipients with pending sends (supports resume from pause)
-  const pendingSends = await db
-    .select({ sendId: sends.id, contactId: sends.contactId, email: sends.email })
-    .from(sends)
-    .where(and(eq(sends.campaignId, campaignId), eq(sends.status, 'pending')))
-
-  if (pendingSends.length === 0) {
-    await db.update(campaigns)
-      .set({ status: 'sent', finishedAt: new Date() })
-      .where(eq(campaigns.id, campaignId))
-    return
-  }
-
-  const contactIds = pendingSends.map(s => s.contactId).filter(Boolean) as number[]
-  const contactMap = new Map<number, typeof contacts.$inferSelect>()
-  if (contactIds.length) {
-    const rows = await db.select().from(contacts).where(inArray(contacts.id, contactIds))
-    rows.forEach(c => contactMap.set(c.id, c))
-  }
-
-  const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, campaignId))
-  if (!campaign?.templateHtml) return
-
-  let sentDelta = 0
-  let failDelta = 0
-
-  for (const send of pendingSends) {
-    // Pause check — re-read status from DB each iteration
-    const [current] = await db
-      .select({ status: campaigns.status })
-      .from(campaigns)
-      .where(eq(campaigns.id, campaignId))
-    if (current?.status === 'paused') break
-
-    const contact = send.contactId ? contactMap.get(send.contactId) : null
-    const vars = contact ?? { email: send.email }
-
-    try {
-      const personalizedSubject = applyVars(campaign.subject, vars)
-      const trackedHtml = injectTracking(
-        applyVars(campaign.templateHtml, vars),
-        send.sendId,
-        cfg.baseUrl,
-        cfg.secret,
-      )
-      const unsubToken = signUnsubscribeToken(send.sendId, cfg.secret)
-      const personalizedHtml = trackedHtml.replace(
-        /\{\{\s*UNSUBSCRIBE_URL\s*\}\}/gi,
-        `${cfg.baseUrl}/unsubscribe?s=${send.sendId}&t=${unsubToken}`
-      )
-
-      const senderEmail = cfg.smtpFromEmail || cfg.smtpUser
-      await sendWithRetry(transporter, {
-        from: `"${cfg.smtpFromName}" <${senderEmail}>`,
-        to: send.email,
-        subject: personalizedSubject,
-        html: personalizedHtml,
-      })
-
-      await db.update(sends).set({
-        status: 'sent',
-        personalizedSubject,
-        sentAt: new Date(),
-      }).where(eq(sends.id, send.sendId))
-      sentDelta++
-    } catch (err: any) {
-      await db.update(sends).set({
-        status: 'failed',
-        errorMsg: err.message,
-        sentAt: new Date(),
-      }).where(eq(sends.id, send.sendId))
-      failDelta++
-    }
-
-    if (cfg.delayMs > 0) {
-      // Add random jitter to avoid SMTP detection (perfectly timed sends look like bots)
-      const jitter = cfg.jitterMs > 0
-        ? Math.floor(Math.random() * (cfg.jitterMs * 2)) - cfg.jitterMs
-        : 0
-      const actualDelay = Math.max(50, cfg.delayMs + jitter)
-      await new Promise(r => setTimeout(r, actualDelay))
-    }
-  }
-
-  // Check final status
-  const [final] = await db
-    .select({ status: campaigns.status })
-    .from(campaigns)
-    .where(eq(campaigns.id, campaignId))
-
-  if (final?.status !== 'paused') {
-    await db.update(campaigns).set({
-      status: 'sent',
-      finishedAt: new Date(),
-      sentCount: (campaign.sentCount ?? 0) + sentDelta,
-      failCount: (campaign.failCount ?? 0) + failDelta,
-    }).where(eq(campaigns.id, campaignId))
-  } else {
-    // Update counts even if paused
-    await db.update(campaigns).set({
-      sentCount: (campaign.sentCount ?? 0) + sentDelta,
-      failCount: (campaign.failCount ?? 0) + failDelta,
-    }).where(eq(campaigns.id, campaignId))
-  }
-}
+import { eq, and } from 'drizzle-orm'
+import { processCampaign, SendConfig } from '~/server/utils/campaign-processor'
 
 export default defineEventHandler(async (event) => {
   const campaignId = Number(getRouterParam(event, 'id'))
@@ -222,6 +43,9 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: 'No active recipients in list' })
     }
 
+    // Clear any previous send records for this campaign if it was a draft
+    await db.delete(sends).where(eq(sends.campaignId, campaignId))
+
     // Create send records
     await db.insert(sends).values(
       recipientRows.map(c => ({
@@ -261,17 +85,18 @@ export default defineEventHandler(async (event) => {
     secret: String(config.unsubscribeSecret),
     delayMs: Number(config.smtpSendDelayMs),
     jitterMs: Number(config.smtpSendJitterMs),
+    maxRetries: Number(config.smtpMaxRetries || 3),
+    retryDelayMs: Number(config.smtpRetryDelayMs || 5000),
   }
 
-  // Process in background — respond immediately so the browser doesn't wait
+  // Process in background
   processCampaign(campaignId, cfg).catch(async (err) => {
     console.error(`[campaign-send] campaignId=${campaignId} fatal error:`, err)
-    // Mark as paused so the user can see it failed and retry from the UI
     await db.update(campaigns)
       .set({ status: 'paused' })
       .where(eq(campaigns.id, campaignId))
       .catch(() => {})
   })
 
-  return { queued: true, campaignId, sentCount: 0, failCount: 0 }
+  return { queued: true, campaignId }
 })

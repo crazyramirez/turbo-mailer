@@ -16,6 +16,7 @@ import {
   ChevronDown,
   Loader2,
   AlertCircle,
+  RotateCcw,
 } from "lucide-vue-next";
 import CampaignPreview from "~/components/campaigns/CampaignPreview.vue";
 import CampaignLibraryModal from "~/components/campaigns/CampaignLibraryModal.vue";
@@ -208,6 +209,31 @@ async function sendCampaign() {
   } finally {
     sending.value = false;
     dismissOverlay.value = false; // Reset overlay when starting a new send
+  }
+}
+
+async function retryCampaign() {
+  const ok = await showDialog({
+    type: "confirm",
+    title: "Reintentar fallidos",
+    message: `¿Intentar enviar de nuevo los ${campaign.value.failCount} emails que fallaron?`,
+  });
+  if (!ok) return;
+  sending.value = true;
+  try {
+    await $fetch<any>(`/api/campaigns/${id}/retry`, {
+      method: "POST",
+    });
+    showToast("Reintentando envíos fallidos...", "info");
+    await Promise.all([fetchCampaign(), fetchSends()]);
+    if (campaign.value?.status === "sending") {
+      startPolling();
+    }
+  } catch (e: any) {
+    showToast(`Error: ${e.data?.statusMessage || e.message}`, "error");
+  } finally {
+    sending.value = false;
+    dismissOverlay.value = false;
   }
 }
 
@@ -626,6 +652,15 @@ onUnmounted(() => {
                   <span class="stat-num">{{ campaign.failCount ?? 0 }}</span>
                   <span class="stat-lbl">{{ t("results.failed") }}</span>
                 </div>
+                <button 
+                  v-if="campaign.failCount > 0 && campaign.status === 'sent' && !sending"
+                  class="stat-retry-btn"
+                  @click="retryCampaign"
+                  title="Reintentar envíos fallidos"
+                >
+                  <RotateCcw :size="14" />
+                  <span>Reintentar</span>
+                </button>
               </div>
             </div>
             <div class="section-hdr">Destinatarios</div>
@@ -1082,6 +1117,30 @@ onUnmounted(() => {
 }
 .stat-lbl strong {
   color: var(--text);
+}
+.stat-retry-btn {
+  margin-left: auto;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.stat-retry-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  transform: translateY(-1px);
+}
+.stat-retry-btn:active {
+  transform: translateY(0);
 }
 
 /* Sending Status Card */
