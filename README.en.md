@@ -28,9 +28,13 @@ What makes **TurboMailer** an extremely powerful tool is its **privacy**. Being 
     <td><img src="public/images/screen_3.webp"></td>
     <td><img src="public/images/screen_4.webp"></td>
   </tr>
-    <tr>
+  <tr>
     <td><img src="public/images/screen_5.webp"></td>
     <td><img src="public/images/screen_6.webp"></td>
+  </tr>
+  <tr>
+    <td><img src="public/images/screen_7.webp"></td>
+    <td><img src="public/images/screen_8.webp"></td>
   </tr>
 </table>
 
@@ -60,12 +64,16 @@ What makes **TurboMailer** an extremely powerful tool is its **privacy**. Being 
 - Bulk sending via SMTP with real-time success and failure reporting
 - **Professional Retry Management**: Automatic retry system at the SMTP level and a manual "Retry Failed" button in the campaign dashboard to recover from temporary errors.
 
-### 📊 Analytics
+### 📊 Advanced Analytics
 
-- Dashboard with KPIs: total contacts, campaigns sent, average open rate, and average click rate
-- **Last 10 opens** with device detection (desktop / mobile / tablet)
-- **Top campaigns** ordered by number of opens
-- Individual event tracking: opens and clicks recorded with IP, user-agent, and timestamp
+- Real-time KPI Dashboard: total contacts, campaigns sent, average open and click rates.
+- **Delivery Funnel**: Direct visualization of the delivery flow: Sent → Opened → Clicked.
+- **Interactive Charts**:
+  - Open and click trends for the last 14 days with visibility toggles.
+  - Device distribution (Desktop/Mobile) with dynamic doughnut charts and central total.
+  - Comparative campaign performance (Open Rate vs Click Rate) with horizontal bar charts.
+- **Detailed Event Log**: Records of the latest opens with device icons, contact names, companies, and timestamps.
+- **Auto-refresh**: Metrics automatically update every 30 seconds for live monitoring.
 
 ### 📡 Email Tracking
 

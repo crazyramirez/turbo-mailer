@@ -28,9 +28,13 @@ Lo que hace a **TurboMailer** una herramienta extremadamente potente es la **pri
     <td><img src="public/images/screen_3.webp"></td>
     <td><img src="public/images/screen_4.webp"></td>
   </tr>
-    <tr>
+  <tr>
     <td><img src="public/images/screen_5.webp"></td>
     <td><img src="public/images/screen_6.webp"></td>
+  </tr>
+  <tr>
+    <td><img src="public/images/screen_7.webp"></td>
+    <td><img src="public/images/screen_8.webp"></td>
   </tr>
 </table>
 
@@ -60,12 +64,16 @@ Lo que hace a **TurboMailer** una herramienta extremadamente potente es la **pri
 - Envío masivo vía SMTP con reporte en tiempo real de éxitos y fallos
 - **Gestión de Reintentos Profesional**: Sistema de reintento automático a nivel de SMTP y botón manual de "Reintentar fallidos" en el dashboard de campaña para recuperar errores temporales.
 
-### 📊 Analytics
+### 📊 Analytics Avanzado
 
-- Dashboard con KPIs: total de contactos, campañas enviadas, tasa media de apertura y tasa media de clics
-- **Últimas 10 aperturas** con detección de dispositivo (desktop / móvil / tablet)
-- **Top campañas** ordenadas por número de aperturas
-- Tracking de eventos individuales: opens y clicks registrados con IP, user-agent y timestamp
+- Dashboard con KPIs en tiempo real: total de contactos, campañas enviadas, tasa media de apertura y clics.
+- **Embudo de Conversión (Funnel)**: Visualización directa del flujo de entrega: Enviados → Abiertos → Clics.
+- **Gráficos Interactivos**:
+  - Tendencia de aperturas y clics de los últimos 14 días con toggles de visibilidad.
+  - Distribución por dispositivo (Desktop/Mobile) con gráficos de donut dinámicos y total central.
+  - Rendimiento comparativo de campañas (Open Rate vs Click Rate) en gráficos de barras horizontales.
+- **Listado Detallado de Eventos**: Registro de las últimas aperturas con detección de dispositivo (iconos), empresa, nombre y sello de tiempo.
+- **Auto-refresco**: Las métricas se actualizan automáticamente cada 30 segundos para monitorización en vivo.
 
 ### 📡 Tracking de Emails
 
