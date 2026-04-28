@@ -6,8 +6,6 @@
 
 **Plataforma Completa de Email Marketing con CRM simple, Editor de plantillas HTML, IA, Analytics, Tracking y mucho más.**
 
-> ⚠️ **Uso Responsable:** Diseñado para envíos legítimos y con permiso (newsletters, B2B). **Prohibido para spam.** Al usarlo, aceptas las normas de Google y leyes de privacidad (GDPR, etc.) bajo tu propia responsabilidad.
-
 TurboMailer es una aplicación **self-hosted de una sola cuenta diseñada para ser desplegada en un VPS**, ofreciendo una plataforma de email marketing de alto rendimiento construida con **Nuxt 3**. Es una herramienta segura, robusta y con una arquitectura bien planteada para garantizar la soberanía de tus datos. Incluye gestión completa de contactos y listas, editor visual de plantillas HTML con bloques drag & drop, sistema de campañas con tracking de aperturas y clics, analytics en tiempo real, integración con IA para copywriting e interfaz multiidioma (ES/EN). Todo con persistencia real en base de datos SQLite y envío masivo vía cualquier servicio SMTP (Gmail, Outlook, Amazon SES, etc.).
 
 ## 🛡️ Tu Información, Solo Tuya (Soberanía de Datos)
@@ -368,6 +366,8 @@ This project is licensed under the **GNU Affero General Public License v3.0 (AGP
 For commercial licensing inquiries, please contact me
 
 ---
+
+⚠️ **Uso Responsable:** Diseñado para envíos legítimos y con permiso (newsletters, B2B). **Prohibido para spam.** Al usarlo, aceptas las normas de Google y leyes de privacidad (GDPR, etc.) bajo tu propia responsabilidad.
 
 ## ⚖️ Aviso Legal
 
