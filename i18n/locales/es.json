@@ -192,7 +192,17 @@
     "opened_at": "Abierto",
     "campaign": "Campaña",
     "contact": "Contacto",
-    "device": "Dispositivo"
+    "device": "Dispositivo",
+    "opens_trend": "Actividad de Aperturas",
+    "last_14_days": "Últimos 14 días",
+    "device_breakdown": "Dispositivos",
+    "campaign_performance": "Rendimiento de Campañas",
+    "opens_label": "Aperturas",
+    "clicks_label": "Clicks",
+    "sent_label": "Enviados",
+    "delivery_funnel": "Embudo de Entrega",
+    "open_rate_label": "% Apertura",
+    "click_rate_label": "% Click"
   },
   "unsubscribe_page": {
     "title": "Baja de suscripción",

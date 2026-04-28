@@ -192,7 +192,17 @@
     "opened_at": "Opened",
     "campaign": "Campaign",
     "contact": "Contact",
-    "device": "Device"
+    "device": "Device",
+    "opens_trend": "Opens Activity",
+    "last_14_days": "Last 14 days",
+    "device_breakdown": "Devices",
+    "campaign_performance": "Campaign Performance",
+    "opens_label": "Opens",
+    "clicks_label": "Clicks",
+    "sent_label": "Sent",
+    "delivery_funnel": "Delivery Funnel",
+    "open_rate_label": "Open %",
+    "click_rate_label": "Click %"
   },
   "unsubscribe_page": {
     "title": "Unsubscribe",

@@ -5,8 +5,36 @@ import {
   Eye,
   MousePointerClick,
   RefreshCcw,
-  TrendingUp,
+  Send,
 } from "lucide-vue-next";
+import {
+  Chart,
+  LineController,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  BarController,
+  BarElement,
+  DoughnutController,
+  ArcElement,
+  Tooltip,
+  Filler,
+} from "chart.js";
+
+Chart.register(
+  LineController,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  BarController,
+  BarElement,
+  DoughnutController,
+  ArcElement,
+  Tooltip,
+  Filler,
+);
 
 definePageMeta({ layout: "app" });
 
@@ -15,11 +43,298 @@ const { t } = useI18n();
 const data = ref<any>(null);
 const loading = ref(true);
 
+const trendCanvas = ref<HTMLCanvasElement>();
+const deviceCanvas = ref<HTMLCanvasElement>();
+const perfCanvas = ref<HTMLCanvasElement>();
+
+let trendChart: Chart | null = null;
+let deviceChart: Chart | null = null;
+let perfChart: Chart | null = null;
+
+const trendShowOpens = ref(true);
+const trendShowClicks = ref(true);
+
+function toggleTrendSeries(series: "opens" | "clicks") {
+  if (series === "opens") trendShowOpens.value = !trendShowOpens.value;
+  else trendShowClicks.value = !trendShowClicks.value;
+  if (trendChart) {
+    trendChart.setDatasetVisibility(0, trendShowOpens.value);
+    trendChart.setDatasetVisibility(1, trendShowClicks.value);
+    trendChart.update("active");
+  }
+}
+
+const DEVICE_COLORS = ["#818cf8", "#38bdf8", "#10b981", "#f59e0b", "#f472b6"];
+const GRID = "rgba(255,255,255,0.05)";
+const TICK = "#475569";
+
+function destroyCharts() {
+  trendChart?.destroy();
+  deviceChart?.destroy();
+  perfChart?.destroy();
+  trendChart = null;
+  deviceChart = null;
+  perfChart = null;
+}
+
+function buildCharts() {
+  if (!data.value) return;
+  nextTick(() => {
+    buildTrendChart();
+    buildDeviceChart();
+    buildPerfChart();
+  });
+}
+
+function buildTrendChart() {
+  if (!trendCanvas.value) return;
+  trendChart?.destroy();
+  const ctx = trendCanvas.value.getContext("2d")!;
+  const gradOpens = ctx.createLinearGradient(0, 0, 0, 260);
+  gradOpens.addColorStop(0, "rgba(129,140,248,0.30)");
+  gradOpens.addColorStop(1, "rgba(129,140,248,0)");
+  const gradClicks = ctx.createLinearGradient(0, 0, 0, 260);
+  gradClicks.addColorStop(0, "rgba(56,189,248,0.22)");
+  gradClicks.addColorStop(1, "rgba(56,189,248,0)");
+
+  trendChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: data.value.opensByDay.map((d: any) => d.label),
+      datasets: [
+        {
+          label: t("analytics_page.opens_label"),
+          data: data.value.opensByDay.map((d: any) => d.count),
+          borderColor: "#818cf8",
+          backgroundColor: gradOpens,
+          fill: true,
+          tension: 0.45,
+          pointRadius: 3,
+          pointHoverRadius: 7,
+          pointBackgroundColor: "#818cf8",
+          pointBorderColor: "#03040a",
+          pointBorderWidth: 2,
+          borderWidth: 2.5,
+          hidden: !trendShowOpens.value,
+        },
+        {
+          label: t("analytics_page.clicks_label"),
+          data: data.value.clicksByDay.map((d: any) => d.count),
+          borderColor: "#38bdf8",
+          backgroundColor: gradClicks,
+          fill: true,
+          tension: 0.45,
+          pointRadius: 3,
+          pointHoverRadius: 7,
+          pointBackgroundColor: "#38bdf8",
+          pointBorderColor: "#03040a",
+          pointBorderWidth: 2,
+          borderWidth: 2.5,
+          borderDash: [4, 3],
+          hidden: !trendShowClicks.value,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 600, easing: "easeOutQuart" },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "rgba(9,11,20,0.95)",
+          borderColor: "rgba(255,255,255,0.10)",
+          borderWidth: 1,
+          titleColor: "#94a3b8",
+          bodyColor: "#f8fafc",
+          padding: { x: 14, y: 10 },
+          cornerRadius: 10,
+          displayColors: true,
+          mode: "index",
+          intersect: false,
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: GRID },
+          border: { display: false },
+          ticks: {
+            color: TICK,
+            font: { size: 11 },
+            maxRotation: 0,
+            maxTicksLimit: 7,
+          },
+        },
+        y: {
+          grid: { color: GRID },
+          border: { display: false },
+          beginAtZero: true,
+          ticks: {
+            color: TICK,
+            font: { size: 11 },
+            precision: 0,
+            maxTicksLimit: 5,
+          },
+        },
+      },
+    },
+  });
+}
+
+function buildDeviceChart() {
+  if (!deviceCanvas.value || !data.value.deviceBreakdown.length) return;
+  deviceChart?.destroy();
+  const ctx = deviceCanvas.value.getContext("2d")!;
+  const labels = data.value.deviceBreakdown.map((d: any) => d.label);
+  const counts = data.value.deviceBreakdown.map((d: any) => d.count);
+
+  deviceChart = new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels,
+      datasets: [
+        {
+          data: counts,
+          backgroundColor: DEVICE_COLORS.slice(0, labels.length),
+          hoverBackgroundColor: DEVICE_COLORS.slice(0, labels.length).map(
+            (c) => c + "dd",
+          ),
+          borderColor: "#03040a",
+          borderWidth: 3,
+          hoverOffset: 6,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 600, easing: "easeOutQuart" },
+      cutout: "68%",
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "rgba(9,11,20,0.95)",
+          borderColor: "rgba(255,255,255,0.10)",
+          borderWidth: 1,
+          titleColor: "#94a3b8",
+          bodyColor: "#f8fafc",
+          padding: { x: 14, y: 10 },
+          cornerRadius: 10,
+          displayColors: true,
+          callbacks: {
+            label: (item) => {
+              const total = counts.reduce((a: number, b: number) => a + b, 0);
+              const pct = Math.round((Number(item.raw) / total) * 100);
+              return ` ${item.raw} (${pct}%)`;
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+function buildPerfChart() {
+  if (!perfCanvas.value || !data.value.topCampaigns.length) return;
+  perfChart?.destroy();
+  const ctx = perfCanvas.value.getContext("2d")!;
+
+  const campaigns = data.value.topCampaigns.slice().reverse();
+  const labels = campaigns.map((c: any) =>
+    c.name.length > 22 ? c.name.slice(0, 22) + "…" : c.name,
+  );
+  const openRates = campaigns.map((c: any) =>
+    c.sentCount ? Math.round((c.openCount / c.sentCount) * 100) : 0,
+  );
+  const clickRates = campaigns.map((c: any) =>
+    c.sentCount ? Math.round((c.clickCount / c.sentCount) * 100) : 0,
+  );
+
+  perfChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: t("analytics_page.open_rate_label"),
+          data: openRates,
+          backgroundColor: "rgba(129,140,248,0.75)",
+          hoverBackgroundColor: "#818cf8",
+          borderRadius: 6,
+          borderSkipped: false,
+        },
+        {
+          label: t("analytics_page.click_rate_label"),
+          data: clickRates,
+          backgroundColor: "rgba(56,189,248,0.65)",
+          hoverBackgroundColor: "#38bdf8",
+          borderRadius: 6,
+          borderSkipped: false,
+        },
+      ],
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 600, easing: "easeOutQuart" },
+      plugins: {
+        legend: {
+          display: true,
+          position: "top",
+          align: "end",
+          labels: {
+            color: "#94a3b8",
+            font: { size: 12 },
+            boxWidth: 12,
+            boxHeight: 12,
+            borderRadius: 4,
+            useBorderRadius: true,
+            padding: 16,
+          },
+        },
+        tooltip: {
+          backgroundColor: "rgba(9,11,20,0.95)",
+          borderColor: "rgba(255,255,255,0.10)",
+          borderWidth: 1,
+          titleColor: "#94a3b8",
+          bodyColor: "#f8fafc",
+          padding: { x: 14, y: 10 },
+          cornerRadius: 10,
+          callbacks: {
+            label: (item) => ` ${item.dataset.label}: ${item.parsed.x}%`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: GRID },
+          border: { display: false },
+          ticks: {
+            color: TICK,
+            font: { size: 11 },
+            callback: (v) => `${v}%`,
+            maxTicksLimit: 6,
+          },
+          max: 100,
+        },
+        y: {
+          grid: { display: false },
+          border: { display: false },
+          ticks: { color: "#94a3b8", font: { size: 12 } },
+        },
+      },
+    },
+  });
+}
+
 async function fetchAnalytics() {
   loading.value = true;
   const start = Date.now();
   try {
     data.value = await $fetch<any>("/api/analytics");
+    destroyCharts();
+    buildCharts();
   } finally {
     const elapsed = Date.now() - start;
     if (elapsed < 600) {
@@ -60,13 +375,21 @@ function parseUA(ua: string) {
   return "🌐 Web";
 }
 
-// Auto-refresh every 30s
+function deviceIcon(label: string) {
+  if (label === "iOS" || label === "Android") return "📱";
+  if (label === "Windows" || label === "Mac") return "💻";
+  return "🌐";
+}
+
 let timer: any;
 onMounted(() => {
   fetchAnalytics();
   timer = setInterval(fetchAnalytics, 30000);
 });
-onUnmounted(() => clearInterval(timer));
+onUnmounted(() => {
+  clearInterval(timer);
+  destroyCharts();
+});
 </script>
 
 <template>
@@ -131,6 +454,134 @@ onUnmounted(() => clearInterval(timer));
           </div>
         </div>
 
+        <!-- Chart row 1: Trend + Device -->
+        <div class="chart-row-main">
+          <!-- Opens Trend -->
+          <div class="panel chart-trend-panel">
+            <div class="panel-head">
+              <div>
+                <h2>{{ t("analytics_page.opens_trend") }}</h2>
+                <span class="panel-sub">{{
+                  t("analytics_page.last_14_days")
+                }}</span>
+              </div>
+              <div class="trend-controls">
+                <button
+                  class="trend-pill"
+                  :class="{ active: trendShowOpens, 'pill-purple': true }"
+                  @click="toggleTrendSeries('opens')"
+                >
+                  <span class="pill-dot purple" />
+                  {{ t("analytics_page.opens_label") }}
+                </button>
+                <button
+                  class="trend-pill"
+                  :class="{ active: trendShowClicks, 'pill-blue': true }"
+                  @click="toggleTrendSeries('clicks')"
+                >
+                  <span class="pill-dot blue" />
+                  {{ t("analytics_page.clicks_label") }}
+                </button>
+              </div>
+            </div>
+            <div class="chart-wrap trend-wrap">
+              <canvas ref="trendCanvas" />
+            </div>
+          </div>
+
+          <!-- Device Breakdown -->
+          <div class="panel chart-device-panel">
+            <div class="panel-head">
+              <div>
+                <h2>{{ t("analytics_page.device_breakdown") }}</h2>
+                <span class="panel-sub">{{
+                  t("analytics_page.opens_label")
+                }}</span>
+              </div>
+            </div>
+            <div v-if="!data.deviceBreakdown.length" class="empty-note">
+              {{ t("analytics_page.no_data") }}
+            </div>
+            <template v-else>
+              <div class="chart-wrap donut-wrap">
+                <canvas ref="deviceCanvas" />
+                <div class="donut-center">
+                  <span class="donut-total">{{ data.totalOpened }}</span>
+                  <span class="donut-lbl">total</span>
+                </div>
+              </div>
+              <div class="device-legend">
+                <div
+                  v-for="(d, i) in data.deviceBreakdown"
+                  :key="d.label"
+                  class="device-leg-item"
+                >
+                  <span
+                    class="leg-dot"
+                    :style="{
+                      background: [
+                        '#818cf8',
+                        '#38bdf8',
+                        '#10b981',
+                        '#f59e0b',
+                        '#f472b6',
+                      ][i],
+                    }"
+                  />
+                  <span class="leg-icon">{{ deviceIcon(d.label) }}</span>
+                  <span class="leg-label">{{ d.label }}</span>
+                  <span class="leg-count">{{ d.count }}</span>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- Chart row 2: Campaign Performance -->
+        <div class="panel chart-perf-panel">
+          <div class="panel-head">
+            <div>
+              <h2>{{ t("analytics_page.campaign_performance") }}</h2>
+              <span class="panel-sub">{{
+                t("analytics_page.top_campaigns")
+              }}</span>
+            </div>
+            <!-- Delivery Funnel mini stats -->
+            <div v-if="data.totalSent > 0" class="funnel-row">
+              <div class="funnel-stat">
+                <Send :size="13" />
+                <span>{{ data.totalSent.toLocaleString() }}</span>
+                <span class="funnel-lbl">{{
+                  t("analytics_page.sent_label")
+                }}</span>
+              </div>
+              <div class="funnel-arrow">→</div>
+              <div class="funnel-stat green">
+                <Eye :size="13" />
+                <span>{{ data.totalOpened.toLocaleString() }}</span>
+                <span class="funnel-lbl">{{
+                  t("analytics_page.opens_label")
+                }}</span>
+              </div>
+              <div class="funnel-arrow">→</div>
+              <div class="funnel-stat blue">
+                <MousePointerClick :size="13" />
+                <span>{{ data.totalClicked.toLocaleString() }}</span>
+                <span class="funnel-lbl">{{
+                  t("analytics_page.clicks_label")
+                }}</span>
+              </div>
+            </div>
+          </div>
+          <div v-if="!data.topCampaigns.length" class="empty-note">
+            {{ t("analytics_page.no_data") }}
+          </div>
+          <div v-else class="chart-wrap perf-wrap">
+            <canvas ref="perfCanvas" />
+          </div>
+        </div>
+
+        <!-- Bottom panels: Recent opens + Top campaigns -->
         <div class="two-cols">
           <!-- Recent opens -->
           <div class="panel">
@@ -273,7 +724,7 @@ onUnmounted(() => clearInterval(timer));
   padding: 80px;
 }
 
-/* KPI */
+/* ── KPI ──────────────────────────────────────────────────── */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -325,21 +776,7 @@ onUnmounted(() => clearInterval(timer));
   margin-top: 3px;
 }
 
-/* Two cols */
-.two-cols {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-@media (max-width: 900px) {
-  .two-cols {
-    grid-template-columns: 1fr;
-  }
-  .kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
+/* ── Panel base ───────────────────────────────────────────── */
 .panel {
   background: rgb(0 0 0 / 6%);
   backdrop-filter: blur(12px);
@@ -354,6 +791,19 @@ onUnmounted(() => clearInterval(timer));
   font-size: 15px;
   font-weight: 800;
 }
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.panel-sub {
+  display: block;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
 .empty-note {
   font-size: 13px;
   color: var(--text-dim);
@@ -361,12 +811,202 @@ onUnmounted(() => clearInterval(timer));
   padding: 24px 0;
 }
 
-/* Events */
+/* ── Chart wrappers ───────────────────────────────────────── */
+.chart-wrap {
+  position: relative;
+  width: 100%;
+}
+.trend-wrap {
+  flex: 1;
+  min-height: 220px;
+}
+.donut-wrap {
+  height: 180px;
+  flex-shrink: 0;
+}
+.perf-wrap {
+  height: 260px;
+}
+
+/* ── Chart row 1: Trend + Device ─────────────────────────── */
+.chart-row-main {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 20px;
+  align-items: stretch;
+}
+.chart-trend-panel {
+}
+.chart-device-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Trend badge */
+.trend-controls {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.trend-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.trend-pill.active.pill-purple {
+  color: #818cf8;
+  background: rgba(129, 140, 248, 0.1);
+  border-color: rgba(129, 140, 248, 0.3);
+}
+.trend-pill.active.pill-blue {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  border-color: rgba(56, 189, 248, 0.3);
+}
+.trend-pill:hover:not(.active) {
+  background: rgb(255 255 255 / 4%);
+  color: var(--text-muted);
+}
+.pill-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.pill-dot.purple {
+  background: #818cf8;
+}
+.pill-dot.blue {
+  background: #38bdf8;
+}
+
+/* Donut center overlay */
+.donut-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.donut-center {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+.donut-total {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.1;
+}
+.donut-lbl {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+/* Device legend */
+.device-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.device-leg-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.leg-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.leg-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+.leg-label {
+  flex: 1;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.leg-count {
+  font-weight: 700;
+  color: var(--text);
+  font-size: 13px;
+}
+
+/* ── Campaign Performance panel ──────────────────────────── */
+.chart-perf-panel {
+}
+
+/* Funnel row */
+.funnel-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.funnel-stat {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: rgb(0 0 0 / 10%);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 5px 10px;
+}
+.funnel-stat.green {
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.25);
+  background: rgba(16, 185, 129, 0.07);
+}
+.funnel-stat.blue {
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.25);
+  background: rgba(56, 189, 248, 0.07);
+}
+.funnel-lbl {
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.7;
+}
+.funnel-arrow {
+  color: var(--text-dim);
+  font-size: 14px;
+  font-weight: 300;
+}
+
+/* ── Two cols bottom ──────────────────────────────────────── */
+.two-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* ── Events list ──────────────────────────────────────────── */
 .event-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 600px;
+  max-height: 300px;
   overflow-y: auto;
   padding-right: 6px;
 }
@@ -440,7 +1080,7 @@ onUnmounted(() => clearInterval(timer));
   color: var(--text-dim);
 }
 
-/* Campaigns */
+/* ── Campaign list ────────────────────────────────────────── */
 .campaign-list {
   display: flex;
   flex-direction: column;
@@ -506,7 +1146,25 @@ onUnmounted(() => clearInterval(timer));
   color: var(--text-dim);
 }
 
-/* ── Responsive ──────────────────────────────────────────── */
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .chart-row-main {
+    grid-template-columns: 1fr;
+  }
+  .chart-device-panel {
+    flex-direction: row;
+    align-items: center;
+    gap: 24px;
+  }
+  .donut-wrap {
+    height: 160px;
+    width: 160px;
+    flex-shrink: 0;
+  }
+  .device-legend {
+    flex: 1;
+  }
+}
 
 @media (max-width: 900px) {
   .two-cols {
@@ -521,6 +1179,16 @@ onUnmounted(() => clearInterval(timer));
   .page-main {
     padding: 32px 0;
     gap: 20px;
+  }
+  .chart-device-panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .donut-wrap {
+    width: 100%;
+  }
+  .perf-wrap {
+    height: 220px;
   }
 }
 
@@ -558,15 +1226,29 @@ onUnmounted(() => clearInterval(timer));
     border-radius: 14px;
     gap: 12px;
   }
-  .event-row {
-    gap: 8px;
+  .funnel-row {
+    gap: 4px;
   }
-  .ev-meta {
-    text-align: left;
-    flex-shrink: 1;
-  }
-  .ev-device {
+  .funnel-stat {
     font-size: 11px;
+    padding: 4px 8px;
+  }
+  .trend-controls {
+    gap: 6px;
+  }
+  .trend-pill {
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+  .trend-wrap {
+    height: 180px;
+  }
+  .perf-wrap {
+    height: 200px;
+  }
+  .panel-head {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 
@@ -612,6 +1294,12 @@ onUnmounted(() => clearInterval(timer));
   }
   .ev-time {
     display: inline;
+  }
+  .funnel-row {
+    flex-wrap: wrap;
+  }
+  .funnel-arrow {
+    display: none;
   }
 }
 </style>
