@@ -58,7 +58,16 @@ export default defineEventHandler(async (event) => {
 
       if (!existing) {
         const [send] = await db.select().from(sends).where(eq(sends.id, sendId))
-        if (send) {
+        if (send && send.sentAt) {
+          const now = Date.now()
+          const sentAt = new Date(send.sentAt).getTime()
+          const diffSeconds = (now - sentAt) / 1000
+
+          // Professional anti-bot: If it's opened in less than 5 seconds, it's almost certainly a proxy or pre-fetch
+          if (diffSeconds < 5) {
+            return PIXEL_GIF
+          }
+
           const campaignId = send.campaignId
 
           await db.insert(trackingEvents).values({
