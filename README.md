@@ -58,6 +58,7 @@ Lo que hace a **TurboMailer** una herramienta extremadamente potente es la **pri
 - Inyección automática de **pixel de tracking** (apertura) y **enlaces trackeados** (clics) en el HTML antes del envío
 - Variables dinámicas (Español/Inglés): `{{Empresa}}`/`{{Company}}`, `{{Nombre}}`/`{{Name}}`, `{{URL}}`, `{{Linkedin}}`, `{{Instagram}}`, `{{Youtube}}`
 - Envío masivo vía SMTP con reporte en tiempo real de éxitos y fallos
+- **Gestión de Reintentos Profesional**: Sistema de reintento automático a nivel de SMTP y botón manual de "Reintentar fallidos" en el dashboard de campaña para recuperar errores temporales.
 
 ### 📊 Analytics
 
@@ -218,6 +219,10 @@ SQLite en `./data/turbomailer.db` gestionada con Drizzle ORM. Tablas principales
     SMTP_SEND_DELAY_MS=2000
     # Variación aleatoria (jitter) en milisegundos para evitar bloqueos por patrones de envío robótico (ej. +/- 500ms)
     SMTP_SEND_JITTER_MS=500
+
+    # Configuración de reintentos en caso de error temporal del servidor SMTP (ej. 421 Busy)
+    SMTP_MAX_RETRIES=3
+    SMTP_RETRY_DELAY_MS=5000
    ```
 
 4. **Iniciar la aplicación**
@@ -317,6 +322,7 @@ La app usa Gmail SMTP con una contraseña de aplicación de 16 dígitos (no tu c
 | PUT    | `/api/campaigns/[id]`       | Actualizar campaña                  |
 | DELETE | `/api/campaigns/[id]`       | Eliminar campaña                    |
 | POST   | `/api/campaigns/[id]/send`  | Lanzar envío                        |
+| POST   | `/api/campaigns/[id]/retry` | Reintentar envíos fallidos          |
 | GET    | `/api/campaigns/[id]/sends` | Listado de envíos individuales      |
 
 ### Tracking & Analytics

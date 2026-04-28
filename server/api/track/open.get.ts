@@ -27,6 +27,13 @@ export default defineEventHandler(async (event) => {
     }
 
     try {
+      const ua = getHeader(event, 'user-agent') || ''
+      const isBot = /bot|crawler|spider|proxy|google|preview|slurp|pingdom|microsoft|office|outlook|fetch|preview/i.test(ua)
+      
+      if (isBot) {
+        return PIXEL_GIF
+      }
+
       const ip = String(getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown').split(',')[0].trim()
       
       // 1. Memory debounce

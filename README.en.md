@@ -58,6 +58,7 @@ What makes **TurboMailer** an extremely powerful tool is its **privacy**. Being 
 - Automatic injection of **tracking pixel** (opens) and **tracked links** (clicks) into the HTML before sending
 - Dynamic variables (English/Spanish): `{{Company}} / {{Empresa}}`, `{{Name}} / {{Nombre}}`, `{{URL}}`, `{{Linkedin}}`, `{{Instagram}}`, `{{Youtube}}`
 - Bulk sending via SMTP with real-time success and failure reporting
+- **Professional Retry Management**: Automatic retry system at the SMTP level and a manual "Retry Failed" button in the campaign dashboard to recover from temporary errors.
 
 ### 📊 Analytics
 
@@ -214,10 +215,14 @@ SQLite in `./data/turbomailer.db` managed with Drizzle ORM. Main tables:
     # Seguridad: secreto HMAC para firmar links de unsubscribe
     UNSUBSCRIBE_SECRET=change-me-use-openssl-rand-hex-32
 
-    # Pausa entre emails (ms) para respetar rate limits del proveedor SMTP. Default: 2000ms
+    # Delay between emails (ms) to respect SMTP provider rate limits. Default: 2000ms
     SMTP_SEND_DELAY_MS=2000
-    # Variación aleatoria (jitter) en milisegundos para evitar bloqueos por patrones de envío robótico (ej. +/- 500ms)
+    # Random variation (jitter) in milliseconds to avoid robotic pattern detection (e.g., +/- 500ms)
     SMTP_SEND_JITTER_MS=500
+
+    # Retry configuration for temporary SMTP server errors (e.g., 421 Busy)
+    SMTP_MAX_RETRIES=3
+    SMTP_RETRY_DELAY_MS=5000
    ```
 
 4. **Start the application**
@@ -317,6 +322,7 @@ The app uses Gmail SMTP with a 16-digit app password (not your normal password).
 | PUT    | `/api/campaigns/[id]`       | Update campaign                   |
 | DELETE | `/api/campaigns/[id]`       | Delete campaign                   |
 | POST   | `/api/campaigns/[id]/send`  | Launch send                       |
+| POST   | `/api/campaigns/[id]/retry` | Retry failed sends                |
 | GET    | `/api/campaigns/[id]/sends` | List individual sends             |
 
 ### Tracking & Analytics
