@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
     try {
       const ua = getHeader(event, 'user-agent') || ''
       // Only block known aggressive image proxies and bots, allow common mail clients
-      const isBot = /googleimageproxy|bot|crawler|spider|slurp|pingdom|lighthouse/i.test(ua)
+      const isBot = /googleimageproxy|googleusercontent|ggpht|bot|crawler|spider|slurp|pingdom|lighthouse|apple-mail-share-extension/i.test(ua)
       
       if (isBot) {
         return PIXEL_GIF
