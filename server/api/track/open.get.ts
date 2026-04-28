@@ -28,8 +28,8 @@ export default defineEventHandler(async (event) => {
 
     try {
       const ua = getHeader(event, 'user-agent') || ''
-      // Only block known aggressive image proxies and bots, allow common mail clients
-      const isBot = /googleimageproxy|googleusercontent|ggpht|bot|crawler|spider|slurp|pingdom|lighthouse|apple-mail-share-extension/i.test(ua)
+      // Only block known non-email bots, allowing email proxies to track opens
+      const isBot = /bot|crawler|spider|slurp|pingdom|lighthouse/i.test(ua)
       
       if (isBot) {
         return PIXEL_GIF
@@ -64,8 +64,8 @@ export default defineEventHandler(async (event) => {
           const sentAt = new Date(send.sentAt).getTime()
           const diffSeconds = (now - sentAt) / 1000
 
-          // Reduced threshold to 2s: enough to block instant proxies, fast enough for human response
-          if (diffSeconds < 2) {
+          // Minimal threshold of 1s to filter only near-instant automated server scans
+          if (diffSeconds < 1) {
             return PIXEL_GIF
           }
 
