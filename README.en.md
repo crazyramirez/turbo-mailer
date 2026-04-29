@@ -92,6 +92,16 @@ What makes **TurboMailer** an extremely powerful tool is its **privacy**. Being 
 - Automatic confirmation email upon unsubscription
 - Marks the contact as `unsubscribed` in the database
 
+### 📧 Deliverability & Reputation (Anti-Spam)
+
+TurboMailer is optimized to comply with strict regulations from **Apple (iCloud)**, **Gmail**, and other providers to prevent your emails from ending up in SPAM:
+
+- **List-Unsubscribe Headers**: Automatic injection of headers to allow one-click unsubscription directly from the email client (Apple Mail, Gmail).
+- **Bounce Management**: Intelligent detection of permanent errors (5xx). If an email bounces, the contact is automatically marked as `bounced` to protect your sender reputation.
+- **Native DKIM Signing**: Support for configurable RSA-2048 digital signatures. Includes a utility to generate your keys: `node scripts/generate-dkim.js yourdomain.com`.
+- **DNS Readiness**: Designed to work with SPF, DKIM, and DMARC records (required by Apple Postmaster).
+- **Rate Control**: Configurable delay and random variation (`jitter`) between sends to avoid robotic sending pattern detection.
+
 ### 🎨 Visual Template Editor
 
 - Accessible at `/editor`
@@ -235,6 +245,18 @@ SQLite in `./data/turbomailer.db` managed with Drizzle ORM. Main tables:
     # Retry configuration for temporary SMTP server errors (e.g., 421 Busy)
     SMTP_MAX_RETRIES=3
     SMTP_RETRY_DELAY_MS=5000
+
+    # DKIM Signing (OPCIONAL pero altamente recomendado)
+    # --------------------------------------------------------------------------
+    # Si dejas estos campos vacíos, TurboMailer funcionará pero tus correos tienen
+    # más riesgo de ser bloqueados o marcados como SPAM por Apple/Gmail.
+    # Si usas un servicio SMTP externo (Gmail, SES), ellos suelen firmar por ti,
+    # pero tener tu propia firma mejora la reputación de tu dominio.
+    # Generar con: node scripts/generate-dkim.js tudominio.com
+
+    # DKIM_DOMAIN=tudominio.com
+    # DKIM_SELECTOR=default
+    # DKIM_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
    ```
 
 4. **Start the application**
@@ -326,19 +348,19 @@ The app uses Gmail SMTP with a 16-digit app password (not your normal password).
 
 ### Campaigns
 
-| Method | Route                       | Description                       |
-| ------ | --------------------------- | --------------------------------- |
-| GET    | `/api/campaigns`            | List campaigns (filter by status) |
-| POST   | `/api/campaigns`            | Create draft                      |
-| GET    | `/api/campaigns/[id]`       | Detail with metrics               |
-| PUT    | `/api/campaigns/[id]`       | Update campaign                   |
-| DELETE | `/api/campaigns/[id]`       | Delete campaign                   |
-| POST   | `/api/campaigns/[id]/send`  | Launch send                       |
-| POST   | `/api/campaigns/[id]/retry` | Retry failed sends                |
-| POST   | `/api/campaigns/[id]/pause` | Pause active send                 |
-| GET    | `/api/campaigns/[id]/progress` | Real-time send progress       |
-| POST   | `/api/campaigns/[id]/sends/[sendId]/resend` | Resend individual recipient |
-| GET    | `/api/campaigns/[id]/sends` | List individual sends             |
+| Method | Route                                       | Description                       |
+| ------ | ------------------------------------------- | --------------------------------- |
+| GET    | `/api/campaigns`                            | List campaigns (filter by status) |
+| POST   | `/api/campaigns`                            | Create draft                      |
+| GET    | `/api/campaigns/[id]`                       | Detail with metrics               |
+| PUT    | `/api/campaigns/[id]`                       | Update campaign                   |
+| DELETE | `/api/campaigns/[id]`                       | Delete campaign                   |
+| POST   | `/api/campaigns/[id]/send`                  | Launch send                       |
+| POST   | `/api/campaigns/[id]/retry`                 | Retry failed sends                |
+| POST   | `/api/campaigns/[id]/pause`                 | Pause active send                 |
+| GET    | `/api/campaigns/[id]/progress`              | Real-time send progress           |
+| POST   | `/api/campaigns/[id]/sends/[sendId]/resend` | Resend individual recipient       |
+| GET    | `/api/campaigns/[id]/sends`                 | List individual sends             |
 
 ### Tracking & Analytics
 

@@ -92,6 +92,16 @@ Lo que hace a **TurboMailer** una herramienta extremadamente potente es la **pri
 - Correo de confirmación automático al darse de baja
 - Marca el contacto como `unsubscribed` en la base de datos
 
+### 📧 Entregabilidad y Reputación (Antidisturbios)
+
+TurboMailer está optimizado para cumplir con las estrictas normativas de **Apple (iCloud)**, **Gmail** y otros proveedores para evitar que tus correos terminen en SPAM:
+
+- **Cabeceras List-Unsubscribe**: Inyección automática de cabeceras para permitir la desuscripción con un solo clic directamente desde el cliente de correo (Apple Mail, Gmail).
+- **Gestión de Rebotes (Bounces)**: Detección inteligente de errores permanentes (5xx). Si un correo rebota, el contacto se marca automáticamente como `bounced` para proteger tu reputación.
+- **Firmado DKIM Nativo**: Soporte para firma digital RSA-2048 configurable. Incluye una utilidad para generar tus llaves: `node scripts/generate-dkim.js tudominio.com`.
+- **DNS Readiness**: Preparado para funcionar con registros SPF, DKIM y DMARC (obligatorios para Apple Postmaster).
+- **Control de Cadencia**: Configuración de retraso (`delay`) y variación aleatoria (`jitter`) entre envíos para evitar patrones de envío robótico.
+
 ### 🎨 Editor Visual de Plantillas
 
 - Accesible desde `/editor`
@@ -235,6 +245,18 @@ SQLite en `./data/turbomailer.db` gestionada con Drizzle ORM. Tablas principales
     # Configuración de reintentos en caso de error temporal del servidor SMTP (ej. 421 Busy)
     SMTP_MAX_RETRIES=3
     SMTP_RETRY_DELAY_MS=5000
+
+    # DKIM Signing (OPCIONAL pero altamente recomendado)
+    # --------------------------------------------------------------------------
+    # Si dejas estos campos vacíos, TurboMailer funcionará pero tus correos tienen
+    # más riesgo de ser bloqueados o marcados como SPAM por Apple/Gmail.
+    # Si usas un servicio SMTP externo (Gmail, SES), ellos suelen firmar por ti,
+    # pero tener tu propia firma mejora la reputación de tu dominio.
+    # Generar con: node scripts/generate-dkim.js tudominio.com
+
+    # DKIM_DOMAIN=tudominio.com
+    # DKIM_SELECTOR=default
+    # DKIM_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
    ```
 
 4. **Iniciar la aplicación**
@@ -326,19 +348,19 @@ La app usa Gmail SMTP con una contraseña de aplicación de 16 dígitos (no tu c
 
 ### Campañas
 
-| Método | Ruta                        | Descripción                         |
-| ------ | --------------------------- | ----------------------------------- |
-| GET    | `/api/campaigns`            | Listar campañas (filtro por estado) |
-| POST   | `/api/campaigns`            | Crear borrador                      |
-| GET    | `/api/campaigns/[id]`       | Detalle con métricas                |
-| PUT    | `/api/campaigns/[id]`       | Actualizar campaña                  |
-| DELETE | `/api/campaigns/[id]`       | Eliminar campaña                    |
-| POST   | `/api/campaigns/[id]/send`  | Lanzar envío                        |
-| POST   | `/api/campaigns/[id]/retry` | Reintentar envíos fallidos          |
-| POST   | `/api/campaigns/[id]/pause` | Pausar envío en curso               |
-| GET    | `/api/campaigns/[id]/progress` | Progreso en tiempo real          |
-| POST   | `/api/campaigns/[id]/sends/[sendId]/resend` | Reenviar destinatario individual |
-| GET    | `/api/campaigns/[id]/sends` | Listado de envíos individuales      |
+| Método | Ruta                                        | Descripción                         |
+| ------ | ------------------------------------------- | ----------------------------------- |
+| GET    | `/api/campaigns`                            | Listar campañas (filtro por estado) |
+| POST   | `/api/campaigns`                            | Crear borrador                      |
+| GET    | `/api/campaigns/[id]`                       | Detalle con métricas                |
+| PUT    | `/api/campaigns/[id]`                       | Actualizar campaña                  |
+| DELETE | `/api/campaigns/[id]`                       | Eliminar campaña                    |
+| POST   | `/api/campaigns/[id]/send`                  | Lanzar envío                        |
+| POST   | `/api/campaigns/[id]/retry`                 | Reintentar envíos fallidos          |
+| POST   | `/api/campaigns/[id]/pause`                 | Pausar envío en curso               |
+| GET    | `/api/campaigns/[id]/progress`              | Progreso en tiempo real             |
+| POST   | `/api/campaigns/[id]/sends/[sendId]/resend` | Reenviar destinatario individual    |
+| GET    | `/api/campaigns/[id]/sends`                 | Listado de envíos individuales      |
 
 ### Tracking & Analytics
 
