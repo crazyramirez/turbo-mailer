@@ -50,7 +50,15 @@ export default defineEventHandler(async () => {
 
     for (const table of TABLES_INSERT_ORDER) {
       console.log(`[Demo] Inserting table: ${table}`)
-      conn.exec(`INSERT INTO main."${table}" SELECT * FROM demo."${table}"`)
+      // Get columns from both databases using the correct attached prefix syntax
+      const demoCols = (conn.pragma(`demo.table_info("${table}")`) as any[]).map(c => c.name)
+      const mainCols = (conn.pragma(`main.table_info("${table}")`) as any[]).map(c => c.name)
+      const commonCols = demoCols.filter(c => mainCols.includes(c))
+      
+      if (commonCols.length > 0) {
+        const colList = commonCols.map(c => `"${c}"`).join(', ')
+        conn.exec(`INSERT INTO main."${table}" (${colList}) SELECT ${colList} FROM demo."${table}"`)
+      }
     }
 
     // Reset AUTOINCREMENT sequences
