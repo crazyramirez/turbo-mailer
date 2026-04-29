@@ -1,0 +1,1 @@
+ALTER TABLE `contacts` ADD `fail_count` integer DEFAULT 0;
