@@ -218,6 +218,34 @@ async function autoCreateTemplate() {
   showToast((useNuxtApp().$i18n as any).t('editor.template_auto_linked'), 'info')
 }
 
+async function downloadHtml() {
+  const i18n = (useNuxtApp().$i18n as any)
+  
+  if (!currentTemplate.value) {
+    showToast(i18n.t('editor.template_required_download'), 'warning')
+    showTemplateModal.value = true
+    return
+  }
+
+  // First save changes
+  await saveTemplate()
+
+  const finalHtml = useIframeEngine().getSurgicalCleanHtml()
+  if (!finalHtml) return
+
+  const blob = new Blob([finalHtml], { type: 'text/html' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${currentTemplate.value}.html`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+  
+  showToast(i18n.t('editor.download_started'), 'success')
+}
+
 export function useTemplateManager() {
   return {
     loadTemplates,
@@ -228,5 +256,6 @@ export function useTemplateManager() {
     handleSave,
     createNewTemplate,
     autoCreateTemplate,
+    downloadHtml,
   }
 }

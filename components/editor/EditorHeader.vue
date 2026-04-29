@@ -10,6 +10,7 @@ import {
   Save,
   Moon,
   Sun,
+  Download,
 } from "lucide-vue-next";
 import { APP_VERSION } from "~/utils/version";
 
@@ -24,7 +25,7 @@ const {
   darkModePreview,
 } = useEditorState();
 const { undo, redo } = useIframeEngine();
-const { handleSave, saveTemplate } = useTemplateManager();
+const { handleSave, saveTemplate, downloadHtml } = useTemplateManager();
 
 async function handleBack() {
   if (currentTemplate.value) {
@@ -117,6 +118,10 @@ async function handleBack() {
       <div class="active-template-tag">
         <span>{{ currentTemplate ? currentTemplate + ".html" : "" }}</span>
       </div>
+
+      <button @click="downloadHtml" class="btn-secondary-download" :title="t('editor.download')">
+        <Download :size="16" />
+      </button>
 
       <button @click="handleSave" :disabled="isSaving" class="btn-premium-save">
         <Save v-if="!isSaving" :size="16" />

@@ -462,7 +462,10 @@
     "module_grid-3": "Grid Trio",
     "module_grid-4": "Grid Quad",
     "module_unsubscribe": "Unsubscribe",
-    "module_signature": "Signature"
+    "module_signature": "Signature",
+    "download": "Download HTML",
+    "download_started": "Download started",
+    "template_required_download": "You must save the template before downloading it"
   },
   "common": {
     "loading": "Loading...",
