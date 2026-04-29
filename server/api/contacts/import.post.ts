@@ -1,6 +1,6 @@
 import { db } from '~/server/db/index'
 import { contacts, listContacts } from '~/server/db/schema'
-import { sql } from 'drizzle-orm'
+import { sql, eq } from 'drizzle-orm'
 import { isValidEmail, sanitizeContactFields } from '~/server/utils/validate'
 
 export default defineEventHandler(async (event) => {
@@ -23,23 +23,36 @@ export default defineEventHandler(async (event) => {
     if (!fields.email || !isValidEmail(fields.email)) { skipped++; continue }
 
     try {
-      const [contact] = await db.insert(contacts).values({
-        ...fields,
-        tags: [],
-        status: 'active',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }).onConflictDoNothing().returning()
+      // 1. Upsert or get existing contact
+      let contactId: number | null = null
+      
+      const [existing] = await db.select({ id: contacts.id }).from(contacts).where(eq(contacts.email, fields.email))
+      
+      if (existing) {
+        contactId = existing.id
+        // Optional: Update existing contact fields
+        await db.update(contacts).set({ ...fields, updatedAt: new Date() }).where(eq(contacts.id, contactId))
+      } else {
+        const [insertedRow] = await db.insert(contacts).values({
+          ...fields,
+          tags: [],
+          status: 'active',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }).returning()
+        if (insertedRow) contactId = insertedRow.id
+      }
 
-      if (contact && listId) {
+      if (contactId && listId) {
         await db.insert(listContacts)
-          .values({ listId: Number(listId), contactId: contact.id })
+          .values({ listId: Number(listId), contactId })
           .onConflictDoNothing()
       }
 
-      if (contact) inserted++
+      if (contactId) inserted++
       else skipped++
-    } catch {
+    } catch (e) {
+      console.error('Import error for row:', row, e)
       skipped++
     }
   }
