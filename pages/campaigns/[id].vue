@@ -284,10 +284,10 @@ let pollTimer: ReturnType<typeof setInterval> | null = null;
 function startPolling() {
   if (pollTimer) return;
   pollTimer = setInterval(async () => {
-    await fetchCampaign();
+    // Actualizamos tanto la campaña (stats) como la lista de envíos en paralelo
+    await Promise.all([fetchCampaign(), fetchSends()]);
     if (campaign.value?.status !== "sending") {
       stopPolling();
-      await fetchSends();
     }
   }, 3000);
 }
