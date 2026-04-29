@@ -55,23 +55,6 @@ export const editorBlocks: EditorBlock[] = [
   </div>`,
   },
   {
-    id: 'card',
-    name: 'Tarjeta',
-    icon: Square,
-    content: `<div class="card-block editable-block" data-type="Tarjeta" data-layout="premium" style="padding:16px 32px;background:#f6faff;">
-    <div class="card-wrapper" style="background:#f6faff;border:1px solid #e2e8f0;border-radius:18px;padding:20px;position:relative;">
-      <div class="image-container" data-toggle="image" style="position:relative;margin-bottom:16px;">
-        <img src="${placeholder1200x800}" alt="Servicio" style="display:block;width:100%;height:auto;border-radius:12px;">
-      </div>
-      <div class="text-group">
-        <div data-toggle="badge" class="badge-el" style="font-family:Arial;font-size:13px;font-weight:700;color:#6366f1;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;">01 · Categoría</div>
-        <div data-toggle="title" style="font-family:Arial;font-size:20px;font-weight:700;color:#0f172a;margin-bottom:10px;">Título del Servicio</div>
-        <div data-toggle="subtitle" style="font-family:Arial;font-size:15px;line-height:24px;color:#475569;">Describe aquí los detalles de este servicio o producto para captar la atención de tu cliente.</div>
-      </div>
-    </div>
-  </div>`,
-  },
-  {
     id: 'button',
     name: 'Botón',
     icon: MousePointer2,
@@ -94,25 +77,19 @@ export const editorBlocks: EditorBlock[] = [
   </div>`,
   },
   {
-    id: 'note',
-    name: 'Nota',
-    icon: StickyNote,
-    content: `<div class="methodology-block editable-block" data-type="Nota" style="padding:20px;background:#f6faff;">
-    <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:18px;padding:24px;border-left:4px solid #6366f1;">
-      <div data-toggle="badge" style="font-family:Arial;font-size:11px;font-weight:700;color:#6366f1;letter-spacing:1.2px;margin-bottom:12px;text-transform:uppercase;">Información Importante</div>
-      <div data-toggle="title" style="font-family:Arial;font-size:16px;font-weight:700;color:#0f172a;line-height:24px;margin-bottom:12px;">Punto clave a destacar en tu comunicación.</div>
-      <div data-toggle="subtitle" style="font-family:Arial;font-size:15px;line-height:24px;color:#475569;">Utiliza este bloque para resaltar datos, aclaraciones o cualquier información que deba captar la atención del lector de forma inmediata y profesional.</div>
-    </div>
-  </div>`,
-  },
-  {
-    id: 'presence',
-    name: 'Presencia',
-    icon: Globe,
-    content: `<div class="presence-block editable-block" data-type="Presencia" style="padding:20px;background:#f6faff;">
-    <div data-toggle="badge" style="font-family:Arial;font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:1.2px;text-align:center;margin-bottom:16px;text-transform:uppercase;">RECONOCIMIENTO Y PRESENCIA</div>
-    <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;text-align:center;">
-      <span style="display:inline-block;font-family:Arial;font-size:12px;font-weight:700;color:#475569;padding:4px 8px;">FITUR · MWC · ITB· IMEX·  WTM</span>
+    id: 'card',
+    name: 'Tarjeta',
+    icon: Square,
+    content: `<div class="card-block editable-block" data-type="Tarjeta" data-layout="premium" style="padding:16px 32px;background:#f6faff;">
+    <div class="card-wrapper" style="background:#f6faff;border:1px solid #e2e8f0;border-radius:18px;padding:20px;position:relative;">
+      <div class="image-container" data-toggle="image" style="position:relative;margin-bottom:16px;">
+        <img src="${placeholder1200x800}" alt="Servicio" style="display:block;width:100%;height:auto;border-radius:12px;">
+      </div>
+      <div class="text-group">
+        <div data-toggle="badge" class="badge-el" style="font-family:Arial;font-size:13px;font-weight:700;color:#6366f1;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;">01 · Categoría</div>
+        <div data-toggle="title" style="font-family:Arial;font-size:20px;font-weight:700;color:#0f172a;margin-bottom:10px;">Título del Servicio</div>
+        <div data-toggle="subtitle" style="font-family:Arial;font-size:15px;line-height:24px;color:#475569;">Describe aquí los detalles de este servicio o producto para captar la atención de tu cliente.</div>
+      </div>
     </div>
   </div>`,
   },
@@ -213,6 +190,29 @@ export const editorBlocks: EditorBlock[] = [
         </td>
       </tr>
     </table>
+  </div>`,
+  },
+  {
+    id: 'note',
+    name: 'Nota',
+    icon: StickyNote,
+    content: `<div class="methodology-block editable-block" data-type="Nota" style="padding:20px;background:#f6faff;">
+    <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:18px;padding:24px;border-left:4px solid #6366f1;">
+      <div data-toggle="badge" style="font-family:Arial;font-size:11px;font-weight:700;color:#6366f1;letter-spacing:1.2px;margin-bottom:12px;text-transform:uppercase;">Información Importante</div>
+      <div data-toggle="title" style="font-family:Arial;font-size:16px;font-weight:700;color:#0f172a;line-height:24px;margin-bottom:12px;">Punto clave a destacar en tu comunicación.</div>
+      <div data-toggle="subtitle" style="font-family:Arial;font-size:15px;line-height:24px;color:#475569;">Utiliza este bloque para resaltar datos, aclaraciones o cualquier información que deba captar la atención del lector de forma inmediata y profesional.</div>
+    </div>
+  </div>`,
+  },
+  {
+    id: 'presence',
+    name: 'Presencia',
+    icon: Globe,
+    content: `<div class="presence-block editable-block" data-type="Presencia" style="padding:20px;background:#f6faff;">
+    <div data-toggle="badge" style="font-family:Arial;font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:1.2px;text-align:center;margin-bottom:16px;text-transform:uppercase;">RECONOCIMIENTO Y PRESENCIA</div>
+    <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;text-align:center;">
+      <span style="display:inline-block;font-family:Arial;font-size:12px;font-weight:700;color:#475569;padding:4px 8px;">FITUR · MWC · ITB · IMEX · WTM · IBTM</span>
+    </div>
   </div>`,
   },
   {
