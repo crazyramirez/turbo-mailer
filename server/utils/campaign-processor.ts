@@ -19,6 +19,7 @@ export interface SendConfig {
   jitterMs: number
   maxRetries: number
   retryDelayMs: number
+  maxEmailsPerSecond: number
   dkimDomain?: string
   dkimSelector?: string
   dkimPrivateKey?: string
@@ -50,18 +51,26 @@ export async function sendWithRetry(
   mailOptions: nodemailer.SendMailOptions,
   maxRetries: number,
   retryDelayMs: number
-): Promise<void> {
+): Promise<nodemailer.SentMessageInfo> {
   let lastErr: Error | null = null
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      await transporter.sendMail(mailOptions)
-      return
+      const info = await transporter.sendMail(mailOptions)
+      
+      // Check if the recipient was rejected even if the SMTP server returned 250 OK
+      if (info.rejected && info.rejected.length > 0) {
+        const err = new Error(`Recipient rejected by SMTP server: ${info.rejected.join(', ')}`)
+        // Assign a mock 550 code to trigger hard bounce logic if it looks like a permanent block
+        ;(err as any).responseCode = 550 
+        throw err
+      }
+      
+      return info
     } catch (err: any) {
       lastErr = err
       // 5xx SMTP = permanent failure — don't retry
       if (err.responseCode >= 500 && err.responseCode < 600) throw err
       if (attempt < maxRetries - 1) {
-        // Exponential backoff or fixed delay? Let's use config delay with a multiplier
         await new Promise(r => setTimeout(r, retryDelayMs * (attempt + 1)))
       }
     }
@@ -151,8 +160,13 @@ export async function processCampaign(campaignId: number, cfg: SendConfig): Prom
         errorMsg: null
       }).where(eq(sends.id, send.sendId))
       await db.update(campaigns)
-        .set({ sentCount: sql`${campaigns.sentCount} + 1` })
+        .set({ sentCount: sql`COALESCE(${campaigns.sentCount}, 0) + 1` })
         .where(eq(campaigns.id, campaignId))
+
+      // Reset failCount on successful send
+      if (send.contactId) {
+        await db.update(contacts).set({ failCount: 0 }).where(eq(contacts.id, send.contactId))
+      }
     } catch (err: any) {
       const isHardBounce = err.responseCode >= 500 && err.responseCode < 600
       const status = isHardBounce ? 'bounced' : 'failed'
@@ -168,19 +182,43 @@ export async function processCampaign(campaignId: number, cfg: SendConfig): Prom
           status: 'bounced',
           updatedAt: new Date()
         }).where(eq(contacts.id, send.contactId))
+      } else if (!isHardBounce && send.contactId) {
+        // Soft Bounce logic: increment failCount
+        const [c] = await db.select({ failCount: contacts.failCount }).from(contacts).where(eq(contacts.id, send.contactId))
+        const newCount = (c?.failCount ?? 0) + 1
+        
+        if (newCount >= 5) {
+          await db.update(contacts).set({ 
+            status: 'inactive', 
+            failCount: newCount, 
+            updatedAt: new Date() 
+          }).where(eq(contacts.id, send.contactId))
+        } else {
+          await db.update(contacts).set({ 
+            failCount: newCount, 
+            updatedAt: new Date() 
+          }).where(eq(contacts.id, send.contactId))
+        }
       }
 
       await db.update(campaigns)
-        .set({ failCount: sql`${campaigns.failCount} + 1` })
+        .set({ failCount: sql`COALESCE(${campaigns.failCount}, 0) + 1` })
         .where(eq(campaigns.id, campaignId))
     }
 
-    if (cfg.delayMs > 0) {
+    const minDelayByRate = cfg.maxEmailsPerSecond > 0 ? (1000 / cfg.maxEmailsPerSecond) : 0
+    const baseDelay = Math.max(cfg.delayMs || 0, minDelayByRate)
+
+    if (baseDelay > 0) {
       const jitter = cfg.jitterMs > 0
         ? Math.floor(Math.random() * (cfg.jitterMs * 2)) - cfg.jitterMs
         : 0
-      const actualDelay = Math.max(50, cfg.delayMs + jitter)
+      const actualDelay = Math.max(50, baseDelay + jitter)
       await new Promise(r => setTimeout(r, actualDelay))
+    } else {
+      // If no delay is configured, use a small 500ms delay to make progress visible in the UI
+      // and prevent "all at once" feeling reported by the user.
+      await new Promise(r => setTimeout(r, 500))
     }
   }
 

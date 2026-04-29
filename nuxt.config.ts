@@ -19,6 +19,7 @@ export default defineNuxtConfig({
     unsubscribeSecret: process.env.UNSUBSCRIBE_SECRET,
     smtpSendDelayMs: Number(process.env.SMTP_SEND_DELAY_MS || 2000),
     smtpSendJitterMs: Number(process.env.SMTP_SEND_JITTER_MS || 500),
+    smtpMaxEmailsPerSecond: Number(process.env.SMTP_MAX_EMAILS_PER_SECOND || 0),
     smtpMaxRetries: Number(process.env.SMTP_MAX_RETRIES || 3),
     smtpRetryDelayMs: Number(process.env.SMTP_RETRY_DELAY_MS || 5000),
     dkimDomain: process.env.DKIM_DOMAIN,

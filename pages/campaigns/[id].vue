@@ -289,7 +289,7 @@ function startPolling() {
     if (campaign.value?.status !== "sending") {
       stopPolling();
     }
-  }, 3000);
+  }, 1000); // Poll every 1s instead of 3s for real-time precision
 }
 function stopPolling() {
   if (pollTimer) {
