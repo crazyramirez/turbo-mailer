@@ -56,6 +56,7 @@ const newListName = ref("");
 const newListColor = ref("#6366f1");
 const tagInput = ref("");
 
+const presets = ['#334155', '#1e3a8a', '#3730a3', '#581c87', '#7f1d1d', '#92400e', '#14532d', '#0f766e', '#064e3b', '#475569'];
 const form = ref({
   email: "",
   name: "",
@@ -106,7 +107,7 @@ function onSearch() {
 function selectList(id: number | null) {
   selectedListId.value = id;
   page.value = 1;
-  selectedContactIds.value.clear();
+  selectedContactIds.value = new Set();
   fetchContacts();
 }
 
@@ -254,11 +255,35 @@ async function batchRemoveFromList() {
   }, 320);
 }
 
+async function batchDelete() {
+  if (selectedContactIds.value.size === 0) return;
+  const ok = await showDialog({
+    type: "confirm",
+    title: `¿Eliminar ${selectedContactIds.value.size} contactos?`,
+    message: "Esta acción eliminará los contactos de todas las listas de forma permanente.",
+  });
+  if (!ok) return;
+
+  const ids = [...selectedContactIds.value];
+  removingIds.value = new Set(ids);
+  
+  await Promise.all(
+    ids.map((id) => $fetch(`/api/contacts/${id}`, { method: "DELETE" }))
+  );
+  
+  selectedContactIds.value = new Set();
+  setTimeout(() => {
+    removingIds.value = new Set();
+    fetchContacts();
+    fetchLists();
+  }, 320);
+}
+
 // ── List CRUD ─────────────────────────────────────────────────────────────
 function openNewList() {
   editListData.value = null;
   newListName.value = "";
-  newListColor.value = "#6366f1";
+  newListColor.value = "#334155";
   showListModal.value = true;
   nextTick(() => listNameInputRef.value?.focus());
 }
@@ -386,6 +411,7 @@ onMounted(() => {
 
 watch([search, statusFilter], () => {
   page.value = 1;
+  selectedContactIds.value = new Set();
   fetchContacts();
 });
 </script>
@@ -515,21 +541,31 @@ watch([search, statusFilter], () => {
           <span class="drag-hint-sep" v-if="!selectedListId"
             >— arrastra a una lista del panel izquierdo</span
           >
-          <button
-            v-if="selectedListId"
-            class="batch-remove-btn"
-            @click="batchRemoveFromList"
-            :title="`Quitar de ${lists.find((l) => l.id === selectedListId)?.name}`"
-          >
-            <UserMinus :size="13" />
-            Quitar de lista
-          </button>
-          <button
-            class="drag-hint-clear"
-            @click="selectedContactIds = new Set()"
-          >
-            <X :size="12" />
-          </button>
+          <div class="batch-actions">
+            <button
+              v-if="selectedListId"
+              class="batch-btn"
+              @click="batchRemoveFromList"
+              :title="`Quitar de ${lists.find((l) => l.id === selectedListId)?.name}`"
+            >
+              <UserMinus :size="13" />
+              Quitar de lista
+            </button>
+            <button
+              class="batch-btn red"
+              @click="batchDelete"
+              title="Eliminar contactos de forma permanente"
+            >
+              <Trash2 :size="13" />
+              Eliminar
+            </button>
+            <button
+              class="drag-hint-clear"
+              @click="selectedContactIds = new Set()"
+            >
+              <X :size="12" />
+            </button>
+          </div>
         </div>
       </Transition>
 
@@ -886,13 +922,28 @@ watch([search, statusFilter], () => {
                   </label>
                   <label class="full-width">
                     <div class="label-text">Color de identificación</div>
-                    <div class="input-with-icon">
-                      <Pipette :size="14" class="field-icon" />
-                      <input
-                        v-model="newListColor"
-                        type="color"
-                        class="form-input color-in"
+                    <div class="color-selection-grid">
+                      <button 
+                        v-for="c in presets" 
+                        :key="c"
+                        type="button"
+                        class="color-swatch"
+                        :style="{ background: c }"
+                        :class="{ active: newListColor === c }"
+                        @click="newListColor = c"
                       />
+                      <div 
+                        class="custom-color-picker" 
+                        :style="{ background: newListColor }"
+                        :class="{ active: !presets.includes(newListColor) }"
+                      >
+                        <Pipette :size="14" class="picker-icon" />
+                        <input
+                          v-model="newListColor"
+                          type="color"
+                          class="picker-input"
+                        />
+                      </div>
                     </div>
                   </label>
                 </div>
@@ -1191,37 +1242,51 @@ watch([search, statusFilter], () => {
   font-weight: 500;
 }
 .drag-hint-clear {
-  margin-left: auto;
   background: none;
   border: none;
   cursor: pointer;
   color: var(--accent-light);
   opacity: 0.6;
   display: flex;
-  padding: 0;
+  padding: 4px;
+  margin-left: 4px;
 }
 .drag-hint-clear:hover {
   opacity: 1;
 }
-.batch-remove-btn {
+.batch-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.batch-btn {
   display: flex;
   align-items: center;
   gap: 5px;
   padding: 5px 12px;
-  background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  color: #ef4444;
-  font-size: 12px;
+  color: var(--text-muted);
+  font-size: 11px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
-  margin-left: auto;
 }
-.batch-remove-btn:hover {
+.batch-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--accent);
+  color: var(--text);
+}
+.batch-btn.red {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+.batch-btn.red:hover {
   background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.5);
-  transform: translateY(-1px);
+  border-color: rgba(239, 68, 68, 0.4);
 }
 
 /* Email cell with list chips */
@@ -1498,6 +1563,9 @@ watch([search, statusFilter], () => {
 .list-form {
   max-width: 360px;
 }
+.list-form .modal-body {
+  padding: 16px 20px;
+}
 .modal-head {
   display: flex;
   justify-content: space-between;
@@ -1605,6 +1673,63 @@ watch([search, statusFilter], () => {
 
 .form-input:focus + .field-icon {
   color: var(--accent-light);
+}
+
+.color-selection-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+}
+.color-swatch {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+}
+.color-swatch:hover {
+  transform: scale(1.1);
+}
+.color-swatch.active {
+  border-color: #fff;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+.custom-color-picker {
+  grid-column: span 2;
+  height: 100%;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s;
+}
+.custom-color-picker.active {
+  border-color: #fff;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+.picker-icon {
+  color: #fff;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+  pointer-events: none;
+}
+.picker-input {
+  position: absolute;
+  inset: -10px;
+  width: 150%;
+  height: 150%;
+  cursor: pointer;
+  opacity: 0;
 }
 
 .tag-input-wrap {
