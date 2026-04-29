@@ -221,20 +221,20 @@ SQLite in `./data/turbomailer.db` managed with Drizzle ORM. Main tables:
     # SMTP Configuration (requerido para enviar)
     SMTP_HOST=smtp.gmail.com
     SMTP_PORT=465
-    SMTP_USER=tu-correo@gmail.com
-    SMTP_PASS=tu-password-de-aplicacion
+    SMTP_USER=your-email@gmail.com
+    SMTP_PASS=your-app-password
     SMTP_SECURE=true
     SMTP_FROM_NAME=TurboMailer
-    SMTP_FROM_EMAIL=tu-correo@gmail.com
+    SMTP_FROM_EMAIL=your-email@gmail.com
 
-    # Inteligencia Artificial (opcional)
+    # Artificial Intelligence (optional)
     OPENAI_API_KEY=sk-...
     OPENAI_MODEL=gpt-4o-mini
 
-    # Tracking (URL base de la app, para generar pixels y links trackeados)
-    TRACKING_BASE_URL=https://url-de-tu-web.xxx
+    # Tracking (Base URL of the app, to generate pixels and tracked links)
+    TRACKING_BASE_URL=https://your-web-url.xxx
 
-    # Seguridad: secreto HMAC para firmar links de unsubscribe
+    # Security: HMAC secret to sign unsubscribe links
     UNSUBSCRIBE_SECRET=change-me-use-openssl-rand-hex-32
 
     # Delay between emails (ms) to respect SMTP provider rate limits. Default: 2000ms
@@ -246,17 +246,16 @@ SQLite in `./data/turbomailer.db` managed with Drizzle ORM. Main tables:
     SMTP_MAX_RETRIES=3
     SMTP_RETRY_DELAY_MS=5000
 
-    # DKIM Signing (OPCIONAL pero altamente recomendado)
+    # DKIM Signing (OPTIONAL but highly recommended)
     # --------------------------------------------------------------------------
-    # Si dejas estos campos vacíos, TurboMailer funcionará pero tus correos tienen
-    # más riesgo de ser bloqueados o marcados como SPAM por Apple/Gmail.
-    # Si usas un servicio SMTP externo (Gmail, SES), ellos suelen firmar por ti,
-    # pero tener tu propia firma mejora la reputación de tu dominio.
-    # Generar con: node scripts/generate-dkim.js tudominio.com
-
-    # DKIM_DOMAIN=tudominio.com
-    # DKIM_SELECTOR=default
-    # DKIM_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+    # If you leave these fields empty, TurboMailer will work but your emails will
+    # have a higher risk of being blocked or marked as SPAM by Apple/Gmail.
+    # If you use an external SMTP service (Gmail, SES), they usually sign for you,
+    # but having your own signature improves your domain's reputation.
+    # Generate with: node scripts/generate-dkim.js yourdomain.com
+    DKIM_DOMAIN=yourdomain.com
+    DKIM_SELECTOR=default
+    DKIM_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
    ```
 
 4. **Start the application**

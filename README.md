@@ -253,10 +253,9 @@ SQLite en `./data/turbomailer.db` gestionada con Drizzle ORM. Tablas principales
     # Si usas un servicio SMTP externo (Gmail, SES), ellos suelen firmar por ti,
     # pero tener tu propia firma mejora la reputación de tu dominio.
     # Generar con: node scripts/generate-dkim.js tudominio.com
-
-    # DKIM_DOMAIN=tudominio.com
-    # DKIM_SELECTOR=default
-    # DKIM_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+    DKIM_DOMAIN=tudominio.com
+    DKIM_SELECTOR=default
+    DKIM_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
    ```
 
 4. **Iniciar la aplicación**
