@@ -422,7 +422,7 @@ onUnmounted(() => {
 }
 .cp-canvas.desktop {
   width: 100%;
-  max-width: 820px;
+  max-width: 960px;
   height: calc(100vh - 380px);
   transform: scale(1);
 }

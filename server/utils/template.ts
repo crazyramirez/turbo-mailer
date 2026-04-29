@@ -5,6 +5,10 @@
 export const VAR_MAP: Record<string, string[]> = {
   name: ['Nombre', 'Name', 'FirstName', 'First Name', 'Contacto', 'Contact'],
   company: ['Empresa', 'Company', 'Business', 'Organization'],
+  role: ['Puesto', 'Cargo', 'Role', 'Position', 'JobTitle', 'Job Title'],
+  city: ['Ciudad', 'City', 'Location', 'Poblacion', 'Población'],
+  country: ['Pais', 'País', 'Country', 'Nacion', 'Nación'],
+  service: ['Servicio', 'Service', 'Producto', 'Product', 'Offer'],
   url: ['URL', 'Link', 'Web', 'Website'],
   linkedin: ['Linkedin', 'LinkedIn'],
   instagram: ['Instagram', 'IG'],

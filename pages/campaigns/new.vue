@@ -456,7 +456,7 @@ onMounted(() => {
 }
 
 .card-wide {
-  max-width: 1000px;
+  max-width: 1200px;
 }
 
 .btn-close-wizard {
