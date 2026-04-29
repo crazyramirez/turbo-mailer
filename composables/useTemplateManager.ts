@@ -163,12 +163,12 @@ async function createNewTemplate() {
       max-width: 820px;
       margin: 0 auto 20px auto;
       background: #ffffff;
-      border-radius: 24px;
+      border-radius: 14px;
       box-shadow: 0 10px 40px rgba(15, 23, 42, 0.08);
       overflow: hidden;
     }
     @media only screen and (max-width: 600px) {
-      .main-card { border-radius: 20px !important; }
+      .main-card { border-radius: 10px !important; }
       .header-block, .body-block, .methodology-block, .presence-block, .card-block, .cta-block, .signature-block {
         padding-left: 20px !important;
         padding-right: 20px !important;

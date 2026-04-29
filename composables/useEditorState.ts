@@ -65,7 +65,7 @@ const htmlContent = ref(`<!DOCTYPE html>
       max-width: 820px;
       margin: 0 auto 20px auto;
       background: #ffffff;
-      border-radius: 24px;
+      border-radius: 14px;
       box-shadow: 0 10px 40px rgba(15, 23, 42, 0.08);
       overflow: hidden;
     }

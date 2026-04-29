@@ -533,7 +533,7 @@ function injectIframeContent() {
     mainCard.style.maxWidth = '820px'
     mainCard.style.width = '100%'
     mainCard.style.margin = '0 auto 40px auto'
-    mainCard.style.borderRadius = '24px'
+    mainCard.style.borderRadius = '14px'
     mainCard.style.overflow = 'hidden'
     
     // Ensure parent has lateral margins for mobile responsiveness
