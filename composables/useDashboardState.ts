@@ -15,6 +15,8 @@ const availableColumns = ref<string[]>([])
 const selectedColumn = ref('Email')
 const empresaColumn = ref('')
 const nombreColumn = ref('')
+const agencyColumn = ref('')
+const puestoColumn = ref('')
 const linkedinColumn = ref('')
 const urlColumn = ref('')
 const youtubeColumn = ref('')
@@ -88,14 +90,22 @@ function applyVars(template: string, row: Record<string, any>): string {
   if (!template) return ''
   let result = template
 
+  // Helper to normalize strings (remove accents, lowercase, remove non-alphanumeric)
+  const normRaw = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+
   const VAR_MAP: Record<string, string[]> = {
-    name: ['Nombre', 'Name', 'FirstName', 'First Name', 'Contacto', 'Contact'],
-    company: ['Empresa', 'Company', 'Business', 'Organization'],
-    url: ['URL', 'Link', 'Web', 'Website'],
-    linkedin: ['Linkedin', 'LinkedIn'],
-    instagram: ['Instagram', 'IG'],
-    youtube: ['Youtube', 'YouTube', 'YT'],
-    phone: ['Telefono', 'Teléfono', 'Phone', 'Cell', 'Mobile'],
+    name: ['Nombre', 'Name', 'FirstName', 'First Name', 'Contacto', 'Contact', 'Persona'],
+    company: ['Empresa', 'Company', 'Business', 'Organization', 'Entidad', 'Brand', 'Company_Name', 'Company Name', 'Nombre_Empresa', 'Nombre Empresa'],
+    agency: ['Agencia', 'Agency', 'Nombre_Agencia', 'Agency_Name', 'Nombre Agencia', 'Agency Name', 'Agency_Brand', 'Marca_Agencia'],
+    role: ['Puesto', 'Cargo', 'Role', 'Position', 'Job Title', 'Titular'],
+    url: ['URL', 'Link', 'Web', 'Website', 'Sitio'],
+    linkedin: ['Linkedin', 'LinkedIn', 'Perfil'],
+    instagram: ['Instagram', 'IG', 'Insta'],
+    youtube: ['Youtube', 'YouTube', 'YT', 'Canal'],
+    phone: ['Telefono', 'Teléfono', 'Phone', 'Cell', 'Mobile', 'WhatsApp'],
+    city: ['Ciudad', 'City', 'Población', 'Location'],
+    country: ['Pais', 'País', 'Country', 'Nación'],
+    service: ['Servicio', 'Service', 'Producto', 'Product', 'Interés'],
     email: ['Email', 'Correo', 'Mail']
   }
 
@@ -103,6 +113,8 @@ function applyVars(template: string, row: Record<string, any>): string {
   const fieldMapping: Record<string, string> = {
     name: nombreColumn.value,
     company: empresaColumn.value,
+    agency: agencyColumn.value,
+    role: puestoColumn.value,
     email: selectedColumn.value,
     linkedin: linkedinColumn.value,
     url: urlColumn.value,
@@ -110,47 +122,58 @@ function applyVars(template: string, row: Record<string, any>): string {
     instagram: instagramColumn.value,
   }
 
-  // Iterate over our defined mappings
+  // 1. Process Predefined Mappings with smart lookup
   for (const [field, aliases] of Object.entries(VAR_MAP)) {
-    // Try to find the value
     const colName = fieldMapping[field]
     let value = colName ? row[colName] : row[field]
 
     if (value === undefined) {
+      // Try to find by normalized alias
       for (const alias of aliases) {
-        if (row[alias] !== undefined) {
-          value = row[alias]
-          break
-        }
-        // Try case-insensitive key lookup
-        const ciKey = Object.keys(row).find(k => k.toLowerCase() === alias.toLowerCase())
-        if (ciKey) {
-          value = row[ciKey]
-          break
+        const normalizedAlias = normRaw(alias);
+        const foundKey = Object.keys(row).find(k => normRaw(k) === normalizedAlias);
+        if (foundKey) {
+          value = row[foundKey];
+          break;
         }
       }
     }
     
     const finalValue = value === null || value === undefined ? '' : String(value)
 
-    // Replace all aliases (case-insensitive)
-    for (const alias of aliases) {
-      const reg = new RegExp(`\\{\\{\\s*${alias}\\s*\\}\\}`, 'gi')
+    // Replace all aliases and the field name
+    const allTokens = [...aliases, field];
+    for (const token of allTokens) {
+      // Regex for exact match (case insensitive)
+      const reg = new RegExp(`\\{\\{\\s*${token}\\s*\\}\\}`, 'gi')
       result = result.replace(reg, finalValue)
+      
+      // Smart Accent-insensitive replace:
+      // We look for anything inside {{ }} and check if its normalization matches the token's normalization
+      const dynamicVarReg = /\{\{\s*([^}]+)\s*\}\}/g;
+      result = result.replace(dynamicVarReg, (match, varName) => {
+        if (normRaw(varName) === normRaw(token)) return finalValue;
+        return match;
+      });
     }
-
-    // Also replace the field name itself
-    const fieldReg = new RegExp(`\\{\\{\\s*${field}\\s*\\}\\}`, 'gi')
-    result = result.replace(fieldReg, finalValue)
   }
 
-  // Dynamic column support (XLSX columns or any key in row)
+  // 2. Dynamic column support for EVERYTHING else
   Object.keys(row).forEach(key => {
     const finalValue = row[key] === null || row[key] === undefined ? '' : String(row[key])
-    const regex = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'gi')
-    result = result.replace(regex, finalValue)
-  })
-  
+    
+    // Replace exact key match
+    const exactRegex = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'gi')
+    result = result.replace(exactRegex, finalValue)
+
+    // Replace normalized key match
+    const dynamicVarReg = /\{\{\s*([^}]+)\s*\}\}/g;
+    result = result.replace(dynamicVarReg, (match, varName) => {
+      if (normRaw(varName) === normRaw(key)) return finalValue;
+      return match;
+    });
+  });
+
   return result
 }
 
@@ -160,6 +183,8 @@ const contactRows = computed<Array<Record<string, any>>>(() =>
     email: String(row[selectedColumn.value] || '').trim(),
     empresa: empresaColumn.value ? String(row[empresaColumn.value] || '').trim() : '',
     nombre: nombreColumn.value ? String(row[nombreColumn.value] || '').trim() : '',
+    agency: agencyColumn.value ? String(row[agencyColumn.value] || '').trim() : '',
+    puesto: puestoColumn.value ? String(row[puestoColumn.value] || '').trim() : '',
   })),
 )
 
@@ -216,6 +241,8 @@ function resetFormFields() {
   selectedColumn.value = 'Email'
   empresaColumn.value = ''
   nombreColumn.value = ''
+  agencyColumn.value = ''
+  puestoColumn.value = ''
   linkedinColumn.value = ''
   urlColumn.value = ''
   youtubeColumn.value = ''
@@ -253,6 +280,8 @@ export function useDashboardState() {
     selectedColumn,
     empresaColumn,
     nombreColumn,
+    agencyColumn,
+    puestoColumn,
     linkedinColumn,
     urlColumn,
     youtubeColumn,

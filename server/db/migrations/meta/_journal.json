@@ -43,6 +43,20 @@
       "when": 1777249253952,
       "tag": "0005_bouncy_jack_power",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1777469423157,
+      "tag": "0006_sour_talon",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1777469623326,
+      "tag": "0007_premium_groot",
+      "breakpoints": true
     }
   ]
 }

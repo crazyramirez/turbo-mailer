@@ -9,6 +9,8 @@ const {
   selectedColumn,
   empresaColumn,
   nombreColumn,
+  agencyColumn,
+  puestoColumn,
   linkedinColumn,
   urlColumn,
   youtubeColumn,
@@ -41,7 +43,9 @@ function parseXlsx(file: File) {
 
       selectedColumn.value = findCol(['email', 'mail', 'correo']) || cols[0] || 'Email'
       empresaColumn.value = findCol(['empresa', 'company', 'business', 'entidad', 'brand']) || ''
-      nombreColumn.value = findCol(['nombre', 'name', 'nombre', 'persona']) || ''
+      nombreColumn.value = findCol(['nombre', 'name', 'persona', 'contacto']) || ''
+      agencyColumn.value = findCol(['agencia', 'agency', 'nombre_agencia']) || ''
+      puestoColumn.value = findCol(['puesto', 'cargo', 'role', 'position', 'job', 'titular']) || ''
       linkedinColumn.value = findCol(['linkedin', 'social', 'perfil']) || ''
       urlColumn.value = findCol(['url', 'web', 'sitio', 'website', 'link']) || ''
       youtubeColumn.value = findCol(['youtube', 'video', 'canal']) || ''

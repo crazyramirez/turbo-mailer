@@ -43,8 +43,13 @@ const { insertVar } = useCampaignSender();
         </button>
       </div>
       <div class="subject-vars">
-        <button @click="insertVar('{{Empresa}}')">Empresa</button>
-        <button @click="insertVar('{{Contacto}}')">Contacto</button>
+        <button @click="insertVar('{{Empresa}}')">{{ $t('variables.company') }}</button>
+        <button @click="insertVar('{{Contacto}}')">{{ $t('variables.name') }}</button>
+        <button @click="insertVar('{{Agencia}}')">{{ $t('variables.agency') }}</button>
+        <button @click="insertVar('{{Puesto}}')">{{ $t('variables.role') }}</button>
+        <button @click="insertVar('{{Ciudad}}')">{{ $t('variables.city') }}</button>
+        <button @click="insertVar('{{País}}')">{{ $t('variables.country') }}</button>
+        <button @click="insertVar('{{Servicio}}')">{{ $t('variables.service') }}</button>
         <button @click="insertVar('{{URL}}')">URL</button>
         <button @click="insertVar('{{Linkedin}}')">LinkedIn</button>
         <button @click="insertVar('{{Instagram}}')">Instagram</button>

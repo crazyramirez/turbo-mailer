@@ -189,6 +189,10 @@ onMounted(() => {
                   v-for="v in [
                     `{{${t('variables.name')}}}`,
                     `{{${t('variables.company')}}}`,
+                    `{{${t('variables.role')}}}`,
+                    `{{${t('variables.city')}}}`,
+                    `{{${t('variables.country')}}}`,
+                    `{{${t('variables.service')}}}`,
                     '{{URL}}',
                     '{{Linkedin}}',
                     '{{Instagram}}',

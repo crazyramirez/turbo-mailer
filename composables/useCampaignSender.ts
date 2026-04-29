@@ -13,6 +13,8 @@ const {
   selectedEmails,
   empresaColumn,
   nombreColumn,
+  agencyColumn,
+  puestoColumn,
   linkedinColumn,
   urlColumn,
   youtubeColumn,
@@ -36,6 +38,8 @@ async function sendEmails() {
       vars.Empresa = r.empresa
       vars.Nombre = r.nombre
       vars.Email = r.email
+      vars.Agencia = r.agency
+      vars.Puesto = r.puesto
       vars.Linkedin = r[linkedinColumn.value] || ''
       vars.URL = r[urlColumn.value] || ''
       vars.Youtube = r[youtubeColumn.value] || ''

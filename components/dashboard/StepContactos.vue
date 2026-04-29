@@ -9,6 +9,8 @@ const {
   emails,
   empresaColumn,
   nombreColumn,
+  agencyColumn,
+  puestoColumn,
   linkedinColumn,
   urlColumn,
   youtubeColumn,
@@ -150,71 +152,105 @@ const showMappingModal = ref(false);
 
         <div class="mapping-modal-content">
           <div class="col-mapping-compact">
-            <div class="mapping-item full-width">
-              <label>Columna Email (Principal)</label>
-              <select
-                v-model="selectedColumn"
-                class="input"
-                @change="remapEmails"
-              >
-                <option v-for="c in availableColumns" :key="c" :value="c">
-                  {{ c }}
-                </option>
-              </select>
+            <!-- Grupo 1: Vitales -->
+            <div class="mapping-group">
+              <h3 class="group-title">{{ $t('step_contacts.group_main') }}</h3>
+              <div class="mapping-item full-width">
+                <label>{{ $t('step_contacts.email_column') }}</label>
+                <select
+                  v-model="selectedColumn"
+                  class="input"
+                  @change="remapEmails"
+                >
+                  <option v-for="c in availableColumns" :key="c" :value="c">
+                    {{ c }}
+                  </option>
+                </select>
+              </div>
+              <div class="mapping-item">
+                <label>{{ $t('contacts_page.name') }}</label>
+                <select v-model="nombreColumn" class="input">
+                  <option value="">{{ $t('step_contacts.optional') }}</option>
+                  <option v-for="c in availableColumns" :key="c" :value="c">
+                    {{ c }}
+                  </option>
+                </select>
+              </div>
+              <div class="mapping-item">
+                <label>{{ $t('step_contacts.label_role') }}</label>
+                <select v-model="puestoColumn" class="input">
+                  <option value="">{{ $t('step_contacts.optional') }}</option>
+                  <option v-for="c in availableColumns" :key="c" :value="c">
+                    {{ c }}
+                  </option>
+                </select>
+              </div>
             </div>
-            <div class="mapping-item">
-              <label>Empresa</label>
-              <select v-model="empresaColumn" class="input">
-                <option value="">(Opcional)</option>
-                <option v-for="c in availableColumns" :key="c" :value="c">
-                  {{ c }}
-                </option>
-              </select>
+
+            <!-- Grupo 2: Organización -->
+            <div class="mapping-group">
+              <h3 class="group-title">{{ $t('step_contacts.group_org') }}</h3>
+              <div class="mapping-item">
+                <label>{{ $t('contacts_page.company') }}</label>
+                <select v-model="empresaColumn" class="input">
+                  <option value="">{{ $t('step_contacts.optional') }}</option>
+                  <option v-for="c in availableColumns" :key="c" :value="c">
+                    {{ c }}
+                  </option>
+                </select>
+              </div>
+              <div class="mapping-item">
+                <label>{{ $t('step_contacts.label_agency') }}</label>
+                <select v-model="agencyColumn" class="input">
+                  <option value="">{{ $t('step_contacts.optional') }}</option>
+                  <option v-for="c in availableColumns" :key="c" :value="c">
+                    {{ c }}
+                  </option>
+                </select>
+              </div>
             </div>
-            <div class="mapping-item">
-              <label>Contacto</label>
-              <select v-model="nombreColumn" class="input">
-                <option value="">(Opcional)</option>
-                <option v-for="c in availableColumns" :key="c" :value="c">
-                  {{ c }}
-                </option>
-              </select>
-            </div>
-            <div class="mapping-item">
-              <label>LinkedIn</label>
-              <select v-model="linkedinColumn" class="input">
-                <option value="">(Opcional)</option>
-                <option v-for="c in availableColumns" :key="c" :value="c">
-                  {{ c }}
-                </option>
-              </select>
-            </div>
-            <div class="mapping-item">
-              <label>URL / Web</label>
-              <select v-model="urlColumn" class="input">
-                <option value="">(Opcional)</option>
-                <option v-for="c in availableColumns" :key="c" :value="c">
-                  {{ c }}
-                </option>
-              </select>
-            </div>
-            <div class="mapping-item">
-              <label>YouTube</label>
-              <select v-model="youtubeColumn" class="input">
-                <option value="">(Opcional)</option>
-                <option v-for="c in availableColumns" :key="c" :value="c">
-                  {{ c }}
-                </option>
-              </select>
-            </div>
-            <div class="mapping-item">
-              <label>Instagram</label>
-              <select v-model="instagramColumn" class="input">
-                <option value="">(Opcional)</option>
-                <option v-for="c in availableColumns" :key="c" :value="c">
-                  {{ c }}
-                </option>
-              </select>
+
+            <!-- Grupo 3: Social & Links -->
+            <div class="mapping-group">
+              <h3 class="group-title">{{ $t('step_contacts.group_social') }}</h3>
+              <div class="mapping-grid-3">
+                <div class="mapping-item">
+                  <label>{{ $t('contacts_page.linkedin') }}</label>
+                  <select v-model="linkedinColumn" class="input">
+                    <option value="">{{ $t('step_contacts.optional') }}</option>
+                    <option v-for="c in availableColumns" :key="c" :value="c">
+                      {{ c }}
+                    </option>
+                  </select>
+                </div>
+                <div class="mapping-item">
+                  <label>{{ $t('contacts_page.url') }}</label>
+                  <select v-model="urlColumn" class="input">
+                    <option value="">{{ $t('step_contacts.optional') }}</option>
+                    <option v-for="c in availableColumns" :key="c" :value="c">
+                      {{ c }}
+                    </option>
+                  </select>
+                </div>
+                <div class="mapping-item">
+                  <label>{{ $t('contacts_page.youtube') }}</label>
+                  <select v-model="youtubeColumn" class="input">
+                    <option value="">{{ $t('step_contacts.optional') }}</option>
+                    <option v-for="c in availableColumns" :key="c" :value="c">
+                      {{ c }}
+                    </option>
+                  </select>
+                </div>
+                <div class="mapping-item">
+                  <label>{{ $t('contacts_page.instagram') }}</label>
+                  <select v-model="instagramColumn" class="input">
+                    <option value="">{{ $t('step_contacts.optional') }}</option>
+                    <option v-for="c in availableColumns" :key="c" :value="c">
+                      {{ c }}
+                    </option>
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -285,6 +321,7 @@ const showMappingModal = ref(false);
                       'col-primary': col === selectedColumn,
                       'col-mapped':
                         col === nombreColumn || col === empresaColumn || 
+                        col === agencyColumn || col === puestoColumn ||
                         col === linkedinColumn || col === urlColumn ||
                         col === youtubeColumn || col === instagramColumn,
                     }"
@@ -297,10 +334,16 @@ const showMappingModal = ref(false);
                         >EMAIL</span
                       >
                       <span v-if="col === nombreColumn" class="col-tag tag-var"
-                        >CONTACTO</span
+                        >{{ $t('contacts_page.col_name') }}</span
                       >
                       <span v-if="col === empresaColumn" class="col-tag tag-var"
-                        >EMPRESA</span
+                        >{{ $t('contacts_page.col_company') }}</span
+                      >
+                      <span v-if="col === agencyColumn" class="col-tag tag-var"
+                        >{{ $t('step_contacts.col_agency') }}</span
+                      >
+                      <span v-if="col === puestoColumn" class="col-tag tag-var"
+                        >{{ $t('step_contacts.col_role') }}</span
                       >
                       <span v-if="col === linkedinColumn" class="col-tag tag-var"
                         >LINKEDIN</span
@@ -375,6 +418,42 @@ const showMappingModal = ref(false);
 
 .mapping-modal-content {
   padding: 0 32px 32px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.mapping-group {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 20px;
+  border: 1px solid var(--border);
+}
+
+.group-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--accent-light);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.group-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  opacity: 0.2;
+}
+
+.mapping-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
 }
 
 .mapping-info-box {

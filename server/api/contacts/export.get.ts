@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
     rows = await db.select().from(contacts)
   }
 
-  const headers = ['email', 'name', 'company', 'phone', 'linkedin', 'url', 'youtube', 'instagram', 'status', 'tags']
+  const headers = ['email', 'name', 'company', 'agency', 'role', 'phone', 'linkedin', 'url', 'youtube', 'instagram', 'status', 'tags']
   const csv = [
     headers.join(','),
     ...rows.map(r => headers.map(h => {

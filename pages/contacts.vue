@@ -9,6 +9,18 @@ import {
   Trash2,
   X,
   Check,
+  User,
+  Mail,
+  Phone,
+  Building2,
+  ShieldCheck,
+  Link as LinkIcon,
+  Linkedin,
+  Instagram,
+  Youtube,
+  Globe,
+  Briefcase,
+  Pipette,
   ChevronLeft,
   ChevronRight,
   Tag,
@@ -48,14 +60,15 @@ const form = ref({
   email: "",
   name: "",
   company: "",
+  role: "",
   phone: "",
   linkedin: "",
   url: "",
   youtube: "",
   instagram: "",
   tags: [] as string[],
-  status: "active",
   listIds: [] as number[],
+  status: "active" as "active" | "unsubscribed" | "bounced",
 });
 
 // ── Data Fetching ──────────────────────────────────────────────────────────
@@ -315,6 +328,8 @@ async function doImport(e: Event) {
   const emailCol = find(["email", "mail", "correo"]) || cols[0] || "";
   const nameCol = find(["nombre", "name", "contacto", "persona"]);
   const compCol = find(["empresa", "company", "business", "entidad", "brand"]);
+  const agencyCol = find(["agencia", "agency", "nombre_agencia"]);
+  const roleCol = find(["puesto", "cargo", "role", "position", "job", "titular"]);
   const linkedCol = find(["linkedin", "social", "perfil"]);
   const urlCol = find(["url", "web", "sitio", "website", "link"]);
   const ytCol = find(["youtube", "video", "canal"]);
@@ -325,6 +340,8 @@ async function doImport(e: Event) {
       email: String(r[emailCol] || "").trim(),
       name: String(r[nameCol] || "").trim(),
       company: String(r[compCol] || "").trim(),
+      agency: String(r[agencyCol] || "").trim(),
+      role: String(r[roleCol] || "").trim(),
       linkedin: String(r[linkedCol] || "").trim(),
       url: String(r[urlCol] || "").trim(),
       youtube: String(r[ytCol] || "").trim(),
@@ -546,6 +563,7 @@ watch([search, statusFilter], () => {
               <th>{{ t("contacts_page.col_email") }}</th>
               <th>{{ t("contacts_page.col_company") }}</th>
               <th>{{ t("contacts_page.col_name") }}</th>
+              <th>{{ t("step_contacts.label_role") }}</th>
               <th>{{ t("contacts_page.col_status") }}</th>
               <th>{{ t("contacts_page.col_actions") }}</th>
             </tr>
@@ -599,6 +617,7 @@ watch([search, statusFilter], () => {
               </td>
               <td>{{ c.company || "—" }}</td>
               <td>{{ c.name || "—" }}</td>
+              <td>{{ c.role || "—" }}</td>
               <td>
                 <span class="badge" :class="statusClass(c.status)">{{
                   statusLabel(c.status)
@@ -674,101 +693,150 @@ watch([search, statusFilter], () => {
             </button>
           </div>
           <div class="modal-body">
-            <div class="form-grid">
-              <label
-                >{{ t("contacts_page.email") }} *
-                <input
-                  ref="emailInputRef"
-                  v-model="form.email"
-                  type="email"
-                  class="form-input"
-                />
-              </label>
-              <label
-                >{{ t("contacts_page.name") }}
-                <input v-model="form.name" type="text" class="form-input" />
-              </label>
-              <label
-                >{{ t("contacts_page.company") }}
-                <input v-model="form.company" type="text" class="form-input" />
-              </label>
-              <label
-                >{{ t("contacts_page.phone") }}
-                <input v-model="form.phone" type="text" class="form-input" />
-              </label>
-              <label
-                >{{ t("contacts_page.linkedin") }}
-                <input v-model="form.linkedin" type="text" class="form-input" />
-              </label>
-              <label
-                >{{ t("contacts_page.url") }}
-                <input v-model="form.url" type="text" class="form-input" />
-              </label>
-              <label
-                >{{ t("contacts_page.youtube") }}
-                <input v-model="form.youtube" type="text" class="form-input" />
-              </label>
-              <label
-                >{{ t("contacts_page.instagram") }}
-                <input
-                  v-model="form.instagram"
-                  type="text"
-                  class="form-input"
-                />
-              </label>
-              <label class="full-width"
-                >{{ t("contacts_page.tags") }}
-                <div class="tag-input-wrap">
-                  <div class="tag-list">
-                    <span v-for="tag in form.tags" :key="tag" class="tag-chip">
-                      {{ tag }}
-                      <button @click="removeTag(tag)"><X :size="10" /></button>
-                    </span>
-                  </div>
-                  <input
-                    v-model="tagInput"
-                    :placeholder="t('contacts_page.add_tag')"
-                    class="form-input tag-in"
-                    @keydown.enter.prevent="addTag"
-                    @keydown.comma.prevent="addTag"
-                  />
+            <div class="modal-form-sections">
+              <!-- Personal Info Section -->
+              <div class="form-section">
+                <div class="section-title">
+                  <span class="section-icon"><Users :size="14" /></span>
+                  {{ t("contacts_page.personal_info") || "Información Personal" }}
                 </div>
-              </label>
-              <label class="full-width"
-                >{{ t("contacts_page.lists") }}
-                <div class="list-checks">
-                  <label
-                    v-for="list in lists"
-                    :key="list.id"
-                    class="list-check-item"
-                  >
-                    <input
-                      type="checkbox"
-                      :value="list.id"
-                      v-model="form.listIds"
-                    />
-                    <span
-                      class="list-dot"
-                      :style="{ background: list.color }"
-                    />
-                    {{ list.name }}
+                <div class="form-grid">
+                  <label>
+                    <div class="label-text">{{ t("contacts_page.email") }} *</div>
+                    <div class="input-with-icon">
+                      <Mail :size="14" class="field-icon" />
+                      <input ref="emailInputRef" v-model="form.email" type="email" class="form-input" placeholder="ejemplo@correo.com" />
+                    </div>
+                  </label>
+                  <label>
+                    <div class="label-text">{{ t("contacts_page.name") }}</div>
+                    <div class="input-with-icon">
+                      <User :size="14" class="field-icon" />
+                      <input v-model="form.name" type="text" class="form-input" placeholder="Nombre completo" />
+                    </div>
+                  </label>
+                  <label>
+                    <div class="label-text">{{ t("contacts_page.phone") }}</div>
+                    <div class="input-with-icon">
+                      <Phone :size="14" class="field-icon" />
+                      <input v-model="form.phone" type="text" class="form-input" placeholder="+34 600 000 000" />
+                    </div>
+                  </label>
+                  <label v-if="editContact">
+                    <div class="label-text">Estado</div>
+                    <select v-model="form.status" class="form-input">
+                      <option value="active">{{ t("contacts_page.status_active") }}</option>
+                      <option value="unsubscribed">{{ t("contacts_page.status_unsubscribed") }}</option>
+                      <option value="bounced">{{ t("contacts_page.status_bounced") }}</option>
+                    </select>
                   </label>
                 </div>
-              </label>
-              <label v-if="editContact"
-                >Estado
-                <select v-model="form.status" class="form-input">
-                  <option value="active">
-                    {{ t("contacts_page.status_active") }}
-                  </option>
-                  <option value="unsubscribed">
-                    {{ t("contacts_page.status_unsubscribed") }}
-                  </option>
-                  <option value="bounced">
-                    {{ t("contacts_page.status_bounced") }}
-                  </option>
-                </select>
-              </label>
+              </div>
+
+              <!-- Professional Info Section -->
+              <div class="form-section">
+                <div class="section-title">
+                  <span class="section-icon"><Briefcase :size="14" /></span>
+                  {{ t("contacts_page.professional_info") || "Información Profesional" }}
+                </div>
+                <div class="form-grid">
+                  <label>
+                    <div class="label-text">{{ t("contacts_page.company") }}</div>
+                    <div class="input-with-icon">
+                      <Building2 :size="14" class="field-icon" />
+                      <input v-model="form.company" type="text" class="form-input" placeholder="Nombre de la empresa o agencia" />
+                    </div>
+                  </label>
+                  <label>
+                    <div class="label-text">{{ t("step_contacts.label_role") }}</div>
+                    <div class="input-with-icon">
+                      <ShieldCheck :size="14" class="field-icon" />
+                      <input v-model="form.role" type="text" class="form-input" placeholder="Cargo o puesto" />
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Social & Web Section -->
+              <div class="form-section">
+                <div class="section-title">
+                  <span class="section-icon"><Globe :size="14" /></span>
+                  {{ t("contacts_page.social_web") || "Redes y Web" }}
+                </div>
+                <div class="form-grid">
+                  <label>
+                    <div class="label-text">{{ t("contacts_page.url") }}</div>
+                    <div class="input-with-icon">
+                      <LinkIcon :size="14" class="field-icon" />
+                      <input v-model="form.url" type="text" class="form-input" placeholder="https://..." />
+                    </div>
+                  </label>
+                  <label>
+                    <div class="label-text">{{ t("contacts_page.linkedin") }}</div>
+                    <div class="input-with-icon">
+                      <Linkedin :size="14" class="field-icon" />
+                      <input v-model="form.linkedin" type="text" class="form-input" placeholder="linkedin.com/in/..." />
+                    </div>
+                  </label>
+                  <label>
+                    <div class="label-text">{{ t("contacts_page.youtube") }}</div>
+                    <div class="input-with-icon">
+                      <Youtube :size="14" class="field-icon" />
+                      <input v-model="form.youtube" type="text" class="form-input" placeholder="youtube.com/@..." />
+                    </div>
+                  </label>
+                  <label>
+                    <div class="label-text">{{ t("contacts_page.instagram") }}</div>
+                    <div class="input-with-icon">
+                      <Instagram :size="14" class="field-icon" />
+                      <input v-model="form.instagram" type="text" class="form-input" placeholder="instagram.com/..." />
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Categorization Section -->
+              <div class="form-section">
+                <div class="section-title">
+                  <span class="section-icon"><Tag :size="14" /></span>
+                  {{ t("contacts_page.categorization") || "Categorización" }}
+                </div>
+                <div class="form-grid">
+                  <label class="full-width">
+                    <div class="label-text">{{ t("contacts_page.tags") }}</div>
+                    <div class="tag-input-wrap">
+                      <div class="tag-list" v-if="form.tags.length">
+                        <span v-for="tag in form.tags" :key="tag" class="tag-chip">
+                          {{ tag }}
+                          <button @click="removeTag(tag)"><X :size="10" /></button>
+                        </span>
+                      </div>
+                      <div class="input-with-icon">
+                        <Plus :size="14" class="field-icon" />
+                        <input
+                          v-model="tagInput"
+                          :placeholder="t('contacts_page.add_tag')"
+                          class="form-input tag-in"
+                          @keydown.enter.prevent="addTag"
+                          @keydown.comma.prevent="addTag"
+                        />
+                      </div>
+                    </div>
+                  </label>
+                  <label class="full-width">
+                    <div class="label-text">{{ t("contacts_page.lists") }}</div>
+                    <div class="list-checks-wrapper">
+                      <div class="list-checks">
+                        <label v-for="list in lists" :key="list.id" class="list-check-item">
+                          <input type="checkbox" :value="list.id" v-model="form.listIds" />
+                          <span class="list-dot" :style="{ background: list.color }" />
+                          <span class="list-name-short">{{ list.name }}</span>
+                        </label>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
           <div class="modal-footer">
@@ -800,24 +868,37 @@ watch([search, statusFilter], () => {
             </button>
           </div>
           <div class="modal-body">
-            <label
-              >{{ t("contacts_page.list_name") }}
-              <input
-                ref="listNameInputRef"
-                v-model="newListName"
-                type="text"
-                class="form-input"
-                @keydown.enter="saveList"
-              />
-            </label>
-            <label
-              >Color
-              <input
-                v-model="newListColor"
-                type="color"
-                class="form-input color-in"
-              />
-            </label>
+            <div class="modal-form-sections">
+              <div class="form-section">
+                <div class="form-grid">
+                  <label class="full-width">
+                    <div class="label-text">{{ t("contacts_page.list_name") }}</div>
+                    <div class="input-with-icon">
+                      <Tag :size="14" class="field-icon" />
+                      <input
+                        ref="listNameInputRef"
+                        v-model="newListName"
+                        type="text"
+                        class="form-input"
+                        placeholder="Nombre de la lista..."
+                        @keydown.enter="saveList"
+                      />
+                    </div>
+                  </label>
+                  <label class="full-width">
+                    <div class="label-text">Color de identificación</div>
+                    <div class="input-with-icon">
+                      <Pipette :size="14" class="field-icon" />
+                      <input
+                        v-model="newListColor"
+                        type="color"
+                        class="form-input color-in"
+                      />
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="modal-footer">
             <button class="btn-secondary" @click="showListModal = false">
@@ -871,28 +952,32 @@ watch([search, statusFilter], () => {
 .list-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 10px;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 13px;
   color: var(--text-muted);
   position: relative;
+  border: 1px solid transparent;
 }
 .list-item:hover {
-  background: rgb(0 0 0 / 5%);
+  background: rgba(255, 255, 255, 0.04);
   color: var(--text);
+  transform: translateX(4px);
 }
 .list-item.active {
   background: rgba(99, 102, 241, 0.1);
   color: var(--accent-light);
+  border-color: rgba(99, 102, 241, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 .list-item.drop-target {
   background: rgba(99, 102, 241, 0.18);
-  border: 1px dashed rgba(99, 102, 241, 0.6);
+  border: 1px dashed var(--accent);
   color: var(--accent-light);
-  scale: 1.02;
+  transform: scale(1.02);
 }
 
 .list-dot {
@@ -1042,29 +1127,34 @@ watch([search, statusFilter], () => {
   border-collapse: collapse;
 }
 .data-table th {
-  padding: 12px 16px;
+  padding: 14px 16px;
   text-align: left;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
   color: var(--text-dim);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
   border-bottom: 1px solid var(--border);
-  background: rgb(0 0 0 / 1%);
+  background: rgba(255, 255, 255, 0.01);
 }
 .data-table td {
-  padding: 12px 16px;
+  padding: 14px 16px;
   font-size: 13px;
-  border-bottom: 1px solid rgb(0 0 0 / 3%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  transition: all 0.2s;
 }
 .data-table tr:last-child td {
   border-bottom: none;
 }
+.data-table tr {
+  transition: all 0.2s;
+}
 .data-table tr:hover td {
-  background: rgb(0 0 0 / 3%);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text);
 }
 .data-table tr.selected td {
-  background: rgba(99, 102, 241, 0.06);
+  background: rgba(99, 102, 241, 0.08);
 }
 .data-table tr[draggable="true"] {
   cursor: grab;
@@ -1265,11 +1355,11 @@ watch([search, statusFilter], () => {
   padding: 20px 0 0;
 }
 .btn-page {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   border: 1px solid var(--border);
-  background: var(--surface);
+  background: rgba(255, 255, 255, 0.03);
   color: var(--text-muted);
   cursor: pointer;
   display: flex;
@@ -1280,6 +1370,8 @@ watch([search, statusFilter], () => {
 .btn-page:hover:not(:disabled) {
   border-color: var(--accent);
   color: var(--accent-light);
+  background: rgba(99, 102, 241, 0.1);
+  transform: translateY(-1px);
 }
 .btn-page:disabled {
   opacity: 0.4;
@@ -1383,14 +1475,26 @@ watch([search, statusFilter], () => {
 }
 .modal-box {
   background: #0d0f1c;
-  border: 1px solid var(--border-hi);
-  border-radius: 24px;
-  width: 90%;
-  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 28px;
+  width: 95%;
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
   overflow: hidden;
+  position: relative;
 }
+
+.modal-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.3), transparent);
+}
+
 .contact-form {
-  max-width: 640px;
+  max-width: 800px;
 }
 .list-form {
   max-width: 360px;
@@ -1410,118 +1514,188 @@ watch([search, statusFilter], () => {
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  max-height: 60vh;
+  gap: 20px;
+  max-height: 75vh;
   overflow-y: auto;
+  scrollbar-width: thin;
 }
-.modal-footer {
+
+.modal-form-sections {
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 16px 24px;
-  border-top: 1px solid var(--border);
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--accent-light);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.8;
+}
+
+.section-icon {
+  width: 20px;
+  height: 20px;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
 }
 
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
 }
+
 .full-width {
   grid-column: 1 / -1;
 }
-label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-dim);
+
+.label-text {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 4px;
 }
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.field-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-dim);
+  pointer-events: none;
+  transition: color 0.2s;
+}
+
 .form-input {
-  padding: 9px 12px;
-  background: var(--surface);
+  padding: 10px 12px 10px 36px;
+  background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--border);
   border-radius: 10px;
   color: var(--text);
   font-size: 13px;
   outline: none;
   width: 100%;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
 .form-input:focus {
   border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08);
 }
-select.form-input {
-  background: #0d1017;
-  appearance: none;
-}
-select.form-input option {
-  background-color: #090b14;
-  color: #f8fafc;
-}
-.color-in {
-  padding: 4px;
-  height: 40px;
-  cursor: pointer;
+
+.form-input:focus + .field-icon {
+  color: var(--accent-light);
 }
 
 .tag-input-wrap {
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
+
 .tag-list {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
+
 .tag-chip {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   padding: 4px 10px;
-  background: rgba(99, 102, 241, 0.1);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  border-radius: 20px;
-  font-size: 12px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(99, 102, 241, 0.04));
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
   color: var(--accent-light);
+  transition: all 0.2s;
 }
-.tag-chip button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: inherit;
-  display: flex;
-  padding: 0;
+
+.tag-chip:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
 }
-.tag-in {
-  margin-top: 4px;
+
+.list-checks-wrapper {
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
 }
 
 .list-checks {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
   gap: 8px;
-  margin-top: 4px;
 }
+
 .list-check-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 12px;
   font-weight: 500;
   color: var(--text-muted);
   cursor: pointer;
   transition: all 0.15s;
-  flex-direction: row;
 }
+
+.list-check-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
 .list-check-item:has(input:checked) {
-  border-color: rgba(99, 102, 241, 0.4);
+  border-color: var(--accent);
   background: rgba(99, 102, 241, 0.08);
-  color: var(--accent-light);
+  color: var(--text);
+}
+
+.list-name-short {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.01);
 }
 .list-check-item input {
   accent-color: var(--accent);

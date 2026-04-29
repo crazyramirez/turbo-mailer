@@ -37,7 +37,14 @@
     "map_info": "Cualquier columna no mapeada estará disponible usando el formato Nombre_Columna en tu diseño.",
     "save_mapping": "Guardar Configuración",
     "modal_contacts_title": "Contactos Importados",
-    "modal_contacts_subtitle": "{count} destinatarios encontrados en el archivo"
+    "modal_contacts_subtitle": "{count} destinatarios encontrados en el archivo",
+    "group_main": "Datos Principales",
+    "group_org": "Empresa y Agencia",
+    "group_social": "Social & Links",
+    "label_agency": "Agencia",
+    "label_role": "Puesto / Cargo",
+    "col_agency": "AGENCIA",
+    "col_role": "PUESTO"
   },
   "step_subject": {
     "title": "Asunto del Email",
@@ -95,9 +102,9 @@
     "filter_active": "Activos",
     "filter_unsub": "Dados de baja",
     "filter_bounced": "Rebotados",
-    "col_name": "Nombre",
+    "col_name": "Nombre / Contacto",
     "col_email": "Email",
-    "col_company": "Empresa",
+    "col_company": "Empresa / Agencia",
     "col_status": "Estado",
     "col_created": "Creado",
     "col_actions": "Acciones",
@@ -111,9 +118,13 @@
     "confirm_delete_msg": "Esta acción no se puede deshacer.",
     "save": "Guardar",
     "cancel": "Cancelar",
+    "personal_info": "Información Personal",
+    "professional_info": "Información Profesional",
+    "social_web": "Redes y Web",
+    "categorization": "Categorización",
     "email": "Email",
-    "name": "Nombre",
-    "company": "Empresa",
+    "name": "Nombre / Contacto",
+    "company": "Empresa / Agencia",
     "phone": "Teléfono",
     "linkedin": "LinkedIn",
     "url": "Web / URL",
@@ -470,8 +481,13 @@
     "unknown": "Desconocido"
   },
   "variables": {
-    "name": "Nombre",
-    "company": "Empresa"
+    "name": "Nombre / Contacto",
+    "company": "Empresa / Agencia",
+    "agency": "Agencia",
+    "role": "Puesto",
+    "city": "Ciudad",
+    "country": "País",
+    "service": "Servicio"
   },
   "ghost": {
     "title": "Ghost Mode Activado",

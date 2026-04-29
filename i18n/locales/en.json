@@ -37,7 +37,14 @@
     "map_info": "Any unmapped column will also be available using the Column_Name format in your design.",
     "save_mapping": "Save Configuration",
     "modal_contacts_title": "Imported Contacts",
-    "modal_contacts_subtitle": "{count} recipients found in file"
+    "modal_contacts_subtitle": "{count} recipients found in file",
+    "group_main": "Main Data",
+    "group_org": "Company & Agency",
+    "group_social": "Social & Links",
+    "label_agency": "Agency",
+    "label_role": "Position / Role",
+    "col_agency": "AGENCY",
+    "col_role": "POSITION"
   },
   "step_subject": {
     "title": "Email Subject",
@@ -95,9 +102,9 @@
     "filter_active": "Active",
     "filter_unsub": "Unsubscribed",
     "filter_bounced": "Bounced",
-    "col_name": "Name",
+    "col_name": "Name / Contact",
     "col_email": "Email",
-    "col_company": "Company",
+    "col_company": "Company / Agency",
     "col_status": "Status",
     "col_created": "Created",
     "col_actions": "Actions",
@@ -109,11 +116,16 @@
     "unsubscribe": "Unsubscribe",
     "confirm_delete": "Delete contact?",
     "confirm_delete_msg": "This action cannot be undone.",
+    "confirm_delete_msg": "This action cannot be undone.",
     "save": "Save",
     "cancel": "Cancel",
+    "personal_info": "Personal Information",
+    "professional_info": "Professional Information",
+    "social_web": "Social & Web",
+    "categorization": "Categorization",
     "email": "Email",
-    "name": "Name",
-    "company": "Company",
+    "name": "Name / Contact",
+    "company": "Company / Agency",
     "phone": "Phone",
     "linkedin": "LinkedIn",
     "url": "Web / URL",
@@ -470,8 +482,13 @@
     "unknown": "Unknown"
   },
   "variables": {
-    "name": "Name",
-    "company": "Company"
+    "name": "Name / Contact",
+    "company": "Company / Agency",
+    "agency": "Agency",
+    "role": "Role",
+    "city": "City",
+    "country": "Country",
+    "service": "Service"
   },
   "ghost": {
     "title": "Ghost Mode Activated",

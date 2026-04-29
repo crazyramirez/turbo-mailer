@@ -5,6 +5,7 @@ export const contacts = sqliteTable('contacts', {
   email: text('email').notNull().unique(),
   name: text('name'),
   company: text('company'),
+  role: text('role'),
   phone: text('phone'),
   linkedin: text('linkedin'),
   url: text('url'),
