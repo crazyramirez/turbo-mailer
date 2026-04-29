@@ -97,6 +97,7 @@ try {
   if (!campaignCols.includes('resub_email_message')) sqlite.exec(`ALTER TABLE campaigns ADD COLUMN resub_email_message TEXT`)
   if (!contactCols.includes('sub_change_count'))      sqlite.exec(`ALTER TABLE contacts ADD COLUMN sub_change_count INTEGER DEFAULT 0`)
   if (!contactCols.includes('sub_change_window_start')) sqlite.exec(`ALTER TABLE contacts ADD COLUMN sub_change_window_start INTEGER`)
+  if (!contactCols.includes('role'))                 sqlite.exec(`ALTER TABLE contacts ADD COLUMN role TEXT`)
 } catch (err) {
   console.error('Schema migration patch failed:', err)
 }

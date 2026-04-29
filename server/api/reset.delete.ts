@@ -18,35 +18,51 @@ export default defineEventHandler(async (event) => {
   // Backup before any destructive operation
   const backupPath = await createBackup().catch(() => null)
 
+  const safeDelete = async (table: any) => {
+    try {
+      await db.delete(table)
+    } catch (e) {
+      console.warn(`Could not delete from table:`, e)
+    }
+  }
+
+  const safeUpdate = async (table: any, values: any) => {
+    try {
+      await db.update(table).set(values)
+    } catch (e) {
+      console.warn(`Could not update table:`, e)
+    }
+  }
+
   if (scope === 'analytics') {
-    await db.delete(trackingEvents)
+    await safeDelete(trackingEvents)
   }
 
   else if (scope === 'contacts') {
     // Null out FK refs to contacts in child tables to avoid constraint violations
-    await db.update(sends).set({ contactId: null })
-    await db.update(trackingEvents).set({ contactId: null })
+    await safeUpdate(sends, { contactId: null })
+    await safeUpdate(trackingEvents, { contactId: null })
     // Null out listId in campaigns before deleting lists
-    await db.update(campaigns).set({ listId: null })
-    await db.delete(listContacts)
-    await db.delete(contacts)
-    await db.delete(lists)
+    await safeUpdate(campaigns, { listId: null })
+    await safeDelete(listContacts)
+    await safeDelete(contacts)
+    await safeDelete(lists)
   }
 
   else if (scope === 'campaigns') {
     // tracking_events.campaign_id and .send_id have no cascade — clear first
-    await db.delete(trackingEvents)
-    await db.delete(campaigns) // sends cascade via ON DELETE CASCADE
+    await safeDelete(trackingEvents)
+    await safeDelete(campaigns) // sends cascade via ON DELETE CASCADE
   }
 
   else if (scope === 'db' || scope === 'all') {
-    await db.delete(trackingEvents)
-    await db.delete(sends)
-    await db.delete(listContacts)
-    await db.delete(campaigns)
-    await db.delete(contacts)
-    await db.delete(lists)
-    await db.delete(settings)
+    await safeDelete(trackingEvents)
+    await safeDelete(sends)
+    await safeDelete(listContacts)
+    await safeDelete(campaigns)
+    await safeDelete(contacts)
+    await safeDelete(lists)
+    await safeDelete(settings)
 
     if (scope === 'all') {
       const templatesDir = path.resolve(process.cwd(), 'data/templates')
