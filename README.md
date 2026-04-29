@@ -63,6 +63,10 @@ Lo que hace a **TurboMailer** una herramienta extremadamente potente es la **pri
 - Variables dinámicas (Español/Inglés): `{{Empresa}}`/`{{Company}}`, `{{Nombre}}`/`{{Name}}`, `{{URL}}`, `{{Linkedin}}`, `{{Instagram}}`, `{{Youtube}}`
 - Envío masivo vía SMTP con reporte en tiempo real de éxitos y fallos
 - **Gestión de Reintentos Profesional**: Sistema de reintento automático a nivel de SMTP y botón manual de "Reintentar fallidos" en el dashboard de campaña para recuperar errores temporales.
+- **Envío en segundo plano**: Al lanzar una campaña, el overlay desaparece a los 4 segundos y el proceso continúa en background. No es necesario mantener la ventana abierta.
+- **Badge de progreso persistente**: Indicador flotante (inferior derecha) visible en toda la aplicación mientras hay un envío activo. Muestra `Enviando X / Y` con barra de progreso en tiempo real, botón de cancelar y botón de reanudar si está pausado.
+- **Control total del envío**: Pausa el envío desde el badge con un clic. Reanuda desde el propio badge o desde el banner de estado en la vista de detalle de la campaña, sin perder el progreso.
+- **Reenvío individual**: En la tabla de destinatarios de la campaña, botón por fila para reenviar un email concreto que haya fallado o quedado pendiente. Abre el badge automáticamente y monitoriza el reenvío.
 
 ### 📊 Analytics Avanzado
 
@@ -331,6 +335,9 @@ La app usa Gmail SMTP con una contraseña de aplicación de 16 dígitos (no tu c
 | DELETE | `/api/campaigns/[id]`       | Eliminar campaña                    |
 | POST   | `/api/campaigns/[id]/send`  | Lanzar envío                        |
 | POST   | `/api/campaigns/[id]/retry` | Reintentar envíos fallidos          |
+| POST   | `/api/campaigns/[id]/pause` | Pausar envío en curso               |
+| GET    | `/api/campaigns/[id]/progress` | Progreso en tiempo real          |
+| POST   | `/api/campaigns/[id]/sends/[sendId]/resend` | Reenviar destinatario individual |
 | GET    | `/api/campaigns/[id]/sends` | Listado de envíos individuales      |
 
 ### Tracking & Analytics

@@ -63,6 +63,10 @@ What makes **TurboMailer** an extremely powerful tool is its **privacy**. Being 
 - Dynamic variables (English/Spanish): `{{Company}} / {{Empresa}}`, `{{Name}} / {{Nombre}}`, `{{URL}}`, `{{Linkedin}}`, `{{Instagram}}`, `{{Youtube}}`
 - Bulk sending via SMTP with real-time success and failure reporting
 - **Professional Retry Management**: Automatic retry system at the SMTP level and a manual "Retry Failed" button in the campaign dashboard to recover from temporary errors.
+- **Background Sending**: When a campaign is launched, the overlay auto-dismisses after 4 seconds and the send continues in the background. No need to keep the window open.
+- **Persistent Progress Badge**: Floating indicator (bottom-right) visible across the entire app while a send is active. Shows `Sending X / Y` with a real-time progress bar, a cancel button, and a resume button when paused.
+- **Full Send Control**: Pause the send from the badge with one click. Resume from the badge or from the status banner on the campaign detail page, without losing progress.
+- **Individual Resend**: In the campaign recipients table, a per-row button to resend a specific email that failed or is still pending. Automatically opens the badge and monitors the resend.
 
 ### 📊 Advanced Analytics
 
@@ -331,6 +335,9 @@ The app uses Gmail SMTP with a 16-digit app password (not your normal password).
 | DELETE | `/api/campaigns/[id]`       | Delete campaign                   |
 | POST   | `/api/campaigns/[id]/send`  | Launch send                       |
 | POST   | `/api/campaigns/[id]/retry` | Retry failed sends                |
+| POST   | `/api/campaigns/[id]/pause` | Pause active send                 |
+| GET    | `/api/campaigns/[id]/progress` | Real-time send progress       |
+| POST   | `/api/campaigns/[id]/sends/[sendId]/resend` | Resend individual recipient |
 | GET    | `/api/campaigns/[id]/sends` | List individual sends             |
 
 ### Tracking & Analytics
