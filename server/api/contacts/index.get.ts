@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 
   const conditions = []
   if (search) {
-    conditions.push(sql`(${contacts.email} LIKE ${`%${search}%`} OR ${contacts.name} LIKE ${`%${search}%`} OR ${contacts.company} LIKE ${`%${search}%`} OR ${contacts.agency} LIKE ${`%${search}%`} OR ${contacts.role} LIKE ${`%${search}%`})`)
+    conditions.push(sql`(${contacts.email} LIKE ${`%${search}%`} OR ${contacts.name} LIKE ${`%${search}%`} OR ${contacts.company} LIKE ${`%${search}%`} OR ${contacts.role} LIKE ${`%${search}%`})`)
   }
   if (status && status !== 'all') {
     conditions.push(eq(contacts.status, status as any))

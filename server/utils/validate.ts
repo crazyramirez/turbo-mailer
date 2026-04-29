@@ -15,7 +15,6 @@ export function sanitizeContactFields(raw: Record<string, any>) {
     email: truncate(raw.email, 254)?.toLowerCase() ?? '',
     name: truncate(raw.name, 255),
     company: truncate(raw.company, 255),
-    agency: truncate(raw.agency, 255),
     role: truncate(raw.role, 255),
     phone: truncate(raw.phone, 50),
     linkedin: truncate(raw.linkedin, 500),
