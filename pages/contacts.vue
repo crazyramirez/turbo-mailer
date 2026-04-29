@@ -339,15 +339,14 @@ async function doImport(e: Event) {
     .map((r) => ({
       email: String(r[emailCol] || "").trim(),
       name: String(r[nameCol] || "").trim(),
-      company: String(r[compCol] || "").trim(),
-      agency: String(r[agencyCol] || "").trim(),
+      company: String(r[compCol] || r[agencyCol] || "").trim(),
       role: String(r[roleCol] || "").trim(),
       linkedin: String(r[linkedCol] || "").trim(),
       url: String(r[urlCol] || "").trim(),
       youtube: String(r[ytCol] || "").trim(),
       instagram: String(r[igCol] || "").trim(),
     }))
-    .filter((r) => r.email);
+    .filter((r) => r.email && r.email.includes("@"));
 
   const res = await $fetch<any>("/api/contacts/import", {
     method: "POST",

@@ -181,9 +181,8 @@ const contactRows = computed<Array<Record<string, any>>>(() =>
   rawRows.value.map((row) => ({
     ...row,
     email: String(row[selectedColumn.value] || '').trim(),
-    empresa: empresaColumn.value ? String(row[empresaColumn.value] || '').trim() : '',
+    empresa: (empresaColumn.value ? String(row[empresaColumn.value] || '').trim() : '') || (agencyColumn.value ? String(row[agencyColumn.value] || '').trim() : ''),
     nombre: nombreColumn.value ? String(row[nombreColumn.value] || '').trim() : '',
-    agency: agencyColumn.value ? String(row[agencyColumn.value] || '').trim() : '',
     puesto: puestoColumn.value ? String(row[puestoColumn.value] || '').trim() : '',
   })),
 )

@@ -1,4 +1,4 @@
-const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{1,63}$/
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function isValidEmail(email: string): boolean {
   return EMAIL_RE.test(email)
