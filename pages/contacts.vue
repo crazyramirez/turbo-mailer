@@ -535,10 +535,10 @@ watch([search, statusFilter], () => {
 
       <!-- Selection action bar -->
       <Transition name="fade-scale">
-        <div v-if="selectedContactIds.size > 0" class="drag-hint">
+        <div v-if="selectedContactIds.size > 0" class="selection-bar">
           <Tag :size="13" />
           <span>{{ selectedContactIds.size }} seleccionado(s)</span>
-          <span class="drag-hint-sep" v-if="!selectedListId"
+          <span class="selection-bar-sep" v-if="!selectedListId"
             >— arrastra a una lista del panel izquierdo</span
           >
           <div class="batch-actions">
@@ -560,7 +560,7 @@ watch([search, statusFilter], () => {
               Eliminar
             </button>
             <button
-              class="drag-hint-clear"
+              class="selection-bar-clear"
               @click="selectedContactIds = new Set()"
             >
               <X :size="12" />
@@ -1224,35 +1224,46 @@ watch([search, statusFilter], () => {
   accent-color: var(--accent);
 }
 
-.drag-hint {
+.selection-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  background: rgba(99, 102, 241, 0.1);
-  border: 1px solid rgba(99, 102, 241, 0.25);
-  border-radius: 10px;
-  font-size: 12px;
+  gap: 12px;
+  padding: 10px 16px;
+  background: rgba(99, 102, 241, 0.12);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--accent-light);
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  animation: barReveal 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.drag-hint-sep {
-  opacity: 0.7;
-  font-weight: 500;
+@keyframes barReveal {
+  from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
-.drag-hint-clear {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--accent-light);
+.selection-bar-sep {
   opacity: 0.6;
-  display: flex;
-  padding: 4px;
-  margin-left: 4px;
+  font-weight: 500;
+  font-size: 12px;
 }
-.drag-hint-clear:hover {
-  opacity: 1;
+.selection-bar-clear {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  padding: 5px;
+  margin-left: 6px;
+  transition: all 0.2s;
+}
+.selection-bar-clear:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
 }
 .batch-actions {
   display: flex;
