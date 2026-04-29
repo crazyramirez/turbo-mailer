@@ -15,8 +15,7 @@ export default defineEventHandler(async (event) => {
   const filters = []
   if (search) {
     filters.push(
-      sql`(${contacts.email} LIKE ${`%${search}%`} OR ${contacts.name} LIKE ${`%${search}%`} OR ${contacts.company} LIKE ${`%${search}%`} OR ${contacts.role} LIKE ${`%${search}%`}` +
-      sql` OR ${contacts.phone} LIKE ${`%${search}%`})`
+      sql`(${contacts.email} LIKE ${`%${search}%`} OR ${contacts.name} LIKE ${`%${search}%`} OR ${contacts.company} LIKE ${`%${search}%`} OR ${contacts.role} LIKE ${`%${search}%`} OR ${contacts.phone} LIKE ${`%${search}%`})`
     )
   }
   if (status && status !== 'all') {
