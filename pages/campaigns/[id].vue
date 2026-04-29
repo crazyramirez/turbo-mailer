@@ -24,6 +24,8 @@ import CampaignLibraryModal from "~/components/campaigns/CampaignLibraryModal.vu
 definePageMeta({ layout: "app" });
 
 const { showToast, showDialog } = useDashboardState();
+const { startMonitoring } = useSendingMonitor();
+const resendingSingle = ref<number | null>(null);
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
@@ -46,8 +48,9 @@ const showLibrary = ref(false);
 const dismissOverlay = ref(false);
 const showEmailConfig = ref(false);
 
-const isDraft = computed(() =>
-  ["draft", "paused"].includes(campaign.value?.status),
+const isDraft = computed(() => campaign.value?.status === "draft");
+const pendingCount = computed(() =>
+  sendsList.value.filter((s) => s.status === "pending").length,
 );
 const canSend = computed(
   () =>
@@ -202,13 +205,15 @@ async function sendCampaign() {
     showToast("Enviando campaña...", "info");
     await Promise.all([fetchCampaign(), fetchSends()]);
     if (campaign.value?.status === "sending") {
+      startMonitoring(id);
+      dismissOverlay.value = false;
+      setTimeout(() => { dismissOverlay.value = true }, 4000);
       startPolling();
     }
   } catch (e: any) {
     showToast(`Error: ${e.data?.statusMessage || e.message}`, "error");
   } finally {
     sending.value = false;
-    dismissOverlay.value = false; // Reset overlay when starting a new send
   }
 }
 
@@ -227,13 +232,46 @@ async function retryCampaign() {
     showToast("Reintentando envíos fallidos...", "info");
     await Promise.all([fetchCampaign(), fetchSends()]);
     if (campaign.value?.status === "sending") {
+      startMonitoring(id);
+      dismissOverlay.value = false;
+      setTimeout(() => { dismissOverlay.value = true }, 4000);
       startPolling();
     }
   } catch (e: any) {
     showToast(`Error: ${e.data?.statusMessage || e.message}`, "error");
   } finally {
     sending.value = false;
-    dismissOverlay.value = false;
+  }
+}
+
+// ─── Resume / Resend ─────────────────────────────────────────
+async function resumeFromPage() {
+  sending.value = true;
+  try {
+    await $fetch<any>(`/api/campaigns/${id}/send`, { method: "POST" });
+    startMonitoring(id);
+    await fetchCampaign();
+    startPolling();
+  } catch (e: any) {
+    showToast(`Error: ${e.data?.statusMessage || e.message}`, "error");
+  } finally {
+    sending.value = false;
+  }
+}
+
+async function resendSingle(sendId: number) {
+  resendingSingle.value = sendId;
+  try {
+    await $fetch<any>(`/api/campaigns/${id}/sends/${sendId}/resend`, {
+      method: "POST",
+    });
+    startMonitoring(id);
+    await fetchCampaign();
+    startPolling();
+  } catch (e: any) {
+    showToast(`Error: ${e.data?.statusMessage || e.message}`, "error");
+  } finally {
+    resendingSingle.value = null;
   }
 }
 
@@ -242,9 +280,10 @@ let pollTimer: ReturnType<typeof setInterval> | null = null;
 function startPolling() {
   if (pollTimer) return;
   pollTimer = setInterval(async () => {
-    await Promise.all([fetchCampaign(), fetchSends()]);
+    await fetchCampaign();
     if (campaign.value?.status !== "sending") {
       stopPolling();
+      await fetchSends();
     }
   }, 3000);
 }
@@ -343,7 +382,8 @@ onMounted(async () => {
   loading.value = false;
 
   if (campaign.value?.status === "sending") {
-    dismissOverlay.value = false;
+    dismissOverlay.value = true;
+    startMonitoring(id);
     startPolling();
   }
 });
@@ -663,6 +703,29 @@ onUnmounted(() => {
                 </button>
               </div>
             </div>
+            <!-- Paused banner -->
+            <div
+              v-if="campaign.status === 'paused' && campaign.totalRecipients > 0"
+              class="paused-banner"
+            >
+              <div class="paused-banner-left">
+                <span class="paused-dot" />
+                <span class="paused-text">
+                  Pausado · <strong>{{ campaign.sentCount }}</strong> enviados,
+                  <strong>{{ pendingCount }}</strong> pendientes
+                </span>
+              </div>
+              <button
+                class="paused-resume-btn"
+                :disabled="sending"
+                @click="resumeFromPage"
+              >
+                <Loader2 v-if="sending" :size="13" class="spin" />
+                <Send v-else :size="13" />
+                Reanudar envío
+              </button>
+            </div>
+
             <div class="section-hdr">Destinatarios</div>
             <div class="table-wrap">
               <div v-if="sendsList.length === 0" class="table-empty">
@@ -671,16 +734,33 @@ onUnmounted(() => {
               <table v-else class="data-table">
                 <thead>
                   <tr>
+                    <th></th>
                     <th>Email</th>
-                    <th>Nombre</th>
+                    <th>Empresa</th>
                     <th>Estado</th>
                     <th>Fecha</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="s in sendsList" :key="s.id">
+                    <td class="td-action">
+                      <button
+                        v-if="s.status === 'failed' || s.status === 'pending'"
+                        class="row-resend-btn"
+                        :disabled="resendingSingle !== null || campaign.status === 'sending'"
+                        :title="s.status === 'failed' ? 'Reintentar envío' : 'Enviar ahora'"
+                        @click="resendSingle(s.id)"
+                      >
+                        <Loader2
+                          v-if="resendingSingle === s.id"
+                          :size="12"
+                          class="spin"
+                        />
+                        <RotateCcw v-else :size="12" />
+                      </button>
+                    </td>
                     <td class="td-email">{{ s.email }}</td>
-                    <td class="td-name">{{ s.contactName || "—" }}</td>
+                    <td class="td-name">{{ s.contactCompany || "—" }}</td>
                     <td>
                       <span class="send-badge" :class="SEND_BADGE[s.status]">
                         {{ SEND_LABEL[s.status] || s.status }}
@@ -1735,6 +1815,92 @@ select.field-input option {
   padding-bottom: 8px;
 }
 
+/* Paused banner */
+.paused-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(245, 158, 11, 0.06);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 14px;
+  padding: 12px 16px;
+  margin-bottom: 4px;
+}
+.paused-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+.paused-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f59e0b;
+}
+.paused-text {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.paused-text strong {
+  color: #f59e0b;
+  font-weight: 700;
+}
+.paused-resume-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 16px;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 10px;
+  color: var(--accent-light);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.paused-resume-btn:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.5);
+}
+.paused-resume-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Row resend button */
+.td-action {
+  width: 32px;
+  padding: 0 8px 0 0;
+  text-align: right;
+}
+.row-resend-btn {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: 7px;
+  color: var(--accent-light);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.row-resend-btn:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+.row-resend-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
 /* Sends table */
 .section-hdr {
   font-size: 14px;
@@ -1748,7 +1914,7 @@ select.field-input option {
   backdrop-filter: blur(5px);
   border-radius: 14px;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto;
   max-height: calc(100vh - 340px);
 }
 .table-empty {
@@ -1793,6 +1959,10 @@ select.field-input option {
 }
 .td-name {
   color: var(--text-muted);
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .td-date {
   font-size: 11px;

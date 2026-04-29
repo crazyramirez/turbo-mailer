@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer'
 import { db } from '~/server/db/index'
 import { campaigns, contacts, listContacts, sends } from '~/server/db/schema'
-import { eq, and, inArray } from 'drizzle-orm'
+import { eq, and, inArray, sql } from 'drizzle-orm'
 import { applyVars } from '~/server/utils/template'
 import { signUnsubscribeToken, signClickToken, signOpenToken } from '~/server/utils/auth'
 
@@ -135,12 +135,18 @@ export async function processCampaign(campaignId: number, cfg: SendConfig): Prom
         sentAt: new Date(),
         errorMsg: null
       }).where(eq(sends.id, send.sendId))
+      await db.update(campaigns)
+        .set({ sentCount: sql`${campaigns.sentCount} + 1` })
+        .where(eq(campaigns.id, campaignId))
     } catch (err: any) {
       await db.update(sends).set({
         status: 'failed',
         errorMsg: err.message,
         sentAt: new Date(),
       }).where(eq(sends.id, send.sendId))
+      await db.update(campaigns)
+        .set({ failCount: sql`${campaigns.failCount} + 1` })
+        .where(eq(campaigns.id, campaignId))
     }
 
     if (cfg.delayMs > 0) {

@@ -136,6 +136,7 @@
     "status_draft": "Borrador",
     "status_scheduled": "Programada",
     "status_sending": "Enviando",
+    "sending_queued": "{count} destinatarios en cola. No cierres la ventana.",
     "status_sent": "Enviada",
     "status_paused": "Pausada",
     "col_name": "Nombre",
@@ -177,6 +178,15 @@
     "confirm_delete_title": "¿Eliminar campaña?",
     "sending_in_progress": "Tu campaña está siendo procesada en tiempo real.",
     "view_dashboard": "Ver Panel"
+  },
+  "sending_badge": {
+    "sending": "Enviando {sent} / {total}",
+    "completed": "¡Enviado! {sent} emails",
+    "paused": "Pausado · {sent} / {total}",
+    "cancel": "Cancelar",
+    "resume": "Reanudar",
+    "failed": "fallidos",
+    "dismiss": "Cerrar"
   },
   "analytics_page": {
     "title": "Analytics",
