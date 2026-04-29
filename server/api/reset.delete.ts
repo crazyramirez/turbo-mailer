@@ -1,10 +1,10 @@
 import { db } from '~/server/db/index'
-import { contacts, lists, listContacts, campaigns, sends, trackingEvents, settings } from '~/server/db/schema'
+import { contacts, lists, listContacts, campaigns, sends, trackingEvents, settings, loginAttempts } from '~/server/db/schema'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { createBackup } from '~/server/utils/backup'
 
-const VALID_SCOPES = ['all', 'db', 'contacts', 'campaigns', 'analytics'] as const
+const VALID_SCOPES = ['all', 'db', 'contacts', 'campaigns', 'analytics', 'security'] as const
 type Scope = typeof VALID_SCOPES[number]
 
 export default defineEventHandler(async (event) => {
@@ -26,36 +26,28 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const safeUpdate = async (table: any, values: any) => {
-    try {
-      await db.update(table).set(values)
-    } catch (e) {
-      console.warn(`Could not update table:`, e)
-    }
-  }
-
   if (scope === 'analytics') {
     await safeDelete(trackingEvents)
   }
 
+  else if (scope === 'security') {
+    await safeDelete(loginAttempts)
+  }
+
   else if (scope === 'contacts') {
-    // Null out FK refs to contacts in child tables to avoid constraint violations
-    await safeUpdate(sends, { contactId: null })
-    await safeUpdate(trackingEvents, { contactId: null })
-    // Null out listId in campaigns before deleting lists
-    await safeUpdate(campaigns, { listId: null })
+    // tracking_events.contact_id and list_contacts.contact_id have cascade — but sends.contact_id does not
+    await db.update(sends).set({ contactId: null })
     await safeDelete(listContacts)
     await safeDelete(contacts)
-    await safeDelete(lists)
   }
 
   else if (scope === 'campaigns') {
-    // tracking_events.campaign_id and .send_id have no cascade — clear first
-    await safeDelete(trackingEvents)
-    await safeDelete(campaigns) // sends cascade via ON DELETE CASCADE
+    // tracking_events.campaign_id has cascade
+    await safeDelete(campaigns) // sends also cascade
   }
 
   else if (scope === 'db' || scope === 'all') {
+    // Deletion order to respect FKs (even with cascades, it's cleaner)
     await safeDelete(trackingEvents)
     await safeDelete(sends)
     await safeDelete(listContacts)
@@ -63,6 +55,7 @@ export default defineEventHandler(async (event) => {
     await safeDelete(contacts)
     await safeDelete(lists)
     await safeDelete(settings)
+    await safeDelete(loginAttempts)
 
     if (scope === 'all') {
       const templatesDir = path.resolve(process.cwd(), 'data/templates')

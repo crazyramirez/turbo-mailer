@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, primaryKey } from 'drizzle-orm/sqlite-core'
 
 export const contacts = sqliteTable('contacts', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -30,7 +30,9 @@ export const lists = sqliteTable('lists', {
 export const listContacts = sqliteTable('list_contacts', {
   listId: integer('list_id').notNull().references(() => lists.id, { onDelete: 'cascade' }),
   contactId: integer('contact_id').notNull().references(() => contacts.id, { onDelete: 'cascade' }),
-})
+}, (t) => ({
+  pk: primaryKey({ columns: [t.listId, t.contactId] }),
+}))
 
 export const campaigns = sqliteTable('campaigns', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -89,4 +91,11 @@ export const settings = sqliteTable('settings', {
   key: text('key').primaryKey(),
   value: text('value'),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+})
+
+export const loginAttempts = sqliteTable('login_attempts', {
+  ip: text('ip').primaryKey(),
+  count: integer('count').notNull().default(0),
+  firstAttempt: integer('first_attempt', { mode: 'timestamp' }).notNull(),
+  blockedUntil: integer('blocked_until', { mode: 'timestamp' }),
 })

@@ -37,69 +37,15 @@ sqlite.pragma('foreign_keys = ON')
 
 export const db = drizzle(sqlite, { schema })
 
-// Ensure runtime tables exist regardless of migration state
-sqlite.exec(`
-  CREATE TABLE IF NOT EXISTS sessions (
-    token TEXT PRIMARY KEY NOT NULL,
-    ip TEXT NOT NULL,
-    created_at INTEGER NOT NULL,
-    expires_at INTEGER NOT NULL
-  )
-`)
-
-sqlite.exec(`
-  CREATE TABLE IF NOT EXISTS login_attempts (
-    ip TEXT PRIMARY KEY NOT NULL,
-    count INTEGER NOT NULL DEFAULT 0,
-    first_attempt INTEGER NOT NULL,
-    blocked_until INTEGER
-  )
-`)
-
-
 export { sqlite }
 
 // Auto-run migrations on startup
-// NOTE: sessions table also ensured above via CREATE TABLE IF NOT EXISTS
 try {
   console.log('Checking database migrations...')
-  
-  // Check if we have tables but no migration table (transition from manual)
-  const hasTables = sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='contacts'").get()
-  const hasMigrationTable = sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='__drizzle_migrations'").get()
-  
-  if (hasTables && !hasMigrationTable) {
-    console.log('Legacy database detected. Skipping initial migration to avoid conflicts.')
-    // We manually ensure settings exists in legacy databases
-    sqlite.exec(`
-      CREATE TABLE IF NOT EXISTS settings (
-        key TEXT PRIMARY KEY NOT NULL,
-        value TEXT,
-        updated_at INTEGER
-      )
-    `)
-  } else {
-    migrate(db, { migrationsFolder: migrationsPath })
-    console.log('Database migrations completed successfully.')
-  }
+  migrate(db, { migrationsFolder: migrationsPath })
+  console.log('Database migrations completed successfully.')
 } catch (error) {
   console.error('Failed to run database migrations:', error)
-}
-
-// Apply incremental schema changes that may not be covered by migrations (legacy DBs)
-try {
-  const campaignCols = (sqlite.prepare('PRAGMA table_info(campaigns)').all() as any[]).map((c: any) => c.name)
-  const contactCols = (sqlite.prepare('PRAGMA table_info(contacts)').all() as any[]).map((c: any) => c.name)
-
-  if (!campaignCols.includes('unsub_email_subject')) sqlite.exec(`ALTER TABLE campaigns ADD COLUMN unsub_email_subject TEXT`)
-  if (!campaignCols.includes('unsub_email_message')) sqlite.exec(`ALTER TABLE campaigns ADD COLUMN unsub_email_message TEXT`)
-  if (!campaignCols.includes('resub_email_subject')) sqlite.exec(`ALTER TABLE campaigns ADD COLUMN resub_email_subject TEXT`)
-  if (!campaignCols.includes('resub_email_message')) sqlite.exec(`ALTER TABLE campaigns ADD COLUMN resub_email_message TEXT`)
-  if (!contactCols.includes('sub_change_count'))      sqlite.exec(`ALTER TABLE contacts ADD COLUMN sub_change_count INTEGER DEFAULT 0`)
-  if (!contactCols.includes('sub_change_window_start')) sqlite.exec(`ALTER TABLE contacts ADD COLUMN sub_change_window_start INTEGER`)
-  if (!contactCols.includes('role'))                 sqlite.exec(`ALTER TABLE contacts ADD COLUMN role TEXT`)
-} catch (err) {
-  console.error('Schema migration patch failed:', err)
 }
 
 // Recover campaigns stuck in 'sending' after a crash/restart
@@ -113,4 +59,3 @@ try {
 }
 
 export default db
-

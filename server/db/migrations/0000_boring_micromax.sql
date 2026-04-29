@@ -15,6 +15,10 @@ CREATE TABLE `campaigns` (
 	`open_count` integer DEFAULT 0,
 	`click_count` integer DEFAULT 0,
 	`fail_count` integer DEFAULT 0,
+	`unsub_email_subject` text,
+	`unsub_email_message` text,
+	`resub_email_subject` text,
+	`resub_email_message` text,
 	FOREIGN KEY (`list_id`) REFERENCES `lists`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
@@ -23,6 +27,7 @@ CREATE TABLE `contacts` (
 	`email` text NOT NULL,
 	`name` text,
 	`company` text,
+	`role` text,
 	`phone` text,
 	`linkedin` text,
 	`url` text,
@@ -30,6 +35,8 @@ CREATE TABLE `contacts` (
 	`instagram` text,
 	`tags` text DEFAULT '[]',
 	`status` text DEFAULT 'active' NOT NULL,
+	`sub_change_count` integer DEFAULT 0,
+	`sub_change_window_start` integer,
 	`created_at` integer,
 	`updated_at` integer
 );
@@ -63,6 +70,19 @@ CREATE TABLE `sends` (
 	FOREIGN KEY (`contact_id`) REFERENCES `contacts`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
+CREATE TABLE `sessions` (
+	`token` text PRIMARY KEY NOT NULL,
+	`ip` text NOT NULL,
+	`created_at` integer NOT NULL,
+	`expires_at` integer NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE `settings` (
+	`key` text PRIMARY KEY NOT NULL,
+	`value` text,
+	`updated_at` integer
+);
+--> statement-breakpoint
 CREATE TABLE `tracking_events` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`send_id` integer,
@@ -73,7 +93,7 @@ CREATE TABLE `tracking_events` (
 	`ip` text,
 	`user_agent` text,
 	`created_at` integer,
-	FOREIGN KEY (`send_id`) REFERENCES `sends`(`id`) ON UPDATE no action ON DELETE no action,
-	FOREIGN KEY (`campaign_id`) REFERENCES `campaigns`(`id`) ON UPDATE no action ON DELETE no action,
-	FOREIGN KEY (`contact_id`) REFERENCES `contacts`(`id`) ON UPDATE no action ON DELETE no action
+	FOREIGN KEY (`send_id`) REFERENCES `sends`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`campaign_id`) REFERENCES `campaigns`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`contact_id`) REFERENCES `contacts`(`id`) ON UPDATE no action ON DELETE cascade
 );
