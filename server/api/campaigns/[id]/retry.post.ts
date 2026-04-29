@@ -40,6 +40,9 @@ export default defineEventHandler(async (event) => {
     jitterMs: Number(config.smtpSendJitterMs),
     maxRetries: Number(config.smtpMaxRetries || 3),
     retryDelayMs: Number(config.smtpRetryDelayMs || 5000),
+    dkimDomain: config.dkimDomain as string,
+    dkimSelector: config.dkimSelector as string,
+    dkimPrivateKey: config.dkimPrivateKey as string,
   }
 
   // Process in background

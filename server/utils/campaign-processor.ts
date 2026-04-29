@@ -19,6 +19,9 @@ export interface SendConfig {
   jitterMs: number
   maxRetries: number
   retryDelayMs: number
+  dkimDomain?: string
+  dkimSelector?: string
+  dkimPrivateKey?: string
 }
 
 export function injectTracking(html: string, sendId: number, baseUrl: string, secret: string): string {
@@ -67,11 +70,18 @@ export async function sendWithRetry(
 }
 
 export async function processCampaign(campaignId: number, cfg: SendConfig): Promise<void> {
+  const dkim = (cfg.dkimDomain && cfg.dkimSelector && cfg.dkimPrivateKey) ? {
+    domainName: cfg.dkimDomain,
+    keySelector: cfg.dkimSelector,
+    privateKey: cfg.dkimPrivateKey.replace(/\\n/g, '\n'),
+  } : undefined
+
   const transporter = nodemailer.createTransport({
     host: cfg.smtpHost,
     port: cfg.smtpPort,
     secure: cfg.smtpSecure,
     auth: { user: cfg.smtpUser, pass: cfg.smtpPass },
+    dkim,
   } as any)
 
   // Load recipients with pending sends (supports resume and retry)
@@ -115,18 +125,23 @@ export async function processCampaign(campaignId: number, cfg: SendConfig): Prom
         cfg.baseUrl,
         cfg.secret,
       )
+      const senderEmail = cfg.smtpFromEmail || cfg.smtpUser
       const unsubToken = signUnsubscribeToken(send.sendId, cfg.secret)
+      const unsubUrl = `${cfg.baseUrl}/unsubscribe?s=${send.sendId}&t=${unsubToken}`
       const personalizedHtml = trackedHtml.replace(
         /\{\{\s*UNSUBSCRIBE_URL\s*\}\}/gi,
-        `${cfg.baseUrl}/unsubscribe?s=${send.sendId}&t=${unsubToken}`
+        unsubUrl
       )
 
-      const senderEmail = cfg.smtpFromEmail || cfg.smtpUser
       await sendWithRetry(transporter, {
         from: `"${cfg.smtpFromName}" <${senderEmail}>`,
         to: send.email,
         subject: personalizedSubject,
         html: personalizedHtml,
+        headers: {
+          'List-Unsubscribe': `<${unsubUrl}>`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        }
       }, cfg.maxRetries, cfg.retryDelayMs)
 
       await db.update(sends).set({
@@ -139,11 +154,22 @@ export async function processCampaign(campaignId: number, cfg: SendConfig): Prom
         .set({ sentCount: sql`${campaigns.sentCount} + 1` })
         .where(eq(campaigns.id, campaignId))
     } catch (err: any) {
+      const isHardBounce = err.responseCode >= 500 && err.responseCode < 600
+      const status = isHardBounce ? 'bounced' : 'failed'
+
       await db.update(sends).set({
-        status: 'failed',
+        status,
         errorMsg: err.message,
         sentAt: new Date(),
       }).where(eq(sends.id, send.sendId))
+
+      if (isHardBounce && send.contactId) {
+        await db.update(contacts).set({
+          status: 'bounced',
+          updatedAt: new Date()
+        }).where(eq(contacts.id, send.contactId))
+      }
+
       await db.update(campaigns)
         .set({ failCount: sql`${campaigns.failCount} + 1` })
         .where(eq(campaigns.id, campaignId))

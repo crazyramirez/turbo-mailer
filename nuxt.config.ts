@@ -21,6 +21,9 @@ export default defineNuxtConfig({
     smtpSendJitterMs: Number(process.env.SMTP_SEND_JITTER_MS || 500),
     smtpMaxRetries: Number(process.env.SMTP_MAX_RETRIES || 3),
     smtpRetryDelayMs: Number(process.env.SMTP_RETRY_DELAY_MS || 5000),
+    dkimDomain: process.env.DKIM_DOMAIN,
+    dkimSelector: process.env.DKIM_SELECTOR || 'default',
+    dkimPrivateKey: process.env.DKIM_PRIVATE_KEY,
     public: {
       portalKey: process.env.PORTAL_KEY || 'admin',
     }
