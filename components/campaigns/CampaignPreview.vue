@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted, onUnmounted } from "vue";
-import { Monitor, Smartphone, Sun, Moon, Maximize2, X, Wifi, Battery } from "lucide-vue-next";
+import {
+  Monitor,
+  Smartphone,
+  Sun,
+  Moon,
+  Maximize2,
+  X,
+  Wifi,
+  Battery,
+} from "lucide-vue-next";
 
 const props = defineProps<{ html: string; subject?: string }>();
 
@@ -34,7 +43,8 @@ const darkStyles = `
 `;
 
 function renderInto(targetFrame: HTMLIFrameElement | null) {
-  const doc = targetFrame?.contentDocument || targetFrame?.contentWindow?.document;
+  const doc =
+    targetFrame?.contentDocument || targetFrame?.contentWindow?.document;
   if (!doc) return;
   doc.open();
   doc.write(`<style>
@@ -46,7 +56,14 @@ function renderInto(targetFrame: HTMLIFrameElement | null) {
   </style>${props.html}`);
   doc.close();
   if (darkMode.value) doc.body?.classList.add("dark-sim");
-  doc.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); }, true);
+  doc.addEventListener(
+    "click",
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    },
+    true,
+  );
 }
 
 function render() {
@@ -70,7 +87,10 @@ watch(
 watch(darkMode, (val) => {
   [frame.value, isFullscreen.value ? fsFrame.value : null].forEach((f) => {
     const doc = f?.contentDocument || f?.contentWindow?.document;
-    if (doc?.body) val ? doc.body.classList.add("dark-sim") : doc.body.classList.remove("dark-sim");
+    if (doc?.body)
+      val
+        ? doc.body.classList.add("dark-sim")
+        : doc.body.classList.remove("dark-sim");
   });
 });
 
@@ -183,24 +203,42 @@ onUnmounted(() => {
   <Teleport to="body">
     <Transition name="fs">
       <div v-if="isFullscreen" class="fs-overlay">
-
         <!-- Desktop browser chrome -->
         <div v-if="viewMode === 'desktop'" class="fs-chrome fs-chrome--desktop">
           <div class="chrome-dots">
-            <button class="dot dot-red" @click="isFullscreen = false" aria-label="Close fullscreen">
+            <button
+              class="dot dot-red"
+              @click="isFullscreen = false"
+              aria-label="Close fullscreen"
+            >
               <X :size="7" class="dot-icon" />
             </button>
             <span class="dot dot-yellow"></span>
             <span class="dot dot-green"></span>
           </div>
           <div class="chrome-urlbar">
-            <svg class="url-lock" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            <svg
+              class="url-lock"
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
             <span class="url-text">{{ subject || "email-preview.html" }}</span>
           </div>
           <div class="chrome-actions">
-            <button class="chrome-btn" @click="viewMode = 'mobile'" title="Switch to mobile">
+            <button
+              class="chrome-btn"
+              @click="viewMode = 'mobile'"
+              title="Switch to mobile"
+            >
               <Smartphone :size="13" />
             </button>
             <button
@@ -211,7 +249,11 @@ onUnmounted(() => {
             >
               <component :is="darkMode ? Sun : Moon" :size="13" />
             </button>
-            <button class="chrome-btn chrome-btn--esc" @click="isFullscreen = false" title="Exit fullscreen (Esc)">
+            <button
+              class="chrome-btn chrome-btn--esc"
+              @click="isFullscreen = false"
+              title="Exit fullscreen (Esc)"
+            >
               <span class="esc-label">ESC</span>
             </button>
           </div>
@@ -228,13 +270,27 @@ onUnmounted(() => {
           </div>
           <div class="mobile-nav">
             <div class="mobile-urlbar">
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              <svg
+                width="9"
+                height="9"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="3" y="11" width="18" height="11" rx="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
               <span>{{ subject || "email preview" }}</span>
             </div>
             <div class="mobile-btns">
-              <button class="chrome-btn" @click="viewMode = 'desktop'" title="Switch to desktop">
+              <button
+                class="chrome-btn"
+                @click="viewMode = 'desktop'"
+                title="Switch to desktop"
+              >
                 <Monitor :size="13" />
               </button>
               <button
@@ -244,7 +300,10 @@ onUnmounted(() => {
               >
                 <component :is="darkMode ? Sun : Moon" :size="13" />
               </button>
-              <button class="chrome-btn chrome-btn--esc" @click="isFullscreen = false">
+              <button
+                class="chrome-btn chrome-btn--esc"
+                @click="isFullscreen = false"
+              >
                 <span class="esc-label">ESC</span>
               </button>
             </div>
@@ -253,9 +312,13 @@ onUnmounted(() => {
 
         <!-- Content -->
         <div class="fs-body" :class="[viewMode, { 'fs-dark': darkMode }]">
-          <iframe ref="fsFrame" class="fs-frame" :class="viewMode" sandbox="allow-same-origin"></iframe>
+          <iframe
+            ref="fsFrame"
+            class="fs-frame"
+            :class="viewMode"
+            sandbox="allow-same-origin"
+          ></iframe>
         </div>
-
       </div>
     </Transition>
   </Teleport>
@@ -460,13 +523,23 @@ onUnmounted(() => {
   animation: sweep 0.6s ease-in-out forwards;
 }
 @keyframes sweep {
-  from { transform: translateX(-100%) skewX(-25deg); }
-  to   { transform: translateX(200%) skewX(-25deg); }
+  from {
+    transform: translateX(-100%) skewX(-25deg);
+  }
+  to {
+    transform: translateX(200%) skewX(-25deg);
+  }
 }
 @keyframes bounce {
-  0%   { transform: scale(1); }
-  30%  { transform: scale(0.96) translateY(8px); }
-  100% { transform: scale(1) translateY(0); }
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(0.96) translateY(8px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+  }
 }
 
 .cp-host {
@@ -566,10 +639,14 @@ onUnmounted(() => {
 
 /* Enter/leave transitions */
 .fs-enter-active {
-  transition: opacity 0.22s ease, transform 0.28s cubic-bezier(0.34, 1.1, 0.64, 1);
+  transition:
+    opacity 0.22s ease,
+    transform 0.28s cubic-bezier(0.34, 1.1, 0.64, 1);
 }
 .fs-leave-active {
-  transition: opacity 0.18s ease, transform 0.2s ease-in;
+  transition:
+    opacity 0.18s ease,
+    transform 0.2s ease-in;
 }
 .fs-enter-from,
 .fs-leave-to {
@@ -655,12 +732,26 @@ button.dot {
   padding: 0;
   transition: filter 0.15s;
 }
-button.dot:hover { filter: brightness(0.85); }
-.dot-red    { background: #ff5f57; }
-.dot-yellow { background: #febc2e; }
-.dot-green  { background: #28c840; }
-.dot-icon   { opacity: 0; transition: opacity 0.15s; color: rgba(0, 0, 0, 0.55); }
-.dot-red:hover .dot-icon { opacity: 1; }
+button.dot:hover {
+  filter: brightness(0.85);
+}
+.dot-red {
+  background: #ff5f57;
+}
+.dot-yellow {
+  background: #febc2e;
+}
+.dot-green {
+  background: #28c840;
+}
+.dot-icon {
+  opacity: 0;
+  transition: opacity 0.15s;
+  color: rgba(0, 0, 0, 0.55);
+}
+.dot-red:hover .dot-icon {
+  opacity: 1;
+}
 
 .chrome-urlbar {
   flex: 1;
@@ -732,7 +823,9 @@ button.dot:hover { filter: brightness(0.85); }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.mobile-urlbar svg { flex-shrink: 0; }
+.mobile-urlbar svg {
+  flex-shrink: 0;
+}
 .mobile-btns {
   display: flex;
   gap: 5px;

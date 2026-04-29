@@ -13,6 +13,7 @@ export const VAR_MAP: Record<string, string[]> = {
   linkedin: ['Linkedin', 'LinkedIn'],
   instagram: ['Instagram', 'IG'],
   youtube: ['Youtube', 'YouTube', 'YT'],
+  agency: ['Agencia', 'Agency', 'agency_name', 'nombre_agencia', 'Agency Name', 'agencyname', 'nombreagencia'],
   phone: ['Telefono', 'Teléfono', 'Phone', 'Cell', 'Mobile'],
   email: ['Email', 'Correo', 'Mail']
 }
