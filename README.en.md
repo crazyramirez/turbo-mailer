@@ -113,6 +113,7 @@ TurboMailer is optimized to comply with strict regulations from **Apple (iCloud)
 - **Keyboard shortcuts**: `Ctrl+S` save · `Ctrl+Z` undo · `Ctrl+Y` redo · `Delete` delete block
 - Autosave upon detecting changes
 - **Template Gallery**: library to save, load, rename, and delete your own HTML templates
+- **Global Style Manager**: Selector with 5 pre-designed aesthetic bases (**Modern Clean, Corporate Premium, Tech Noir, Corporate Bold, Lux Dark**) that automatically unify colors, borders, and typography throughout the template.
 - Live Preview with desktop / mobile / dark mode toggle
 
 ### 🤖 AI Copywriting Assistant

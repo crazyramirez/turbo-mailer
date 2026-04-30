@@ -113,6 +113,7 @@ TurboMailer está optimizado para cumplir con las estrictas normativas de **Appl
 - **Atajos de teclado**: `Ctrl+S` guardar · `Ctrl+Z` deshacer · `Ctrl+Y` rehacer · `Delete` eliminar bloque
 - Autosave al detectar cambios
 - **Galería de Plantillas**: biblioteca para guardar, cargar, renombrar y eliminar plantillas HTML propias
+- **Gestor de Estilos Globales**: Selector con 5 bases estéticas prediseñadas (**Modern Clean, Corporate Premium, Tech Noir, Corporate Bold, Lux Dark**) que unifican automáticamente colores, bordes y tipografías en todo el template.
 - Live Preview con toggle desktop / móvil / modo oscuro
 
 ### 🤖 IA Copywriting Assistant
