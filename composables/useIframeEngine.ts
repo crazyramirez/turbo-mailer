@@ -542,7 +542,7 @@ function injectIframeContent() {
   if (mainCard) {
     mainCard.style.maxWidth = '820px'
     mainCard.style.width = '100%'
-    mainCard.style.margin = '0 auto 40px auto'
+    mainCard.style.margin = '0 auto'
     mainCard.style.borderRadius = '0px'
     mainCard.style.overflow = 'hidden'
     
@@ -693,7 +693,7 @@ function applyStyleBase(style: EditorStyleBase) {
     const cardCss = `.main-card {
       width: 100%;
       max-width: 820px;
-      margin: 0 auto 20px auto;
+      margin: 0 auto;
       background: ${style.config.cardBg};
       border-radius: ${style.config.cardRadius};
       box-shadow: ${style.config.cardShadow};
