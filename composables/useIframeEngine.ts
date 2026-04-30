@@ -694,7 +694,6 @@ function applyStyleBase(style: EditorStyleBase) {
       width: 100%;
       max-width: 820px;
       margin: 0 auto;
-      background: ${style.config.cardBg};
       border-radius: ${style.config.cardRadius};
       box-shadow: ${style.config.cardShadow};
       border: ${style.config.cardBorder};
