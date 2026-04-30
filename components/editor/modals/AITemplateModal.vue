@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, watch } from 'vue'
 import { X, Sparkles, Send, Loader2 } from 'lucide-vue-next'
 import { useEditorState } from '~/composables/useEditorState'
 import { useTemplateManager } from '~/composables/useTemplateManager'
@@ -7,7 +7,7 @@ import { useToast } from '~/composables/useToast'
 import { editorBlocks } from '~/utils/editorBlocks'
 
 const { showAITemplateModal, currentTemplate, htmlContent, currentStyle } = useEditorState()
-const { saveTemplate } = useTemplateManager()
+const { saveTemplate, loadTemplates } = useTemplateManager()
 const { showToast } = useToast()
 
 const messages = ref<{role: 'assistant' | 'user', content: string}[]>([
@@ -16,6 +16,23 @@ const messages = ref<{role: 'assistant' | 'user', content: string}[]>([
 const inputMessage = ref('')
 const isLoading = ref(false)
 const chatContainer = ref<HTMLElement | null>(null)
+const textareaRef = ref<HTMLTextAreaElement | null>(null)
+
+const autoResize = () => {
+  if (textareaRef.value) {
+    textareaRef.value.style.height = 'auto'
+    textareaRef.value.style.height = Math.min(textareaRef.value.scrollHeight, 125) + 'px'
+  }
+}
+
+watch(showAITemplateModal, (newVal) => {
+  if (!newVal) {
+    inputMessage.value = ''
+    if (textareaRef.value) {
+      textareaRef.value.style.height = 'auto'
+    }
+  }
+})
 
 const scrollToBottom = async () => {
   await nextTick()
@@ -28,8 +45,13 @@ const sendMessage = async () => {
   if (!inputMessage.value.trim() || isLoading.value) return
 
   const userMsg = inputMessage.value.trim()
-  messages.value.push({ role: 'user', content: userMsg })
   inputMessage.value = ''
+  
+  if (textareaRef.value) {
+    textareaRef.value.style.height = 'auto'
+  }
+
+  messages.value.push({ role: 'user', content: userMsg })
   isLoading.value = true
   await scrollToBottom()
 
@@ -96,28 +118,16 @@ const applyGeneratedTemplate = async (data: any) => {
                   await scrollToBottom()
                   
                   try {
-                    const response = await fetch(imgUrl)
-                    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`)
-                    
-                    const contentType = response.headers.get('content-type')
-                    if (!contentType || !contentType.startsWith('image/')) {
-                      throw new Error(`Invalid content type: ${contentType}`)
-                    }
-                    
-                    const blob = await response.blob()
-                    const formData = new FormData()
-                    formData.append('files', blob, `ai_img_${Date.now()}.jpg`)
-                    
-                    const uploadRes = await $fetch<any[]>('/api/uploads', {
+                    const uploadRes = await $fetch<any>('/api/ai/download-image', {
                       method: 'POST',
-                      body: formData
+                      body: { url: imgUrl }
                     })
                     
-                    if (uploadRes && uploadRes.length > 0) {
-                      imgUrl = uploadRes[0].url
+                    if (uploadRes && uploadRes.url) {
+                      imgUrl = uploadRes.url
                     }
                   } catch (e) {
-                    console.error('Error procesando la imagen de IA', e)
+                    console.error('Error descargando la imagen de IA', e)
                   }
                 }
                 
@@ -129,6 +139,15 @@ const applyGeneratedTemplate = async (data: any) => {
                 const span = el.querySelector('.btn-text')
                 if (span) span.innerHTML = value as string
                 else el.innerHTML = value as string
+              } else if (key === 'contact') {
+                const a = el.querySelector('a')
+                if (a) {
+                  a.innerHTML = value as string
+                  const valStr = value as string
+                  a.href = valStr.includes('@') ? `mailto:${valStr}` : (valStr.startsWith('http') ? valStr : `https://${valStr}`)
+                } else {
+                  el.innerHTML = value as string
+                }
               } else {
                 el.innerHTML = value as string
               }
@@ -196,8 +215,9 @@ const applyGeneratedTemplate = async (data: any) => {
   import('~/composables/useIframeEngine').then(m => m.useIframeEngine().injectIframeContent())
   
   // Guardar con un delay de 2 segundos para asegurar que el DOM ha cargado
-  setTimeout(() => {
-    saveTemplate(true)
+  setTimeout(async () => {
+    await saveTemplate(true)
+    await loadTemplates()
   }, 2000)
 }
 </script>
@@ -205,7 +225,7 @@ const applyGeneratedTemplate = async (data: any) => {
 <template>
   <Transition name="fade">
     <div v-if="showAITemplateModal" class="modal-overlay premium-overlay">
-      <div class="modal-backdrop" @click="showAITemplateModal = false"></div>
+      <div class="modal-backdrop"></div>
       <div class="ai-modal-glass">
         <!-- Glowing animated background inside modal -->
         <div class="glass-glow"></div>
@@ -240,18 +260,21 @@ const applyGeneratedTemplate = async (data: any) => {
           </div>
           
           <div class="chat-input-wrapper">
-            <div class="chat-input-pill">
-              <input 
+            <div class="chat-input-box">
+              <textarea 
+                ref="textareaRef"
                 v-model="inputMessage" 
-                type="text" 
                 placeholder="Ej: Newsletter de verano..." 
-                @keyup.enter="sendMessage"
+                @keydown.enter.shift.prevent="sendMessage"
+                @input="autoResize"
                 :disabled="isLoading"
-              />
+                rows="1"
+              ></textarea>
               <button @click="sendMessage" :disabled="isLoading || !inputMessage.trim()" class="btn-send-glass">
                 <Send :size="16" />
               </button>
             </div>
+            <div class="input-hint">Shift + Enter para enviar</div>
           </div>
         </div>
       </div>
@@ -429,35 +452,54 @@ const applyGeneratedTemplate = async (data: any) => {
   padding: 0 24px 24px 24px;
 }
 
-.chat-input-pill {
+.chat-input-box {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   background: rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 99px;
+  border-radius: 16px;
   padding: 6px;
   transition: all 0.3s;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.chat-input-pill:focus-within {
+.chat-input-box:focus-within {
   border-color: rgba(99, 102, 241, 0.5);
   background: rgba(0, 0, 0, 0.3);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1), inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.chat-input-pill input {
+.chat-input-box textarea {
   flex: 1;
   background: transparent;
   border: none;
-  padding: 0 16px;
+  padding: 8px 16px;
   color: #fff;
   font-size: 14px;
+  line-height: 1.5;
   outline: none;
+  resize: none;
+  min-height: 38px;
+  max-height: 125px;
+  overflow-y: auto;
+  font-family: inherit;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
-.chat-input-pill input::placeholder {
+.chat-input-box textarea::-webkit-scrollbar {
+  display: none;
+}
+
+.chat-input-box textarea::placeholder {
   color: #64748b;
+}
+
+.input-hint {
+  font-size: 11px;
+  color: #64748b;
+  text-align: center;
+  margin-top: 8px;
 }
 
 .btn-send-glass {

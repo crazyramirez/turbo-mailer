@@ -73,7 +73,7 @@ export const editorBlocks: EditorBlock[] = [
     name: 'Imagen',
     icon: ImageIcon,
     content: `<div class="image-block editable-block" data-type="Imagen" style="padding:16px 32px;background:#f6faff;text-align:center;">
-    <div data-toggle="image"><img src="${placeholder1200x800}" alt="Imagen" style="display:block;width:100%;height:auto;border-radius:12px;"></div>
+    <div data-toggle="image"><img src="${placeholder1200x800}" class="main-img-responsive" alt="Imagen" style="display:block;width:100%;height:auto;border-radius:12px;"></div>
   </div>`,
   },
   {
@@ -83,7 +83,7 @@ export const editorBlocks: EditorBlock[] = [
     content: `<div class="card-block editable-block" data-type="Tarjeta" data-layout="premium" style="padding:16px 32px;background:#f6faff;">
     <div class="card-wrapper" style="background:#f6faff;border:1px solid #e2e8f0;border-radius:18px;padding:20px;position:relative;">
       <div class="image-container" data-toggle="image" style="position:relative;margin-bottom:16px;">
-        <img src="${placeholder1200x800}" alt="Servicio" style="display:block;width:100%;height:auto;border-radius:12px;">
+        <img src="${placeholder1200x800}" class="main-img-responsive" alt="Servicio" style="display:block;width:100%;height:auto;border-radius:12px;">
       </div>
       <div class="text-group">
         <div data-toggle="badge" class="badge-el" style="font-family:Arial;font-size:13px;font-weight:700;color:#6366f1;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;">01 · Categoría</div>

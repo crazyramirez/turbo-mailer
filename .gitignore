@@ -20,3 +20,5 @@ data/SQLite.md
 !data/turbomailer_demo.db
 private
 private/*
+
+public/uploads/*
