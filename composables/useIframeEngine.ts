@@ -699,7 +699,6 @@ function applyStyleBase(style: EditorStyleBase, forceTheme = false) {
       width: 100%;
       max-width: 820px;
       margin: 0 auto;
-      border-radius: ${style.config.cardRadius};
       box-shadow: ${style.config.cardShadow};
       border: ${style.config.cardBorder};
       overflow: hidden;
@@ -721,7 +720,7 @@ function applyStyleBase(style: EditorStyleBase, forceTheme = false) {
         border-color: ${style.config.borderColor} !important;
       }
       @media only screen and (max-width: 600px) {
-        .main-card { border-radius: 20px !important; }
+        .main-card { border-radius: 0px !important; }
         .header-block, .body-block, .methodology-block, .presence-block, .card-block, .cta-block, .signature-block {
           padding-left: 20px !important;
           padding-right: 20px !important;

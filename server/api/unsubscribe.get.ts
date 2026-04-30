@@ -45,7 +45,7 @@ async function sendConfirmationEmail(
   <table width="100%" cellpadding="0" cellspacing="0">
     <tr>
       <td align="center" style="padding:40px 16px;">
-        <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;">
+        <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:0px;overflow:hidden;border:1px solid #e2e8f0;">
           <tr>
             <td style="padding:40px 48px;text-align:center;">
               <div style="font-size:40px;margin-bottom:16px;">✓</div>
@@ -57,7 +57,7 @@ async function sendConfirmationEmail(
               <p style="font-size:13px;color:#94a3b8;margin:0 0 20px;">
                 ${t('unsub_resub_text')}
               </p>
-              <a href="${resubUrl}" style="display:inline-block;padding:12px 28px;background:#6366f1;color:#ffffff;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none;">
+              <a href="${resubUrl}" style="display:inline-block;padding:12px 28px;background:#6366f1;color:#ffffff;border-radius:0px;font-size:14px;font-weight:700;text-decoration:none;">
                 ${t('unsub_resub_button')}
               </a>
             </td>

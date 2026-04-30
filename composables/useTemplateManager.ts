@@ -167,7 +167,7 @@ async function createNewTemplate() {
       overflow: hidden;
     }
     @media only screen and (max-width: 600px) {
-      .main-card { border-radius: 20px !important; }
+      .main-card { border-radius: 0px !important; }
       .header-block, .body-block, .methodology-block, .presence-block, .card-block, .cta-block, .signature-block {
         padding-left: 20px !important;
         padding-right: 20px !important;
