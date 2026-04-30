@@ -239,6 +239,7 @@ function previewBlockColor(color: string) {
   if (isCompleteHex || isTransparent) {
     selectedElement.value.style.backgroundColor = color
     selectedElement.value.style.background = color
+    selectedElement.value.dataset.customBg = 'true'
   }
 }
 
@@ -394,7 +395,11 @@ function updateButtonColor() {
   const current = (buttons[0] as HTMLElement).style.background || '#6366f1'
   const i18n = (useNuxtApp().$i18n as any)
   openPrompt(i18n.t('editor.color_block_title'), i18n.t('editor.color_block_label'), current, 'color', (color) => {
-    buttons.forEach((b) => ((b as HTMLElement).style.background = color))
+    buttons.forEach((b) => {
+      const btn = b as HTMLElement
+      btn.style.background = color
+      btn.dataset.customBg = 'true'
+    })
     import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
   }, 'primary', undefined, 'block')
 }

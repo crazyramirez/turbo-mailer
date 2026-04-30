@@ -617,7 +617,10 @@ function applyStyleBase(style: EditorStyleBase, forceTheme = false) {
 
     // 1. Content background & Borders
     if (!block.classList.contains('header-block')) {
-      block.style.backgroundColor = style.config.contentBg
+      if (forceTheme || !block.dataset.customBg) {
+        block.style.backgroundColor = style.config.contentBg
+        block.style.background = style.config.contentBg
+      }
       
       // Target all child divs and tables that might have hardcoded backgrounds or borders
       block.querySelectorAll('div, table, td').forEach((el: any) => {
@@ -643,7 +646,10 @@ function applyStyleBase(style: EditorStyleBase, forceTheme = false) {
         }
       })
     } else {
-      block.style.backgroundColor = style.config.headerBg
+      if (forceTheme || !block.dataset.customBg) {
+        block.style.backgroundColor = style.config.headerBg
+        block.style.background = style.config.headerBg
+      }
     }
 
     // 2. Colors & Typography
@@ -711,9 +717,9 @@ function applyStyleBase(style: EditorStyleBase, forceTheme = false) {
         font-family: ${style.config.fontFamily} !important; 
       }
       ${cardCss}
-      .header-block { background-color: ${style.config.headerBg} !important; }
+      .header-block { background-color: ${style.config.headerBg}; }
       .body-block, .card-block, .cta-block, .image-block, .grid-block, .methodology-block, .presence-block, .signature-block, .unsubscribe-block { 
-        background-color: ${style.config.contentBg} !important; 
+        background-color: ${style.config.contentBg}; 
       }
       .card-wrapper, .methodology-block > div, .presence-block > div, .grid-block td > div, .signature-block table td {
         background-color: ${style.config.contentBg} !important;
