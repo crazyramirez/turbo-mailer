@@ -177,7 +177,7 @@
     "campaign_name": "Nombre de la campaña",
     "campaign_name_ph": "Ej: Newsletter Octubre 2025",
     "select_list": "Selecciona una lista",
-    "no_list": "Sin lista (cargar Excel manualmente)",
+    "no_list": "Sin lista (cargar posteriormente)",
     "send_now": "Enviar Ahora",
     "schedule": "Programar",
     "save_draft": "Guardar borrador",

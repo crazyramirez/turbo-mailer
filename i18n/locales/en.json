@@ -178,7 +178,7 @@
     "campaign_name": "Campaign name",
     "campaign_name_ph": "E.g.: October 2025 Newsletter",
     "select_list": "Select a list",
-    "no_list": "No list (load Excel manually)",
+    "no_list": "No list (upload later)",
     "send_now": "Send Now",
     "schedule": "Schedule",
     "save_draft": "Save draft",
