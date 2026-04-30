@@ -1,5 +1,5 @@
 export const iframeEditorStyles = `
-  html, body { background-color: #ffffff; overflow-x: hidden !important; margin: 0; min-height: 100vh; box-sizing: border-box; }
+  html, body { overflow-x: hidden !important; margin: 0; min-height: 100vh; box-sizing: border-box; }
   .main-card { max-width: 820px !important; margin: 0 auto !important; box-sizing: border-box !important; }
   .editable-block { position: relative; }
   .editable-block:hover { outline: 2px solid #6366f1 !important; cursor: pointer; outline-offset: -2px; }

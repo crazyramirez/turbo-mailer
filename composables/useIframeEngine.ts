@@ -704,7 +704,6 @@ function applyStyleBase(style: EditorStyleBase) {
       body { 
         margin: 0; 
         padding: 0; 
-        background-color: ${style.config.bodyBg}; 
         font-family: ${style.config.fontFamily} !important; 
       }
       ${cardCss}

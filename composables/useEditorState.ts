@@ -61,7 +61,7 @@ const htmlContent = ref(`<!DOCTYPE html>
 <html lang="es">
 <head>
   <style>
-    body { margin: 0; padding: 0; background-color: #f8fafc; font-family: Arial, sans-serif; }
+    body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
     .main-card {
       width: 100%;
       max-width: 820px;
@@ -85,8 +85,8 @@ const htmlContent = ref(`<!DOCTYPE html>
     }
   </style>
 </head>
-<body style="margin:0;padding:0;background-color:#ffffff;">
-  <div style="margin:0;padding:0;width:100%;background-color:#ffffff;">
+<body style="margin:0;padding:0;">
+  <div style="margin:0;padding:0;width:100%;">
     <div style="margin:0 auto;padding:0px;">
       <div class="main-card" style="width:100%;max-width:820px;margin:0 auto;border: 1px solid #e9e9e9;border-radius:20px;box-shadow:0 10px 40px rgba(15, 23, 42, 0.08);overflow:hidden;"></div>
     </div>

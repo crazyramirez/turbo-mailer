@@ -49,7 +49,6 @@ function updateIframeContent() {
     doc.write(
       `<style>
         html, body { 
-          background-color: #ffffff;
           overflow-x: hidden !important; 
           margin: 0; 
           word-break: break-word; 

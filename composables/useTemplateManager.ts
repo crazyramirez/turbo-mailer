@@ -153,7 +153,7 @@ async function createNewTemplate() {
 <head>
   <style>
     body { 
-      margin: 0; padding: 0; background-color: #ffffff; font-family: Arial, sans-serif; 
+      margin: 0; padding: 0; font-family: Arial, sans-serif; 
       width: 100% !important;
       -webkit-text-size-adjust: 100%;
       -ms-text-size-adjust: 100%;
@@ -181,8 +181,8 @@ async function createNewTemplate() {
     }
   </style>
 </head>
-<body style="margin:0;padding:0;background-color:#ffffff;" data-style-id="default">
-  <div style="margin:0;padding:0;width:100%;background-color:#ffffff;">
+<body style="margin:0;padding:0;" data-style-id="default">
+  <div style="margin:0;padding:0;width:100%;">
     <div style="margin:0 auto;padding: 0px;">
       <div class="main-card" style="width:100%;max-width:820px;margin:0 auto;border: 1px solid #e9e9e9;border-radius:0px;box-shadow:0 10px 40px rgba(15, 23, 42, 0.08);overflow:hidden;"></div>
     </div>
