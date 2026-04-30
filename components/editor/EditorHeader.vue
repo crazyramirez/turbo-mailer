@@ -14,7 +14,7 @@ import {
 } from "lucide-vue-next";
 import { APP_VERSION } from "~/utils/version";
 
-const { t } = useI18n()
+const { t } = useI18n();
 const {
   viewMode,
   undoStack,
@@ -44,7 +44,7 @@ async function handleBack() {
   <header class="editor-header" style="user-select: none">
     <div class="header-section left">
       <button @click="handleBack" class="btn-action-back">
-        <ArrowLeft :size="18" /> <span>{{ t('editor.back') }}</span>
+        <ArrowLeft :size="18" /> <span>{{ t("editor.back") }}</span>
       </button>
       <div class="h-divider"></div>
       <div class="editor-brand">
@@ -85,10 +85,14 @@ async function handleBack() {
         @click="darkModePreview = !darkModePreview"
         class="btn-dark-mode"
         :class="{ active: darkModePreview }"
-        :title="darkModePreview ? t('editor.dark_mode_off') : t('editor.dark_mode_on')"
+        :title="
+          darkModePreview ? t('editor.dark_mode_off') : t('editor.dark_mode_on')
+        "
       >
         <component :is="darkModePreview ? Sun : Moon" :size="16" />
-        <span class="d-label">{{ darkModePreview ? t('editor.light') : t('editor.dark') }}</span>
+        <span class="d-label">{{
+          darkModePreview ? t("editor.light") : t("editor.dark")
+        }}</span>
       </button>
       <div class="h-divider" style="margin: 0 12px"></div>
       <div class="history-controls">
@@ -119,13 +123,17 @@ async function handleBack() {
         <span>{{ currentTemplate ? currentTemplate + ".html" : "" }}</span>
       </div>
 
-      <button @click="downloadHtml" class="btn-secondary-download" :title="t('editor.download')">
+      <button
+        @click="downloadHtml"
+        class="btn-secondary-download"
+        :title="t('editor.download')"
+      >
         <Download :size="16" />
       </button>
 
       <button @click="handleSave" :disabled="isSaving" class="btn-premium-save">
         <Save v-if="!isSaving" :size="16" />
-        <span>{{ isSaving ? t('editor.saving') : t('editor.save') }}</span>
+        <span>{{ isSaving ? t("editor.saving") : t("editor.save") }}</span>
       </button>
     </div>
   </header>

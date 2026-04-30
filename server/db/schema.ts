@@ -61,7 +61,7 @@ export const campaigns = sqliteTable('campaigns', {
 export const sends = sqliteTable('sends', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   campaignId: integer('campaign_id').notNull().references(() => campaigns.id, { onDelete: 'cascade' }),
-  contactId: integer('contact_id').references(() => contacts.id),
+  contactId: integer('contact_id').references(() => contacts.id, { onDelete: 'set null' }),
   email: text('email').notNull(),
   personalizedSubject: text('personalized_subject'),
   status: text('status', { enum: ['pending', 'sent', 'failed', 'bounced', 'opened'] }).notNull().default('pending'),

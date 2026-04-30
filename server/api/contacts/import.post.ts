@@ -28,9 +28,31 @@ export default defineEventHandler(async (event) => {
     }
 
     try {
-      // ... (logic remains same)
-      // (skipping middle part for brevity in this view, tool handles it)
-      if (contactId) inserted++
+      const [contact] = await db.insert(contacts)
+        .values({
+          ...fields,
+          status: 'active',
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: contacts.email,
+          set: {
+            ...fields,
+            updatedAt: new Date(),
+          },
+        })
+        .returning()
+
+      if (contact && listId) {
+        await db.insert(listContacts)
+          .values({
+            listId: Number(listId),
+            contactId: contact.id,
+          })
+          .onConflictDoNothing()
+      }
+
+      if (contact) inserted++
       else skipped++
     } catch (e) {
       console.error('Import error for row:', row, e)

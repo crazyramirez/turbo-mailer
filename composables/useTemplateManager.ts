@@ -163,7 +163,7 @@ async function createNewTemplate() {
       max-width: 820px;
       margin: 0 auto 20px auto;
       background: #ffffff;
-      border-radius: 14px;
+      border-radius: 0px;
       box-shadow: 0 10px 40px rgba(15, 23, 42, 0.08);
       overflow: hidden;
     }
@@ -182,10 +182,10 @@ async function createNewTemplate() {
     }
   </style>
 </head>
-<body style="margin:0;padding:0;background-color:#ffffff;">
+<body style="margin:0;padding:0;background-color:#ffffff;" data-style-id="default">
   <div style="margin:0;padding:0;width:100%;background-color:#ffffff;">
     <div style="margin:0 auto;padding: 0px;">
-      <div class="main-card" style="width:100%;max-width:820px;margin:0 auto;background:#ffffff;border: 1px solid #e9e9e9;border-radius:20px;box-shadow:0 10px 40px rgba(15, 23, 42, 0.08);overflow:hidden;"></div>
+      <div class="main-card" style="width:100%;max-width:820px;margin:0 auto;background:#ffffff;border: 1px solid #e9e9e9;border-radius:0px;box-shadow:0 10px 40px rgba(15, 23, 42, 0.08);overflow:hidden;"></div>
     </div>
   </div>
 </body>

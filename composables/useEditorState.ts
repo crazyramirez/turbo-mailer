@@ -1,4 +1,5 @@
 import { ref, reactive, watch } from 'vue'
+import { editorStyleBases, type EditorStyleBase } from '../utils/editorStyles'
 
 export interface Template {
   name: string
@@ -19,7 +20,7 @@ const iframeRef = ref<HTMLIFrameElement | null>(null)
 const viewMode = ref<'desktop' | 'mobile'>(
   (localStorage.getItem('editor_view_mode') as 'desktop' | 'mobile') ?? 'desktop'
 )
-const activePanel = ref<'layers' | 'edit' | 'fonts'>('layers')
+const activePanel = ref<'layers' | 'edit' | 'fonts' | 'styles'>('layers')
 const selectedElement = ref<HTMLElement | null>(null)
 const selectedSubElement = ref<HTMLElement | null>(null)
 const layerList = ref<LayerItem[]>([])
@@ -33,6 +34,7 @@ const showTemplateModal = ref(false)
 const newTemplateName = ref('')
 const lastSavedTime = ref('')
 const darkModePreview = ref(localStorage.getItem('editor_dark_mode') === 'true')
+const currentStyle = ref<EditorStyleBase>(editorStyleBases[0])
 
 const fontSizeRef = ref(16)
 const selectionBaseRef = ref(16)
@@ -174,6 +176,7 @@ export function useEditorState() {
     toast,
     promptData,
     imageModal,
+    currentStyle,
     resetEditorState,
   }
 }

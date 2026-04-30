@@ -2,6 +2,7 @@ import { watch } from 'vue'
 import { useEditorState } from '~/composables/useEditorState'
 import { useToast } from '~/composables/useToast'
 import { iframeEditorStyles } from '~/utils/iframeStyles'
+import { editorStyleBases, type EditorStyleBase } from '~/utils/editorStyles'
 
 declare global {
   interface Window {
@@ -513,6 +514,15 @@ function injectIframeContent() {
   doc.write(htmlContent.value)
   doc.close()
 
+  // Restore style from metadata if present
+  const styleId = doc.body.getAttribute('data-style-id')
+  if (styleId) {
+    const savedStyle = editorStyleBases.find(s => s.id === styleId)
+    if (savedStyle) {
+      useEditorState().currentStyle.value = savedStyle
+    }
+  }
+
   const style = doc.createElement('style')
   style.id = 'editor-styles'
   style.textContent = iframeEditorStyles
@@ -533,7 +543,7 @@ function injectIframeContent() {
     mainCard.style.maxWidth = '820px'
     mainCard.style.width = '100%'
     mainCard.style.margin = '0 auto 40px auto'
-    mainCard.style.borderRadius = '14px'
+    mainCard.style.borderRadius = '0px'
     mainCard.style.overflow = 'hidden'
     
     // Ensure parent has lateral margins for mobile responsiveness
@@ -567,10 +577,157 @@ function injectIframeContent() {
   }
   
   refreshLayers()
+  
+  // Apply current style base
+  applyStyleBase(useEditorState().currentStyle.value)
+
   pushToHistory()
 }
 
 // ─── HTML Serialisation ──────────────────────────────────────────────────────
+
+function applyStyleBase(style: EditorStyleBase) {
+  const doc = iframeRef.value?.contentDocument
+  if (!doc) return
+  
+  // Apply body style
+  doc.body.style.backgroundColor = style.config.bodyBg
+  doc.body.style.fontFamily = style.config.fontFamily
+  
+  // Apply main-card style
+  const mainCard = doc.querySelector('.main-card') as HTMLElement
+  if (mainCard) {
+    mainCard.style.backgroundColor = style.config.cardBg
+    mainCard.style.borderRadius = style.config.cardRadius
+    mainCard.style.boxShadow = style.config.cardShadow
+    mainCard.style.border = style.config.cardBorder
+  }
+
+  // Apply to blocks
+  doc.querySelectorAll('.editable-block').forEach((block: any) => {
+    // 0. Global Font Overrides for the block
+    block.style.fontFamily = style.config.fontFamily
+    block.querySelectorAll('*').forEach((el: any) => {
+      // If it has a hardcoded font-family, override it with the theme font
+      // unless it's already being handled by badge logic below
+      if (el.style.fontFamily && !el.dataset.toggle?.includes('badge')) {
+        el.style.fontFamily = style.config.fontFamily
+      }
+    })
+
+    // 1. Content background & Borders
+    if (!block.classList.contains('header-block')) {
+      block.style.backgroundColor = style.config.contentBg
+      
+      // Target all child divs and tables that might have hardcoded backgrounds or borders
+      block.querySelectorAll('div, table, td').forEach((el: any) => {
+        // If it has a background, force the theme background
+        if (el.style.backgroundColor || el.getAttribute('background') || el.getAttribute('bgcolor')) {
+          el.style.backgroundColor = style.config.contentBg
+          if (el.hasAttribute('bgcolor')) el.setAttribute('bgcolor', style.config.contentBg)
+        }
+        
+        // Update borders
+        if (el.style.border || el.style.borderTop || el.style.borderBottom || el.style.borderLeft || el.style.borderRight) {
+          // If it's a specialty border like the accent line in Note block, preserve the color if it's not the default gray
+          const currentBorder = el.style.border || el.style.borderLeft
+          if (currentBorder && !currentBorder.includes('#e2e8f0') && !currentBorder.includes('rgb(226, 232, 240)')) {
+            // Keep it
+          } else {
+            if (el.style.border) el.style.borderColor = style.config.borderColor
+            if (el.style.borderLeft) el.style.borderLeftColor = style.config.borderColor
+            if (el.style.borderTop) el.style.borderTopColor = style.config.borderColor
+            if (el.style.borderBottom) el.style.borderBottomColor = style.config.borderColor
+            if (el.style.borderRight) el.style.borderRightColor = style.config.borderColor
+          }
+        }
+      })
+    } else {
+      block.style.backgroundColor = style.config.headerBg
+    }
+
+    // 2. Colors & Typography
+    block.querySelectorAll('[data-toggle="title"]').forEach((el: any) => {
+      el.style.color = style.config.titleColor
+      if (style.config.titleLetterSpacing) {
+        el.style.letterSpacing = style.config.titleLetterSpacing
+      }
+    })
+    
+    // Labels / Badges
+    block.querySelectorAll('[data-toggle="badge"]').forEach((el: any) => {
+      const isHeader = block.classList.contains('header-block')
+      el.style.color = isHeader ? style.config.headerText : style.config.accentColor
+      
+      if (style.config.labelFontFamily) {
+        el.style.fontFamily = style.config.labelFontFamily
+        el.style.letterSpacing = '1.5px'
+        el.style.textTransform = 'uppercase'
+        el.style.fontSize = '10px'
+      }
+    })
+
+    block.querySelectorAll('[data-toggle="subtitle"], [data-toggle="ps"], [data-toggle="contact"]').forEach((el: any) => {
+      el.style.color = style.config.subtitleColor
+      // Update link colors inside subtitles/contacts
+      el.querySelectorAll('a').forEach((link: any) => {
+        if (!link.dataset.toggle) link.style.color = style.config.accentColor
+      })
+    })
+    
+    // Header specific overrides
+    if (block.classList.contains('header-block')) {
+      block.querySelectorAll('[data-toggle="title"], [data-toggle="subtitle"]').forEach((el: any) => el.style.color = style.config.headerText)
+    }
+
+    // 3. Buttons
+    block.querySelectorAll('[data-toggle="button"]').forEach((btn: any) => {
+      btn.style.borderRadius = style.config.buttonRadius
+      btn.style.backgroundColor = style.config.accentColor
+    })
+  })
+
+  // Update the base <style> in head to keep it persistent for exports
+  const headStyle = doc.querySelector('style:not(#editor-styles)')
+  if (headStyle) {
+    const cardCss = `.main-card {
+      width: 100%;
+      max-width: 820px;
+      margin: 0 auto 20px auto;
+      background: ${style.config.cardBg};
+      border-radius: ${style.config.cardRadius};
+      box-shadow: ${style.config.cardShadow};
+      border: ${style.config.cardBorder};
+      overflow: hidden;
+    }`
+    
+    let css = `
+      body { 
+        margin: 0; 
+        padding: 0; 
+        background-color: ${style.config.bodyBg}; 
+        font-family: ${style.config.fontFamily} !important; 
+      }
+      ${cardCss}
+      .header-block { background-color: ${style.config.headerBg} !important; }
+      .body-block, .card-block, .cta-block, .image-block, .grid-block, .methodology-block, .presence-block, .signature-block, .unsubscribe-block { 
+        background-color: ${style.config.contentBg} !important; 
+      }
+      .card-wrapper, .methodology-block > div, .presence-block > div, .grid-block td > div, .signature-block table td {
+        background-color: ${style.config.contentBg} !important;
+        border-color: ${style.config.borderColor} !important;
+      }
+      @media only screen and (max-width: 600px) {
+        .main-card { border-radius: 20px !important; }
+        .header-block, .body-block, .methodology-block, .presence-block, .card-block, .cta-block, .signature-block {
+          padding-left: 20px !important;
+          padding-right: 20px !important;
+        }
+      }
+    `
+    headStyle.textContent = css
+  }
+}
 
 function getSurgicalCleanHtml(): string {
   const doc = iframeRef.value?.contentDocument
@@ -594,6 +751,10 @@ function getSurgicalCleanHtml(): string {
   clone.querySelectorAll('[data-org-size]').forEach((el) => (el as HTMLElement).removeAttribute('data-org-size'))
 
   clone.querySelectorAll('#editor-styles').forEach(s => s.remove())
+
+  // Save current style ID for restoration
+  const styleId = useEditorState().currentStyle.value.id
+  clone.querySelector('body')?.setAttribute('data-style-id', styleId)
 
   return '<!DOCTYPE html>\n' + clone.outerHTML
 }
@@ -656,6 +817,11 @@ function setupEditorWatches() {
       doc.documentElement.classList.remove('dark-mode-simulation')
     }
   })
+
+  watch(useEditorState().currentStyle, (style) => {
+    applyStyleBase(style)
+    triggerAutosave(true)
+  })
 }
 
 export function useIframeEngine() {
@@ -669,6 +835,7 @@ export function useIframeEngine() {
     injectFloatingToolbar,
     setupIframeEvents,
     injectIframeContent,
+    applyStyleBase,
     getSurgicalCleanHtml,
     updateHtml,
     triggerAutosave,
