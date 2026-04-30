@@ -360,6 +360,8 @@
     "style_dark_desc": "Absolute elegance in dark mode with gold details.",
     "style_midnight_name": "Midnight Gold",
     "style_midnight_desc": "Ultra-premium aesthetic: deep navy gradients, golden accents and high contrast.",
+    "style_global_color_title": "Global Color (Background)",
+    "style_global_color_label": "Define the tone for the body and main background:",
     "style_notice": "Changing the style will affect the base structure and default colors.",
     "layers_empty_title": "Empty Structure",
     "layers_empty_desc": "Drag modules from the left to start your design",

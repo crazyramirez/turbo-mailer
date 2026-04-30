@@ -264,7 +264,7 @@ function updateBgColor() {
   openPrompt(i18n.t('editor.color_bg_title'), i18n.t('editor.color_bg_label'), current, 'color', (val) => {
     if (val) {
       previewBlockColor(val)
-      import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave())
+      import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
     } else {
       previewBlockColor(originalColorBeforePreview.value)
     }
@@ -279,7 +279,7 @@ function updateTextColor() {
   openPrompt(i18n.t('editor.color_text_title'), i18n.t('editor.color_text_label'), current, 'color', (val) => {
     if (val) {
       previewTextColor(val)
-      import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave())
+      import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
     } else {
       previewTextColor(originalColorBeforePreview.value)
     }

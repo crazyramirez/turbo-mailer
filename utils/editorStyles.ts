@@ -77,6 +77,30 @@ export const editorStyleBases: EditorStyleBase[] = [
     }
   },
   {
+    id: 'corporate',
+    name: 'editor.style_corp_name',
+    description: 'editor.style_corp_desc',
+    icon: Layout,
+    previewColor: '#1e293b',
+    config: {
+      bodyBg: '#e2e8f0',
+      cardBg: '#ffffff',
+      contentBg: '#ffffff',
+      cardRadius: '0px',
+      cardShadow: 'none',
+      cardBorder: '4px solid #1e293b',
+      borderColor: '#1e293b',
+      headerBg: '#1e293b',
+      headerText: '#ffffff',
+      titleColor: '#000000',
+      subtitleColor: '#334155',
+      accentColor: '#1e293b',
+      buttonRadius: '0px',
+      fontFamily: 'Helvetica, Arial, sans-serif',
+      titleLetterSpacing: '0px'
+    }
+  },
+  {
     id: 'tech-noir',
     name: 'editor.style_tech_name',
     description: 'editor.style_tech_desc',
@@ -99,30 +123,6 @@ export const editorStyleBases: EditorStyleBase[] = [
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif',
       labelFontFamily: "'Courier New', Courier, monospace",
       titleLetterSpacing: '-0.4px'
-    }
-  },
-  {
-    id: 'corporate',
-    name: 'editor.style_corp_name',
-    description: 'editor.style_corp_desc',
-    icon: Layout,
-    previewColor: '#1e293b',
-    config: {
-      bodyBg: '#e2e8f0',
-      cardBg: '#ffffff',
-      contentBg: '#ffffff',
-      cardRadius: '0px',
-      cardShadow: 'none',
-      cardBorder: '4px solid #1e293b',
-      borderColor: '#1e293b',
-      headerBg: '#1e293b',
-      headerText: '#ffffff',
-      titleColor: '#000000',
-      subtitleColor: '#334155',
-      accentColor: '#1e293b',
-      buttonRadius: '0px',
-      fontFamily: 'Helvetica, Arial, sans-serif',
-      titleLetterSpacing: '0px'
     }
   },
   {

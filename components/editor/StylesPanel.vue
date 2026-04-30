@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { useEditorState } from "~/composables/useEditorState";
 import { editorStyleBases, type EditorStyleBase } from "~/utils/editorStyles";
-import { Check, Info } from "lucide-vue-next";
+import { Check, Info, Palette } from "lucide-vue-next";
+import { usePrompt } from "~/composables/usePrompt";
 
 const { currentStyle } = useEditorState();
 
@@ -11,6 +12,33 @@ const selectStyle = (style: EditorStyleBase) => {
     useIframeEngine().applyStyleBase(style, true);
     useIframeEngine().triggerAutosave(true);
   });
+};
+
+const { openPrompt } = usePrompt();
+
+const openGlobalColorPicker = () => {
+  const i18n = (useNuxtApp().$i18n as any);
+  openPrompt(
+    i18n.t('editor.style_global_color_title'),
+    i18n.t('editor.style_global_color_label'),
+    currentStyle.value.config.bodyBg,
+    'color',
+    (color) => {
+      if (color) {
+        // Clone and update config
+        const newStyle = JSON.parse(JSON.stringify(currentStyle.value));
+        newStyle.config.bodyBg = color;
+        newStyle.config.cardBg = color;
+        newStyle.config.contentBg = color;
+        currentStyle.value = newStyle;
+        
+        import("~/composables/useIframeEngine").then(({ useIframeEngine }) => {
+          useIframeEngine().applyStyleBase(newStyle, true);
+          useIframeEngine().triggerAutosave(true);
+        });
+      }
+    }
+  );
 };
 </script>
 
@@ -82,6 +110,14 @@ const selectStyle = (style: EditorStyleBase) => {
     <div class="style-notice">
       <Info :size="14" />
       <span>{{ $t("editor.style_notice") }}</span>
+    </div>
+
+    <div class="global-controls">
+      <button @click="openGlobalColorPicker" class="global-color-btn">
+        <Palette :size="14" />
+        <span>{{ $t("editor.style_global_color_title") }}</span>
+        <div class="color-indicator" :style="{ backgroundColor: currentStyle.config.bodyBg }"></div>
+      </button>
     </div>
   </div>
 </template>
@@ -235,5 +271,40 @@ const selectStyle = (style: EditorStyleBase) => {
 
 .style-notice span {
   flex: 1;
+}
+
+.global-controls {
+  margin-top: 10px;
+  padding-top: 20px;
+  border-top: 1px solid #334155;
+}
+
+.global-color-btn {
+  width: 100%;
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #f1f5f9;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.global-color-btn:hover {
+  background: #2d3a4f;
+  border-color: #475569;
+}
+
+.color-indicator {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin-left: auto;
 }
 </style>
