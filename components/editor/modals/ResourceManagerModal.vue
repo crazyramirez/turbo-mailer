@@ -10,14 +10,14 @@ import {
   Search,
   Loader2,
   Plus,
-  AlertCircle
+  AlertCircle,
 } from "lucide-vue-next";
 import { useEditorState } from "~/composables/useEditorState";
 import { useBlockEditor } from "~/composables/useBlockEditor";
 
 const vFocus = {
-  mounted: (el: HTMLElement) => el.focus()
-}
+  mounted: (el: HTMLElement) => el.focus(),
+};
 
 const props = defineProps<{
   visible: boolean;
@@ -78,7 +78,8 @@ function startRenaming(image: any) {
   editingFile.value = image.name;
   // Strip extension for easier editing
   const dotIndex = image.name.lastIndexOf(".");
-  tempName.value = dotIndex !== -1 ? image.name.substring(0, dotIndex) : image.name;
+  tempName.value =
+    dotIndex !== -1 ? image.name.substring(0, dotIndex) : image.name;
   renameError.value = false;
 }
 
@@ -105,7 +106,7 @@ async function finishRenaming(image: any) {
         newName: newFullName,
       },
     });
-    
+
     // If successful, update local state if needed (or just refetch)
     await fetchImages();
     cancelRenaming();
@@ -284,7 +285,10 @@ watch(
                 </div>
               </div>
               <div class="image-info">
-                <div v-if="editingFile === image.name" class="name-edit-wrapper">
+                <div
+                  v-if="editingFile === image.name"
+                  class="name-edit-wrapper"
+                >
                   <div class="input-container">
                     <input
                       v-model="tempName"
@@ -294,16 +298,18 @@ watch(
                       @blur="finishRenaming(image)"
                       v-focus
                     />
-                    <span class="extension-label">{{ image.name.substring(image.name.lastIndexOf('.')) }}</span>
+                    <span class="extension-label">{{
+                      image.name.substring(image.name.lastIndexOf("."))
+                    }}</span>
                   </div>
                   <div v-if="renameError" class="error-badge">
                     <AlertCircle :size="12" />
-                    {{ $t('editor.image_name_exists') }}
+                    {{ $t("editor.image_name_exists") }}
                   </div>
                 </div>
                 <template v-else>
-                  <span 
-                    class="image-name" 
+                  <span
+                    class="image-name"
                     :title="image.name"
                     @click.stop="startRenaming(image)"
                   >

@@ -514,6 +514,10 @@ function setupIframeEvents(doc: Document) {
         import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
           useBlockEditor().selectElement(newBlock)
         })
+        
+        // Apply current global style to the new block
+        applyStyleBase(useEditorState().currentStyle.value, false, newBlock)
+        
         refreshLayers()
         
         import('~/composables/useTemplateManager').then(({ useTemplateManager }) => {
@@ -636,25 +640,28 @@ function injectIframeContent() {
 
 // ─── HTML Serialisation ──────────────────────────────────────────────────────
 
-function applyStyleBase(style: EditorStyleBase, forceTheme = false) {
+function applyStyleBase(style: EditorStyleBase, forceTheme = false, target?: HTMLElement) {
   const doc = iframeRef.value?.contentDocument
   if (!doc) return
   
-  // Apply body style
-  doc.body.style.backgroundColor = style.config.bodyBg
-  doc.body.style.fontFamily = style.config.fontFamily
-  
-  // Apply main-card style
-  const mainCard = doc.querySelector('.main-card') as HTMLElement
-  if (mainCard) {
-    mainCard.style.backgroundColor = style.config.cardBg
-    mainCard.style.borderRadius = style.config.cardRadius
-    mainCard.style.boxShadow = style.config.cardShadow
-    mainCard.style.border = style.config.cardBorder
+  if (!target) {
+    // Apply body style
+    doc.body.style.backgroundColor = style.config.bodyBg
+    doc.body.style.fontFamily = style.config.fontFamily
+    
+    // Apply main-card style
+    const mainCard = doc.querySelector('.main-card') as HTMLElement
+    if (mainCard) {
+      mainCard.style.backgroundColor = style.config.cardBg
+      mainCard.style.borderRadius = style.config.cardRadius
+      mainCard.style.boxShadow = style.config.cardShadow
+      mainCard.style.border = style.config.cardBorder
+    }
   }
 
   // Apply to blocks
-  doc.querySelectorAll('.editable-block').forEach((block: any) => {
+  const blocks = target ? [target] : doc.querySelectorAll('.editable-block')
+  blocks.forEach((block: any) => {
     // 0. Global Font Overrides for the block
     block.style.fontFamily = style.config.fontFamily
     block.querySelectorAll('*').forEach((el: any) => {
