@@ -247,12 +247,26 @@ function previewTextColor(color: string) {
   if (!selectedElement.value || !color) return
   const isCompleteHex = /^#([0-9A-F]{3}){1,2}$/i.test(color)
   const isInherit = color.toLowerCase() === 'inherit' || color.toLowerCase() === 'transparent'
+  
   if (isCompleteHex || isInherit) {
     const finalColor = isInherit ? 'inherit' : color
-    selectedElement.value.style.color = finalColor
-    selectedElement.value.querySelectorAll('div, p, span, td, h1, h2, h3, b, strong, a').forEach((el: any) => {
-      el.style.color = finalColor
-    })
+    
+    // Check if there's a selection in the iframe
+    const doc = iframeRef.value?.contentDocument
+    const win = doc?.defaultView
+    const selection = win?.getSelection()
+    
+    if (selection && !selection.isCollapsed && doc) {
+      // Apply color only to selection
+      doc.execCommand('styleWithCSS', false, 'true')
+      doc.execCommand('foreColor', false, finalColor)
+    } else {
+      // Apply to the whole block
+      selectedElement.value.style.color = finalColor
+      selectedElement.value.querySelectorAll('div, p, span, td, h1, h2, h3, b, strong, a').forEach((el: any) => {
+        el.style.color = finalColor
+      })
+    }
   }
 }
 

@@ -195,6 +195,9 @@ function injectFloatingToolbar(doc: Document) {
     <button data-cmd="underline" title="Subrayado"><u>U</u></button>
     <button data-cmd="foreColor" title="Color de Texto"><span>A</span><div style="height:2px;background:currentColor;width:10px;margin-top:-2px;"></div></button>
     <div style="width:1px;height:18px;background:rgba(255,255,255,0.1);margin:auto 4px;"></div>
+    <button data-cmd="fontSizeDec" title="Disminuir Tamaño" style="font-size: 11px;">A-</button>
+    <button data-cmd="fontSizeInc" title="Aumentar Tamaño" style="font-size: 15px;">A+</button>
+    <div style="width:1px;height:18px;background:rgba(255,255,255,0.1);margin:auto 4px;"></div>
     <button data-cmd="createLink" title="Insertar Link">🔗</button>
   `
   doc.body.appendChild(toolbar)
@@ -217,12 +220,59 @@ function injectFloatingToolbar(doc: Document) {
         if (window.parent && (window.parent as any).openColorPrompt) {
           ;(window.parent as any).openColorPrompt((color: string) => {
             if (color) {
+              const win = doc.defaultView
+              if (!win) return
+              win.focus()
               doc.body.focus()
-              doc.execCommand('foreColor', false, color)
+              
+              const selection = win.getSelection()
+              if (selection && !selection.isCollapsed) {
+                // Use span instead of the old <font> tag
+                doc.execCommand('styleWithCSS', false, 'true')
+                doc.execCommand('foreColor', false, color)
+              } else if (selectedElement.value) {
+                // If no selection but a block is selected (rare in toolbar but good fallback)
+                selectedElement.value.style.color = color
+                selectedElement.value.querySelectorAll('div, p, span, td, h1, h2, h3, b, strong, a').forEach((el: any) => {
+                  el.style.color = color
+                })
+              }
               triggerAutosave(true)
             }
           })
         }
+      } else if (cmd === 'fontSizeInc' || cmd === 'fontSizeDec') {
+        const win = doc.defaultView
+        if (!win) return
+        const selection = win.getSelection()
+        if (!selection || selection.rangeCount === 0) return
+
+        const delta = cmd === 'fontSizeInc' ? 2 : -2
+        let container = selection.anchorNode as any
+        if (container.nodeType === 3) container = container.parentElement
+        
+        // Find nearest element with font-size
+        const computedStyle = win.getComputedStyle(container)
+        const currentSize = parseInt(computedStyle.fontSize) || 16
+        const newSize = Math.max(8, Math.min(72, currentSize + delta))
+        
+        // Apply to the element directly if it's a small text container
+        // or wrap the selection if it's part of a larger text
+        if (selection.toString().trim() === container.innerText.trim()) {
+          container.style.fontSize = newSize + 'px'
+          container.style.lineHeight = Math.round(newSize * 1.5) + 'px'
+        } else {
+          doc.execCommand('fontSize', false, '7') // Temporary marker
+          const fonts = doc.querySelectorAll('font[size="7"]')
+          fonts.forEach(f => {
+            const span = doc.createElement('span')
+            span.style.fontSize = newSize + 'px'
+            span.style.lineHeight = Math.round(newSize * 1.5) + 'px'
+            span.innerHTML = f.innerHTML
+            f.parentNode?.replaceChild(span, f)
+          })
+        }
+        triggerAutosave(true)
       } else {
         const win = doc.defaultView
         if (win) win.focus()
@@ -320,7 +370,7 @@ function setupIframeEvents(doc: Document) {
     const rect = range.getBoundingClientRect()
     toolbar.style.display = 'flex'
     toolbar.style.top = rect.top - 50 + 'px'
-    toolbar.style.left = rect.left + rect.width / 2 - toolbar.offsetWidth / 2 + 'px'
+    toolbar.style.left = rect.left + 'px'
     if (rect.top < 0 || rect.bottom > doc.documentElement.clientHeight) {
       toolbar.style.display = 'none'
     }
