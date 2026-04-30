@@ -40,6 +40,7 @@ const fontSizeRef = ref(16)
 const selectionBaseRef = ref(16)
 const logoWidthRef = ref(150)
 const gridImageHeightRef = ref(150)
+const buttonRadiusRef = ref(8)
 const refreshLayersTrigger = ref(0)
 const visibilityTrigger = ref(0)
 const layoutTrigger = ref(0)
@@ -159,6 +160,7 @@ export function useEditorState() {
     selectionBaseRef,
     logoWidthRef,
     gridImageHeightRef,
+    buttonRadiusRef,
     refreshLayersTrigger,
     visibilityTrigger,
     layoutTrigger,

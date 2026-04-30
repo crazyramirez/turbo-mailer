@@ -579,14 +579,14 @@ function injectIframeContent() {
   refreshLayers()
   
   // Apply current style base
-  applyStyleBase(useEditorState().currentStyle.value)
+  applyStyleBase(useEditorState().currentStyle.value, false)
 
   pushToHistory()
 }
 
 // ─── HTML Serialisation ──────────────────────────────────────────────────────
 
-function applyStyleBase(style: EditorStyleBase) {
+function applyStyleBase(style: EditorStyleBase, forceTheme = false) {
   const doc = iframeRef.value?.contentDocument
   if (!doc) return
   
@@ -682,8 +682,13 @@ function applyStyleBase(style: EditorStyleBase) {
 
     // 3. Buttons
     block.querySelectorAll('[data-toggle="button"]').forEach((btn: any) => {
-      btn.style.borderRadius = style.config.buttonRadius
-      btn.style.backgroundColor = style.config.accentColor
+      if (forceTheme || !btn.dataset.customRadius) {
+        btn.style.borderRadius = style.config.buttonRadius
+      }
+      if (forceTheme || !btn.dataset.customBg) {
+        btn.style.backgroundColor = style.config.accentColor
+        btn.style.background = style.config.accentColor
+      }
     })
   })
 
@@ -816,10 +821,6 @@ function setupEditorWatches() {
     }
   })
 
-  watch(useEditorState().currentStyle, (style) => {
-    applyStyleBase(style)
-    triggerAutosave(true)
-  })
 }
 
 export function useIframeEngine() {

@@ -12,6 +12,7 @@ const {
   selectionBaseRef,
   logoWidthRef,
   gridImageHeightRef,
+  buttonRadiusRef,
   visibilityTrigger,
   layoutTrigger,
   originalFontBeforePreview,
@@ -51,6 +52,11 @@ function selectElement(el: HTMLElement, subEl?: HTMLElement) {
       const h = parseInt(firstImg.style.height) || firstImg.offsetHeight || 150
       gridImageHeightRef.value = h
     }
+  }
+
+  if (subEl?.closest('[data-toggle="button"]')) {
+    const btn = subEl.closest('[data-toggle="button"]') as HTMLElement
+    buttonRadiusRef.value = parseInt(btn.style.borderRadius) || 8
   }
 
   activePanel.value = 'edit'
@@ -400,6 +406,7 @@ function updateThisButtonColor() {
   const i18n = (useNuxtApp().$i18n as any)
   openPrompt(i18n.t('editor.color_btn_title'), i18n.t('editor.color_btn_label'), current, 'color', (color) => {
     btn.style.background = color
+    btn.dataset.customBg = 'true'
     import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
   }, 'primary', undefined, 'button')
 }
@@ -413,6 +420,14 @@ function updateButtonLink() {
     btn.setAttribute('href', url)
     import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
   })
+}
+
+function updateThisButtonRadius() {
+  const btn = selectedSubElement.value?.closest('[data-toggle="button"]') as HTMLElement
+  if (!btn) return
+  btn.style.borderRadius = buttonRadiusRef.value + 'px'
+  btn.dataset.customRadius = 'true'
+  import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
 }
 
 function removeThisButton() {
@@ -671,6 +686,7 @@ export function useBlockEditor() {
     updateButtonColor,
     updateThisButtonColor,
     updateButtonLink,
+    updateThisButtonRadius,
     removeThisButton,
     addButton,
     updateImage,

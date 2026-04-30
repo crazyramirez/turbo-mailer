@@ -28,6 +28,7 @@ const {
   fontSizeRef,
   logoWidthRef,
   gridImageHeightRef,
+  buttonRadiusRef,
 } = useEditorState();
 
 const {
@@ -50,6 +51,7 @@ const {
   updateButtonColor,
   updateThisButtonColor,
   updateButtonLink,
+  updateThisButtonRadius,
   removeThisButton,
   addButton,
   improveBlockWithAI,
@@ -419,7 +421,24 @@ const editableTypes = [
             <button @click="updateButtonLink" class="c-btn highlight-btn">
               <Code :size="14" /> {{ $t('editor.edit_link') }}
             </button>
-            <button @click="removeThisButton" class="c-btn btn-danger-soft">
+
+            <!-- Button Radius Slider -->
+            <div class="slider-row sub-grid-full" style="margin-top: 4px">
+              <div class="slider-header">
+                <span class="s-label">{{ $t('editor.edit_btn_radius') }}</span>
+                <span class="s-value">{{ buttonRadiusRef }}px</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                v-model="buttonRadiusRef"
+                @input="updateThisButtonRadius"
+                class="premium-slider"
+              />
+            </div>
+
+            <button @click="removeThisButton" class="c-btn btn-danger-soft sub-grid-full">
               <Trash2 :size="14" /> {{ $t('editor.edit_delete_btn') }}
             </button>
           </div>

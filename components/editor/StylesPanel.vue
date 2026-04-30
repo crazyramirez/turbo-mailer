@@ -7,6 +7,10 @@ const { currentStyle } = useEditorState();
 
 const selectStyle = (style: EditorStyleBase) => {
   currentStyle.value = style;
+  import("~/composables/useIframeEngine").then(({ useIframeEngine }) => {
+    useIframeEngine().applyStyleBase(style, true);
+    useIframeEngine().triggerAutosave(true);
+  });
 };
 </script>
 

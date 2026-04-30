@@ -148,5 +148,29 @@ export const editorStyleBases: EditorStyleBase[] = [
       fontFamily: 'Georgia, serif',
       titleLetterSpacing: '0px'
     }
+  },
+  {
+    id: 'midnight-gold',
+    name: 'editor.style_midnight_name',
+    description: 'editor.style_midnight_desc',
+    icon: Palette,
+    previewColor: '#d9a54c',
+    config: {
+      bodyBg: '#090b12',
+      cardBg: '#10131d',
+      contentBg: '#10131d',
+      cardRadius: '0px',
+      cardShadow: '0 28px 90px rgba(0, 0, 0, 0.48)',
+      cardBorder: '1px solid rgba(212, 175, 55, 0.22)',
+      borderColor: 'rgba(212, 175, 55, 0.15)',
+      headerBg: '#111827',
+      headerText: '#ffffff',
+      titleColor: '#ffffff',
+      subtitleColor: '#d1d5db',
+      accentColor: '#d9a54c',
+      buttonRadius: '999px',
+      fontFamily: 'Inter, "Segoe UI", system-ui, sans-serif',
+      titleLetterSpacing: '-0.5px'
+    }
   }
 ]

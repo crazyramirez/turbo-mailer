@@ -29,6 +29,13 @@
       "when": 1777504540273,
       "tag": "0003_nice_cobalt_man",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1777552553813,
+      "tag": "0004_chilly_sugar_man",
+      "breakpoints": true
     }
   ]
 }

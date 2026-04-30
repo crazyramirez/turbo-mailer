@@ -2379,13 +2379,17 @@
 .sub-edit-grid {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: 1fr 1.2fr 0.8fr;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
-  background: rgba(99, 102, 241, 0.03);
-  padding: 8px;
-  border-radius: 12px;
-  border: 1px dashed rgba(99, 102, 241, 0.2);
-  margin-bottom: 4px;
+  background: rgba(99, 102, 241, 0.05);
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(99, 102, 241, 0.1);
+  margin-bottom: 8px;
+}
+
+.sub-grid-full {
+  grid-column: 1 / -1;
 }
 
 .sub-edit-header {
