@@ -11,6 +11,7 @@ import {
   Moon,
   Sun,
   Download,
+  Sparkles,
 } from "lucide-vue-next";
 import { APP_VERSION } from "~/utils/version";
 
@@ -23,6 +24,7 @@ const {
   currentTemplate,
   isSaving,
   darkModePreview,
+  showAITemplateModal,
 } = useEditorState();
 const { undo, redo } = useIframeEngine();
 const { handleSave, saveTemplate, downloadHtml } = useTemplateManager();
@@ -119,8 +121,8 @@ async function handleBack() {
       <div v-if="lastSavedTime" class="save-indicator">
         <Clock :size="12" /> <span>{{ lastSavedTime }}</span>
       </div>
-      <div class="active-template-tag">
-        <span>{{ currentTemplate ? currentTemplate + ".html" : "" }}</span>
+      <div v-if="currentTemplate" class="active-template-tag">
+        <span>{{ currentTemplate + ".html" }}</span>
       </div>
 
       <button
@@ -129,6 +131,15 @@ async function handleBack() {
         :title="t('editor.download')"
       >
         <Download :size="16" />
+      </button>
+
+      <button
+        @click="showAITemplateModal = true"
+        class="btn-secondary-download"
+        title="Generar con IA"
+        style="color: #6366f1; border-color: rgba(99, 102, 241, 0.3);"
+      >
+        <Sparkles :size="16" />
       </button>
 
       <button @click="handleSave" :disabled="isSaving" class="btn-premium-save">

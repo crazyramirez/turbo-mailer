@@ -1,6 +1,6 @@
 import { useEditorState } from '~/composables/useEditorState'
 
-const { promptData, iframeRef } = useEditorState()
+const { promptData, iframeRef, selectedElement } = useEditorState()
 
 function openPrompt(
   title: string,
@@ -10,7 +10,7 @@ function openPrompt(
   callback: (val: string) => void,
   variant: 'primary' | 'danger' = 'primary',
   confirmLabel?: string,
-  colorTarget?: 'block' | 'text' | 'button',
+  colorTarget?: 'block' | 'text' | 'button' | 'border',
 ) {
   promptData.title = title
   promptData.label = label
@@ -20,6 +20,7 @@ function openPrompt(
   promptData.variant = variant
   promptData.confirmLabel = confirmLabel ?? (useNuxtApp().$i18n as any).t('editor.prompt_apply')
   promptData.colorTarget = colorTarget ?? ''
+  promptData.initialValue = initial
   promptData.visible = true
 }
 
@@ -42,6 +43,13 @@ function submitPrompt() {
   }
 }
 
+function cancelPrompt() {
+  if (promptData.mode === 'color') {
+    handlePromptInput(promptData.initialValue)
+  }
+  promptData.visible = false
+}
+
 function handlePromptInput(val: string) {
   if (promptData.mode !== 'color') return
 
@@ -61,10 +69,14 @@ function handlePromptInput(val: string) {
           btn.style.background = val
         }
       }
+    } else if (promptData.colorTarget === 'border') {
+      import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
+        useBlockEditor().previewBorderColor(val)
+      })
     }
   })
 }
 
 export function usePrompt() {
-  return { openPrompt, submitPrompt, handlePromptInput }
+  return { openPrompt, submitPrompt, handlePromptInput, cancelPrompt }
 }

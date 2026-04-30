@@ -28,7 +28,10 @@ const {
   fontSizeRef,
   logoWidthRef,
   gridImageHeightRef,
+  imageHeightRef,
   buttonRadiusRef,
+  borderWidthRef,
+  borderColorRef,
 } = useEditorState();
 
 const {
@@ -45,6 +48,9 @@ const {
   updateFontSize,
   updateLogoWidth,
   updateGridImageHeight,
+  updateImageHeight,
+  updateBorderWidth,
+  updateBorderColor,
   updateBgColor,
   updateTextColor,
   updateImage,
@@ -228,6 +234,28 @@ const editableTypes = [
               </div>
             </div>
 
+            <!-- Image Height Slider for Tarjeta & Imagen -->
+            <div
+              v-if="['Imagen', 'Tarjeta'].includes(selectedElement.dataset.type)"
+              class="toggle-item full-width-toggle no-border"
+              style="display: block;"
+            >
+              <div class="slider-row" style="width: 100%; margin-top: 8px">
+                <div class="slider-header">
+                  <span class="s-label">{{ $t('editor.edit_image_height') || 'Altura de la Imagen' }}</span>
+                  <span class="s-value">{{ imageHeightRef }}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="50"
+                  max="800"
+                  v-model="imageHeightRef"
+                  @input="updateImageHeight()"
+                  class="premium-slider"
+                />
+              </div>
+            </div>
+
             <div
               v-if="selectedElement.querySelector('[data-toggle=\'image\']')"
               class="toggle-item"
@@ -396,6 +424,25 @@ const editableTypes = [
         >
           <ImageIcon :size="14" /> {{ $t('editor.edit_image') }}
         </button>
+        <button @click="updateBorderColor" class="c-btn">
+          <Palette :size="14" /> {{ $t('editor.edit_border_color') }}
+        </button>
+
+        <!-- Border Width Slider -->
+        <div class="slider-row sub-grid-full" style="margin-top: 4px; grid-column: span 2;">
+          <div class="slider-header">
+            <span class="s-label">{{ $t('editor.edit_border_width') }}</span>
+            <span class="s-value">{{ borderWidthRef }}px</span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="20"
+            v-model="borderWidthRef"
+            @input="updateBorderWidth(borderWidthRef)"
+            class="premium-slider"
+          />
+        </div>
 
         <template v-if="selectedElement.dataset.type === 'Botón'">
           <div

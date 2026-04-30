@@ -211,4 +211,16 @@ export const iframeEditorStyles = `
       height: calc(var(--grid-img-h, 150px) * 0.5) !important;
     }
   }
+
+  /* Responsive Main Images (Cards and Image Modules) */
+  .main-img-responsive {
+    height: var(--main-img-h, auto) !important;
+    object-fit: cover !important;
+    width: 100% !important;
+  }
+  @media only screen and (max-width: 600px) {
+    .main-img-responsive {
+      height: calc(var(--main-img-h, 300px) * 0.5) !important;
+    }
+  }
 `

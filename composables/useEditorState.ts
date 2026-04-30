@@ -31,6 +31,7 @@ const isTemplateLoading = ref(false)
 const isSaving = ref(false)
 const isMorphing = ref(false)
 const showTemplateModal = ref(false)
+const showAITemplateModal = ref(false)
 const newTemplateName = ref('')
 const lastSavedTime = ref('')
 const darkModePreview = ref(localStorage.getItem('editor_dark_mode') === 'true')
@@ -40,7 +41,10 @@ const fontSizeRef = ref(16)
 const selectionBaseRef = ref(16)
 const logoWidthRef = ref(150)
 const gridImageHeightRef = ref(150)
+const imageHeightRef = ref(300)
 const buttonRadiusRef = ref(8)
+const borderWidthRef = ref(0)
+const borderColorRef = ref('#e9e9e9')
 const refreshLayersTrigger = ref(0)
 const visibilityTrigger = ref(0)
 const layoutTrigger = ref(0)
@@ -58,7 +62,7 @@ const maxHistory = 30
 watch(viewMode, (v) => localStorage.setItem('editor_view_mode', v))
 watch(darkModePreview, (v) => localStorage.setItem('editor_dark_mode', String(v)))
 
-const htmlContent = ref(`<!DOCTYPE html>
+const defaultHtml = `<!DOCTYPE html>
 <html lang="es">
 <head>
   <style>
@@ -91,7 +95,18 @@ const htmlContent = ref(`<!DOCTYPE html>
     </div>
   </div>
 </body>
-</html>`)
+</html>`
+
+const getInitialHtml = () => {
+  if (typeof localStorage !== 'undefined') {
+    const draft = localStorage.getItem('editor_html_draft')
+    if (draft) return draft
+  }
+  return defaultHtml
+}
+
+const htmlContent = ref(getInitialHtml())
+
 
 const editorDragState = reactive({
   draggedModule: null as string | null,
@@ -109,10 +124,11 @@ const promptData = reactive({
   mode: 'text' as 'text' | 'color' | 'font' | 'confirm',
   variant: 'primary' as 'primary' | 'danger',
   confirmLabel: '',
-  colorTarget: '' as '' | 'block' | 'text' | 'button',
+  colorTarget: '' as '' | 'block' | 'text' | 'button' | 'border',
   title: '',
   label: '',
   value: '',
+  initialValue: '',
   callback: (_val: string) => {},
 })
 
@@ -161,6 +177,7 @@ export function useEditorState() {
     isSaving,
     isMorphing,
     showTemplateModal,
+    showAITemplateModal,
     newTemplateName,
     lastSavedTime,
     darkModePreview,
@@ -168,7 +185,10 @@ export function useEditorState() {
     selectionBaseRef,
     logoWidthRef,
     gridImageHeightRef,
+    imageHeightRef,
     buttonRadiusRef,
+    borderWidthRef,
+    borderColorRef,
     refreshLayersTrigger,
     visibilityTrigger,
     layoutTrigger,

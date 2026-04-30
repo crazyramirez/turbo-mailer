@@ -11,7 +11,7 @@ import { usePrompt } from "~/composables/usePrompt";
 import { colorPalettes } from "~/utils/editorColors";
 
 const { promptData } = useEditorState();
-const { submitPrompt, handlePromptInput } = usePrompt();
+const { submitPrompt, handlePromptInput, cancelPrompt } = usePrompt();
 
 function handleHexInput() {
   if (promptData.value !== "transparent" && !promptData.value.startsWith("#")) {
@@ -28,7 +28,7 @@ function handleHexInput() {
       class="modal-overlay"
       :class="{ 'lighter-backdrop': promptData.mode === 'color' }"
     >
-      <div class="modal-backdrop" @click="promptData.visible = false"></div>
+      <div class="modal-backdrop" @click="cancelPrompt"></div>
       <div
         class="modal-window"
         :class="{
@@ -41,7 +41,7 @@ function handleHexInput() {
             <h2>{{ promptData.title }}</h2>
             <p>{{ promptData.label }}</p>
           </div>
-          <button @click="promptData.visible = false" class="btn-close-minimal">
+          <button @click="cancelPrompt" class="btn-close-minimal">
             <X :size="20" />
           </button>
         </div>
@@ -171,6 +171,13 @@ function handleHexInput() {
             >
               {{ promptData.confirmLabel }}
             </button>
+            <button
+              v-if="promptData.mode === 'color'"
+              @click="cancelPrompt"
+              class="btn-modal-cancel-inline"
+            >
+              {{ $t('editor.image_modal_cancel') }}
+            </button>
           </div>
         </div>
       </div>
@@ -217,5 +224,21 @@ button.btn-modal-danger {
   border: none;
   cursor: pointer;
   transition: all 0.3s;
+}
+button.btn-modal-cancel-inline {
+  background: rgba(255, 255, 255, 0.05);
+  color: #9ca3af;
+  padding: 8px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+button.btn-modal-cancel-inline:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 </style>

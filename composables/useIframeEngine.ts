@@ -284,6 +284,20 @@ function injectFloatingToolbar(doc: Document) {
   })
 }
 
+function ensureMainCard(doc: Document) {
+  let mainCard = doc.querySelector('.main-card') as HTMLElement
+  if (!mainCard) {
+    mainCard = doc.createElement('div')
+    mainCard.className = 'main-card'
+    doc.body.appendChild(mainCard)
+    // Apply current global style to the new container
+    import('~/composables/useEditorState').then(({ useEditorState }) => {
+       applyStyleBase(useEditorState().currentStyle.value, true)
+    })
+  }
+  return mainCard
+}
+
 // ─── Iframe Events ───────────────────────────────────────────────────────────
 
 function setupIframeEvents(doc: Document) {
@@ -458,7 +472,7 @@ function setupIframeEvents(doc: Document) {
         if (isTop) block.parentNode?.insertBefore(placeholder, block)
         else block.after(placeholder)
       } else {
-        const container = doc.querySelector('.main-card') || doc.body
+        const container = ensureMainCard(doc)
         if (placeholder.parentNode !== container) container.appendChild(placeholder)
       }
     },
@@ -502,7 +516,7 @@ function setupIframeEvents(doc: Document) {
 
         if (placeholder) placeholder.parentNode?.replaceChild(newBlock, placeholder)
         else {
-          const container = doc.querySelector('.main-card') || doc.body
+          const container = ensureMainCard(doc)
           if (block && block.parentNode) {
             const rect = block.getBoundingClientRect()
             if (e.clientY - rect.top < rect.height / 2) block.parentNode.insertBefore(newBlock, block)
@@ -532,7 +546,7 @@ function setupIframeEvents(doc: Document) {
           const rect = block.getBoundingClientRect()
           if (e.clientY - rect.top < rect.height / 2) block.parentNode?.insertBefore(layerEl, block)
           else block.after(layerEl)
-        } else doc.querySelector('.main-card')?.appendChild(layerEl)
+        } else ensureMainCard(doc).appendChild(layerEl)
         parentState.draggedLayer = null
         refreshLayers()
         triggerAutosave(true)
@@ -540,7 +554,7 @@ function setupIframeEvents(doc: Document) {
         const dragged = window.draggedElement
         if (placeholder) placeholder.parentNode?.replaceChild(dragged, placeholder)
         else {
-          const container = doc.querySelector('.main-card') || doc.body
+          const container = ensureMainCard(doc)
           if (block && block.parentNode) {
             const rect = block.getBoundingClientRect()
             if (e.clientY - rect.top < rect.height / 2) block.parentNode.insertBefore(dragged, block)
@@ -652,6 +666,9 @@ function applyStyleBase(style: EditorStyleBase, forceTheme = false, target?: HTM
     // Apply main-card style
     const mainCard = doc.querySelector('.main-card') as HTMLElement
     if (mainCard) {
+      mainCard.style.maxWidth = '820px'
+      mainCard.style.width = '100%'
+      mainCard.style.margin = '0 auto'
       mainCard.style.backgroundColor = style.config.cardBg
       mainCard.style.borderRadius = style.config.cardRadius
       mainCard.style.boxShadow = style.config.cardShadow
@@ -825,7 +842,11 @@ function getSurgicalCleanHtml(): string {
 }
 
 function updateHtml() {
-  htmlContent.value = getSurgicalCleanHtml()
+  const html = getSurgicalCleanHtml()
+  htmlContent.value = html
+  if (typeof localStorage !== 'undefined' && html) {
+    localStorage.setItem('editor_html_draft', html)
+  }
 }
 
 // ─── Autosave ────────────────────────────────────────────────────────────────

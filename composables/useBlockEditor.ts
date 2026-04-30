@@ -12,7 +12,10 @@ const {
   selectionBaseRef,
   logoWidthRef,
   gridImageHeightRef,
+  imageHeightRef,
   buttonRadiusRef,
+  borderWidthRef,
+  borderColorRef,
   visibilityTrigger,
   layoutTrigger,
   originalFontBeforePreview,
@@ -22,6 +25,7 @@ const {
   isLayerDragging,
   layerList,
   imageModal,
+  currentStyle,
 } = useEditorState()
 
 const { openPrompt } = usePrompt()
@@ -54,6 +58,14 @@ function selectElement(el: HTMLElement, subEl?: HTMLElement) {
     }
   }
 
+  if (el.dataset.type === 'Imagen' || el.dataset.type === 'Tarjeta') {
+    const firstImg = el.querySelector("[data-toggle='image'] img") as HTMLImageElement
+    if (firstImg) {
+      const h = parseInt(firstImg.style.height) || firstImg.offsetHeight || 300
+      imageHeightRef.value = h
+    }
+  }
+
   if (subEl?.closest('[data-toggle="button"]')) {
     const btn = subEl.closest('[data-toggle="button"]') as HTMLElement
     buttonRadiusRef.value = parseInt(btn.style.borderRadius) || 8
@@ -75,6 +87,11 @@ function selectElement(el: HTMLElement, subEl?: HTMLElement) {
       }
     })
   }
+
+  // Border initialization
+  const borderStyle = window.getComputedStyle(el)
+  borderWidthRef.value = parseInt(borderStyle.borderWidth) || 0
+  borderColorRef.value = rgbToHex(borderStyle.borderColor) || '#e9e9e9'
 }
 
 function deselect() {
@@ -270,6 +287,15 @@ function previewTextColor(color: string) {
   }
 }
 
+function previewBorderColor(color: string) {
+  if (!selectedElement.value || !color) return
+  const isCompleteHex = /^#([0-9A-F]{3}){1,2}$/i.test(color)
+  const isTransparent = color.toLowerCase() === 'transparent'
+  if (isCompleteHex || isTransparent) {
+    selectedElement.value.style.borderColor = color
+  }
+}
+
 function updateBgColor() {
   if (!selectedElement.value) return
   const current = rgbToHex(selectedElement.value.style.backgroundColor || 'transparent')
@@ -398,6 +424,54 @@ function updateGridImageHeight(val?: number | string) {
   })
 
   import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
+}
+
+function updateImageHeight(val?: number | string) {
+  if (!selectedElement.value || (selectedElement.value.dataset.type !== 'Imagen' && selectedElement.value.dataset.type !== 'Tarjeta')) return
+  
+  let newHeight: number
+  if (val !== undefined) {
+    newHeight = typeof val === 'string' ? parseInt(val) : (typeof val === 'number' ? val : (val as any).value || 300)
+  } else {
+    newHeight = imageHeightRef.value
+  }
+  
+  if (isNaN(newHeight)) newHeight = 300
+  imageHeightRef.value = newHeight
+  
+  selectedElement.value.style.setProperty('--main-img-h', newHeight + 'px')
+  
+  const img = selectedElement.value.querySelector("[data-toggle='image'] img") as HTMLImageElement
+  if (img) {
+    img.classList.add('main-img-responsive')
+    img.style.height = '' // Remove inline height so CSS wins
+    img.style.objectFit = 'cover'
+    img.setAttribute('height', newHeight.toString())
+  }
+
+  import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
+}
+
+function updateBorderWidth(val: number | string) {
+  if (!selectedElement.value) return
+  const newWidth = typeof val === 'string' ? parseInt(val) : val
+  borderWidthRef.value = newWidth
+  selectedElement.value.style.borderWidth = newWidth + 'px'
+  selectedElement.value.style.borderStyle = newWidth > 0 ? 'solid' : 'none'
+  import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
+}
+
+function updateBorderColor() {
+  if (!selectedElement.value) return
+  const current = rgbToHex(selectedElement.value.style.borderColor || '#e9e9e9')
+  const i18n = (useNuxtApp().$i18n as any)
+  openPrompt(i18n.t('editor.border_color_title'), i18n.t('editor.border_color_label'), current, 'color', (color) => {
+    if (selectedElement.value) {
+      selectedElement.value.style.borderColor = color
+      borderColorRef.value = color
+      import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
+    }
+  }, 'primary', undefined, 'border')
 }
 
 // ─── Button Controls ─────────────────────────────────────────────────────────
@@ -637,6 +711,7 @@ function applyImageSettings() {
 // ─── Drag Handlers ───────────────────────────────────────────────────────────
 
 function handleSidebarDragStart(content: string, event: DragEvent) {
+  deselect()
   editorDragState.draggedModule = content
   isSidebarDragging.value = true
   if (event.target) (event.target as HTMLElement).classList.add('dragging-source')
@@ -648,6 +723,7 @@ function handleSidebarDragEnd(event: DragEvent) {
 }
 
 function handleLayerDragStart(el: HTMLElement, event: DragEvent) {
+  deselect()
   editorDragState.draggedLayer = el
   isLayerDragging.value = true
   const target = (event.target as HTMLElement).closest('.stack-item')
@@ -691,6 +767,7 @@ export function useBlockEditor() {
     getButtonLayout,
     previewBlockColor,
     previewTextColor,
+    previewBorderColor,
     updateBgColor,
     updateTextColor,
     updateFont,
@@ -702,6 +779,9 @@ export function useBlockEditor() {
     updateFontSize,
     updateLogoWidth,
     updateGridImageHeight,
+    updateImageHeight,
+    updateBorderWidth,
+    updateBorderColor,
     updateButtonColor,
     updateThisButtonColor,
     updateButtonLink,

@@ -15,6 +15,7 @@ import ToastNotification from "~/components/editor/ToastNotification.vue";
 import PromptModal from "~/components/editor/modals/PromptModal.vue";
 import ImageModal from "~/components/editor/modals/ImageModal.vue";
 import TemplateModal from "~/components/editor/modals/TemplateModal.vue";
+import AITemplateModal from "~/components/editor/modals/AITemplateModal.vue";
 import ConfirmModal from "~/components/editor/modals/ConfirmModal.vue";
 
 const { t } = useI18n();
@@ -96,6 +97,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  triggerAutosave(true);
   document.body.style.overflow = "";
   window.removeEventListener("keydown", handleGlobalKeydown);
   resetEditorState();
@@ -145,6 +147,7 @@ onUnmounted(() => {
     <PromptModal />
     <ImageModal />
     <TemplateModal />
+    <AITemplateModal />
     <ConfirmModal />
 
     <EditorHeader />
