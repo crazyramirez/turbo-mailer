@@ -15,6 +15,7 @@ import ToastNotification from "~/components/editor/ToastNotification.vue";
 import PromptModal from "~/components/editor/modals/PromptModal.vue";
 import ImageModal from "~/components/editor/modals/ImageModal.vue";
 import TemplateModal from "~/components/editor/modals/TemplateModal.vue";
+import ConfirmModal from "~/components/editor/modals/ConfirmModal.vue";
 
 const { t } = useI18n();
 const { editorDragState, resetEditorState } = useEditorState();
@@ -144,6 +145,7 @@ onUnmounted(() => {
     <PromptModal />
     <ImageModal />
     <TemplateModal />
+    <ConfirmModal />
 
     <EditorHeader />
 

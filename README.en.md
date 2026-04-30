@@ -113,6 +113,7 @@ TurboMailer is optimized to comply with strict regulations from **Apple (iCloud)
 - **Keyboard shortcuts**: `Ctrl+S` save · `Ctrl+Z` undo · `Ctrl+Y` redo · `Delete` delete block
 - Autosave upon detecting changes
 - **Template Gallery**: library to save, load, rename, and delete your own HTML templates
+- **Image Resource Manager**: Premium system to upload, view, select, and delete your own images. Includes automatic resizing to 1200px using the `sharp` library to optimize email weight without losing quality.
 - **Global Style Manager**: Selector with 5 pre-designed aesthetic bases (**Modern Clean, Corporate Premium, Tech Noir, Corporate Bold, Lux Dark**) that automatically unify colors, borders, and typography throughout the template.
 - Live Preview with desktop / mobile / dark mode toggle
 
@@ -371,6 +372,14 @@ The app uses Gmail SMTP with a 16-digit app password (not your normal password).
 | GET    | `/api/analytics`   | Dashboard KPIs       |
 | GET    | `/api/unsubscribe` | Unsubscribe          |
 | DELETE | `/api/reset`       | Selective data reset |
+
+### Resource Management (Images)
+
+| Method | Route            | Description                             |
+| ------ | ---------------- | --------------------------------------- |
+| GET    | `/api/uploads`   | List images stored on the server        |
+| POST   | `/api/uploads`   | Upload and resize images (1200px)       |
+| DELETE | `/api/uploads`   | Physically delete image file            |
 
 ---
 

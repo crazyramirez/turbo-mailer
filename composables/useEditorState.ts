@@ -125,6 +125,16 @@ const imageModal = reactive({
   linkEl: null as HTMLAnchorElement | null,
 })
 
+const confirmData = reactive({
+  visible: false,
+  title: '',
+  message: '',
+  variant: 'primary' as 'primary' | 'danger',
+  onConfirm: () => {},
+  confirmLabel: '',
+  cancelLabel: '',
+})
+
 // ─── Reset function (call on editor unmount to clear DOM refs) ────────────────
 function resetEditorState() {
   selectedElement.value = null
@@ -175,6 +185,7 @@ export function useEditorState() {
     toast,
     promptData,
     imageModal,
+    confirmData,
     currentStyle,
     resetEditorState,
   }

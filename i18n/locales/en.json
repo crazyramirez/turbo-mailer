@@ -462,6 +462,7 @@
     "template_deleted": "Template deleted",
     "template_delete_error": "Error deleting",
     "template_delete_confirm": "Delete",
+    "image_delete_title": "Delete Image",
     "template_rename_title": "Rename Template",
     "template_rename_label": "New file name:",
     "template_renamed": "Template renamed",
@@ -484,7 +485,19 @@
     "module_signature": "Signature",
     "download": "Download HTML",
     "download_started": "Download started",
-    "template_required_download": "You must save the template before downloading it"
+    "template_required_download": "You must save the template before downloading it",
+    "resource_manager_btn": "Resource Manager",
+    "resource_manager_title": "Resource Manager",
+    "resource_manager_subtitle": "Manage and select your images for the email",
+    "resource_manager_search": "Search images...",
+    "resource_manager_upload": "Upload Images",
+    "resource_manager_uploading": "Uploading...",
+    "resource_manager_upload_sub": "Click to select your files",
+    "resource_manager_empty": "No images uploaded yet",
+    "resource_manager_empty_search": "No images found for \"{query}\"",
+    "resource_manager_first": "Upload my first image",
+    "image_name_exists": "This name already exists",
+    "resource_manager_delete_confirm": "Are you sure you want to delete this image?"
   },
   "common": {
     "loading": "Loading...",

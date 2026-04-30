@@ -461,6 +461,7 @@
     "template_deleted": "Plantilla eliminada",
     "template_delete_error": "Error al eliminar",
     "template_delete_confirm": "Eliminar",
+    "image_delete_title": "Eliminar Imagen",
     "template_rename_title": "Renombrar Plantilla",
     "template_rename_label": "Nuevo nombre del archivo:",
     "template_renamed": "Plantilla renombrada",
@@ -483,7 +484,19 @@
     "module_signature": "Firma",
     "download": "Descargar HTML",
     "download_started": "Descarga iniciada",
-    "template_required_download": "Debes guardar la plantilla antes de descargarla"
+    "template_required_download": "Debes guardar la plantilla antes de descargarla",
+    "resource_manager_btn": "Gestor de Recursos",
+    "resource_manager_title": "Gestor de Recursos",
+    "resource_manager_subtitle": "Administra y selecciona tus imágenes para el email",
+    "resource_manager_search": "Buscar imágenes...",
+    "resource_manager_upload": "Subir Imágenes",
+    "resource_manager_uploading": "Subiendo...",
+    "resource_manager_upload_sub": "Haz clic para seleccionar tus archivos",
+    "resource_manager_empty": "No hay imágenes subidas todavía",
+    "resource_manager_empty_search": "No se encontraron imágenes para \"{query}\"",
+    "resource_manager_first": "Subir mi primera imagen",
+    "image_name_exists": "Ese nombre ya existe",
+    "resource_manager_delete_confirm": "¿Estás seguro de que quieres eliminar esta imagen?"
   },
   "common": {
     "loading": "Cargando...",

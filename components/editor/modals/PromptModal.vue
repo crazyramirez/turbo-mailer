@@ -179,6 +179,9 @@ function handleHexInput() {
 </template>
 
 <style scoped>
+.modal-overlay {
+  z-index: 11000; /* Ensure prompt is always on top of other modals */
+}
 .confirm-message {
   display: flex;
   flex-direction: column;
