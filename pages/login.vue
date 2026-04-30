@@ -208,6 +208,11 @@ const showPortal = computed(
   () => route.query.portal === ACCESS_KEY || isAuthed.value,
 );
 
+// Persistir el portal en localStorage para PWAs y sesiones perdidas
+if (process.client && route.query.portal === ACCESS_KEY) {
+  localStorage.setItem("last_portal", ACCESS_KEY);
+}
+
 onMounted(async () => {
   if (showPortal.value) {
     try {
