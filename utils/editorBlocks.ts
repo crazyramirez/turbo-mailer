@@ -31,7 +31,7 @@ export const editorBlocks: EditorBlock[] = [
     id: 'header-pro',
     name: 'Header',
     icon: Layout,
-    content: `<div class="header-block editable-block" data-type="Header" style="padding:48px 32px;background-color:#d4e2ed;">
+    content: `<div class="header-block editable-block" data-type="Header" style="padding:48px 32px; border-bottom: 1px solid #E6E6E6; background-color:#d4e2ed;">
     <div data-toggle="logo" style="margin-bottom:24px;">
       <img src="${placeholderLogo}" alt="Logo" style="display:block;max-height:50px;width:auto;">
     </div>
