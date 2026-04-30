@@ -21,20 +21,20 @@ Lo que hace a **TurboMailer** una herramienta extremadamente potente es la **pri
 
 <table>
   <tr>
-    <td><img src="public/images/screen_1.webp"></td>
-    <td><img src="public/images/screen_2.webp"></td>
+    <td><img src="public/images/sc_1.webp"></td>
+    <td><img src="public/images/sc_2.webp"></td>
   </tr>
   <tr>
-    <td><img src="public/images/screen_3.webp"></td>
-    <td><img src="public/images/screen_4.webp"></td>
+    <td><img src="public/images/sc_3.webp"></td>
+    <td><img src="public/images/sc_4.webp"></td>
   </tr>
   <tr>
-    <td><img src="public/images/screen_5.webp"></td>
-    <td><img src="public/images/screen_6.webp"></td>
+    <td><img src="public/images/sc_5.webp"></td>
+    <td><img src="public/images/sc_6.webp"></td>
   </tr>
   <tr>
-    <td><img src="public/images/screen_7.webp"></td>
-    <td><img src="public/images/screen_8.webp"></td>
+    <td><img src="public/images/sc_7.webp"></td>
+    <td><img src="public/images/sc_8.webp"></td>
   </tr>
 </table>
 
