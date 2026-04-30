@@ -54,13 +54,22 @@ async function handleFileUpload(event: Event) {
   }
 
   try {
-    await $fetch("/api/uploads", {
+    const results = await $fetch<any[]>("/api/uploads", {
       method: "POST",
       body: formData,
     });
+
+    if (!results || results.length === 0) {
+      console.warn("Upload response was empty. This might mean the server couldn't process the files.");
+      // You could add a toast or alert here if you had one
+    } else {
+      console.log(`Successfully uploaded ${results.length} files`);
+    }
+    
     await fetchImages();
   } catch (error) {
     console.error("Error uploading files:", error);
+    alert(t("common.error_uploading") || "Error al subir la imagen. Verifica el tamaño y formato.");
   } finally {
     uploading.value = false;
     if (fileInput.value) fileInput.value.value = "";

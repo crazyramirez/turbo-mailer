@@ -505,6 +505,7 @@
   "common": {
     "loading": "Cargando...",
     "error": "Error",
+    "error_uploading": "Error al subir la imagen. Verifica el tamaño y formato.",
     "success": "Éxito",
     "confirm": "Confirmar",
     "cancel": "Cancelar",

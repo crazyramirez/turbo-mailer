@@ -6,10 +6,15 @@ export default defineEventHandler(async (event) => {
   const uploadDir = path.join(process.cwd(), 'public', 'uploads')
   
   // Ensure directory exists
-  await fs.mkdir(uploadDir, { recursive: true })
+  try {
+    await fs.mkdir(uploadDir, { recursive: true })
+  } catch (err) {
+    console.error('Error creating upload directory:', err)
+  }
   
   const formData = await readMultipartFormData(event)
   if (!formData) {
+    console.warn('Upload attempt with no form data')
     throw createError({
       statusCode: 400,
       statusMessage: 'No file uploaded',
@@ -19,19 +24,30 @@ export default defineEventHandler(async (event) => {
   const results = []
 
   for (const field of formData) {
-    if (field.name === 'files') {
-      const filename = `${Date.now()}-${field.filename}`
+    // Some browsers or libraries might send 'files', 'files[]', or just 'file'
+    // We also check if it has a filename to be sure it's a file field
+    if ((field.name === 'files' || field.name === 'file' || field.name?.includes('files')) && field.filename) {
+      // Sanitize filename: remove path components and illegal characters
+      const safeFilename = field.filename.replace(/[^a-zA-Z0-9.-]/g, '_')
+      const filename = `${Date.now()}-${safeFilename}`
       const filepath = path.join(uploadDir, filename)
       
+      console.log(`Processing upload: ${field.filename} -> ${filename}`)
+      
       try {
-        // Resize image if it's wider than 1200px
-        const image = sharp(field.data)
-        const metadata = await image.metadata()
+        let buffer: Buffer = field.data
         
-        let buffer: Buffer
-        if (metadata.width && metadata.width > 1200) {
-          buffer = await image.resize(1200).toBuffer()
-        } else {
+        // Try to process with sharp, but fallback to raw data if it fails
+        try {
+          const image = sharp(field.data)
+          const metadata = await image.metadata()
+          
+          if (metadata.width && metadata.width > 1200) {
+            buffer = await image.resize(1200).toBuffer()
+            console.log(`Resized image ${filename} to 1200px width`)
+          }
+        } catch (sharpError) {
+          console.warn(`Sharp processing failed for ${field.filename}, saving original file.`, sharpError)
           buffer = field.data
         }
         
@@ -41,10 +57,17 @@ export default defineEventHandler(async (event) => {
           name: filename,
           url: `/uploads/${filename}`,
         })
+        console.log(`Successfully saved: ${filename}`)
       } catch (error) {
-        console.error(`Error processing file ${field.filename}:`, error)
+        console.error(`Error saving file ${field.filename}:`, error)
       }
+    } else {
+      console.log(`Skipping field: ${field.name} (filename: ${field.filename})`)
     }
+  }
+
+  if (results.length === 0) {
+    console.warn('No files were successfully processed from the upload')
   }
 
   return results
