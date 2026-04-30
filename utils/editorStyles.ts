@@ -132,7 +132,7 @@ export const editorStyleBases: EditorStyleBase[] = [
     icon: Palette,
     previewColor: '#f59e0b',
     config: {
-      bodyBg: '#020617',
+      bodyBg: '#0f172a',
       cardBg: '#0f172a',
       contentBg: '#0f172a',
       cardRadius: '0px',
@@ -156,7 +156,7 @@ export const editorStyleBases: EditorStyleBase[] = [
     icon: Palette,
     previewColor: '#d9a54c',
     config: {
-      bodyBg: '#090b12',
+      bodyBg: '#10131d',
       cardBg: '#10131d',
       contentBg: '#10131d',
       cardRadius: '0px',
