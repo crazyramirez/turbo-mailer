@@ -117,10 +117,13 @@ TurboMailer está optimizado para cumplir con las estrictas normativas de **Appl
 - **Gestor de Estilos Globales**: Selector con 5 bases estéticas prediseñadas (**Modern Clean, Corporate Premium, Tech Noir, Corporate Bold, Lux Dark**) que unifican automáticamente colores, bordes y tipografías en todo el template.
 - Live Preview con toggle desktop / móvil / modo oscuro
 
-### 🤖 IA Copywriting Assistant
+### 🤖 IA Copywriting & Diseño Generativo
 
-- Integración con OpenAI (GPT-4o-mini configurable a otros modelos de OpenAI)
-- Mejora bloques individuales preservando el HTML y las variables dinámicas
+- **Asistente de Bloques**: Mejora bloques individuales preservando el HTML y las variables dinámicas con un solo clic.
+- **Generador de Plantillas Completo**: Crea campañas enteras desde cero mediante una conversación guiada con la IA.
+- **Estilos Contextuales**: Elige automáticamente el tema visual (Viseni, Corporate, Tech Noir, etc.) que mejor se adapta a tu sector.
+- **Imágenes por IA con Persistencia**: Genera imágenes profesionales vía *Pollinations.ai* y las descarga automáticamente a tu servidor local para garantizar la estabilidad y privacidad.
+- **Copywriting Persuasivo**: Genera textos optimizados para conversión, incluyendo asuntos de email efectivos.
 
 ### 🌐 Multiidioma (i18n)
 

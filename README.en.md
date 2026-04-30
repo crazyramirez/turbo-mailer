@@ -117,10 +117,13 @@ TurboMailer is optimized to comply with strict regulations from **Apple (iCloud)
 - **Global Style Manager**: Selector with 5 pre-designed aesthetic bases (**Modern Clean, Corporate Premium, Tech Noir, Corporate Bold, Lux Dark**) that automatically unify colors, borders, and typography throughout the template.
 - Live Preview with desktop / mobile / dark mode toggle
 
-### 🤖 AI Copywriting Assistant
+### 🤖 AI Copywriting & Generative Design
 
-- Integration with OpenAI (GPT-4o-mini configurable to other OpenAI models)
-- Improves individual blocks while preserving HTML and dynamic variables
+- **Block Assistant**: Improve individual blocks while preserving HTML and dynamic variables with a single click.
+- **Full Template Generator**: Create entire campaigns from scratch through a guided AI conversation.
+- **Contextual Styles**: Automatically chooses the visual theme (Viseni, Corporate, Tech Noir, etc.) that best fits your sector.
+- **AI-Driven Images with Persistence**: Generates professional images via *Pollinations.ai* and automatically downloads them to your local server to ensure stability and privacy.
+- **Persuasive Copywriting**: Generates conversion-optimized texts, including effective email subject lines.
 
 ### 🌐 Multi-language (i18n)
 
