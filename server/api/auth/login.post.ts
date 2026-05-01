@@ -1,7 +1,16 @@
+import bcrypt from 'bcryptjs'
 import { timingSafeEqual } from 'crypto'
 import { checkRateLimit, recordFailedAttempt, clearAttempts, createSession, getClientIp } from '~/server/utils/auth'
 
 function safePasswordCompare(input: string, expected: string): boolean {
+  if (expected.startsWith('$2a$') || expected.startsWith('$2b$') || expected.startsWith('$2y$')) {
+    try {
+      return bcrypt.compareSync(input, expected)
+    } catch {
+      return false
+    }
+  }
+
   const a = Buffer.alloc(256)
   const b = Buffer.alloc(256)
   Buffer.from(input).copy(a, 0, 0, Math.min(input.length, 256))

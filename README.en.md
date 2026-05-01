@@ -310,6 +310,18 @@ To ensure maximum privacy, TurboMailer is designed to be invisible to curious vi
 
 > **Important**: Once you log in, you can navigate the dashboard normally. If you log out or the session expires, you will see the technical decoy page again.
 
+### 🔐 Password Security (BCrypt)
+
+For maximum security, TurboMailer supports **BCrypt** hashed passwords in the `APP_PASSWORD` environment variable. By storing a hash, your real password is never present in the server's plain text or memory.
+
+You can generate a hash of your password using the following command:
+```bash
+npm run hash-password
+# Or by passing the password directly as an argument:
+npm run hash-password my-secure-password
+```
+_Paste the generated hash into the `APP_PASSWORD` field of your `.env` file._
+
 ## 🔑 Example: Configuration with Gmail
 
 The app uses Gmail SMTP with a 16-digit app password (not your normal password).

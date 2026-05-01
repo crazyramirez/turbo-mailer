@@ -11,11 +11,14 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "db:generate": "drizzle-kit generate",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "hash-password": "node scripts/hash-password.js"
   },
   "dependencies": {
     "@nuxtjs/i18n": "^10.2.4",
+    "@types/bcryptjs": "^2.4.6",
     "archiver": "^7.0.1",
+    "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.9.0",
     "chart.js": "^4.5.1",
     "drizzle-kit": "^0.31.10",

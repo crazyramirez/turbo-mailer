@@ -310,6 +310,18 @@ Para garantizar la máxima privacidad, TurboMailer está diseñado para ser invi
 
 > **Importante**: Una vez que inicies sesión, podrás navegar normalmente por el panel. Si cierras sesión o la sesión expira, volverás a ver la página de señuelo técnica.
 
+### 🔐 Seguridad de la Contraseña (BCrypt)
+
+Para máxima seguridad, TurboMailer soporta contraseñas hasheadas mediante **BCrypt** en la variable de entorno `APP_PASSWORD`. Al usar un hash, tu contraseña real nunca se almacena en texto plano en el servidor ni en memoria.
+
+Puedes generar un hash de tu contraseña usando el siguiente comando:
+```bash
+npm run hash-password
+# O pasando la contraseña directamente como argumento:
+npm run hash-password mi-contraseña-segura
+```
+_Pega el hash resultante en el campo `APP_PASSWORD` de tu archivo `.env`._
+
 ## 🔑 Ejemplo: Configuración con Gmail
 
 La app usa Gmail SMTP con una contraseña de aplicación de 16 dígitos (no tu contraseña normal).
