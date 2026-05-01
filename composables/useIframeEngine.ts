@@ -629,7 +629,7 @@ function setupIframeEvents(doc: Document) {
       pricingToolbar.style.display = 'flex'
       const rect = pricingItem.getBoundingClientRect()
       const scrollTop = doc.documentElement.scrollTop || doc.body.scrollTop
-      let top = rect.top + scrollTop - 45
+      let top = rect.top + scrollTop - 60
       if (top < 5) top = rect.bottom + scrollTop + 5
       pricingToolbar.style.top = top + 'px'
       pricingToolbar.style.left = Math.max(5, rect.left + (rect.width / 2) - 45) + 'px'

@@ -105,9 +105,9 @@ export const iframeEditorStyles = `
   .drop-icon svg { width: 22px; height: 22px; }
   .editable-block.dragging { opacity: 0.4; transform: scale(0.96); pointer-events: none; }
   @keyframes textFocus {
-    0% { background: rgba(99, 102, 241, 0); transform: scale(0.99); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
-    70% { background: rgba(99, 102, 241, 0.12); transform: scale(1.01); box-shadow: 0 0 25px rgba(99, 102, 241, 0.2); }
-    100% { background: rgba(99, 102, 241, 0.06); transform: scale(1); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+    0% { background: rgba(99, 102, 241, 0); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+    70% { background: rgba(99, 102, 241, 0.12); box-shadow: 0 0 25px rgba(99, 102, 241, 0.2); }
+    100% { background: rgba(99, 102, 241, 0.06); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
   }
   [contenteditable="true"]:hover {
     cursor: text !important;
