@@ -105,17 +105,21 @@ TurboMailer is optimized to comply with strict regulations from **Apple (iCloud)
 ### 🎨 Visual Template Editor
 
 - Accessible at `/editor`
-- **Available Blocks**: Header, Hero, Card (standard/premium), Buttons, Image, Text, Divider, Footer
-- Editing panel: font, size, text and background color, alignment per block
-- Layers panel: visual tree with drag & drop reordering
-- **AI per block**: improve text for an individual block with one click
-- **Bulk AI**: improve all template blocks at once
-- **Keyboard shortcuts**: `Ctrl+S` save · `Ctrl+Z` undo · `Ctrl+Y` redo · `Delete` delete block
-- Autosave upon detecting changes
-- **Template Gallery**: library to save, load, rename, and delete your own HTML templates
-- **Image Resource Manager**: Premium system to upload, view, select, and delete your own images. Includes automatic resizing to 1200px using the `sharp` library to optimize email weight without losing quality.
-- **Global Style Manager**: Selector with 5 pre-designed aesthetic bases (**Modern Clean, Corporate Premium, Tech Noir, Corporate Bold, Lux Dark**) that automatically unify colors, borders, and typography throughout the template.
-- Live Preview with desktop / mobile / dark mode toggle
+- **Available Blocks**: Header Pro, Hero, Text, Button, Image, Card, Duo Grid (2 col), Trio Grid (3 col), Quad Grid (4 col), Note, Presence, Testimonials, Pricing, Video, Socials, Divider, FAQ, Metrics, Unsubscribe, Signature.
+- **Smart Dynamic Rebalancing**: Advanced grid system for Pricing and Metrics blocks that ensures perfect alignment (e.g., pyramid centering for 5 items).
+- **Smart Style Inheritance**: FAQ blocks automatically inherit custom separator colors when adding new items.
+- **Optimized Interaction**: Video play button with click-through (`pointer-events: none`) to allow easy thumbnail image selection.
+- Editing panel: font, size, text and background color, alignment per block, borders, and radius.
+- Layers panel: visual tree with drag & drop reordering.
+- **Premium Sidebar UX**: Fluid navigation with unified scroll, 16px icons, 8px corners, and modern design.
+- **AI per block**: improve text for an individual block with one click.
+- **Bulk AI**: improve all template blocks at once.
+- **Keyboard shortcuts**: `Ctrl+S` save · `Ctrl+Z` undo · `Ctrl+Y` redo · `Delete` delete block.
+- Autosave upon detecting changes.
+- **Template Gallery**: library to save, load, rename, and delete your own HTML templates.
+- **Image Resource Manager**: Premium system to upload, view, select, and delete your own images. Includes automatic resizing to 1200px using the `sharp` library.
+- **Global Style Manager**: Selector with 5 pre-designed aesthetic bases (**Modern Clean, Corporate Premium, Tech Noir, Corporate Bold, Lux Dark**) that automatically unify colors, borders, and typography.
+- Live Preview with desktop / mobile / dark mode toggle.
 
 ### 🤖 AI Copywriting & Generative Design
 

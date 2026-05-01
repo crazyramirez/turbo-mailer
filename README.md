@@ -105,17 +105,21 @@ TurboMailer está optimizado para cumplir con las estrictas normativas de **Appl
 ### 🎨 Editor Visual de Plantillas
 
 - Accesible desde `/editor`
-- **Bloques disponibles**: Header, Hero, Card (standard/premium), Botones, Imagen, Texto, Separador, Footer
-- Panel de edición: fuente, tamaño, color de texto y fondo, alineación por bloque
-- Panel de capas: árbol visual con reordenamiento drag & drop
-- **IA por bloque**: mejora el texto de un bloque individual con un clic
-- **IA masiva**: mejora todos los bloques de la plantilla a la vez
-- **Atajos de teclado**: `Ctrl+S` guardar · `Ctrl+Z` deshacer · `Ctrl+Y` rehacer · `Delete` eliminar bloque
-- Autosave al detectar cambios
-- **Galería de Plantillas**: biblioteca para guardar, cargar, renombrar y eliminar plantillas HTML propias
-- **Gestor de Recursos de Imagen**: Sistema premium para subir, visualizar, seleccionar y eliminar imágenes propias. Incluye redimensionado automático a 1200px mediante la librería `sharp` para optimizar el peso de los emails sin perder calidad.
-- **Gestor de Estilos Globales**: Selector con 5 bases estéticas prediseñadas (**Modern Clean, Corporate Premium, Tech Noir, Corporate Bold, Lux Dark**) que unifican automáticamente colores, bordes y tipografías en todo el template.
-- Live Preview con toggle desktop / móvil / modo oscuro
+- **Bloques disponibles**: Header Pro, Hero, Texto, Botón, Imagen, Tarjeta, Grid Dúo (2 col), Grid Trío (3 col), Grid Quad (4 col), Nota, Presencia, Testimonios, Precios, Video, Sociales, Separador, FAQ, Estadísticas (Metrics), Unsuscribir, Firma.
+- **Balanceo Dinámico Inteligente**: Sistema de rejilla avanzada para bloques de Precios y Estadísticas que garantiza alineación perfecta (ej. centrado piramidal para 5 elementos).
+- **Herencia de Estilos Inteligente**: Los bloques de FAQ heredan automáticamente los colores de separador personalizados al añadir nuevos elementos.
+- **Interacción Optimizada**: Botón de Play en video con click-through (`pointer-events: none`) para facilitar la selección de la imagen de miniatura.
+- Panel de edición: fuente, tamaño, color de texto y fondo, alineación por bloque, bordes y radio.
+- Panel de capas: árbol visual con reordenamiento drag & drop.
+- **Sidebar UX Premium**: Navegación fluida con scroll unificado, iconos de 16px, esquinas de 8px y diseño moderno.
+- **IA por bloque**: mejora el texto de un bloque individual con un clic.
+- **IA masiva**: mejora todos los bloques de la plantilla a la vez.
+- **Atajos de teclado**: `Ctrl+S` guardar · `Ctrl+Z` deshacer · `Ctrl+Y` rehacer · `Delete` eliminar bloque.
+- Autosave al detectar cambios.
+- **Galería de Plantillas**: biblioteca para guardar, cargar, renombrar y eliminar plantillas HTML propias.
+- **Gestor de Recursos de Imagen**: Sistema premium para subir, visualizar, seleccionar y eliminar imágenes propias. Incluye redimensionado automático a 1200px mediante la librería `sharp`.
+- **Gestor de Estilos Globales**: Selector con 5 bases estéticas prediseñadas (**Modern Clean, Corporate Premium, Tech Noir, Corporate Bold, Lux Dark**) que unifican automáticamente colores, bordes y tipografías.
+- Live Preview con toggle desktop / móvil / modo oscuro.
 
 ### 🤖 IA Copywriting & Diseño Generativo
 
