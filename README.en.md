@@ -409,10 +409,113 @@ The app uses Gmail SMTP with a 16-digit app password (not your normal password).
 
 ---
 
+## 🔑 External Integration (Subscription & Unsubscription via API Key)
+
+You can connect your own forms, opt-in pages, or external applications directly to TurboMailer using the API.
+
+### Authentication
+For all external requests, you must include either the `X-API-Key` or `Authorization` header with the value of `API_SECRET` defined in your `.env` file.
+
+Example headers:
+```http
+X-API-Key: your-api-secret-key
+```
+or
+```http
+Authorization: Bearer your-api-secret-key
+```
+
+### 1. Contact Subscription (`POST /api/subscribe` or `POST /api/subscribers`)
+
+Creates a new contact or updates an existing one if the email already exists in the database. Upon subscribing or updating, the contact's status changes to `active`.
+
+#### Body Parameters (JSON)
+- `email` (string, required): Recipient's email address.
+- `name` (string, optional): Full name.
+- `company` (string, optional): Company name.
+- `phone` (string, optional): Phone number.
+- `role` (string, optional): Job title/role.
+- `linkedin` (string, optional): LinkedIn profile URL.
+- `url` (string, optional): Website URL.
+- `tags` (array of strings, optional): Tags to segment the contact.
+- `listIds` (array of numbers, optional): IDs of the lists to associate the contact with.
+
+#### Request Example with `curl`:
+```bash
+curl -X POST https://your-domain.com/api/subscribe \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-secret-key" \
+  -d '{
+    "email": "contact@example.com",
+    "name": "John Doe",
+    "company": "My Company",
+    "tags": ["customer", "lead"],
+    "listIds": [1, 2]
+  }'
+```
+
+#### Request Example with `fetch` in JavaScript:
+```javascript
+fetch('https://your-domain.com/api/subscribe', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'your-api-secret-key'
+  },
+  body: JSON.stringify({
+    email: 'contact@example.com',
+    name: 'John Doe',
+    company: 'My Company',
+    tags: ['customer'],
+    listIds: [1]
+  })
+})
+.then(res => res.json())
+.then(data => console.log('Contact subscribed:', data))
+.catch(err => console.error('Error:', err));
+```
+
+### 2. Contact Unsubscription (`POST /api/unsubscribe`)
+
+Changes the contact's status to `unsubscribed`.
+
+#### Body Parameters (JSON)
+- `email` (string, required): Email address of the contact to unsubscribe.
+
+#### Request Example with `curl`:
+```bash
+curl -X POST https://your-domain.com/api/unsubscribe \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-secret-key" \
+  -d '{
+    "email": "contact@example.com"
+  }'
+```
+
+#### Request Example with `fetch` in JavaScript:
+```javascript
+fetch('https://your-domain.com/api/unsubscribe', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'your-api-secret-key'
+  },
+  body: JSON.stringify({
+    email: 'contact@example.com'
+  })
+})
+.then(res => res.json())
+.then(data => console.log('Unsubscribed successfully:', data))
+.catch(err => console.error('Error:', err));
+```
+
+---
+
 - **Privacy**: Contact and campaign data persist in your local SQLite database. Your data **never** leaves your server and is not accessible by third parties.
 - **Ghost Mode**: High-level obfuscation for maximum privacy (see the Ghost Mode section above for access details).
 
 ---
+
 
 ## 📄 Demo Templates
 

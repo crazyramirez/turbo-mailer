@@ -5,6 +5,8 @@ const PUBLIC_PATHS = [
   '/api/track/open',
   '/api/track/click',
   '/api/unsubscribe',
+  '/api/subscribers',
+  '/api/subscribe',
   '/api/ghost-status',
 ]
 

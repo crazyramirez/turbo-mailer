@@ -409,10 +409,113 @@ La app usa Gmail SMTP con una contraseña de aplicación de 16 dígitos (no tu c
 
 ---
 
+## 🔑 Integración Externa (Suscripción y Baja vía API Key)
+
+Puedes conectar tus propios formularios, páginas de captura o aplicaciones externas directamente con TurboMailer mediante la API.
+
+### Autenticación
+Para todas las peticiones externas, debes incluir la cabecera `X-API-Key` o `Authorization` con el valor de `API_SECRET` que has definido en tu archivo `.env`.
+
+Ejemplo de cabeceras:
+```http
+X-API-Key: tu-api-secret-key
+```
+o
+```http
+Authorization: Bearer tu-api-secret-key
+```
+
+### 1. Suscripción de Contactos (`POST /api/subscribe` o `POST /api/subscribers`)
+
+Crea un nuevo contacto o actualiza uno existente si el email ya existe en la base de datos. Al suscribirse o actualizarse, el estado del contacto pasa a `active`.
+
+#### Parámetros del Body (JSON)
+- `email` (string, requerido): Correo electrónico del contacto.
+- `name` (string, opcional): Nombre completo.
+- `company` (string, opcional): Nombre de la empresa.
+- `phone` (string, opcional): Número de teléfono.
+- `role` (string, opcional): Puesto o cargo.
+- `linkedin` (string, opcional): URL de perfil de LinkedIn.
+- `url` (string, opcional): URL del sitio web.
+- `tags` (array de strings, opcional): Etiquetas para segmentar al contacto.
+- `listIds` (array de números, opcional): IDs de las listas a las que asociar el contacto.
+
+#### Ejemplo de Petición con `curl`:
+```bash
+curl -X POST https://tu-dominio.com/api/subscribe \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: tu-api-secret-key" \
+  -d '{
+    "email": "contacto@ejemplo.com",
+    "name": "Juan Pérez",
+    "company": "Mi Empresa",
+    "tags": ["cliente", "lead"],
+    "listIds": [1, 2]
+  }'
+```
+
+#### Ejemplo de Petición con `fetch` en JavaScript:
+```javascript
+fetch('https://tu-dominio.com/api/subscribe', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'tu-api-secret-key'
+  },
+  body: JSON.stringify({
+    email: 'contacto@ejemplo.com',
+    name: 'Juan Pérez',
+    company: 'Mi Empresa',
+    tags: ['cliente'],
+    listIds: [1]
+  })
+})
+.then(res => res.json())
+.then(data => console.log('Contacto suscrito:', data))
+.catch(err => console.error('Error:', err));
+```
+
+### 2. Baja de Suscripción (`POST /api/unsubscribe`)
+
+Cambia el estado del contacto a `unsubscribed`.
+
+#### Parámetros del Body (JSON)
+- `email` (string, requerido): Correo electrónico del contacto a dar de baja.
+
+#### Ejemplo de Petición con `curl`:
+```bash
+curl -X POST https://tu-dominio.com/api/unsubscribe \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: tu-api-secret-key" \
+  -d '{
+    "email": "contacto@ejemplo.com"
+  }'
+```
+
+#### Ejemplo de Petición con `fetch` en JavaScript:
+```javascript
+fetch('https://tu-dominio.com/api/unsubscribe', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'tu-api-secret-key'
+  },
+  body: JSON.stringify({
+    email: 'contacto@ejemplo.com'
+  })
+})
+.then(res => res.json())
+.then(data => console.log('Baja completada:', data))
+.catch(err => console.error('Error:', err));
+```
+
+---
+
 - **Privacy**: Contact and campaign data persist in your local SQLite database. Your data **never** leaves your server and is not accessible by third parties.
 - **Ghost Mode**: High-level obfuscation (see the Ghost Mode section above for access details).
 
 ---
+
 
 ## 📄 Plantillas de Demo
 
