@@ -566,13 +566,14 @@ function addFaqItem() {
   if (!selectedElement.value || selectedElement.value.dataset.type !== 'FAQ') return
   const items = selectedElement.value.querySelectorAll('.faq-item')
   if (items.length === 0) return
-  const last = items[items.length - 1] as HTMLElement
-  const clone = last.cloneNode(true) as HTMLElement
   
-  // Inherit border color from last item
-  const lastStyle = window.getComputedStyle(last)
-  const bColor = lastStyle.borderTopColor && lastStyle.borderTopColor !== 'rgba(0, 0, 0, 0)' 
-    ? lastStyle.borderTopColor 
+  const current = (selectedSubElement.value?.closest('.faq-item') || items[items.length - 1]) as HTMLElement
+  const clone = current.cloneNode(true) as HTMLElement
+  
+  // Inherit border color from current item
+  const currentStyle = window.getComputedStyle(current)
+  const bColor = currentStyle.borderTopColor && currentStyle.borderTopColor !== 'rgba(0, 0, 0, 0)' 
+    ? currentStyle.borderTopColor 
     : '#f1f5f9'
 
   // Clean up styles for the clone to ensure proper spacing/border
@@ -582,10 +583,15 @@ function addFaqItem() {
   clone.style.marginBottom = '0'
   
   // Ensure consistent spacing
-  last.style.marginBottom = '20px'
-  last.style.borderBottom = 'none'
+  current.style.marginBottom = '20px'
+  current.style.borderBottom = 'none'
 
-  selectedElement.value.appendChild(clone)
+  current.parentNode?.insertBefore(clone, current.nextSibling)
+  
+  setTimeout(() => {
+    clone.click()
+  }, 50)
+
   import('~/composables/useIframeEngine').then(({ useIframeEngine }) => {
     useIframeEngine().refreshLayers()
     useIframeEngine().triggerAutosave(true)
@@ -602,8 +608,17 @@ function removeFaqItem() {
     return
   }
   
+  const sibling = (item.previousElementSibling?.closest('.faq-item') || item.nextElementSibling?.closest('.faq-item') || selectedElement.value?.querySelector('.faq-item')) as HTMLElement
+  
   item.remove()
   selectedSubElement.value = null
+  
+  if (sibling) {
+    setTimeout(() => {
+      sibling.click()
+    }, 50)
+  }
+
   import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
 }
 
@@ -617,10 +632,13 @@ function addSocialIcon(targetBlock?: HTMLElement) {
   if (!container) return
 
   const items = container.querySelectorAll('.social-item')
-  if (items.length > 0) {
-    const last = items[items.length - 1]
-    const clone = last.cloneNode(true) as HTMLElement
-    container.appendChild(clone)
+  const current = (selectedSubElement.value?.closest('.social-item') || items[items.length - 1]) as HTMLElement
+  if (current) {
+    const clone = current.cloneNode(true) as HTMLElement
+    current.parentNode?.insertBefore(clone, current.nextSibling)
+    setTimeout(() => {
+      clone.click()
+    }, 50)
   } else {
     const newIcon = document.createElement('a')
     newIcon.href = '#'
@@ -629,6 +647,9 @@ function addSocialIcon(targetBlock?: HTMLElement) {
     newIcon.style.margin = '0 8px'
     newIcon.innerHTML = `<img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" width="32" height="32" alt="Social">`
     container.appendChild(newIcon)
+    setTimeout(() => {
+      newIcon.click()
+    }, 50)
   }
   
   import('~/composables/useIframeEngine').then(({ useIframeEngine }) => {
@@ -649,8 +670,16 @@ function removeSocialIcon(targetItem?: HTMLElement) {
     return
   }
   
+  const sibling = (item.previousElementSibling?.closest('.social-item') || item.nextElementSibling?.closest('.social-item') || block?.querySelector('.social-item')) as HTMLElement
+  
   item.remove()
   if (selectedSubElement.value === item) selectedSubElement.value = null
+  
+  if (sibling) {
+    setTimeout(() => {
+      sibling.click()
+    }, 50)
+  }
   
   import('~/composables/useIframeEngine').then(({ useIframeEngine }) => {
     useIframeEngine().refreshLayers()
@@ -765,14 +794,32 @@ function addPricingItem() {
     return
   }
 
-  const lastItem = pricingItems[pricingItems.length - 1]
-  if (!lastItem) return
+  const currentItem = (selectedSubElement.value?.closest('.pricing-item') || pricingItems[pricingItems.length - 1]) as HTMLElement
+  if (!currentItem) return
   
-  const clone = lastItem.cloneNode(true) as HTMLElement
+  const clone = currentItem.cloneNode(true) as HTMLElement
+  
+  // Reset clone to default state so we don't duplicate the "featured" badge
+  const badge = Array.from(clone.children).find(c => (c as HTMLElement).style.position === 'absolute' && ((c as HTMLElement).style.top === '-12px' || (c as HTMLElement).innerText.toUpperCase().includes('POPULAR')));
+  if (badge) badge.remove();
+  
+  const borderColor = currentStyle.value?.config?.borderColor || '#e2e8f0';
+  clone.style.border = `1px solid ${borderColor}`;
+
+  const currentIndex = Array.from(pricingItems).indexOf(currentItem)
+
   // Add to a temporary place or just use the items list
-  lastItem.parentNode?.insertBefore(clone, lastItem.nextSibling)
+  currentItem.parentNode?.insertBefore(clone, currentItem.nextSibling)
   
   rebalancePricing(selectedElement.value)
+  
+  const allNewItems = selectedElement.value.querySelectorAll('.pricing-item')
+  const newClone = allNewItems[currentIndex + 1] as HTMLElement
+  if (newClone) {
+    setTimeout(() => {
+      newClone.click()
+    }, 50)
+  }
   
   import('~/composables/useIframeEngine').then(({ useIframeEngine }) => {
     useIframeEngine().refreshLayers()
@@ -799,8 +846,43 @@ function removePricingItem() {
   
   rebalancePricing(block)
   
+  const remaining = block.querySelector('.pricing-item') as HTMLElement
+  if (remaining) {
+    setTimeout(() => {
+      remaining.click()
+    }, 50)
+  }
+  
   import('~/composables/useIframeEngine').then(({ useIframeEngine }) => {
     useIframeEngine().refreshLayers()
+    useIframeEngine().triggerAutosave(true)
+  })
+}
+
+function togglePricingFeatured(targetItem?: HTMLElement) {
+  const item = targetItem || (selectedSubElement.value?.closest('.pricing-item') as HTMLElement)
+  if (!item) return
+  
+  const badge = Array.from(item.children).find(c => (c as HTMLElement).style.position === 'absolute' && ((c as HTMLElement).style.top === '-12px' || (c as HTMLElement).innerText.toUpperCase().includes('POPULAR')));
+  
+  const accentColor = currentStyle.value?.config?.accentColor || '#6366f1';
+  const borderColor = currentStyle.value?.config?.borderColor || '#e2e8f0';
+
+  if (badge) {
+    // Remove it
+    badge.remove();
+    item.style.border = `1px solid ${borderColor}`;
+  } else {
+    // Add it
+    const newBadge = document.createElement('div');
+    newBadge.style.cssText = `position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:${accentColor}; color:#ffffff; padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700; text-transform:uppercase; white-space:nowrap;`;
+    newBadge.innerText = 'Más Popular';
+    item.style.position = 'relative';
+    item.style.border = `2px solid ${accentColor}`;
+    item.prepend(newBadge);
+  }
+  
+  import('~/composables/useIframeEngine').then(({ useIframeEngine }) => {
     useIframeEngine().triggerAutosave(true)
   })
 }
@@ -906,13 +988,23 @@ function addMetricItem() {
     return
   }
 
-  const last = items[items.length - 1]
-  if (!last) return
+  const current = (selectedSubElement.value?.closest('.metric-item') || items[items.length - 1]) as HTMLElement
+  if (!current) return
+
+  const currentIndex = Array.from(items).indexOf(current)
   
-  const clone = last.cloneNode(true) as HTMLElement
-  last.closest('td')?.after(clone) // Temporary place
+  const clone = current.cloneNode(true) as HTMLElement
+  current.closest('td')?.after(clone) // Temporary place
   
   rebalanceMetrics(selectedElement.value)
+  
+  const allNewItems = selectedElement.value.querySelectorAll('.metric-item')
+  const newClone = allNewItems[currentIndex + 1] as HTMLElement
+  if (newClone) {
+    setTimeout(() => {
+      newClone.click()
+    }, 50)
+  }
   
   import('~/composables/useIframeEngine').then(({ useIframeEngine }) => {
     useIframeEngine().refreshLayers()
@@ -936,6 +1028,13 @@ function removeMetricItem() {
   item.remove()
   selectedSubElement.value = null
   rebalanceMetrics(block)
+  
+  const remaining = block.querySelector('.metric-item') as HTMLElement
+  if (remaining) {
+    setTimeout(() => {
+      remaining.click()
+    }, 50)
+  }
   
   import('~/composables/useIframeEngine').then(({ useIframeEngine }) => {
     useIframeEngine().refreshLayers()
@@ -1181,6 +1280,7 @@ export function useBlockEditor() {
     removeSocialIcon,
     addPricingItem,
     removePricingItem,
+    togglePricingFeatured,
     addMetricItem,
     removeMetricItem,
     updateImage,

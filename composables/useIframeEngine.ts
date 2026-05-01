@@ -455,10 +455,120 @@ function setupIframeEvents(doc: Document) {
     doc.body.appendChild(toolbar)
     return toolbar
   }
+  // ─── Metric Inline Toolbar Logic ───────────────────────────────────────────
+  const injectMetricToolbar = () => {
+    let toolbar = doc.getElementById('metric-inline-toolbar')
+    if (toolbar) return toolbar
+    toolbar = doc.createElement('div')
+    toolbar.id = 'metric-inline-toolbar'
+    toolbar.dataset.ignoreSave = 'true'
+    toolbar.style.cssText = 'position:absolute;display:none;background:#0f172a;border-radius:8px;padding:4px;gap:4px;z-index:2147483647;box-shadow:0 10px 15px-3px rgb(0 0 0/0.1);border:1px solid #334155;flex-direction:row;align-items:center;'
+    toolbar.innerHTML = `
+      <button type="button" data-action="add" title="Añadir" style="background:none;border:none;color:white;cursor:pointer;padding:6px;display:flex;border-radius:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+      <button type="button" data-action="remove" title="Eliminar" style="background:none;border:none;color:#f87171;cursor:pointer;padding:6px;display:flex;border-radius:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>`
+    toolbar.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('mouseover', () => (btn.style.background = '#1e293b'))
+      btn.addEventListener('mouseout', () => (btn.style.background = 'none'))
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        const action = btn.dataset.action
+        const targetItem = (window as any).activeMetricItem
+        if (!targetItem) return
+        import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
+          const editor = useBlockEditor()
+          if (action === 'add') {
+            const block = targetItem.closest('.editable-block') as HTMLElement
+            editor.addMetricItem(block)
+          } else if (action === 'remove') {
+            editor.removeMetricItem(targetItem)
+            toolbar!.style.display = 'none'
+          }
+        })
+      })
+    })
+    doc.body.appendChild(toolbar)
+    return toolbar
+  }
+
+  // ─── Pricing Inline Toolbar Logic ──────────────────────────────────────────
+  const injectPricingToolbar = () => {
+    let toolbar = doc.getElementById('pricing-inline-toolbar')
+    if (toolbar) return toolbar
+    toolbar = doc.createElement('div')
+    toolbar.id = 'pricing-inline-toolbar'
+    toolbar.dataset.ignoreSave = 'true'
+    toolbar.style.cssText = 'position:absolute;display:none;background:#0f172a;border-radius:8px;padding:4px;gap:4px;z-index:2147483647;box-shadow:0 10px 15px-3px rgb(0 0 0/0.1);border:1px solid #334155;flex-direction:row;align-items:center;'
+    toolbar.innerHTML = `
+      <button type="button" data-action="toggle-featured" title="Destacar" style="background:none;border:none;color:#fbbf24;cursor:pointer;padding:6px;display:flex;border-radius:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></button>
+      <button type="button" data-action="add" title="Añadir" style="background:none;border:none;color:white;cursor:pointer;padding:6px;display:flex;border-radius:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+      <button type="button" data-action="remove" title="Eliminar" style="background:none;border:none;color:#f87171;cursor:pointer;padding:6px;display:flex;border-radius:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>`
+    toolbar.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('mouseover', () => (btn.style.background = '#1e293b'))
+      btn.addEventListener('mouseout', () => (btn.style.background = 'none'))
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        const action = btn.dataset.action
+        const targetItem = (window as any).activePricingItem
+        if (!targetItem) return
+        import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
+          const editor = useBlockEditor()
+          if (action === 'toggle-featured') {
+            editor.togglePricingFeatured(targetItem)
+          } else if (action === 'add') {
+            const block = targetItem.closest('.editable-block') as HTMLElement
+            editor.addPricingItem(block)
+          } else if (action === 'remove') {
+            editor.removePricingItem(targetItem)
+            toolbar!.style.display = 'none'
+          }
+        })
+      })
+    })
+    doc.body.appendChild(toolbar)
+    return toolbar
+  }
+
+  // ─── FAQ Inline Toolbar Logic ──────────────────────────────────────────────
+  const injectFaqToolbar = () => {
+    let toolbar = doc.getElementById('faq-inline-toolbar')
+    if (toolbar) return toolbar
+    toolbar = doc.createElement('div')
+    toolbar.id = 'faq-inline-toolbar'
+    toolbar.dataset.ignoreSave = 'true'
+    toolbar.style.cssText = 'position:absolute;display:none;background:#0f172a;border-radius:8px;padding:4px;gap:4px;z-index:2147483647;box-shadow:0 10px 15px-3px rgb(0 0 0/0.1);border:1px solid #334155;flex-direction:row;align-items:center;'
+    toolbar.innerHTML = `
+      <button type="button" data-action="add" title="Añadir" style="background:none;border:none;color:white;cursor:pointer;padding:6px;display:flex;border-radius:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+      <button type="button" data-action="remove" title="Eliminar" style="background:none;border:none;color:#f87171;cursor:pointer;padding:6px;display:flex;border-radius:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>`
+    toolbar.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('mouseover', () => (btn.style.background = '#1e293b'))
+      btn.addEventListener('mouseout', () => (btn.style.background = 'none'))
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        const action = btn.dataset.action
+        const targetItem = (window as any).activeFaqItem
+        if (!targetItem) return
+        import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
+          const editor = useBlockEditor()
+          if (action === 'add') {
+            editor.addFaqItem()
+          } else if (action === 'remove') {
+            editor.removeFaqItem()
+            toolbar!.style.display = 'none'
+          }
+        })
+      })
+    })
+    doc.body.appendChild(toolbar)
+    return toolbar
+  }
+
   // ─── Main Click Handler ────────────────────────────────────────────────────
   doc.addEventListener('click', (e: MouseEvent) => {
     const target = e.target as HTMLElement
     const socialItem = target.closest('.social-item') as HTMLElement
+    const metricItem = target.closest('.metric-item') as HTMLElement
+    const pricingItem = target.closest('.pricing-item') as HTMLElement
+    const faqItem = target.closest('.faq-item') as HTMLElement
     
     if (socialItem) {
       e.preventDefault()
@@ -485,12 +595,93 @@ function setupIframeEvents(doc: Document) {
         useBlockEditor().selectElement(block, socialItem, true)
       })
       return
+    } else if (metricItem) {
+      e.preventDefault()
+      e.stopPropagation()
+      ;(window as any).activeMetricItem = metricItem
+      
+      const metricToolbar = injectMetricToolbar()
+      metricToolbar.style.display = 'flex'
+      const rect = metricItem.getBoundingClientRect()
+      const scrollTop = doc.documentElement.scrollTop || doc.body.scrollTop
+      let top = rect.top + scrollTop - 45
+      if (top < 5) top = rect.bottom + scrollTop + 5
+      metricToolbar.style.top = top + 'px'
+      metricToolbar.style.left = Math.max(5, rect.left + (rect.width / 2) - 45) + 'px'
+      
+      const block = metricItem.closest('.editable-block') as HTMLElement
+      if (selectedElement.value) selectedElement.value.classList.remove('selected')
+      selectedElement.value = block
+      selectedSubElement.value = metricItem
+      block.classList.add('selected')
+      activePanel.value = 'edit'
+
+      import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
+        useBlockEditor().selectElement(block, metricItem, true)
+      })
+      return
+    } else if (pricingItem) {
+      e.preventDefault()
+      e.stopPropagation()
+      ;(window as any).activePricingItem = pricingItem
+      
+      const pricingToolbar = injectPricingToolbar()
+      pricingToolbar.style.display = 'flex'
+      const rect = pricingItem.getBoundingClientRect()
+      const scrollTop = doc.documentElement.scrollTop || doc.body.scrollTop
+      let top = rect.top + scrollTop - 45
+      if (top < 5) top = rect.bottom + scrollTop + 5
+      pricingToolbar.style.top = top + 'px'
+      pricingToolbar.style.left = Math.max(5, rect.left + (rect.width / 2) - 45) + 'px'
+      
+      const block = pricingItem.closest('.editable-block') as HTMLElement
+      if (selectedElement.value) selectedElement.value.classList.remove('selected')
+      selectedElement.value = block
+      selectedSubElement.value = pricingItem
+      block.classList.add('selected')
+      activePanel.value = 'edit'
+
+      import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
+        useBlockEditor().selectElement(block, pricingItem, true)
+      })
+      return
+    } else if (faqItem) {
+      e.preventDefault()
+      e.stopPropagation()
+      ;(window as any).activeFaqItem = faqItem
+      
+      const faqToolbar = injectFaqToolbar()
+      faqToolbar.style.display = 'flex'
+      const rect = faqItem.getBoundingClientRect()
+      const scrollTop = doc.documentElement.scrollTop || doc.body.scrollTop
+      let top = rect.top + scrollTop - 45
+      if (top < 5) top = rect.bottom + scrollTop + 5
+      faqToolbar.style.top = top + 'px'
+      faqToolbar.style.left = Math.max(5, rect.left + (rect.width / 2) - 45) + 'px'
+      
+      const block = faqItem.closest('.editable-block') as HTMLElement
+      if (selectedElement.value) selectedElement.value.classList.remove('selected')
+      selectedElement.value = block
+      selectedSubElement.value = faqItem
+      block.classList.add('selected')
+      activePanel.value = 'edit'
+
+      import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
+        useBlockEditor().selectElement(block, faqItem, true)
+      })
+      return
     } else {
-      const existingToolbar = doc.getElementById('social-inline-toolbar')
-      if (existingToolbar) existingToolbar.style.display = 'none'
+      const existingSocialToolbar = doc.getElementById('social-inline-toolbar')
+      if (existingSocialToolbar) existingSocialToolbar.style.display = 'none'
+      const existingMetricToolbar = doc.getElementById('metric-inline-toolbar')
+      if (existingMetricToolbar) existingMetricToolbar.style.display = 'none'
+      const existingPricingToolbar = doc.getElementById('pricing-inline-toolbar')
+      if (existingPricingToolbar) existingPricingToolbar.style.display = 'none'
+      const existingFaqToolbar = doc.getElementById('faq-inline-toolbar')
+      if (existingFaqToolbar) existingFaqToolbar.style.display = 'none'
     }
 
-    if (target.closest('#floating-toolbar') || target.closest('#social-inline-toolbar')) return
+    if (target.closest('#floating-toolbar') || target.closest('#social-inline-toolbar') || target.closest('#metric-inline-toolbar') || target.closest('#pricing-inline-toolbar') || target.closest('#faq-inline-toolbar')) return
     if (target.closest('a')) e.preventDefault()
     
     if (target.tagName === 'IMG') {
@@ -851,6 +1042,16 @@ function applyStyleBase(style: EditorStyleBase, forceTheme = false, target?: HTM
         btn.style.background = style.config.accentColor
       }
     })
+    // 4. Pricing items
+    block.querySelectorAll('.pricing-item').forEach((item: any) => {
+      const badge = Array.from(item.children).find(c => (c as HTMLElement).style.position === 'absolute' && ((c as HTMLElement).style.top === '-12px' || (c as HTMLElement).innerText.toUpperCase().includes('POPULAR')));
+      if (badge) {
+        (badge as HTMLElement).style.backgroundColor = style.config.accentColor;
+        item.style.borderColor = style.config.accentColor;
+      } else {
+        item.style.borderColor = style.config.borderColor;
+      }
+    })
   })
 
   // Update the base <style> in head to keep it persistent for exports
@@ -900,7 +1101,7 @@ function getSurgicalCleanHtml(): string {
   const clone = doc.documentElement.cloneNode(true) as HTMLElement
 
   clone.querySelectorAll('.visor-drag-handle').forEach((h) => h.remove())
-  clone.querySelectorAll('#floating-toolbar, #social-inline-toolbar').forEach((t) => t.remove())
+  clone.querySelectorAll('#floating-toolbar, #social-inline-toolbar, #metric-inline-toolbar, #pricing-inline-toolbar, #faq-inline-toolbar').forEach((t) => t.remove())
   clone.querySelectorAll('#drop-placeholder').forEach((p) => p.remove())
 
   clone.querySelectorAll('.selected').forEach((s) => s.classList.remove('selected'))

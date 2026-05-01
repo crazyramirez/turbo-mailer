@@ -481,72 +481,13 @@ const editableTypes = [
           />
         </div>
 
-        <!-- Pricing Controls -->
-        <template v-if="selectedElement.dataset.type === 'Precios'">
-          <div class="sub-edit-grid" style="grid-column: span 2; margin-top: 10px;">
-            <div v-if="selectedSubElement?.closest('.pricing-item')" class="sub-edit-header" style="margin-bottom: 8px;">
-              <CreditCard :size="12" />
-              <span>{{ $t('editor.edit_pricing_selected') || 'Plan Seleccionado' }}</span>
-            </div>
-            <button v-if="selectedSubElement?.closest('.pricing-item')" @click="removePricingItem" class="c-btn btn-danger-soft sub-grid-full">
-              <Trash2 :size="14" /> {{ $t('editor.edit_delete_pricing') || 'Eliminar Plan' }}
-            </button>
-            <button @click="addPricingItem" class="c-btn full-width sub-grid-full mt-10">
-              <Plus :size="14" /> {{ $t('editor.edit_add_pricing') || 'Añadir Plan' }}
-            </button>
-          </div>
-        </template>
 
-        <!-- Metrics Controls -->
-        <template v-if="selectedElement.dataset.type === 'Métricas'">
-          <div class="sub-edit-grid" style="grid-column: span 2; margin-top: 10px;">
-            <div v-if="selectedSubElement?.closest('.metric-item')" class="sub-edit-header" style="margin-bottom: 8px;">
-              <Zap :size="12" />
-              <span>{{ $t('editor.edit_metrics_selected') || 'Estadística Seleccionada' }}</span>
-            </div>
-            <button v-if="selectedSubElement?.closest('.metric-item')" @click="removeMetricItem" class="c-btn btn-danger-soft sub-grid-full">
-              <Trash2 :size="14" /> {{ $t('editor.edit_remove_metric') || 'Eliminar Estadística' }}
-            </button>
-            <button @click="addMetricItem" class="c-btn full-width sub-grid-full mt-10">
-              <Plus :size="14" /> {{ $t('editor.edit_add_metric') || 'Añadir Estadística' }}
-            </button>
-          </div>
-        </template>
 
-        <!-- FAQ Controls -->
-        <template v-if="selectedElement.dataset.type === 'FAQ'">
-          <div class="sub-edit-grid" style="grid-column: span 2; margin-top: 10px;">
-            <div v-if="selectedSubElement?.closest('.faq-item')" class="sub-edit-header" style="margin-bottom: 8px;">
-              <HelpCircle :size="12" />
-              <span>{{ $t('editor.edit_faq_item_selected') }}</span>
-            </div>
-            <button v-if="selectedSubElement?.closest('.faq-item')" @click="removeFaqItem" class="c-btn btn-danger-soft sub-grid-full">
-              <Trash2 :size="14" /> {{ $t('editor.edit_delete_faq') }}
-            </button>
-            <button @click="addFaqItem" class="c-btn full-width sub-grid-full mt-10">
-              <Plus :size="14" /> {{ $t('editor.edit_add_faq') }}
-            </button>
-          </div>
-        </template>
 
-        <!-- Social Controls -->
-        <template v-if="selectedElement.dataset.type === 'Redes Sociales'">
-          <div class="sub-edit-grid" style="grid-column: span 2; margin-top: 10px;">
-            <div v-if="selectedSubElement?.closest('.social-item')" class="sub-edit-header" style="margin-bottom: 8px;">
-              <Share2 :size="12" />
-              <span>{{ $t('editor.edit_social_selected') || 'Red Social Seleccionada' }}</span>
-            </div>
-            <button v-if="selectedSubElement?.closest('.social-item')" @click="updateImage" class="c-btn highlight-btn sub-grid-full" style="margin-bottom: 8px;">
-              <ImageIcon :size="14" /> {{ $t('editor.edit_image') }} / {{ $t('editor.edit_link') }}
-            </button>
-            <button v-if="selectedSubElement?.closest('.social-item')" @click="removeSocialIcon" class="c-btn btn-danger-soft sub-grid-full">
-              <Trash2 :size="14" /> {{ $t('editor.edit_delete_social') || 'Eliminar Red' }}
-            </button>
-            <button @click="addSocialIcon" class="c-btn full-width sub-grid-full mt-10">
-              <Plus :size="14" /> {{ $t('editor.edit_add_social') || 'Añadir Red' }}
-            </button>
-          </div>
-        </template>
+
+
+
+
 
         <template v-if="selectedElement.dataset.type === 'Botón'">
           <div
