@@ -126,7 +126,7 @@ TurboMailer is optimized to comply with strict regulations from **Apple (iCloud)
 - **Block Assistant**: Improve individual blocks while preserving HTML and dynamic variables with a single click.
 - **Full Template Generator**: Create entire campaigns from scratch through a guided AI conversation.
 - **Contextual Styles**: Automatically chooses the visual theme (Viseni, Corporate, Tech Noir, etc.) that best fits your sector.
-- **AI-Driven Images with Persistence**: Generates professional images via *Pollinations.ai* and automatically downloads them to your local server to ensure stability and privacy.
+- **AI-Driven Images with Persistence**: Generates professional images via _Pollinations.ai_ and automatically downloads them to your local server to ensure stability and privacy.
 - **Persuasive Copywriting**: Generates conversion-optimized texts, including effective email subject lines.
 
 ### 🌐 Multi-language (i18n)
@@ -223,7 +223,12 @@ SQLite in `./data/turbomailer.db` managed with Drizzle ORM. Main tables:
    Rename `.env.template` to `.env` in the project root and complete the fields:
 
    ```env
-    # Acceso a la Aplicación (requerido)
+    # Application Access (required)
+    # Generate hash: npm run hash-password
+    # SECURITY NOTE: This is a BCrypt hash of your master password. BCrypt is a slow,
+    # salted hashing algorithm designed to be resistant to brute-force attacks.
+    # By storing only the hash, your real password is never present in the database
+    # or server memory, providing protection even if the environment is compromised.
     APP_PASSWORD=tu-contraseña-de-acceso
     PORTAL_KEY=admin
 
@@ -315,11 +320,13 @@ To ensure maximum privacy, TurboMailer is designed to be invisible to curious vi
 For maximum security, TurboMailer supports **BCrypt** hashed passwords in the `APP_PASSWORD` environment variable. By storing a hash, your real password is never present in the server's plain text or memory.
 
 You can generate a hash of your password using the following command:
+
 ```bash
 npm run hash-password
 # Or by passing the password directly as an argument:
 npm run hash-password my-secure-password
 ```
+
 _Paste the generated hash into the `APP_PASSWORD` field of your `.env` file._
 
 ## 🔑 Example: Configuration with Gmail
@@ -394,11 +401,11 @@ The app uses Gmail SMTP with a 16-digit app password (not your normal password).
 
 ### Resource Management (Images)
 
-| Method | Route            | Description                             |
-| ------ | ---------------- | --------------------------------------- |
-| GET    | `/api/uploads`   | List images stored on the server        |
-| POST   | `/api/uploads`   | Upload and resize images (1200px)       |
-| DELETE | `/api/uploads`   | Physically delete image file            |
+| Method | Route          | Description                       |
+| ------ | -------------- | --------------------------------- |
+| GET    | `/api/uploads` | List images stored on the server  |
+| POST   | `/api/uploads` | Upload and resize images (1200px) |
+| DELETE | `/api/uploads` | Physically delete image file      |
 
 ---
 
