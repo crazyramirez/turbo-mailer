@@ -35,9 +35,9 @@ const isImprovingAI = ref(false)
 
 // ─── Selection ───────────────────────────────────────────────────────────────
 
-function selectElement(el: HTMLElement, subEl?: HTMLElement) {
+function selectElement(el: HTMLElement, subEl?: HTMLElement, skipScroll = false) {
   if (selectedElement.value) selectedElement.value.classList.remove('selected')
-
+  
   selectedElement.value = el
   selectedSubElement.value = subEl || null
   el.classList.add('selected')
@@ -72,7 +72,9 @@ function selectElement(el: HTMLElement, subEl?: HTMLElement) {
   }
 
   activePanel.value = 'edit'
-  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  if (!skipScroll) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }
 
   const elements = el.querySelectorAll('div, p, span, h1, h2, h3, td, b, strong, i, u, font, em')
   if (elements.length > 0) {
@@ -560,14 +562,399 @@ function addButton() {
   import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
 }
 
+function addFaqItem() {
+  if (!selectedElement.value || selectedElement.value.dataset.type !== 'FAQ') return
+  const items = selectedElement.value.querySelectorAll('.faq-item')
+  if (items.length === 0) return
+  const last = items[items.length - 1] as HTMLElement
+  const clone = last.cloneNode(true) as HTMLElement
+  
+  // Inherit border color from last item
+  const lastStyle = window.getComputedStyle(last)
+  const bColor = lastStyle.borderTopColor && lastStyle.borderTopColor !== 'rgba(0, 0, 0, 0)' 
+    ? lastStyle.borderTopColor 
+    : '#f1f5f9'
+
+  // Clean up styles for the clone to ensure proper spacing/border
+  clone.style.marginTop = '20px'
+  clone.style.paddingTop = '20px'
+  clone.style.borderTop = `1px solid ${bColor}`
+  clone.style.marginBottom = '0'
+  
+  // Ensure consistent spacing
+  last.style.marginBottom = '20px'
+  last.style.borderBottom = 'none'
+
+  selectedElement.value.appendChild(clone)
+  import('~/composables/useIframeEngine').then(({ useIframeEngine }) => {
+    useIframeEngine().refreshLayers()
+    useIframeEngine().triggerAutosave(true)
+  })
+}
+
+function removeFaqItem() {
+  const item = selectedSubElement.value?.closest('.faq-item') as HTMLElement
+  if (!item) return
+  const count = selectedElement.value?.querySelectorAll('.faq-item')?.length || 0
+  const i18n = (useNuxtApp().$i18n as any)
+  if (count <= 1) {
+    showToast(i18n.t('editor.faq_min_error') || 'At least one FAQ item is required', 'info')
+    return
+  }
+  
+  item.remove()
+  selectedSubElement.value = null
+  import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
+}
+
+function addSocialIcon(targetBlock?: HTMLElement) {
+  const block = targetBlock || (selectedElement.value?.dataset.type === 'Redes Sociales' ? selectedElement.value : null)
+  if (!block) return
+  
+  // Find the icons container (usually the last div in the block)
+  const divs = block.querySelectorAll(':scope > div')
+  const container = divs[divs.length - 1] as HTMLElement
+  if (!container) return
+
+  const items = container.querySelectorAll('.social-item')
+  if (items.length > 0) {
+    const last = items[items.length - 1]
+    const clone = last.cloneNode(true) as HTMLElement
+    container.appendChild(clone)
+  } else {
+    const newIcon = document.createElement('a')
+    newIcon.href = '#'
+    newIcon.className = 'social-item'
+    newIcon.style.display = 'inline-block'
+    newIcon.style.margin = '0 8px'
+    newIcon.innerHTML = `<img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" width="32" height="32" alt="Social">`
+    container.appendChild(newIcon)
+  }
+  
+  import('~/composables/useIframeEngine').then(({ useIframeEngine }) => {
+    useIframeEngine().refreshLayers()
+    useIframeEngine().triggerAutosave(true)
+  })
+}
+
+function removeSocialIcon(targetItem?: HTMLElement) {
+  const item = targetItem || (selectedSubElement.value?.closest('.social-item') as HTMLElement)
+  if (!item) return
+  
+  const block = item.closest('.editable-block') as HTMLElement
+  const count = block?.querySelectorAll('.social-item')?.length || 0
+  const i18n = (useNuxtApp().$i18n as any)
+  if (count <= 1) {
+    showToast(i18n.t('editor.social_min_error') || 'At least one social icon is required', 'info')
+    return
+  }
+  
+  item.remove()
+  if (selectedSubElement.value === item) selectedSubElement.value = null
+  
+  import('~/composables/useIframeEngine').then(({ useIframeEngine }) => {
+    useIframeEngine().refreshLayers()
+    useIframeEngine().triggerAutosave(true)
+  })
+}
+
+function rebalancePricing(block: HTMLElement) {
+  const table = block.querySelector('table')
+  if (!table) return
+  
+  // 1. Collect all pricing items and clone them to keep them safe
+  const items = Array.from(block.querySelectorAll('.pricing-item')).map(el => el.cloneNode(true) as HTMLElement)
+  if (items.length === 0) return
+
+  // 2. Clear the table
+  table.innerHTML = ''
+  
+  // 3. Define the intelligent chunks
+  const chunks: HTMLElement[][] = []
+  const count = items.length
+  
+  if (count === 4) {
+    chunks.push(items.slice(0, 2))
+    chunks.push(items.slice(2, 4))
+  } else if (count === 5) {
+    chunks.push(items.slice(0, 3))
+    chunks.push(items.slice(3, 5))
+  } else {
+    // Default: chunks of 3
+    for (let i = 0; i < count; i += 3) {
+      chunks.push(items.slice(i, i + 3))
+    }
+  }
+
+  // 4. Reconstruct the table with centered rows
+  chunks.forEach((chunk, rowIndex) => {
+    // Add vertical spacer between rows
+    if (rowIndex > 0) {
+      const spacerRow = document.createElement('tr')
+      spacerRow.innerHTML = `<td style="height:32px; line-height:32px; font-size:1px;">&nbsp;</td>`
+      table.appendChild(spacerRow)
+    }
+
+    const row = document.createElement('tr')
+    const mainTd = document.createElement('td')
+    mainTd.setAttribute('align', 'center')
+    
+    // Create an inner table for this row to keep it centered
+    const innerTable = document.createElement('table')
+    innerTable.setAttribute('cellpadding', '0')
+    innerTable.setAttribute('cellspacing', '0')
+    innerTable.setAttribute('border', '0')
+    innerTable.setAttribute('align', 'center')
+    innerTable.style.margin = '0 auto'
+    
+    const innerRow = document.createElement('tr')
+    
+    // Calculate width based on chunk size
+    // 3 items -> 31% each, 2 items -> 48% each, 1 item -> 100%
+    let itemWidth = '31%'
+    let tableWidth = '100%'
+    let spacerWidth = '3.5%'
+
+    if (chunk.length === 2) {
+      itemWidth = '48%'
+      tableWidth = '90%' // Slightly narrower for 2 items to prevent overlapping
+      spacerWidth = '4%'
+    } else if (chunk.length === 1) {
+      itemWidth = '100%'
+      tableWidth = '60%' // Narrower for single item centering
+    }
+
+    innerTable.setAttribute('width', tableWidth)
+    
+    chunk.forEach((item, itemIndex) => {
+      const td = document.createElement('td')
+      td.setAttribute('width', itemWidth)
+      td.setAttribute('valign', 'top')
+      
+      // Reset item styles to ensure they fit the new container
+      item.style.margin = '0'
+      item.style.width = '100%'
+      item.style.boxSizing = 'border-box'
+      
+      td.appendChild(item)
+      innerRow.appendChild(td)
+      
+      // Add horizontal spacer
+      if (itemIndex < chunk.length - 1) {
+        const spacer = document.createElement('td')
+        spacer.setAttribute('width', spacerWidth)
+        spacer.innerHTML = '&nbsp;'
+        innerRow.appendChild(spacer)
+      }
+    })
+    
+    innerTable.appendChild(innerRow)
+    mainTd.appendChild(innerTable)
+    row.appendChild(mainTd)
+    table.appendChild(row)
+  })
+}
+
+function addPricingItem() {
+  if (!selectedElement.value || selectedElement.value.dataset.type !== 'Precios') return
+  
+  const pricingItems = selectedElement.value.querySelectorAll('.pricing-item')
+  if (pricingItems.length >= 6) {
+    const i18n = (useNuxtApp().$i18n as any)
+    showToast(i18n.t('editor.pricing_max_error') || 'Maximum 6 plans allowed', 'info')
+    return
+  }
+
+  const lastItem = pricingItems[pricingItems.length - 1]
+  if (!lastItem) return
+  
+  const clone = lastItem.cloneNode(true) as HTMLElement
+  // Add to a temporary place or just use the items list
+  lastItem.parentNode?.insertBefore(clone, lastItem.nextSibling)
+  
+  rebalancePricing(selectedElement.value)
+  
+  import('~/composables/useIframeEngine').then(({ useIframeEngine }) => {
+    useIframeEngine().refreshLayers()
+    useIframeEngine().triggerAutosave(true)
+  })
+}
+
+function removePricingItem() {
+  const item = (selectedSubElement.value?.closest('.pricing-item') || selectedSubElement.value?.closest('td[width="31%"]')) as HTMLElement
+  if (!item) return
+  
+  const block = item.closest('.editable-block') as HTMLElement
+  if (!block) return
+  
+  const allItems = block.querySelectorAll('.pricing-item')
+  if (allItems.length <= 1) {
+    const i18n = (useNuxtApp().$i18n as any)
+    showToast(i18n.t('editor.pricing_min_error') || 'At least one pricing plan is required', 'info')
+    return
+  }
+  
+  item.remove()
+  selectedSubElement.value = null
+  
+  rebalancePricing(block)
+  
+  import('~/composables/useIframeEngine').then(({ useIframeEngine }) => {
+    useIframeEngine().refreshLayers()
+    useIframeEngine().triggerAutosave(true)
+  })
+}
+
+function rebalanceMetrics(block: HTMLElement) {
+  const table = block.querySelector('.metrics-table') as HTMLTableElement
+  if (!table) return
+  
+  // Use a 6-column grid for perfect alignment (LCM of 1, 2, 3)
+  table.style.tableLayout = 'fixed'
+  table.setAttribute('width', '100%')
+
+  const items = Array.from(block.querySelectorAll('.metric-item')).map(el => el.cloneNode(true) as HTMLElement)
+  const count = items.length
+  if (count === 0) return
+
+  table.innerHTML = ''
+  
+  const rows: HTMLElement[][] = []
+  
+  if (count === 4) {
+    rows.push([items[0], items[1]])
+    rows.push([items[2], items[3]])
+  } else if (count === 2) {
+    rows.push([items[0], items[1]])
+  } else {
+    for (let i = 0; i < count; i += 3) {
+      rows.push(items.slice(i, i + 3))
+    }
+  }
+
+  rows.forEach((rowItems, rowIndex) => {
+    const tr = document.createElement('tr')
+    
+    // CASE: 5 Items - Pyramid centering logic
+    if (count === 5 && rowItems.length === 2) {
+      // Row 2 of 5: [Spacer(1)] [Item(2)] [Item(2)] [Spacer(1)] = 6 cols
+      const spacerLeft = document.createElement('td')
+      spacerLeft.setAttribute('colspan', '1')
+      tr.appendChild(spacerLeft)
+      
+      rowItems.forEach((item) => {
+        const td = document.createElement('td')
+        td.setAttribute('colspan', '2')
+        td.setAttribute('valign', 'top')
+        td.setAttribute('align', 'center')
+        td.className = 'metric-td'
+        td.appendChild(item)
+        tr.appendChild(td)
+      })
+      
+      const spacerRight = document.createElement('td')
+      spacerRight.setAttribute('colspan', '1')
+      tr.appendChild(spacerRight)
+    } 
+    // CASE: 4 Items - 2x2 grid
+    else if (count === 4) {
+      rowItems.forEach((item) => {
+        const td = document.createElement('td')
+        td.setAttribute('colspan', '3') // 3+3 = 6
+        td.setAttribute('valign', 'top')
+        td.setAttribute('align', 'center')
+        td.className = 'metric-td'
+        td.appendChild(item)
+        tr.appendChild(td)
+      })
+    }
+    // CASE: 2 Items - 1x2 grid
+    else if (count === 2) {
+      rowItems.forEach((item) => {
+        const td = document.createElement('td')
+        td.setAttribute('colspan', '3') // 3+3 = 6
+        td.setAttribute('valign', 'top')
+        td.setAttribute('align', 'center')
+        td.className = 'metric-td'
+        td.appendChild(item)
+        tr.appendChild(td)
+      })
+    }
+    // CASE: Standard (1, 3, or Row 1 of 5/6)
+    else {
+      const colspan = (6 / rowItems.length).toString()
+      rowItems.forEach((item) => {
+        const td = document.createElement('td')
+        td.setAttribute('colspan', colspan)
+        td.setAttribute('valign', 'top')
+        td.setAttribute('align', 'center')
+        td.className = 'metric-td'
+        td.appendChild(item)
+        tr.appendChild(td)
+      })
+    }
+    table.appendChild(tr)
+  })
+}
+
+function addMetricItem() {
+  if (!selectedElement.value || selectedElement.value.dataset.type !== 'Métricas') return
+  
+  const items = selectedElement.value.querySelectorAll('.metric-item')
+  if (items.length >= 6) {
+    showToast((useNuxtApp().$i18n as any).t('editor.metrics_max_error') || 'Maximum 6 metrics allowed', 'info')
+    return
+  }
+
+  const last = items[items.length - 1]
+  if (!last) return
+  
+  const clone = last.cloneNode(true) as HTMLElement
+  last.closest('td')?.after(clone) // Temporary place
+  
+  rebalanceMetrics(selectedElement.value)
+  
+  import('~/composables/useIframeEngine').then(({ useIframeEngine }) => {
+    useIframeEngine().refreshLayers()
+    useIframeEngine().triggerAutosave(true)
+  })
+}
+
+function removeMetricItem() {
+  const item = selectedSubElement.value?.closest('.metric-item') as HTMLElement
+  if (!item) return
+  
+  const block = item.closest('.editable-block') as HTMLElement
+  if (!block) return
+  
+  const all = block.querySelectorAll('.metric-item')
+  if (all.length <= 1) {
+    showToast((useNuxtApp().$i18n as any).t('editor.metrics_min_error') || 'At least one metric is required', 'info')
+    return
+  }
+  
+  item.remove()
+  selectedSubElement.value = null
+  rebalanceMetrics(block)
+  
+  import('~/composables/useIframeEngine').then(({ useIframeEngine }) => {
+    useIframeEngine().refreshLayers()
+    useIframeEngine().triggerAutosave(true)
+  })
+}
+
 function updateImage() {
   if (!selectedElement.value) return
-  const img = selectedElement.value.querySelector('img')
+  
+  // Prefer the image in the selected sub-element, fallback to first image in block
+  const subImg = (selectedSubElement.value?.tagName === 'IMG' 
+    ? selectedSubElement.value 
+    : selectedSubElement.value?.querySelector('img')) as HTMLImageElement
+    
+  const img = subImg || selectedElement.value.querySelector('img')
   if (!img) return
-  const i18n = (useNuxtApp().$i18n as any)
-  openPrompt(i18n.t('editor.image_edit_title'), i18n.t('editor.image_edit_label'), img.src, 'text', (val) => {
-    if (val) img.src = val
-  })
+  
+  openImageModal(img as HTMLImageElement)
 }
 
 // ─── AI Improvement ──────────────────────────────────────────────────────────
@@ -788,6 +1175,14 @@ export function useBlockEditor() {
     updateThisButtonRadius,
     removeThisButton,
     addButton,
+    addFaqItem,
+    removeFaqItem,
+    addSocialIcon,
+    removeSocialIcon,
+    addPricingItem,
+    removePricingItem,
+    addMetricItem,
+    removeMetricItem,
     updateImage,
     openImageModal,
     applyImageSettings,

@@ -65,7 +65,7 @@ const { handleSidebarDragStart, handleSidebarDragEnd } = useBlockEditor();
           @dragend="handleSidebarDragEnd($event)"
           class="module-card"
         >
-          <component :is="block.icon" :size="20" class="mod-icon" />
+          <component :is="block.icon" :size="16" class="mod-icon" />
           <span>{{ $t("editor.module_" + block.id) }}</span>
         </div>
       </div>

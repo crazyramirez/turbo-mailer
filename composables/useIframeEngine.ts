@@ -14,6 +14,7 @@ const {
   iframeRef,
   htmlContent,
   selectedElement,
+  selectedSubElement,
   layerList,
   undoStack,
   redoStack,
@@ -102,6 +103,16 @@ function initBlock(el: HTMLElement, doc: Document) {
     else if (el.classList.contains('cta-block')) el.dataset.type = 'Botón'
     else if (el.classList.contains('methodology-block')) el.dataset.type = 'Nota'
     else if (el.classList.contains('grid-block')) el.dataset.type = 'Grid'
+    else if (el.classList.contains('hero-block')) el.dataset.type = 'Hero'
+    else if (el.classList.contains('testimonials-block')) el.dataset.type = 'Testimonios'
+    else if (el.classList.contains('pricing-block')) el.dataset.type = 'Precios'
+    else if (el.classList.contains('video-block')) el.dataset.type = 'Video'
+    else if (el.classList.contains('social-block')) el.dataset.type = 'Redes Sociales'
+    else if (el.classList.contains('divider-block')) el.dataset.type = 'Separador'
+    else if (el.classList.contains('faq-block')) el.dataset.type = 'FAQ'
+    else if (el.classList.contains('presence-block')) el.dataset.type = 'Presencia'
+    else if (el.classList.contains('unsubscribe-block')) el.dataset.type = 'Unsuscribir'
+    else if (el.classList.contains('metrics-block')) el.dataset.type = 'Métricas'
     else el.dataset.type = 'Bloque'
   }
 
@@ -305,73 +316,217 @@ function setupIframeEvents(doc: Document) {
   iframeEventsController = new AbortController()
   const { signal } = iframeEventsController
 
-  // Keyboard shortcuts
-  doc.addEventListener(
-    'keydown',
-    (e: any) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+  // ─── Keyboard Shortcuts ───────────────────────────────────────────────────
+  doc.addEventListener('keydown', (e: any) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault()
+      import('~/composables/useTemplateManager').then(({ useTemplateManager }) => {
+        useTemplateManager().handleSave()
+      })
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+      e.preventDefault()
+      undo()
+    }
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'Z'))) {
+      e.preventDefault()
+      redo()
+    }
+    if (e.key === 'Delete') {
+      const isEditing = (e.target as HTMLElement)?.isContentEditable
+      if (!isEditing && selectedElement.value) {
         e.preventDefault()
-        import('~/composables/useTemplateManager').then(({ useTemplateManager }) => {
-          useTemplateManager().handleSave()
+        import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
+          useBlockEditor().deleteSelectedBlock()
         })
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
-        e.preventDefault()
-        undo()
-      }
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'Z'))) {
-        e.preventDefault()
-        redo()
-      }
-      if (e.key === 'Delete') {
-        const isEditing = (e.target as HTMLElement)?.isContentEditable
-        if (!isEditing && selectedElement.value) {
-          e.preventDefault()
-          import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
-            useBlockEditor().deleteSelectedBlock()
-          })
+    }
+  }, { signal })
+
+  // ─── Natural Editing: Pricing Features ─────────────────────────────────────
+  doc.addEventListener('keydown', (e: KeyboardEvent) => {
+    const target = e.target as HTMLElement
+    
+    if (e.key === 'Enter' && target.classList.contains('pricing-feature')) {
+      e.preventDefault()
+      e.stopImmediatePropagation()
+      target.style.marginBottom = '8px'
+      const clone = target.cloneNode(true) as HTMLElement
+      clone.innerText = '✓ ' 
+      clone.style.marginBottom = '8px'
+      clone.style.display = 'block'
+      target.parentNode?.insertBefore(clone, target.nextSibling)
+      
+      setTimeout(() => {
+        clone.focus()
+        const range = doc.createRange()
+        const sel = doc.getSelection()
+        if (clone.firstChild) {
+          range.setStart(clone.firstChild, clone.innerText.length)
+          range.collapse(true)
+          sel?.removeAllRanges()
+          sel?.addRange(range)
         }
-      }
-    },
-    { signal },
-  )
+      }, 0)
+      triggerAutosave(true)
+      return
+    }
 
-  // Click handler
-  doc.addEventListener(
-    'click',
-    (e) => {
-      const target = e.target as HTMLElement
-      if (target.closest('a')) e.preventDefault()
-      if (target.closest('#floating-toolbar')) {
-        e.stopPropagation()
-        return
-      }
-      if (target.tagName === 'IMG') {
+    if (e.key === 'Backspace' && target.classList.contains('pricing-feature')) {
+      const text = target.innerText.replace('✓', '').trim()
+      if (text === '') {
         e.preventDefault()
+        const prev = target.previousElementSibling as HTMLElement
+        if (prev) {
+          prev.focus()
+          const range = doc.createRange()
+          const sel = doc.getSelection()
+          range.selectNodeContents(prev)
+          range.collapse(false)
+          sel?.removeAllRanges()
+          sel?.addRange(range)
+        }
+        target.remove()
+        triggerAutosave(true)
+      }
+    }
+  }, { signal })
+
+  // ─── Click-to-Add: Pricing Features ────────────────────────────────────────
+  doc.addEventListener('click', (e: MouseEvent) => {
+    const target = e.target as HTMLElement
+    if (target.classList.contains('pricing-features') && e.target === e.currentTarget) {
+      const features = target.querySelectorAll('.pricing-feature')
+      const last = features[features.length - 1]
+      let clone: HTMLElement
+      if (last) {
+        clone = last.cloneNode(true) as HTMLElement
+      } else {
+        clone = doc.createElement('div')
+        clone.className = 'pricing-feature'
+        clone.dataset.toggle = 'pricing-feature'
+        clone.style.fontFamily = 'Arial'
+        clone.style.fontSize = '13px'
+        clone.style.color = '#475569'
+        clone.style.marginBottom = '8px'
+        clone.contentEditable = 'true'
+      }
+      clone.innerText = '✓ '
+      target.appendChild(clone)
+      setTimeout(() => clone.focus(), 0)
+      triggerAutosave(true)
+    }
+  }, { signal })
+
+  // ─── Social Inline Toolbar Logic ───────────────────────────────────────────
+  const injectSocialToolbar = () => {
+    let toolbar = doc.getElementById('social-inline-toolbar')
+    if (toolbar) return toolbar
+    toolbar = doc.createElement('div')
+    toolbar.id = 'social-inline-toolbar'
+    toolbar.dataset.ignoreSave = 'true'
+    toolbar.style.cssText = 'position:absolute;display:none;background:#0f172a;border-radius:8px;padding:4px;gap:4px;z-index:2147483647;box-shadow:0 10px 15px-3px rgb(0 0 0/0.1);border:1px solid #334155;flex-direction:row;align-items:center;'
+    toolbar.innerHTML = `
+      <button type="button" data-action="edit" title="Editar" style="background:none;border:none;color:white;cursor:pointer;padding:6px;display:flex;border-radius:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+      <button type="button" data-action="add" title="Añadir" style="background:none;border:none;color:white;cursor:pointer;padding:6px;display:flex;border-radius:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+      <button type="button" data-action="remove" title="Eliminar" style="background:none;border:none;color:#f87171;cursor:pointer;padding:6px;display:flex;border-radius:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>`
+    toolbar.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('mouseover', () => (btn.style.background = '#1e293b'))
+      btn.addEventListener('mouseout', () => (btn.style.background = 'none'))
+      btn.addEventListener('click', (e) => {
         e.stopPropagation()
+        const action = btn.dataset.action
+        const targetIcon = (window as any).activeSocialItem
+        if (!targetIcon) return
         import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
-          useBlockEditor().openImageModal(target as HTMLImageElement)
+          const editor = useBlockEditor()
+          if (action === 'edit') {
+            editor.openImageModal(targetIcon.querySelector('img') || targetIcon as any)
+          } else if (action === 'add') {
+            const block = targetIcon.closest('.editable-block') as HTMLElement
+            editor.addSocialIcon(block)
+          } else if (action === 'remove') {
+            editor.removeSocialIcon(targetIcon)
+            toolbar!.style.display = 'none'
+          }
+        })
+      })
+    })
+    doc.body.appendChild(toolbar)
+    return toolbar
+  }
+  // ─── Main Click Handler ────────────────────────────────────────────────────
+  doc.addEventListener('click', (e: MouseEvent) => {
+    const target = e.target as HTMLElement
+    const socialItem = target.closest('.social-item') as HTMLElement
+    
+    if (socialItem) {
+      e.preventDefault()
+      e.stopPropagation()
+      ;(window as any).activeSocialItem = socialItem
+      
+      const socialToolbar = injectSocialToolbar()
+      socialToolbar.style.display = 'flex'
+      const rect = socialItem.getBoundingClientRect()
+      const scrollTop = doc.documentElement.scrollTop || doc.body.scrollTop
+      let top = rect.top + scrollTop - 45
+      if (top < 5) top = rect.bottom + scrollTop + 5
+      socialToolbar.style.top = top + 'px'
+      socialToolbar.style.left = Math.max(5, rect.left + (rect.width / 2) - 45) + 'px'
+      
+      const block = socialItem.closest('.editable-block') as HTMLElement
+      if (selectedElement.value) selectedElement.value.classList.remove('selected')
+      selectedElement.value = block
+      selectedSubElement.value = socialItem
+      block.classList.add('selected')
+      activePanel.value = 'edit'
+
+      import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
+        useBlockEditor().selectElement(block, socialItem, true)
+      })
+      return
+    } else {
+      const existingToolbar = doc.getElementById('social-inline-toolbar')
+      if (existingToolbar) existingToolbar.style.display = 'none'
+    }
+
+    if (target.closest('#floating-toolbar') || target.closest('#social-inline-toolbar')) return
+    if (target.closest('a')) e.preventDefault()
+    
+    if (target.tagName === 'IMG') {
+      e.preventDefault()
+      e.stopPropagation()
+      const block = target.closest('.editable-block') as HTMLElement
+      const sItem = target.closest('.social-item') as HTMLElement
+      if (sItem && block) {
+        import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
+          import('~/composables/useEditorState').then(({ useEditorState }) => {
+             if (useEditorState().selectedSubElement.value === sItem) useBlockEditor().openImageModal(target as HTMLImageElement)
+             else useBlockEditor().selectElement(block, sItem, true)
+          })
         })
         return
       }
-      const block = target.closest('.editable-block') as HTMLElement
-      if (block) {
-        const sub = target.closest(
-          '[data-toggle="title"], [data-toggle="subtitle"], [data-toggle="badge"], [data-toggle="image"], [data-toggle="button"], [data-toggle="ps"], [data-toggle="contact"]',
-        ) as HTMLElement
-        import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
-          useBlockEditor().selectElement(block, sub || undefined)
-        })
-      } else {
-        import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
-          useBlockEditor().deselect()
-        })
-      }
-    },
-    { signal },
-  )
+      import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
+        useBlockEditor().openImageModal(target as HTMLImageElement)
+      })
+      return
+    }
 
-  // Floating toolbar visibility
+    const block = target.closest('.editable-block') as HTMLElement
+    if (block) {
+      const sub = target.closest('[data-toggle="title"], [data-toggle="subtitle"], [data-toggle="badge"], [data-toggle="image"], [data-toggle="button"], [data-toggle="ps"], [data-toggle="contact"], [data-toggle="pricing-feature"], .pricing-item, .faq-item, .social-item') as HTMLElement
+      import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
+        useBlockEditor().selectElement(block, sub || undefined)
+      })
+    } else {
+      import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
+        useBlockEditor().deselect()
+      })
+    }
+  }, { signal })
+
+  // ─── Toolbar & Other Events ────────────────────────────────────────────────
   const updateToolbar = () => {
     const toolbar = doc.getElementById('floating-toolbar')
     if (!toolbar) return
@@ -380,20 +535,11 @@ function setupIframeEvents(doc: Document) {
       toolbar.style.display = 'none'
       return
     }
-    const range = selection.getRangeAt(0)
-    const rect = range.getBoundingClientRect()
+    const rect = selection.getRangeAt(0).getBoundingClientRect()
     toolbar.style.display = 'flex'
     toolbar.style.top = rect.top - 50 + 'px'
     toolbar.style.left = rect.left + 'px'
-    if (rect.top < 0 || rect.bottom > doc.documentElement.clientHeight) {
-      toolbar.style.display = 'none'
-    }
-    toolbar.querySelectorAll('button').forEach((btn) => {
-      const cmd = btn.dataset.cmd
-      if (cmd && ['bold', 'italic', 'underline'].includes(cmd)) {
-        doc.queryCommandState(cmd) ? btn.classList.add('active') : btn.classList.remove('active')
-      }
-    })
+    if (rect.top < 0 || rect.bottom > doc.documentElement.clientHeight) toolbar.style.display = 'none'
   }
 
   doc.addEventListener('mouseup', updateToolbar, { signal })
@@ -401,174 +547,109 @@ function setupIframeEvents(doc: Document) {
   doc.addEventListener('selectionchange', updateToolbar, { signal })
   doc.addEventListener('scroll', updateToolbar, { signal })
 
-  doc.addEventListener(
-    'input',
-    () => {
-      refreshLayers()
-      triggerAutosave()
-    },
-    { signal },
-  )
+  doc.addEventListener('input', () => {
+    refreshLayers()
+    triggerAutosave()
+  }, { signal })
 
-  // Drag-over: placeholder + auto-scroll
-  doc.addEventListener(
-    'dragover',
-    (e: DragEvent) => {
-      e.preventDefault()
-      isDraggingOverIframe.value = true
-      const target = e.target as HTMLElement
-      const block = target.closest('.editable-block') as HTMLElement
+  doc.addEventListener('dragover', (e: DragEvent) => {
+    e.preventDefault()
+    isDraggingOverIframe.value = true
+    const rect = iframeRef.value!.getBoundingClientRect()
+    if (e.clientY < 100) iframeRef.value!.contentWindow?.scrollBy(0, -20)
+    else if (e.clientY > rect.height - 100) iframeRef.value!.contentWindow?.scrollBy(0, 20)
 
-      const scrollThreshold = 100
-      const scrollSpeed = 20
-      const rect = iframeRef.value!.getBoundingClientRect()
-      if (e.clientY < scrollThreshold) {
-        iframeRef.value!.contentWindow?.scrollBy(0, -scrollSpeed)
-      } else if (e.clientY > rect.height - scrollThreshold) {
-        iframeRef.value!.contentWindow?.scrollBy(0, scrollSpeed)
-      }
+    let placeholder = doc.getElementById('drop-placeholder')
+    if (!placeholder) {
+      placeholder = doc.createElement('div')
+      placeholder.id = 'drop-placeholder'
+      placeholder.className = 'drop-placeholder'
+      placeholder.dataset.ignoreSave = 'true'
+      placeholder.innerHTML = '<div class="drop-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>'
+    }
 
-      let placeholder = doc.getElementById('drop-placeholder')
-      if (!placeholder) {
-        placeholder = doc.createElement('div')
-        placeholder.id = 'drop-placeholder'
-        placeholder.className = 'drop-placeholder'
-        placeholder.dataset.ignoreSave = 'true'
-        placeholder.innerHTML = `
-          <div class="drop-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m6 9 6 6 6-6"/>
-            </svg>
-          </div>
-        `
-      }
-
-      if (block) {
-        const bRect = block.getBoundingClientRect()
-        const isTop = e.clientY - bRect.top < bRect.height / 2
-
-        // Evitar posiciones redundantes al arrastrar un elemento del propio visor
-        const parentState = (window as any).editorState
-        const dragged = (window as any).draggedElement || (parentState ? parentState.draggedLayer : null)
-        
-        if (dragged) {
-          // Si es el mismo bloque, es redundante en cualquier mitad
-          if (block === dragged) {
-            placeholder?.remove()
-            return
-          }
-          // Si es el anterior y estamos en su mitad inferior, es su posición actual
-          if (block === dragged.previousElementSibling && !isTop) {
-            placeholder?.remove()
-            return
-          }
-          // Si es el siguiente y estamos en su mitad superior, es su posición actual
-          if (block === dragged.nextElementSibling && isTop) {
-            placeholder?.remove()
-            return
-          }
-        }
-
-        if (isTop) block.parentNode?.insertBefore(placeholder, block)
-        else block.after(placeholder)
-      } else {
-        const container = ensureMainCard(doc)
-        if (placeholder.parentNode !== container) container.appendChild(placeholder)
-      }
-    },
-    { signal },
-  )
-
-  doc.body.addEventListener(
-    'dragleave',
-    (e: DragEvent) => {
-      if (!e.relatedTarget || (e.relatedTarget as HTMLElement).tagName === 'HTML' || e.relatedTarget === doc.documentElement) {
-        doc.getElementById('drop-placeholder')?.remove()
-        isDraggingOverIframe.value = false
-      }
-    },
-    { signal },
-  )
-
-  doc.body.addEventListener(
-    'drop',
-    (e: DragEvent) => {
-      e.preventDefault()
-      isDraggingOverIframe.value = false
-      const placeholder = doc.getElementById('drop-placeholder')
-      const target = e.target as HTMLElement
-      const block = target.closest('.editable-block') as HTMLElement
+    const target = e.target as HTMLElement
+    const block = target.closest('.editable-block') as HTMLElement
+    if (block) {
+      const bRect = block.getBoundingClientRect()
+      const isTop = e.clientY - bRect.top < bRect.height / 2
       const parentState = (window as any).editorState
-
-      if (!parentState) {
+      const dragged = (window as any).draggedElement || (parentState ? parentState.draggedLayer : null)
+      if (dragged && (block === dragged || (block === dragged.previousElementSibling && !isTop) || (block === dragged.nextElementSibling && isTop))) {
         placeholder?.remove()
         return
       }
+      if (isTop) block.parentNode?.insertBefore(placeholder, block)
+      else block.after(placeholder)
+    } else {
+      const container = ensureMainCard(doc)
+      if (placeholder.parentNode !== container) container.appendChild(placeholder)
+    }
+  }, { signal })
 
-      if (parentState.draggedModule) {
-        const content = parentState.draggedModule as string
-        const t = doc.createElement('div')
-        t.innerHTML = content
-        const newBlock = t.firstElementChild as HTMLElement
-        initBlock(newBlock, doc)
-        newBlock.classList.add('module-drop-reveal')
-        newBlock.addEventListener('animationend', () => newBlock.classList.remove('module-drop-reveal'), { once: true })
+  doc.body.addEventListener('dragleave', (e: DragEvent) => {
+    if (!e.relatedTarget || (e.relatedTarget as HTMLElement).tagName === 'HTML' || e.relatedTarget === doc.documentElement) {
+      doc.getElementById('drop-placeholder')?.remove()
+      isDraggingOverIframe.value = false
+    }
+  }, { signal })
 
-        if (placeholder) placeholder.parentNode?.replaceChild(newBlock, placeholder)
-        else {
-          const container = ensureMainCard(doc)
-          if (block && block.parentNode) {
-            const rect = block.getBoundingClientRect()
-            if (e.clientY - rect.top < rect.height / 2) block.parentNode.insertBefore(newBlock, block)
-            else block.after(newBlock)
-          } else container.appendChild(newBlock)
-        }
+  doc.body.addEventListener('drop', (e: DragEvent) => {
+    e.preventDefault()
+    isDraggingOverIframe.value = false
+    const placeholder = doc.getElementById('drop-placeholder')
+    const target = e.target as HTMLElement
+    const block = target.closest('.editable-block') as HTMLElement
+    const parentState = (window as any).editorState
+    if (!parentState) { placeholder?.remove(); return; }
 
-        parentState.draggedModule = null
-        import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
-          useBlockEditor().selectElement(newBlock)
-        })
-        
-        // Apply current global style to the new block
-        applyStyleBase(useEditorState().currentStyle.value, false, newBlock)
-        
-        refreshLayers()
-        
-        import('~/composables/useTemplateManager').then(({ useTemplateManager }) => {
-          useTemplateManager().autoCreateTemplate()
-        })
-        
-        triggerAutosave(true)
-      } else if (parentState.draggedLayer) {
-        const layerEl = parentState.draggedLayer as HTMLElement
-        if (placeholder) placeholder.parentNode?.replaceChild(layerEl, placeholder)
-        else if (block) {
+    if (parentState.draggedModule) {
+      const t = doc.createElement('div')
+      t.innerHTML = parentState.draggedModule as string
+      const newBlock = t.firstElementChild as HTMLElement
+      initBlock(newBlock, doc)
+      newBlock.classList.add('module-drop-reveal')
+      if (placeholder) placeholder.parentNode?.replaceChild(newBlock, placeholder)
+      else {
+        const container = ensureMainCard(doc)
+        if (block && block.parentNode) {
           const rect = block.getBoundingClientRect()
-          if (e.clientY - rect.top < rect.height / 2) block.parentNode?.insertBefore(layerEl, block)
-          else block.after(layerEl)
-        } else ensureMainCard(doc).appendChild(layerEl)
-        parentState.draggedLayer = null
-        refreshLayers()
-        triggerAutosave(true)
-      } else if (window.draggedElement) {
-        const dragged = window.draggedElement
-        if (placeholder) placeholder.parentNode?.replaceChild(dragged, placeholder)
-        else {
-          const container = ensureMainCard(doc)
-          if (block && block.parentNode) {
-            const rect = block.getBoundingClientRect()
-            if (e.clientY - rect.top < rect.height / 2) block.parentNode.insertBefore(dragged, block)
-            else block.after(dragged)
-          } else container.appendChild(dragged)
-        }
-        refreshLayers()
-        triggerAutosave(true)
-      } else {
-        placeholder?.remove()
+          if (e.clientY - rect.top < rect.height / 2) block.parentNode.insertBefore(newBlock, block)
+          else block.after(newBlock)
+        } else container.appendChild(newBlock)
       }
-    },
-    { signal },
-  )
+      parentState.draggedModule = null
+      import('~/composables/useBlockEditor').then(({ useBlockEditor }) => useBlockEditor().selectElement(newBlock))
+      applyStyleBase(useEditorState().currentStyle.value, false, newBlock)
+      refreshLayers()
+      import('~/composables/useTemplateManager').then(({ useTemplateManager }) => useTemplateManager().autoCreateTemplate())
+      triggerAutosave(true)
+    } else if (parentState.draggedLayer) {
+      const layerEl = parentState.draggedLayer as HTMLElement
+      if (placeholder) placeholder.parentNode?.replaceChild(layerEl, placeholder)
+      else if (block) {
+        const rect = block.getBoundingClientRect()
+        if (e.clientY - rect.top < rect.height / 2) block.parentNode?.insertBefore(layerEl, block)
+        else block.after(layerEl)
+      } else ensureMainCard(doc).appendChild(layerEl)
+      parentState.draggedLayer = null
+      refreshLayers()
+      triggerAutosave(true)
+    } else if (window.draggedElement) {
+      const dragged = window.draggedElement
+      if (placeholder) placeholder.parentNode?.replaceChild(dragged, placeholder)
+      else {
+        const container = ensureMainCard(doc)
+        if (block && block.parentNode) {
+          const rect = block.getBoundingClientRect()
+          if (e.clientY - rect.top < rect.height / 2) block.parentNode.insertBefore(dragged, block)
+          else block.after(dragged)
+        } else container.appendChild(dragged)
+      }
+      refreshLayers()
+      triggerAutosave(true)
+    } else placeholder?.remove()
+  }, { signal })
 }
 
 // ─── Iframe Content Injection ────────────────────────────────────────────────
@@ -792,7 +873,8 @@ function applyStyleBase(style: EditorStyleBase, forceTheme = false, target?: HTM
       }
       ${cardCss}
       .header-block { background-color: ${style.config.headerBg}; }
-      .body-block, .card-block, .cta-block, .image-block, .grid-block, .methodology-block, .presence-block, .signature-block, .unsubscribe-block { 
+      .body-block, .card-block, .cta-block, .image-block, .grid-block, .methodology-block, .presence-block, .signature-block, .unsubscribe-block,
+      .hero-block, .testimonials-block, .pricing-block, .video-block, .social-block, .divider-block, .faq-block { 
         background-color: ${style.config.contentBg}; 
       }
       .card-wrapper, .methodology-block > div, .presence-block > div, .grid-block td > div, .signature-block table td {
@@ -818,7 +900,7 @@ function getSurgicalCleanHtml(): string {
   const clone = doc.documentElement.cloneNode(true) as HTMLElement
 
   clone.querySelectorAll('.visor-drag-handle').forEach((h) => h.remove())
-  clone.querySelectorAll('#floating-toolbar').forEach((t) => t.remove())
+  clone.querySelectorAll('#floating-toolbar, #social-inline-toolbar').forEach((t) => t.remove())
   clone.querySelectorAll('#drop-placeholder').forEach((p) => p.remove())
 
   clone.querySelectorAll('.selected').forEach((s) => s.classList.remove('selected'))

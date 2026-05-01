@@ -286,19 +286,29 @@
 }
 
 .side-nav {
-  width: 280px;
+  width: 300px;
   background: #0f172a;
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   z-index: 10;
   position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .side-nav.right {
   border-right: none;
   border-left: 1px solid var(--border);
   width: 340px;
+}
+
+.side-nav.left {
+  max-height: 100vh;
+  overflow: hidden !important;
+  z-index: 10;
+  position: relative;
+  background: #0f172a;
 }
 
 .editor-viewport {
@@ -550,15 +560,21 @@
 
 /* ── SIDEBARS ── */
 .nav-group {
-  padding: 24px;
+  padding: 18px;
+  padding-top: 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  overflow-y: auto;
 }
 
 .group-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-panel);
+  padding: 10px;
 }
 
 .group-header h3 {
@@ -583,8 +599,7 @@
 }
 
 .nav-list {
-  max-height: 300px;
-  overflow-y: auto;
+  max-height: 195px;
 }
 .nav-item-wrapper {
   display: flex;
@@ -598,7 +613,7 @@
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--border);
   padding: 10px 12px;
-  border-radius: 12px;
+  border-radius: 8px;
   color: var(--text-muted);
   cursor: pointer;
   display: flex !important;
@@ -687,29 +702,37 @@
   color: #ef4444;
 }
 
+.nav-group.modules {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
 .modules-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 8px;
+  padding-bottom: 60px;
+  padding-right: 4px;
 }
 
 .module-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  padding: 20px;
-  border-radius: 16px;
+  padding: 12px 8px;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   cursor: grab;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
   color: var(--text-muted);
   transition: all 0.2s;
+  text-align: center;
 }
 .module-card:hover {
-  transform: translateY(-2px);
   border-color: var(--primary);
   color: #fff;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
