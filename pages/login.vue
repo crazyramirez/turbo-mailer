@@ -214,6 +214,12 @@ if (process.client && route.query.portal === ACCESS_KEY) {
 }
 
 onMounted(async () => {
+  if (process.client && route.query.portal === ACCESS_KEY) {
+    // Clear query param from the URL immediately so it's not visible
+    const newUrl = window.location.pathname;
+    window.history.replaceState({}, "", newUrl);
+  }
+
   if (showPortal.value) {
     try {
       const data = await $fetch<{ seen: boolean }>("/api/ghost-status", {

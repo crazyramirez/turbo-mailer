@@ -1,5 +1,17 @@
 export default defineNuxtRouteMiddleware(async (to) => {
-  if (to.path === '/login' || to.path === '/unsubscribe' || to.path === '/resubscribe') return
+  if (to.path === '/login') {
+    if (process.client) {
+      const config = useRuntimeConfig()
+      if (!config.public.ghostMode) {
+        const lastPortal = localStorage.getItem('last_portal')
+        if (lastPortal && lastPortal === config.public.portalKey && !to.query.portal) {
+          return navigateTo(`/login?portal=${lastPortal}`)
+        }
+      }
+    }
+    return
+  }
+  if (to.path === '/unsubscribe' || to.path === '/resubscribe') return
 
   const isAuthed = useState<boolean | null>('isAuthed', () => null)
 
@@ -25,8 +37,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
       }
     }
 
-    if (to.path !== '/' && to.path !== '/login') {
-      return navigateTo('/')
+    const config = useRuntimeConfig()
+    if (config.public.ghostMode) {
+      if (to.path !== '/login') {
+        return navigateTo('/login')
+      }
+    } else {
+      if (to.path !== '/' && to.path !== '/login') {
+        return navigateTo('/')
+      }
     }
   }
 })

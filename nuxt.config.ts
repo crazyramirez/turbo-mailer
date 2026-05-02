@@ -28,6 +28,7 @@ export default defineNuxtConfig({
     dkimPrivateKey: process.env.DKIM_PRIVATE_KEY,
     public: {
       portalKey: process.env.PORTAL_KEY || 'admin',
+      ghostMode: process.env.GHOST_MODE === 'true',
     }
   },
 

@@ -315,6 +315,15 @@ To ensure maximum privacy, TurboMailer is designed to be invisible to curious vi
 
 > **Important**: Once you log in, you can navigate the dashboard normally. If you log out or the session expires, you will see the technical decoy page again.
 
+### 🕶️ Ghost Mode Configuration (Activation and Obfuscation)
+
+You can fully activate or deactivate the root route (`/`) visibility via the `GHOST_MODE` environment variable in your `.env` file:
+
+- **`GHOST_MODE=true`**: Completely hides the root page. Any unauthenticated user attempting to access the root (`/`) or any other protected route will be immediately redirected to the `/login` screen without showing the technical decoy page.
+- **`GHOST_MODE=false`** (default): Shows the technical decoy status page on the root (`/`) route.
+
+Additionally, when a user accesses the login portal with the secret key (`/login?portal=secret-key`), TurboMailer securely saves the key to `localStorage` and **immediately strips the parameter from the browser's address bar**, ensuring your access key is never exposed.
+
 ### 🔐 Password Security (BCrypt)
 
 For maximum security, TurboMailer supports **BCrypt** hashed passwords in the `APP_PASSWORD` environment variable. By storing a hash, your real password is never present in the server's plain text or memory.

@@ -315,6 +315,15 @@ Para garantizar la máxima privacidad, TurboMailer está diseñado para ser invi
 
 > **Importante**: Una vez que inicies sesión, podrás navegar normalmente por el panel. Si cierras sesión o la sesión expira, volverás a ver la página de señuelo técnica.
 
+### 🕶️ Configuración de Ghost Mode (Activación y Ocultamiento)
+
+Puedes activar o desactivar por completo la visibilidad de la página de la raíz (`/`) a través de la variable de entorno `GHOST_MODE` en tu archivo `.env`:
+
+- **`GHOST_MODE=true`**: Oculta la página de raíz por completo. Cualquier usuario no autenticado que intente acceder a la raíz (`/`) o cualquier otra ruta protegida será redirigido inmediatamente a la pantalla de `/login` sin mostrar la página de señuelo.
+- **`GHOST_MODE=false`** (por defecto): Muestra la página de señuelo técnica en la raíz (`/`).
+
+Además, cuando un usuario accede al portal de login con la clave secreta (`/login?portal=clave-secreta`), TurboMailer guarda la clave de forma segura en `localStorage` y **limpia inmediatamente el parámetro de la barra de direcciones**, garantizando que la clave de acceso no quede expuesta.
+
 ### 🔐 Seguridad de la Contraseña (BCrypt)
 
 Para máxima seguridad, TurboMailer soporta contraseñas hasheadas mediante **BCrypt** en la variable de entorno `APP_PASSWORD`. Al usar un hash, tu contraseña real nunca se almacena en texto plano en el servidor ni en memoria.

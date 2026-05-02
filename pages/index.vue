@@ -4,6 +4,11 @@ import { ArrowRight } from "lucide-vue-next";
 // Página de señuelo (Decoy) - No requiere autenticación
 definePageMeta({ layout: false });
 
+const config = useRuntimeConfig();
+if (config.public.ghostMode) {
+  navigateTo('/login');
+}
+
 const isAuthed = useState<boolean | null>("isAuthed", () => null);
 const showSetupWelcome = ref(false);
 const portalKey = ref("");
