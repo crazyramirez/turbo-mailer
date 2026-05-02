@@ -231,6 +231,7 @@ SQLite in `./data/turbomailer.db` managed with Drizzle ORM. Main tables:
     # or server memory, providing protection even if the environment is compromised.
     APP_PASSWORD=tu-contraseña-de-acceso
     PORTAL_KEY=admin
+    GHOST_MODE=true
 
     # SMTP Configuration (requerido para enviar)
     SMTP_HOST=smtp.gmail.com
@@ -423,13 +424,17 @@ The app uses Gmail SMTP with a 16-digit app password (not your normal password).
 You can connect your own forms, opt-in pages, or external applications directly to TurboMailer using the API.
 
 ### Authentication
+
 For all external requests, you must include either the `X-API-Key` or `Authorization` header with the value of `API_SECRET` defined in your `.env` file.
 
 Example headers:
+
 ```http
 X-API-Key: your-api-secret-key
 ```
+
 or
+
 ```http
 Authorization: Bearer your-api-secret-key
 ```
@@ -439,6 +444,7 @@ Authorization: Bearer your-api-secret-key
 Creates a new contact or updates an existing one if the email already exists in the database. Upon subscribing or updating, the contact's status changes to `active`.
 
 #### Body Parameters (JSON)
+
 - `email` (string, required): Recipient's email address.
 - `name` (string, optional): Full name.
 - `company` (string, optional): Company name.
@@ -450,6 +456,7 @@ Creates a new contact or updates an existing one if the email already exists in 
 - `listIds` (array of numbers, optional): IDs of the lists to associate the contact with.
 
 #### Request Example with `curl`:
+
 ```bash
 curl -X POST https://your-domain.com/api/subscribe \
   -H "Content-Type: application/json" \
@@ -464,24 +471,25 @@ curl -X POST https://your-domain.com/api/subscribe \
 ```
 
 #### Request Example with `fetch` in JavaScript:
+
 ```javascript
-fetch('https://your-domain.com/api/subscribe', {
-  method: 'POST',
+fetch("https://your-domain.com/api/subscribe", {
+  method: "POST",
   headers: {
-    'Content-Type': 'application/json',
-    'X-API-Key': 'your-api-secret-key'
+    "Content-Type": "application/json",
+    "X-API-Key": "your-api-secret-key",
   },
   body: JSON.stringify({
-    email: 'contact@example.com',
-    name: 'John Doe',
-    company: 'My Company',
-    tags: ['customer'],
-    listIds: [1]
-  })
+    email: "contact@example.com",
+    name: "John Doe",
+    company: "My Company",
+    tags: ["customer"],
+    listIds: [1],
+  }),
 })
-.then(res => res.json())
-.then(data => console.log('Contact subscribed:', data))
-.catch(err => console.error('Error:', err));
+  .then((res) => res.json())
+  .then((data) => console.log("Contact subscribed:", data))
+  .catch((err) => console.error("Error:", err));
 ```
 
 ### 2. Contact Unsubscription (`POST /api/unsubscribe`)
@@ -489,9 +497,11 @@ fetch('https://your-domain.com/api/subscribe', {
 Changes the contact's status to `unsubscribed`.
 
 #### Body Parameters (JSON)
+
 - `email` (string, required): Email address of the contact to unsubscribe.
 
 #### Request Example with `curl`:
+
 ```bash
 curl -X POST https://your-domain.com/api/unsubscribe \
   -H "Content-Type: application/json" \
@@ -502,20 +512,21 @@ curl -X POST https://your-domain.com/api/unsubscribe \
 ```
 
 #### Request Example with `fetch` in JavaScript:
+
 ```javascript
-fetch('https://your-domain.com/api/unsubscribe', {
-  method: 'POST',
+fetch("https://your-domain.com/api/unsubscribe", {
+  method: "POST",
   headers: {
-    'Content-Type': 'application/json',
-    'X-API-Key': 'your-api-secret-key'
+    "Content-Type": "application/json",
+    "X-API-Key": "your-api-secret-key",
   },
   body: JSON.stringify({
-    email: 'contact@example.com'
-  })
+    email: "contact@example.com",
+  }),
 })
-.then(res => res.json())
-.then(data => console.log('Unsubscribed successfully:', data))
-.catch(err => console.error('Error:', err));
+  .then((res) => res.json())
+  .then((data) => console.log("Unsubscribed successfully:", data))
+  .catch((err) => console.error("Error:", err));
 ```
 
 ---
@@ -524,7 +535,6 @@ fetch('https://your-domain.com/api/unsubscribe', {
 - **Ghost Mode**: High-level obfuscation for maximum privacy (see the Ghost Mode section above for access details).
 
 ---
-
 
 ## 📄 Demo Templates
 
