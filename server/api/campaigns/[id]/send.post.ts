@@ -5,7 +5,7 @@ import { processCampaign, SendConfig } from '~/server/utils/campaign-processor'
 
 export default defineEventHandler(async (event) => {
   const campaignId = Number(getRouterParam(event, 'id'))
-  const config = useRuntimeConfig()
+  const config = useServerConfig()
 
   const {
     smtpHost, smtpPort, smtpUser, smtpPass, smtpSecure,

@@ -2,7 +2,7 @@
   <div class="login-wrapper">
     <!-- Ghost Mode First Run Welcome -->
     <GhostWelcomeModal
-      v-if="showSetupWelcome"
+      v-if="showSetupWelcome && config.public.ghostMode"
       @close="showSetupWelcome = false"
     />
 
@@ -205,7 +205,7 @@ const { t } = useI18n();
 // Constante secreta para el acceso configurada en .env
 const ACCESS_KEY = config.public.portalKey;
 const showPortal = computed(
-  () => route.query.portal === ACCESS_KEY || isAuthed.value,
+  () => !config.public.ghostMode || route.query.portal === ACCESS_KEY || isAuthed.value,
 );
 
 // Persistir el portal en localStorage para PWAs y sesiones perdidas
@@ -220,7 +220,7 @@ onMounted(async () => {
     window.history.replaceState({}, "", newUrl);
   }
 
-  if (showPortal.value) {
+  if (showPortal.value && config.public.ghostMode) {
     try {
       const data = await $fetch<{ seen: boolean }>("/api/ghost-status", {
         params: { portal: ACCESS_KEY },

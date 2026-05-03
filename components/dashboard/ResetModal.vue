@@ -9,6 +9,7 @@ import {
   X,
   ShieldCheck,
   FolderOpen,
+  Settings2,
 } from "lucide-vue-next";
 
 const emit = defineEmits<{ close: []; done: [] }>();
@@ -59,6 +60,13 @@ const scopes: Scope[] = [
     desc: t("reset_modal.scope_analytics_desc"),
     danger: "low",
   },
+  {
+    id: "setup",
+    icon: Settings2,
+    label: t("reset_modal.scope_setup_label"),
+    desc: t("reset_modal.scope_setup_desc"),
+    danger: "high",
+  },
 ];
 
 const selectedScope = ref<string | null>(null);
@@ -95,6 +103,14 @@ async function performReset() {
       "/api/reset",
       { method: "DELETE", body: { scope: selectedScope.value } },
     );
+    if (selectedScope.value === "setup") {
+      const isInstalled = useState<boolean | null>("isInstalled");
+      isInstalled.value = false;
+      emit("done");
+      emit("close");
+      window.location.href = "/setup";
+      return;
+    }
     if (needsReload.value) {
       localStorage.removeItem("turbomailer_welcome_seen");
       backupPath.value = res.backupPath;

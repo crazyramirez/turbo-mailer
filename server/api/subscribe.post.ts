@@ -1,10 +1,10 @@
-import { db } from '~/server/db/index'
+﻿import { db } from '~/server/db/index'
 import { contacts, listContacts } from '~/server/db/schema'
 import { isValidEmail, sanitizeContactFields } from '~/server/utils/validate'
 import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
+  const config = useServerConfig()
   const secret = event.headers.get('x-api-key') || event.headers.get('authorization')?.replace('Bearer ', '') || ''
 
   if (!config.apiSecret || secret !== config.apiSecret) {

@@ -32,15 +32,17 @@ const showGhostWelcome = ref(false);
 const config = useRuntimeConfig();
 
 onMounted(async () => {
-  try {
-    const data = await $fetch<{ seen: boolean }>("/api/ghost-status", {
-      params: { portal: config.public.portalKey },
-    });
-    if (!data.seen) {
-      showGhostWelcome.value = true;
+  if (config.public.ghostMode) {
+    try {
+      const data = await $fetch<{ seen: boolean }>("/api/ghost-status", {
+        params: { portal: config.public.portalKey },
+      });
+      if (!data.seen) {
+        showGhostWelcome.value = true;
+      }
+    } catch (e) {
+      console.error("Error fetching ghost status in dashboard:", e);
     }
-  } catch (e) {
-    console.error("Error fetching ghost status in dashboard:", e);
   }
 });
 
@@ -319,7 +321,7 @@ async function duplicateCampaign() {
         @done="dismissWelcome"
       />
       <GhostWelcomeModal
-        v-if="showGhostWelcome"
+        v-if="showGhostWelcome && config.public.ghostMode"
         @close="handleGhostWelcomeClose"
       />
 

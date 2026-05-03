@@ -1,4 +1,5 @@
 .env
+.env2
 .env.*
 !.env.example
 node_modules/
@@ -9,6 +10,8 @@ dist/
 docs/
 docs/*
 
+data/config.json
+data/.installed
 data/templates/*
 !data/templates/.gitkeep
 data/backup/*

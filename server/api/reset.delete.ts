@@ -4,7 +4,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { createBackup } from '~/server/utils/backup'
 
-const VALID_SCOPES = ['all', 'db', 'contacts', 'campaigns', 'analytics', 'security'] as const
+const VALID_SCOPES = ['all', 'db', 'contacts', 'campaigns', 'analytics', 'security', 'setup'] as const
 type Scope = typeof VALID_SCOPES[number]
 
 export default defineEventHandler(async (event) => {
@@ -13,6 +13,13 @@ export default defineEventHandler(async (event) => {
 
   if (!VALID_SCOPES.includes(scope)) {
     throw createError({ statusCode: 400, message: 'Invalid scope' })
+  }
+
+  // Setup reconfiguration: only delete config files, no DB backup needed
+  if (scope === 'setup') {
+    await fs.unlink(path.resolve(process.cwd(), 'data/.installed')).catch(() => {})
+    await fs.unlink(path.resolve(process.cwd(), 'data/config.json')).catch(() => {})
+    return { ok: true, backupPath: null }
   }
 
   // Backup before any destructive operation

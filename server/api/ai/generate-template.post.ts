@@ -1,4 +1,4 @@
-import { defineEventHandler, readBody, createError } from 'h3'
+﻿import { defineEventHandler, readBody, createError } from 'h3'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Messages array is required' })
   }
 
-  const config = useRuntimeConfig()
+  const config = useServerConfig()
   const apiKey = config.openaiApiKey || process.env.OPENAI_API_KEY
   const model = config.openaiModel || process.env.OPENAI_MODEL || 'gpt-4o-mini'
 

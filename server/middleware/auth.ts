@@ -5,9 +5,12 @@ const PUBLIC_PATHS = [
   '/api/track/open',
   '/api/track/click',
   '/api/unsubscribe',
+  '/api/resubscribe',
   '/api/subscribers',
   '/api/subscribe',
   '/api/ghost-status',
+  '/api/setup/',
+  '/api/health',
 ]
 
 export default defineEventHandler(async (event) => {

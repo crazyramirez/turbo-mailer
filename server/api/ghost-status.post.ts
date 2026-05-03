@@ -1,10 +1,10 @@
-import { db } from '../db'
+﻿import { db } from '../db'
 import { settings } from '../db/schema'
 import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
-  const config = useRuntimeConfig()
+  const config = useServerConfig()
   
   try {
     await db.insert(settings)

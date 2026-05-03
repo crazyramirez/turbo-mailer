@@ -1,4 +1,4 @@
-import { db } from '~/server/db/index'
+﻿import { db } from '~/server/db/index'
 import { sends, campaigns, trackingEvents } from '~/server/db/schema'
 import { eq, sql, and, gt, ne } from 'drizzle-orm'
 import { verifyClickToken } from '~/server/utils/auth'
@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Missing target URL' })
   }
 
-  const config = useRuntimeConfig()
+  const config = useServerConfig()
   if (!verifyClickToken(sendId, targetUrl, sig, config.unsubscribeSecret as string)) {
     throw createError({ statusCode: 403, statusMessage: 'Invalid link signature' })
   }

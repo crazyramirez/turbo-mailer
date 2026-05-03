@@ -1,8 +1,8 @@
-import nodemailer from 'nodemailer'
+﻿import nodemailer from 'nodemailer'
 import { applyVars } from '~/server/utils/template'
 
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
+  const config = useServerConfig()
   const {
     smtpHost,
     smtpPort,

@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs'
+﻿import bcrypt from 'bcryptjs'
 import { timingSafeEqual } from 'crypto'
 import { checkRateLimit, recordFailedAttempt, clearAttempts, createSession, getClientIp } from '~/server/utils/auth'
 
@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Contraseña requerida' })
   }
 
-  const config = useRuntimeConfig()
+  const config = useServerConfig()
   const correctPassword = config.appPassword
   if (!correctPassword) {
     throw createError({ statusCode: 500, message: 'APP_PASSWORD no configurado' })

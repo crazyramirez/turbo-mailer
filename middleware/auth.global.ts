@@ -1,8 +1,23 @@
 export default defineNuxtRouteMiddleware(async (to) => {
+  // Setup wizard — only accessible when not installed
+  if (to.path === '/setup') {
+    const isInstalled = useState<boolean | null>('isInstalled', () => null)
+    if (isInstalled.value === null) {
+      try {
+        const { installed } = await $fetch<{ installed: boolean }>('/api/setup/status')
+        isInstalled.value = installed
+      } catch {
+        isInstalled.value = true
+      }
+    }
+    if (isInstalled.value) return navigateTo('/dashboard')
+    return
+  }
+
   if (to.path === '/login') {
     if (process.client) {
       const config = useRuntimeConfig()
-      if (!config.public.ghostMode) {
+      if (config.public.ghostMode) {
         const lastPortal = localStorage.getItem('last_portal')
         if (lastPortal && lastPortal === config.public.portalKey && !to.query.portal) {
           return navigateTo(`/login?portal=${lastPortal}`)
@@ -11,7 +26,20 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
     return
   }
+
   if (to.path === '/unsubscribe' || to.path === '/resubscribe') return
+
+  // Check setup status before auth
+  const isInstalled = useState<boolean | null>('isInstalled', () => null)
+  if (isInstalled.value === null) {
+    try {
+      const { installed } = await $fetch<{ installed: boolean }>('/api/setup/status')
+      isInstalled.value = installed
+    } catch {
+      isInstalled.value = true
+    }
+  }
+  if (!isInstalled.value) return navigateTo('/setup')
 
   const isAuthed = useState<boolean | null>('isAuthed', () => null)
 
@@ -25,14 +53,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   if (!isAuthed.value) {
-    // Si no está autenticado, intentamos recuperar el último portal usado (para PWAs)
     if (process.client) {
       const config = useRuntimeConfig()
       const lastPortal = localStorage.getItem('last_portal')
-      
-      // Solo redireccionamos si el portal guardado coincide con el actual (seguridad)
-      // Redirigimos incluso si está en '/' para que el PWA vuelva al login correcto
-      if (lastPortal && lastPortal === config.public.portalKey && to.path !== '/login') {
+      if (config.public.ghostMode && lastPortal && lastPortal === config.public.portalKey && to.path !== '/login') {
         return navigateTo(`/login?portal=${lastPortal}`)
       }
     }

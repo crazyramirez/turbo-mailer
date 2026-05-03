@@ -5,7 +5,7 @@ import { ArrowRight } from "lucide-vue-next";
 definePageMeta({ layout: false });
 
 const config = useRuntimeConfig();
-if (config.public.ghostMode) {
+if (!config.public.ghostMode) {
   navigateTo('/login');
 }
 
@@ -73,7 +73,7 @@ function enterPortal() {
     </div>
 
     <!-- First Run Welcome Overlay -->
-    <GhostWelcomeModal v-if="showSetupWelcome" @close="enterPortal" />
+    <GhostWelcomeModal v-if="showSetupWelcome && config.public.ghostMode" @close="enterPortal" />
   </div>
 </template>
 

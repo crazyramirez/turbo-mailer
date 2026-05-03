@@ -94,13 +94,20 @@ export default defineNuxtConfig({
       installPrompt: true
     },
     devOptions: {
-      enabled: true,
+      enabled: false,
       type: "module",
       suppressWarnings: true
     }
   },
   
   vite: {
+    plugins: [
+      {
+        name: 'stub-app-manifest',
+        resolveId(id: string) { if (id === '#app-manifest') return '\0#app-manifest' },
+        load(id: string) { if (id === '\0#app-manifest') return 'export default {}' },
+      },
+    ],
     server: {
       allowedHosts: true,
       watch: {

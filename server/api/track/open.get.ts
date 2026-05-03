@@ -1,4 +1,4 @@
-import { db } from '~/server/db/index'
+﻿import { db } from '~/server/db/index'
 import { sends, campaigns, trackingEvents } from '~/server/db/schema'
 import { and, eq, ne, sql, gt } from 'drizzle-orm'
 import { verifyOpenToken } from '~/server/utils/auth'
@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
   setHeader(event, 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
   setHeader(event, 'Pragma', 'no-cache')
 
-  const config = useRuntimeConfig()
+  const config = useServerConfig()
   if (sendId && sig) {
     if (!verifyOpenToken(sendId, sig, config.unsubscribeSecret as string)) {
       return PIXEL_GIF

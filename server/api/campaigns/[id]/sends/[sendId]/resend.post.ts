@@ -6,7 +6,7 @@ import { processCampaign, SendConfig } from '~/server/utils/campaign-processor'
 export default defineEventHandler(async (event) => {
   const campaignId = Number(getRouterParam(event, 'id'))
   const sendId = Number(getRouterParam(event, 'sendId'))
-  const config = useRuntimeConfig()
+  const config = useServerConfig()
 
   const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, campaignId))
   if (!campaign) throw createError({ statusCode: 404, statusMessage: 'Campaign not found' })

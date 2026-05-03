@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer'
+﻿import nodemailer from 'nodemailer'
 import { db } from '~/server/db/index'
 import { sends, contacts, campaigns } from '~/server/db/schema'
 import { eq } from 'drizzle-orm'
@@ -68,7 +68,7 @@ async function sendResubConfirmationEmail(
 }
 
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
+  const config = useServerConfig()
 
   if (!config.unsubscribeSecret) {
     throw createError({ statusCode: 500, statusMessage: 'UNSUBSCRIBE_SECRET not configured' })
