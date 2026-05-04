@@ -30,7 +30,11 @@ const openGlobalColorPicker = () => {
         newStyle.config.bodyBg = color;
         currentStyle.value = newStyle;
         
-        applyStyleBase(newStyle, true);
+        const doc = iframeRef.value?.contentDocument;
+        if (doc) {
+          doc.body.style.backgroundColor = color;
+          doc.body.setAttribute('data-style-body-bg', color);
+        }
         triggerAutosave(true);
       }
     }
@@ -43,7 +47,14 @@ const updateCardRadius = (radiusVal: string) => {
   newStyle.config.cardRadius = radius;
   currentStyle.value = newStyle;
 
-  applyStyleBase(newStyle, true);
+  const doc = iframeRef.value?.contentDocument;
+  if (doc) {
+    const mainCard = doc.querySelector('.main-card') as HTMLElement;
+    if (mainCard) {
+      mainCard.style.borderRadius = radius;
+    }
+    doc.body.setAttribute('data-style-card-radius', radius);
+  }
   triggerAutosave(true);
 };
 
@@ -62,6 +73,7 @@ const updateGlobalFont = (family: string) => {
   const doc = iframeRef.value?.contentDocument;
   if (doc) {
     doc.body.style.fontFamily = family;
+    doc.body.setAttribute('data-style-font-family', family);
     doc.querySelectorAll(".editable-block").forEach((block: any) => {
       delete block.dataset.customFont;
       block.removeAttribute('data-custom-font');
@@ -75,7 +87,6 @@ const updateGlobalFont = (family: string) => {
       });
     });
   }
-  applyStyleBase(newStyle, true);
   triggerAutosave(true);
 };
 
@@ -84,7 +95,14 @@ const updateCardShadow = (shadow: string) => {
   newStyle.config.cardShadow = shadow;
   currentStyle.value = newStyle;
 
-  applyStyleBase(newStyle, true);
+  const doc = iframeRef.value?.contentDocument;
+  if (doc) {
+    const mainCard = doc.querySelector('.main-card') as HTMLElement;
+    if (mainCard) {
+      mainCard.style.boxShadow = shadow;
+    }
+    doc.body.setAttribute('data-style-card-shadow', shadow);
+  }
   triggerAutosave(true);
 };
 </script>
