@@ -1,10 +1,10 @@
-﻿import { db } from '../db'
+import { db } from '../db'
 import { settings } from '../db/schema'
 import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
-  const config = useServerConfig()
+  const config = useRuntimeConfig(event)
   
   // Si no es una consulta pública y no tiene la llave, denegar
   if (!query.public && query.portal !== config.public.portalKey) {

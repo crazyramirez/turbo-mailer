@@ -1,8 +1,21 @@
 <script setup lang="ts">
 import {
-  Lock, Eye, EyeOff, Server, Globe, Shield, CheckCircle2,
-  ChevronRight, ChevronLeft, Zap, RefreshCw, AlertTriangle,
-  Settings2, RotateCcw, Brain, Key,
+  Lock,
+  Eye,
+  EyeOff,
+  Server,
+  Globe,
+  Shield,
+  CheckCircle2,
+  ChevronRight,
+  ChevronLeft,
+  Zap,
+  RefreshCw,
+  AlertTriangle,
+  Settings2,
+  RotateCcw,
+  Brain,
+  Key,
 } from "lucide-vue-next";
 import { APP_VERSION } from "@/utils/version";
 
@@ -172,7 +185,9 @@ async function install() {
 
 // ── Restart detection ─────────────────────────────────────────────────
 let originalStartedAt = 0;
-const pollStatus = ref<"idle" | "checking" | "ready" | "not_restarted" | "down">("idle");
+const pollStatus = ref<
+  "idle" | "checking" | "ready" | "not_restarted" | "down"
+>("idle");
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 
 async function checkRestart() {
@@ -186,7 +201,9 @@ async function checkRestart() {
   pollTimer = setInterval(async () => {
     tries++;
     try {
-      const { startedAt } = await $fetch<{ ok: boolean; startedAt: number }>("/api/health");
+      const { startedAt } = await $fetch<{ ok: boolean; startedAt: number }>(
+        "/api/health",
+      );
       if (startedAt > originalStartedAt) {
         clearInterval(pollTimer!);
         pollStatus.value = "ready";
@@ -209,11 +226,15 @@ onMounted(async () => {
     trackingBaseUrl.value = window.location.origin;
   }
   try {
-    const { startedAt } = await $fetch<{ ok: boolean; startedAt: number }>("/api/health");
+    const { startedAt } = await $fetch<{ ok: boolean; startedAt: number }>(
+      "/api/health",
+    );
     originalStartedAt = startedAt;
   } catch {}
   try {
-    const { installed } = await $fetch<{ installed: boolean }>("/api/setup/status");
+    const { installed } = await $fetch<{ installed: boolean }>(
+      "/api/setup/status",
+    );
     if (installed) await navigateTo("/dashboard");
   } catch {}
 });
@@ -298,7 +319,9 @@ onUnmounted(() => {
             <img src="/images/icons/web-app-manifest-192x192.png" alt="Logo" />
           </div>
           <div class="sw-logo-text">
-            <span class="sw-logo-title">TurboMailer <span class="sw-accent">PRO</span></span>
+            <span class="sw-logo-title"
+              >TurboMailer <span class="sw-accent">PRO</span></span
+            >
             <span class="sw-logo-sub">{{ t("setup.page_title") }}</span>
           </div>
         </div>
@@ -377,7 +400,11 @@ onUnmounted(() => {
                     autocomplete="new-password"
                     @keydown.enter="next"
                   />
-                  <button type="button" class="sw-eye" @click="showPass = !showPass">
+                  <button
+                    type="button"
+                    class="sw-eye"
+                    @click="showPass = !showPass"
+                  >
                     <Eye v-if="!showPass" :size="15" />
                     <EyeOff v-else :size="15" />
                   </button>
@@ -396,7 +423,11 @@ onUnmounted(() => {
                     autocomplete="new-password"
                     @keydown.enter="next"
                   />
-                  <button type="button" class="sw-eye" @click="showConfirmPass = !showConfirmPass">
+                  <button
+                    type="button"
+                    class="sw-eye"
+                    @click="showConfirmPass = !showConfirmPass"
+                  >
                     <Eye v-if="!showConfirmPass" :size="15" />
                     <EyeOff v-else :size="15" />
                   </button>
@@ -413,14 +444,18 @@ onUnmounted(() => {
 
             <div class="sw-fields">
               <div class="sw-field-row">
-                <div class="sw-field" style="flex:1">
+                <div class="sw-field" style="flex: 1">
                   <label>{{ t("setup.smtp_host") }}</label>
                   <div class="sw-input-wrap">
                     <Server :size="15" class="sw-field-icon" />
-                    <input v-model="smtpHost" :placeholder="t('setup.smtp_host_ph')" autocomplete="off" />
+                    <input
+                      v-model="smtpHost"
+                      :placeholder="t('setup.smtp_host_ph')"
+                      autocomplete="off"
+                    />
                   </div>
                 </div>
-                <div class="sw-field" style="width:90px">
+                <div class="sw-field" style="width: 90px">
                   <label>{{ t("setup.smtp_port") }}</label>
                   <div class="sw-input-wrap">
                     <input v-model="smtpPort" placeholder="465" />
@@ -431,7 +466,12 @@ onUnmounted(() => {
               <div class="sw-field">
                 <label>{{ t("setup.smtp_user") }}</label>
                 <div class="sw-input-wrap">
-                  <input v-model="smtpUser" type="email" :placeholder="t('setup.smtp_user_ph')" autocomplete="off" />
+                  <input
+                    v-model="smtpUser"
+                    type="email"
+                    :placeholder="t('setup.smtp_user_ph')"
+                    autocomplete="off"
+                  />
                 </div>
               </div>
 
@@ -445,7 +485,11 @@ onUnmounted(() => {
                     placeholder="••••••••"
                     autocomplete="off"
                   />
-                  <button type="button" class="sw-eye" @click="showSmtpPass = !showSmtpPass">
+                  <button
+                    type="button"
+                    class="sw-eye"
+                    @click="showSmtpPass = !showSmtpPass"
+                  >
                     <Eye v-if="!showSmtpPass" :size="15" />
                     <EyeOff v-else :size="15" />
                   </button>
@@ -459,16 +503,23 @@ onUnmounted(() => {
               </label>
 
               <div class="sw-field-row">
-                <div class="sw-field" style="flex:1">
+                <div class="sw-field" style="flex: 1">
                   <label>{{ t("setup.smtp_from_name") }}</label>
                   <div class="sw-input-wrap">
-                    <input v-model="smtpFromName" :placeholder="t('setup.smtp_from_name_ph')" />
+                    <input
+                      v-model="smtpFromName"
+                      :placeholder="t('setup.smtp_from_name_ph')"
+                    />
                   </div>
                 </div>
-                <div class="sw-field" style="flex:1">
+                <div class="sw-field" style="flex: 1">
                   <label>{{ t("setup.smtp_from_email") }}</label>
                   <div class="sw-input-wrap">
-                    <input v-model="smtpFromEmail" type="email" :placeholder="t('setup.smtp_from_email_ph')" />
+                    <input
+                      v-model="smtpFromEmail"
+                      type="email"
+                      :placeholder="t('setup.smtp_from_email_ph')"
+                    />
                   </div>
                 </div>
               </div>
@@ -482,14 +533,19 @@ onUnmounted(() => {
                 >
                   <span v-if="smtpTesting" class="sw-spinner"></span>
                   <Server v-else :size="14" />
-                  {{ smtpTesting ? t("setup.smtp_testing") : t("setup.smtp_test") }}
+                  {{
+                    smtpTesting ? t("setup.smtp_testing") : t("setup.smtp_test")
+                  }}
                 </button>
                 <Transition name="sw-fade">
                   <div v-if="smtpResult === 'ok'" class="smtp-result ok">
                     <CheckCircle2 :size="13" />
                     {{ t("setup.smtp_ok") }}
                   </div>
-                  <div v-else-if="smtpResult === 'error'" class="smtp-result err">
+                  <div
+                    v-else-if="smtpResult === 'error'"
+                    class="smtp-result err"
+                  >
                     <AlertTriangle :size="13" />
                     {{ smtpErrMsg || t("setup.smtp_error") }}
                   </div>
@@ -497,7 +553,10 @@ onUnmounted(() => {
               </div>
 
               <!-- Advanced -->
-              <button class="sw-advanced-toggle" @click="showAdvanced = !showAdvanced">
+              <button
+                class="sw-advanced-toggle"
+                @click="showAdvanced = !showAdvanced"
+              >
                 <ChevronRight :size="14" :class="{ rotated: showAdvanced }" />
                 {{ t("setup.smtp_advanced") }}
               </button>
@@ -505,30 +564,47 @@ onUnmounted(() => {
               <Transition name="sw-slide">
                 <div v-if="showAdvanced" class="sw-advanced">
                   <div class="sw-field-row">
-                    <div class="sw-field" style="flex:1">
+                    <div class="sw-field" style="flex: 1">
                       <label>{{ t("setup.smtp_delay_ms") }}</label>
                       <div class="sw-input-wrap">
-                        <input v-model.number="smtpSendDelayMs" type="number" min="0" />
+                        <input
+                          v-model.number="smtpSendDelayMs"
+                          type="number"
+                          min="0"
+                        />
                       </div>
                     </div>
-                    <div class="sw-field" style="flex:1">
+                    <div class="sw-field" style="flex: 1">
                       <label>{{ t("setup.smtp_jitter_ms") }}</label>
                       <div class="sw-input-wrap">
-                        <input v-model.number="smtpSendJitterMs" type="number" min="0" />
+                        <input
+                          v-model.number="smtpSendJitterMs"
+                          type="number"
+                          min="0"
+                        />
                       </div>
                     </div>
                   </div>
                   <div class="sw-field-row">
-                    <div class="sw-field" style="flex:1">
+                    <div class="sw-field" style="flex: 1">
                       <label>{{ t("setup.smtp_max_retries") }}</label>
                       <div class="sw-input-wrap">
-                        <input v-model.number="smtpMaxRetries" type="number" min="0" max="10" />
+                        <input
+                          v-model.number="smtpMaxRetries"
+                          type="number"
+                          min="0"
+                          max="10"
+                        />
                       </div>
                     </div>
-                    <div class="sw-field" style="flex:1">
+                    <div class="sw-field" style="flex: 1">
                       <label>{{ t("setup.smtp_retry_delay_ms") }}</label>
                       <div class="sw-input-wrap">
-                        <input v-model.number="smtpRetryDelayMs" type="number" min="0" />
+                        <input
+                          v-model.number="smtpRetryDelayMs"
+                          type="number"
+                          min="0"
+                        />
                       </div>
                     </div>
                   </div>
@@ -547,12 +623,17 @@ onUnmounted(() => {
                 <label>{{ t("setup.app_tracking_url") }}</label>
                 <div class="sw-input-wrap">
                   <Globe :size="15" class="sw-field-icon" />
-                  <input v-model="trackingBaseUrl" placeholder="https://mail.miempresa.com" />
+                  <input
+                    v-model="trackingBaseUrl"
+                    placeholder="https://mail.miempresa.com"
+                  />
                 </div>
                 <p class="sw-field-hint">{{ t("setup.app_tracking_hint") }}</p>
               </div>
 
-              <div class="sw-section-sep">{{ t("setup.app_secrets_title") }}</div>
+              <div class="sw-section-sep">
+                {{ t("setup.app_secrets_title") }}
+              </div>
 
               <label class="sw-toggle">
                 <input v-model="autoSecrets" type="checkbox" />
@@ -560,14 +641,19 @@ onUnmounted(() => {
                 <span>{{ t("setup.app_auto_secrets") }}</span>
               </label>
 
-              <p class="sw-field-hint" style="margin-top:-4px">{{ t("setup.app_secrets_hint") }}</p>
+              <p class="sw-field-hint" style="margin-top: -4px">
+                {{ t("setup.app_secrets_hint") }}
+              </p>
 
               <Transition name="sw-slide">
                 <div v-if="!autoSecrets" class="sw-fields">
                   <div class="sw-field">
                     <label>{{ t("setup.app_unsub_secret") }}</label>
                     <div class="sw-input-wrap">
-                      <input v-model="unsubscribeSecret" placeholder="hex string (64 chars)" />
+                      <input
+                        v-model="unsubscribeSecret"
+                        placeholder="hex string (64 chars)"
+                      />
                     </div>
                   </div>
                   <div class="sw-field">
@@ -596,7 +682,11 @@ onUnmounted(() => {
                     :placeholder="t('setup.openai_api_key_ph')"
                     autocomplete="off"
                   />
-                  <button type="button" class="sw-eye" @click="showOpenaiKey = !showOpenaiKey">
+                  <button
+                    type="button"
+                    class="sw-eye"
+                    @click="showOpenaiKey = !showOpenaiKey"
+                  >
                     <Eye v-if="!showOpenaiKey" :size="15" />
                     <EyeOff v-else :size="15" />
                   </button>
@@ -607,10 +697,10 @@ onUnmounted(() => {
                 <label>{{ t("setup.openai_model") }}</label>
                 <div class="sw-input-wrap">
                   <select v-model="openaiModel" class="sw-select">
+                    <option value="gpt-5.4-nano">gpt-5.4 nano</option>
+                    <option value="gpt-4.1-nano">gpt-4.1 nano</option>
                     <option value="gpt-4o-mini">gpt-4o-mini</option>
-                    <option value="gpt-4o">gpt-4o</option>
-                    <option value="gpt-4-turbo">gpt-4-turbo</option>
-                    <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                    <option value="gpt-4.1-mini">gpt-4.1 mini</option>
                   </select>
                 </div>
               </div>
@@ -624,16 +714,22 @@ onUnmounted(() => {
 
             <div class="sw-fields">
               <div class="sw-field-row">
-                <div class="sw-field" style="flex:1">
+                <div class="sw-field" style="flex: 1">
                   <label>{{ t("setup.dkim_domain") }}</label>
                   <div class="sw-input-wrap">
-                    <input v-model="dkimDomain" :placeholder="t('setup.dkim_domain_ph')" />
+                    <input
+                      v-model="dkimDomain"
+                      :placeholder="t('setup.dkim_domain_ph')"
+                    />
                   </div>
                 </div>
-                <div class="sw-field" style="width:130px">
+                <div class="sw-field" style="width: 130px">
                   <label>{{ t("setup.dkim_selector") }}</label>
                   <div class="sw-input-wrap">
-                    <input v-model="dkimSelector" :placeholder="t('setup.dkim_selector_ph')" />
+                    <input
+                      v-model="dkimSelector"
+                      :placeholder="t('setup.dkim_selector_ph')"
+                    />
                   </div>
                 </div>
               </div>
@@ -660,12 +756,16 @@ onUnmounted(() => {
               <div class="sw-review-row">
                 <Shield :size="14" />
                 <span class="sw-review-key">{{ t("setup.review_admin") }}</span>
-                <span class="sw-review-val ok">{{ t("setup.review_password_ok") }}</span>
+                <span class="sw-review-val ok">{{
+                  t("setup.review_password_ok")
+                }}</span>
               </div>
               <div class="sw-review-row">
                 <Server :size="14" />
                 <span class="sw-review-key">{{ t("setup.review_smtp") }}</span>
-                <span class="sw-review-val">{{ smtpHost }}:{{ smtpPort }} ({{ smtpUser }})</span>
+                <span class="sw-review-val"
+                  >{{ smtpHost }}:{{ smtpPort }} ({{ smtpUser }})</span
+                >
               </div>
               <div class="sw-review-row">
                 <Globe :size="14" />
@@ -674,23 +774,42 @@ onUnmounted(() => {
               </div>
               <div class="sw-review-row">
                 <Lock :size="14" />
-                <span class="sw-review-key">{{ t("setup.review_secrets") }}</span>
+                <span class="sw-review-key">{{
+                  t("setup.review_secrets")
+                }}</span>
                 <span class="sw-review-val ok">
-                  {{ autoSecrets ? t("setup.review_secrets_auto") : t("setup.review_secrets_custom") }}
+                  {{
+                    autoSecrets
+                      ? t("setup.review_secrets_auto")
+                      : t("setup.review_secrets_custom")
+                  }}
                 </span>
               </div>
               <div class="sw-review-row">
                 <Brain :size="14" />
-                <span class="sw-review-key">{{ t("setup.review_openai") }}</span>
+                <span class="sw-review-key">{{
+                  t("setup.review_openai")
+                }}</span>
                 <span class="sw-review-val" :class="{ ok: openaiApiKey }">
-                  {{ openaiApiKey ? t("setup.review_openai_set") : t("setup.review_openai_skip") }}
+                  {{
+                    openaiApiKey
+                      ? t("setup.review_openai_set")
+                      : t("setup.review_openai_skip")
+                  }}
                 </span>
               </div>
               <div class="sw-review-row">
                 <Key :size="14" />
                 <span class="sw-review-key">{{ t("setup.review_dkim") }}</span>
-                <span class="sw-review-val" :class="{ ok: dkimDomain && dkimPrivateKey }">
-                  {{ (dkimDomain && dkimPrivateKey) ? t("setup.review_dkim_set") : t("setup.review_dkim_skip") }}
+                <span
+                  class="sw-review-val"
+                  :class="{ ok: dkimDomain && dkimPrivateKey }"
+                >
+                  {{
+                    dkimDomain && dkimPrivateKey
+                      ? t("setup.review_dkim_set")
+                      : t("setup.review_dkim_skip")
+                  }}
                 </span>
               </div>
             </div>
@@ -727,7 +846,11 @@ onUnmounted(() => {
           >
             <span v-if="installing" class="sw-spinner"></span>
             <Zap v-else :size="15" />
-            {{ installing ? t("setup.review_installing") : t("setup.review_install") }}
+            {{
+              installing
+                ? t("setup.review_installing")
+                : t("setup.review_install")
+            }}
           </button>
         </div>
 
@@ -785,7 +908,7 @@ onUnmounted(() => {
   border-radius: 14px;
   overflow: hidden;
   flex-shrink: 0;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 16px rgba(99, 102, 241, 0.25);
 }
 
@@ -808,7 +931,9 @@ onUnmounted(() => {
   letter-spacing: -0.02em;
 }
 
-.sw-accent { color: #818cf8; }
+.sw-accent {
+  color: #818cf8;
+}
 
 .sw-logo-sub {
   font-size: 11px;
@@ -836,7 +961,7 @@ onUnmounted(() => {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   background: transparent;
   color: #475569;
   display: flex;
@@ -868,7 +993,11 @@ onUnmounted(() => {
 }
 
 /* ── Step content ── */
-.sw-step { display: flex; flex-direction: column; gap: 16px; }
+.sw-step {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
 .sw-title {
   font-size: 22px;
@@ -886,9 +1015,17 @@ onUnmounted(() => {
 }
 
 /* ── Fields ── */
-.sw-fields { display: flex; flex-direction: column; gap: 12px; }
+.sw-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 
-.sw-field { display: flex; flex-direction: column; gap: 5px; }
+.sw-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
 
 .sw-field label {
   font-size: 11px;
@@ -927,7 +1064,10 @@ onUnmounted(() => {
   font-size: 14px;
   font-family: inherit;
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s,
+    background 0.15s;
   box-sizing: border-box;
 }
 
@@ -973,9 +1113,14 @@ onUnmounted(() => {
   align-items: center;
   padding: 5px;
   border-radius: 6px;
-  transition: color 0.15s, background 0.15s;
+  transition:
+    color 0.15s,
+    background 0.15s;
 }
-.sw-eye:hover { color: #94a3b8; background: rgba(255,255,255,0.05); }
+.sw-eye:hover {
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.05);
+}
 
 /* ── Toggle ── */
 .sw-toggle {
@@ -988,21 +1133,25 @@ onUnmounted(() => {
   color: #94a3b8;
 }
 
-.sw-toggle input { display: none; }
+.sw-toggle input {
+  display: none;
+}
 
 .sw-toggle-track {
   width: 36px;
   height: 20px;
   border-radius: 10px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   flex-shrink: 0;
   position: relative;
-  transition: background 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
 }
 
 .sw-toggle-track::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 3px;
   left: 3px;
@@ -1010,7 +1159,9 @@ onUnmounted(() => {
   height: 12px;
   border-radius: 50%;
   background: #475569;
-  transition: transform 0.2s, background 0.2s;
+  transition:
+    transform 0.2s,
+    background 0.2s;
 }
 
 .sw-toggle input:checked + .sw-toggle-track {
@@ -1031,7 +1182,7 @@ onUnmounted(() => {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   padding-top: 4px;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 /* ── SMTP test ── */
@@ -1080,12 +1231,22 @@ onUnmounted(() => {
   font-family: inherit;
 }
 
-.sw-advanced-toggle:hover { color: #94a3b8; }
+.sw-advanced-toggle:hover {
+  color: #94a3b8;
+}
 
-.sw-advanced-toggle svg { transition: transform 0.2s; }
-.sw-advanced-toggle svg.rotated { transform: rotate(90deg); }
+.sw-advanced-toggle svg {
+  transition: transform 0.2s;
+}
+.sw-advanced-toggle svg.rotated {
+  transform: rotate(90deg);
+}
 
-.sw-advanced { display: flex; flex-direction: column; gap: 10px; }
+.sw-advanced {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
 .sw-select {
   width: 100%;
@@ -1099,7 +1260,9 @@ onUnmounted(() => {
   font-family: inherit;
   outline: none;
   cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
   box-sizing: border-box;
   appearance: none;
 }
@@ -1109,7 +1272,10 @@ onUnmounted(() => {
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
-.sw-select option { background: #1d242f; color: #f8fafc; }
+.sw-select option {
+  background: #1d242f;
+  color: #f8fafc;
+}
 
 .sw-textarea {
   width: 100%;
@@ -1122,7 +1288,9 @@ onUnmounted(() => {
   font-family: "JetBrains Mono", "Fira Code", monospace;
   outline: none;
   resize: vertical;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
   box-sizing: border-box;
   line-height: 1.5;
 }
@@ -1132,15 +1300,18 @@ onUnmounted(() => {
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
-.sw-textarea::placeholder { color: #334155; font-size: 11px; }
+.sw-textarea::placeholder {
+  color: #334155;
+  font-size: 11px;
+}
 
 /* ── Review ── */
 .sw-review {
   display: flex;
   flex-direction: column;
   gap: 0;
-  background: rgba(0,0,0,0.2);
-  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 14px;
   overflow: hidden;
 }
@@ -1150,11 +1321,13 @@ onUnmounted(() => {
   align-items: center;
   gap: 10px;
   padding: 11px 14px;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   color: #475569;
 }
 
-.sw-review-row:last-child { border-bottom: none; }
+.sw-review-row:last-child {
+  border-bottom: none;
+}
 
 .sw-review-key {
   font-size: 12px;
@@ -1169,7 +1342,10 @@ onUnmounted(() => {
   word-break: break-all;
 }
 
-.sw-review-val.ok { color: #10b981; font-weight: 600; }
+.sw-review-val.ok {
+  color: #10b981;
+  font-weight: 600;
+}
 
 .sw-install-err {
   display: flex;
@@ -1195,15 +1371,18 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 10px;
   font-size: 12px;
   font-weight: 600;
   color: #64748b;
 }
 
-.sw-feature svg { color: #6366f1; flex-shrink: 0; }
+.sw-feature svg {
+  color: #6366f1;
+  flex-shrink: 0;
+}
 
 /* ── Navigation ── */
 .sw-nav {
@@ -1213,10 +1392,12 @@ onUnmounted(() => {
   gap: 10px;
   margin-top: 8px;
   padding-top: 18px;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.sw-nav.centered { justify-content: center; }
+.sw-nav.centered {
+  justify-content: center;
+}
 
 /* ── Buttons ── */
 .sw-btn-primary {
@@ -1234,7 +1415,10 @@ onUnmounted(() => {
   background: linear-gradient(135deg, #6366f1, #4f46e5);
   color: #fff;
   box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
-  transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s,
+    opacity 0.15s;
   min-width: 140px;
   justify-content: center;
 }
@@ -1244,7 +1428,10 @@ onUnmounted(() => {
   box-shadow: 0 6px 22px rgba(99, 102, 241, 0.45);
 }
 
-.sw-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.sw-btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
 .sw-btn-install {
   height: 46px;
@@ -1261,7 +1448,10 @@ onUnmounted(() => {
   background: linear-gradient(135deg, #10b981, #059669);
   color: #fff;
   box-shadow: 0 4px 20px rgba(16, 185, 129, 0.35);
-  transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s,
+    opacity 0.15s;
   flex: 1;
   justify-content: center;
 }
@@ -1271,12 +1461,15 @@ onUnmounted(() => {
   box-shadow: 0 6px 28px rgba(16, 185, 129, 0.5);
 }
 
-.sw-btn-install:disabled { opacity: 0.5; cursor: not-allowed; }
+.sw-btn-install:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 .sw-btn-back {
   height: 44px;
   padding: 0 16px;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   background: transparent;
   color: #64748b;
@@ -1290,12 +1483,15 @@ onUnmounted(() => {
   transition: all 0.15s;
 }
 
-.sw-btn-back:hover { background: rgba(255,255,255,0.05); color: #94a3b8; }
+.sw-btn-back:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
+}
 
 .sw-btn-outline {
   height: 38px;
   padding: 0 16px;
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   background: transparent;
   color: #64748b;
@@ -1309,8 +1505,14 @@ onUnmounted(() => {
   transition: all 0.15s;
 }
 
-.sw-btn-outline:hover:not(:disabled) { background: rgba(255,255,255,0.05); color: #94a3b8; }
-.sw-btn-outline:disabled { opacity: 0.4; cursor: not-allowed; }
+.sw-btn-outline:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
+}
+.sw-btn-outline:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
 /* ── Done screen ── */
 .sw-done {
@@ -1365,7 +1567,10 @@ onUnmounted(() => {
   box-sizing: border-box;
 }
 
-.done-files span { color: #475569; font-family: monospace; }
+.done-files span {
+  color: #475569;
+  font-family: monospace;
+}
 
 .done-restart-box {
   width: 100%;
@@ -1453,14 +1658,18 @@ onUnmounted(() => {
 .sw-spinner {
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(255,255,255,0.2);
+  border: 2px solid rgba(255, 255, 255, 0.2);
   border-top-color: currentColor;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
   flex-shrink: 0;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* ── Footer ── */
 .sw-footer {
@@ -1471,16 +1680,43 @@ onUnmounted(() => {
 }
 
 /* ── Transitions ── */
-.sw-fade-enter-active, .sw-fade-leave-active { transition: opacity 0.2s ease; }
-.sw-fade-enter-from, .sw-fade-leave-to { opacity: 0; }
+.sw-fade-enter-active,
+.sw-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.sw-fade-enter-from,
+.sw-fade-leave-to {
+  opacity: 0;
+}
 
-.sw-slide-enter-active, .sw-slide-leave-active { transition: all 0.22s ease; overflow: hidden; }
-.sw-slide-enter-from, .sw-slide-leave-to { opacity: 0; transform: translateX(16px); max-height: 0; }
-.sw-slide-enter-to, .sw-slide-leave-from { opacity: 1; transform: translateX(0); max-height: 800px; }
+.sw-slide-enter-active,
+.sw-slide-leave-active {
+  transition: all 0.22s ease;
+  overflow: hidden;
+}
+.sw-slide-enter-from,
+.sw-slide-leave-to {
+  opacity: 0;
+  transform: translateX(16px);
+  max-height: 0;
+}
+.sw-slide-enter-to,
+.sw-slide-leave-from {
+  opacity: 1;
+  transform: translateX(0);
+  max-height: 800px;
+}
 
 @media (max-width: 560px) {
-  .sw-card { padding: 26px 20px 22px; border-radius: 20px; }
-  .sw-field-row { flex-direction: column; }
-  .sw-feature-list { grid-template-columns: 1fr; }
+  .sw-card {
+    padding: 26px 20px 22px;
+    border-radius: 20px;
+  }
+  .sw-field-row {
+    flex-direction: column;
+  }
+  .sw-feature-list {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
