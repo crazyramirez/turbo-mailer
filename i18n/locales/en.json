@@ -365,6 +365,8 @@
     "style_global_color_label": "Define the tone for the body and main background:",
     "card_border_radius": "Card border radius",
     "card_shadow": "Card shadow",
+    "style_global_font": "Global Typography",
+    "style_global_font_override_hint": "Changing the global typography will overwrite any fonts previously assigned to individual blocks.",
     "style_notice": "Changing the style will affect the base structure and default colors.",
     "layers_empty_title": "Empty Structure",
     "layers_empty_desc": "Drag modules from the left to start your design",

@@ -3,15 +3,15 @@ import { useEditorState } from "~/composables/useEditorState";
 import { editorStyleBases, type EditorStyleBase } from "~/utils/editorStyles";
 import { Check, Info, Palette } from "lucide-vue-next";
 import { usePrompt } from "~/composables/usePrompt";
+import { safeFonts } from "~/utils/editorFonts";
 
-const { currentStyle } = useEditorState();
+const { currentStyle, iframeRef } = useEditorState();
+const { applyStyleBase, triggerAutosave } = useIframeEngine();
 
 const selectStyle = (style: EditorStyleBase) => {
   currentStyle.value = style;
-  import("~/composables/useIframeEngine").then(({ useIframeEngine }) => {
-    useIframeEngine().applyStyleBase(style, true);
-    useIframeEngine().triggerAutosave(true);
-  });
+  applyStyleBase(style, true);
+  triggerAutosave(true);
 };
 
 const { openPrompt } = usePrompt();
@@ -30,10 +30,8 @@ const openGlobalColorPicker = () => {
         newStyle.config.bodyBg = color;
         currentStyle.value = newStyle;
         
-        import("~/composables/useIframeEngine").then(({ useIframeEngine }) => {
-          useIframeEngine().applyStyleBase(newStyle, true);
-          useIframeEngine().triggerAutosave(true);
-        });
+        applyStyleBase(newStyle, true);
+        triggerAutosave(true);
       }
     }
   );
@@ -45,10 +43,40 @@ const updateCardRadius = (radiusVal: string) => {
   newStyle.config.cardRadius = radius;
   currentStyle.value = newStyle;
 
-  import("~/composables/useIframeEngine").then(({ useIframeEngine }) => {
-    useIframeEngine().applyStyleBase(newStyle, true);
-    useIframeEngine().triggerAutosave(true);
-  });
+  applyStyleBase(newStyle, true);
+  triggerAutosave(true);
+};
+
+const isFontActive = (fontFamily: string) => {
+  if (!currentStyle.value?.config?.fontFamily) return false;
+  const currentFirst = currentStyle.value.config.fontFamily.split(',')[0].trim().replace(/['"]/g, '').toLowerCase();
+  const targetFirst = fontFamily.split(',')[0].trim().replace(/['"]/g, '').toLowerCase();
+  return currentFirst === targetFirst;
+};
+
+const updateGlobalFont = (family: string) => {
+  const newStyle = JSON.parse(JSON.stringify(currentStyle.value));
+  newStyle.config.fontFamily = family;
+  currentStyle.value = newStyle;
+
+  const doc = iframeRef.value?.contentDocument;
+  if (doc) {
+    doc.body.style.fontFamily = family;
+    doc.querySelectorAll(".editable-block").forEach((block: any) => {
+      delete block.dataset.customFont;
+      block.removeAttribute('data-custom-font');
+      block.style.fontFamily = family;
+      block.querySelectorAll("*").forEach((el: any) => {
+        delete el.dataset.customFont;
+        el.removeAttribute('data-custom-font');
+        if (!el.dataset.toggle?.includes('badge')) {
+          el.style.fontFamily = family;
+        }
+      });
+    });
+  }
+  applyStyleBase(newStyle, true);
+  triggerAutosave(true);
 };
 
 const updateCardShadow = (shadow: string) => {
@@ -56,10 +84,8 @@ const updateCardShadow = (shadow: string) => {
   newStyle.config.cardShadow = shadow;
   currentStyle.value = newStyle;
 
-  import("~/composables/useIframeEngine").then(({ useIframeEngine }) => {
-    useIframeEngine().applyStyleBase(newStyle, true);
-    useIframeEngine().triggerAutosave(true);
-  });
+  applyStyleBase(newStyle, true);
+  triggerAutosave(true);
 };
 </script>
 
@@ -174,6 +200,30 @@ const updateCardShadow = (shadow: string) => {
           <option value="0 28px 90px rgba(0, 0, 0, 0.48)">Muy intensa</option>
           <option v-if="currentStyle.config.cardShadow && !['none', '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', '0 10px 40px rgba(15, 23, 42, 0.08)', '0 20px 50px rgba(0, 0, 0, 0.5)', '0 28px 90px rgba(0, 0, 0, 0.48)'].includes(currentStyle.config.cardShadow)" :value="currentStyle.config.cardShadow">Personalizada</option>
         </select>
+      </div>
+
+      <div class="control-group">
+        <label class="control-label">
+          <span>{{ $t("editor.style_global_font") || 'Tipografía Global' }}</span>
+        </label>
+        <select 
+          @change="updateGlobalFont(($event.target as HTMLSelectElement).value)"
+          class="control-select"
+        >
+          <optgroup v-for="group in safeFonts" :key="group.group" :label="group.group">
+            <option 
+              v-for="font in group.fonts" 
+              :key="font.name" 
+              :value="font.family"
+              :selected="isFontActive(font.family)"
+            >
+              {{ font.name }}
+            </option>
+          </optgroup>
+        </select>
+        <p class="control-help">
+          {{ $t("editor.style_global_font_override_hint") || 'Al cambiar la tipografía global se sobrescribirá cualquier tipografía asignada previamente.' }}
+        </p>
       </div>
     </div>
   </div>
@@ -436,5 +486,12 @@ const updateCardShadow = (shadow: string) => {
 
 .control-select:focus {
   border-color: #6366f1;
+}
+
+.control-help {
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.35;
+  margin-top: 4px;
 }
 </style>

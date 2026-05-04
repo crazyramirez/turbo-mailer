@@ -365,6 +365,8 @@
     "style_global_color_label": "Define el tono para el cuerpo y fondo principal:",
     "card_border_radius": "Bordes de la tarjeta",
     "card_shadow": "Sombra de la tarjeta",
+    "style_global_font": "Tipografía Global",
+    "style_global_font_override_hint": "Al cambiar la tipografía global se sobrescribirá cualquier tipografía asignada previamente a nivel individual.",
     "style_notice": "Cambiar el estilo afectará a la estructura base y colores por defecto.",
     "layers_empty_title": "Estructura Vacía",
     "layers_empty_desc": "Arrastra módulos desde la izquierda para comenzar tu diseño",

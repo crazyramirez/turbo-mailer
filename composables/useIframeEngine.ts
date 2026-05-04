@@ -859,7 +859,18 @@ function injectIframeContent() {
   if (styleId) {
     const savedStyle = editorStyleBases.find(s => s.id === styleId)
     if (savedStyle) {
-      useEditorState().currentStyle.value = savedStyle
+      const clonedStyle = JSON.parse(JSON.stringify(savedStyle))
+      const customBodyBg = doc.body.getAttribute('data-style-body-bg')
+      const customCardRadius = doc.body.getAttribute('data-style-card-radius')
+      const customCardShadow = doc.body.getAttribute('data-style-card-shadow')
+      const customFontFamily = doc.body.getAttribute('data-style-font-family')
+      
+      if (customBodyBg) clonedStyle.config.bodyBg = customBodyBg
+      if (customCardRadius) clonedStyle.config.cardRadius = customCardRadius
+      if (customCardShadow) clonedStyle.config.cardShadow = customCardShadow
+      if (customFontFamily) clonedStyle.config.fontFamily = customFontFamily
+      
+      useEditorState().currentStyle.value = clonedStyle
     }
   }
 
@@ -935,6 +946,13 @@ function applyStyleBase(style: EditorStyleBase, forceTheme = false, target?: HTM
     doc.body.style.backgroundColor = style.config.bodyBg
     doc.body.style.fontFamily = style.config.fontFamily
     
+    // Save style metadata
+    doc.body.setAttribute('data-style-id', style.id)
+    if (style.config.bodyBg) doc.body.setAttribute('data-style-body-bg', style.config.bodyBg)
+    if (style.config.cardRadius) doc.body.setAttribute('data-style-card-radius', style.config.cardRadius)
+    if (style.config.cardShadow) doc.body.setAttribute('data-style-card-shadow', style.config.cardShadow)
+    if (style.config.fontFamily) doc.body.setAttribute('data-style-font-family', style.config.fontFamily)
+
     // Apply main-card style
     const mainCard = doc.querySelector('.main-card') as HTMLElement
     if (mainCard) {
@@ -955,9 +973,11 @@ function applyStyleBase(style: EditorStyleBase, forceTheme = false, target?: HTM
     if (forceTheme || !block.dataset.customFont) {
       block.style.fontFamily = style.config.fontFamily
       block.querySelectorAll('*').forEach((el: any) => {
-        // If it has a hardcoded font-family, override it with the theme font
-        // unless it's already being handled by badge logic below
-        if (el.style.fontFamily && !el.dataset.customFont && !el.dataset.toggle?.includes('badge')) {
+        if (forceTheme) {
+          if (!el.dataset.toggle?.includes('badge')) {
+            el.style.fontFamily = style.config.fontFamily
+          }
+        } else if (el.style.fontFamily && !el.dataset.customFont && !el.dataset.toggle?.includes('badge')) {
           el.style.fontFamily = style.config.fontFamily
         }
       })
