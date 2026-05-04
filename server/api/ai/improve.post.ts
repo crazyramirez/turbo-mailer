@@ -1,8 +1,8 @@
-﻿import { defineEventHandler, readBody, createError } from 'h3'
+import { defineEventHandler, readBody, createError } from 'h3'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
-  const { text } = body
+  const { text, context } = body
 
   if (!text) {
     throw createError({ statusCode: 400, statusMessage: 'Text is required' })
@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
           },
           {
             role: 'user',
-            content: `Mejora los textos de este HTML: ${text}`
+            content: `Mejora los textos de este HTML: ${text}${context ? `\n\nContexto adicional del usuario: ${context}` : ''}`
           }
         ],
         temperature: 0.7

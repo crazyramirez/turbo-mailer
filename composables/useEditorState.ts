@@ -141,6 +141,12 @@ const imageModal = reactive({
   linkEl: null as HTMLAnchorElement | null,
 })
 
+const aiImproveModal = reactive({
+  visible: false,
+  context: '',
+  targetEl: null as HTMLElement | null,
+})
+
 const confirmData = reactive({
   visible: false,
   title: '',
@@ -206,6 +212,7 @@ export function useEditorState() {
     promptData,
     imageModal,
     confirmData,
+    aiImproveModal,
     currentStyle,
     resetEditorState,
   }

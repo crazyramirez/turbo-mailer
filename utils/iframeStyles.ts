@@ -191,6 +191,38 @@ export const iframeEditorStyles = `
     border-radius: 12px;
     outline: 2px solid rgba(168, 85, 247, 0.5) !important;
   }
+  @keyframes blockGlowAnimation {
+    0% {
+      outline: 5px solid rgba(16, 185, 129, 0) !important;
+      outline-offset: -2px !important;
+      box-shadow: 0 0 0 rgba(16, 185, 129, 0) !important;
+      transform: scale(1);
+    }
+    20% {
+      outline: 6px solid #10b981 !important;
+      outline-offset: -2px !important;
+      box-shadow: 0 0 60px rgba(16, 185, 129, 0.8), 0 0 30px rgba(139, 92, 246, 0.6) !important;
+      transform: scale(1.03);
+      filter: brightness(1.25);
+    }
+    55% {
+      outline: 6px solid #8b5cf6 !important;
+      outline-offset: -2px !important;
+      box-shadow: 0 0 70px rgba(139, 92, 246, 0.9), 0 0 40px rgba(16, 185, 129, 0.7) !important;
+      transform: scale(1.035);
+      filter: brightness(1.3);
+    }
+    100% {
+      outline: 2px solid transparent !important;
+      outline-offset: -2px !important;
+      box-shadow: 0 0 0px transparent !important;
+      transform: scale(1);
+      filter: brightness(1);
+    }
+  }
+  .block-updated-glow {
+    animation: blockGlowAnimation 2.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  }
   
   @media only screen and (max-width: 600px) {
     .grid-quad-td {

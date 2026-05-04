@@ -17,6 +17,7 @@ import ImageModal from "~/components/editor/modals/ImageModal.vue";
 import TemplateModal from "~/components/editor/modals/TemplateModal.vue";
 import AITemplateModal from "~/components/editor/modals/AITemplateModal.vue";
 import ConfirmModal from "~/components/editor/modals/ConfirmModal.vue";
+import AIImproveModal from "~/components/editor/modals/AIImproveModal.vue";
 
 const { t } = useI18n();
 const { editorDragState, resetEditorState } = useEditorState();
@@ -149,6 +150,7 @@ onUnmounted(() => {
     <TemplateModal />
     <AITemplateModal />
     <ConfirmModal />
+    <AIImproveModal />
 
     <EditorHeader />
 

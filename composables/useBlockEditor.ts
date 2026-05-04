@@ -1058,7 +1058,7 @@ function updateImage() {
 
 // ─── AI Improvement ──────────────────────────────────────────────────────────
 
-async function improveBlockWithAI(el?: HTMLElement) {
+function improveBlockWithAI(el?: HTMLElement) {
   const target = el || selectedElement.value
   if (!target) return
 
@@ -1070,34 +1070,10 @@ async function improveBlockWithAI(el?: HTMLElement) {
     return
   }
 
-  isImprovingAI.value = true
-  showToast(i18n.t('editor.ai_improving'), 'info')
-  
-  // Añadir efecto visual al bloque
-  target.classList.add('ai-improving')
-
-  try {
-    const { improvedText } = await $fetch<{ improvedText: string }>('/api/ai/improve', {
-      method: 'POST',
-      body: { text: textToImprove }
-    })
-
-    if (improvedText) {
-      // Aplicamos el HTML mejorado manteniendo la estructura
-      target.innerHTML = improvedText
-      showToast(i18n.t('editor.ai_success'), 'success')
-      
-      import('~/composables/useIframeEngine').then(({ useIframeEngine }) => {
-        useIframeEngine().refreshLayers()
-        useIframeEngine().triggerAutosave(true)
-      })
-    }
-  } catch (err: any) {
-    showToast(err.statusMessage || i18n.t('editor.ai_error'), 'error')
-  } finally {
-    isImprovingAI.value = false
-    target.classList.remove('ai-improving')
-  }
+  const { aiImproveModal } = useEditorState()
+  aiImproveModal.targetEl = target
+  aiImproveModal.context = ''
+  aiImproveModal.visible = true
 }
 
 async function improveAllWithAI() {
