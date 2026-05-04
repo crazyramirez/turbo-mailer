@@ -28,8 +28,6 @@ const openGlobalColorPicker = () => {
         // Clone and update config
         const newStyle = JSON.parse(JSON.stringify(currentStyle.value));
         newStyle.config.bodyBg = color;
-        newStyle.config.cardBg = color;
-        newStyle.config.contentBg = color;
         currentStyle.value = newStyle;
         
         import("~/composables/useIframeEngine").then(({ useIframeEngine }) => {
@@ -39,6 +37,29 @@ const openGlobalColorPicker = () => {
       }
     }
   );
+};
+
+const updateCardRadius = (radiusVal: string) => {
+  const radius = `${radiusVal}px`;
+  const newStyle = JSON.parse(JSON.stringify(currentStyle.value));
+  newStyle.config.cardRadius = radius;
+  currentStyle.value = newStyle;
+
+  import("~/composables/useIframeEngine").then(({ useIframeEngine }) => {
+    useIframeEngine().applyStyleBase(newStyle, true);
+    useIframeEngine().triggerAutosave(true);
+  });
+};
+
+const updateCardShadow = (shadow: string) => {
+  const newStyle = JSON.parse(JSON.stringify(currentStyle.value));
+  newStyle.config.cardShadow = shadow;
+  currentStyle.value = newStyle;
+
+  import("~/composables/useIframeEngine").then(({ useIframeEngine }) => {
+    useIframeEngine().applyStyleBase(newStyle, true);
+    useIframeEngine().triggerAutosave(true);
+  });
 };
 </script>
 
@@ -118,6 +139,42 @@ const openGlobalColorPicker = () => {
         <span>{{ $t("editor.style_global_color_title") }}</span>
         <div class="color-indicator" :style="{ backgroundColor: currentStyle.config.bodyBg }"></div>
       </button>
+    </div>
+
+    <div class="advanced-controls" v-if="currentStyle">
+      <div class="control-group">
+        <label class="control-label">
+          <span>{{ $t("editor.card_border_radius") || 'Bordes de la tarjeta' }}</span>
+          <span class="control-val">{{ currentStyle.config.cardRadius || '0px' }}</span>
+        </label>
+        <input 
+          type="range" 
+          min="0" 
+          max="40" 
+          step="2" 
+          :value="parseInt(currentStyle.config.cardRadius) || 0"
+          @input="updateCardRadius(($event.target as HTMLInputElement).value)"
+          class="control-slider" 
+        />
+      </div>
+
+      <div class="control-group">
+        <label class="control-label">
+          <span>{{ $t("editor.card_shadow") || 'Sombra de la tarjeta' }}</span>
+        </label>
+        <select 
+          :value="currentStyle.config.cardShadow" 
+          @change="updateCardShadow(($event.target as HTMLSelectElement).value)"
+          class="control-select"
+        >
+          <option value="none">Ninguna</option>
+          <option value="0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)">Suave</option>
+          <option value="0 10px 40px rgba(15, 23, 42, 0.08)">Media</option>
+          <option value="0 20px 50px rgba(0, 0, 0, 0.5)">Intensa</option>
+          <option value="0 28px 90px rgba(0, 0, 0, 0.48)">Muy intensa</option>
+          <option v-if="currentStyle.config.cardShadow && !['none', '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', '0 10px 40px rgba(15, 23, 42, 0.08)', '0 20px 50px rgba(0, 0, 0, 0.5)', '0 28px 90px rgba(0, 0, 0, 0.48)'].includes(currentStyle.config.cardShadow)" :value="currentStyle.config.cardShadow">Personalizada</option>
+        </select>
+      </div>
     </div>
   </div>
 </template>
@@ -306,5 +363,78 @@ const openGlobalColorPicker = () => {
   border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   margin-left: auto;
+}
+
+.advanced-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 10px;
+  padding-top: 16px;
+  border-top: 1px solid #334155;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.control-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.control-val {
+  font-family: monospace;
+  font-size: 11px;
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.control-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  background: #334155;
+  border-radius: 3px;
+  outline: none;
+}
+
+.control-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  background: #6366f1;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.control-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.control-select {
+  width: 100%;
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #f1f5f9;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.control-select:focus {
+  border-color: #6366f1;
 }
 </style>

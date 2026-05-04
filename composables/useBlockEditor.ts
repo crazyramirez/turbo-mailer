@@ -353,9 +353,13 @@ function cancelFontSelection() {
 function applyFont(family: string) {
   if (!selectedElement.value) return
   selectedElement.value.style.fontFamily = family
-  selectedElement.value.querySelectorAll('div, p, span, td, a').forEach((el: any) => (el.style.fontFamily = family))
+  selectedElement.value.dataset.customFont = 'true'
+  selectedElement.value.querySelectorAll('div, p, span, td, a').forEach((el: any) => {
+    el.style.fontFamily = family
+    el.dataset.customFont = 'true'
+  })
   activePanel.value = 'edit'
-  import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave())
+  import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
 }
 
 function updateTextAlign(align: string) {

@@ -952,14 +952,16 @@ function applyStyleBase(style: EditorStyleBase, forceTheme = false, target?: HTM
   const blocks = target ? [target] : doc.querySelectorAll('.editable-block')
   blocks.forEach((block: any) => {
     // 0. Global Font Overrides for the block
-    block.style.fontFamily = style.config.fontFamily
-    block.querySelectorAll('*').forEach((el: any) => {
-      // If it has a hardcoded font-family, override it with the theme font
-      // unless it's already being handled by badge logic below
-      if (el.style.fontFamily && !el.dataset.toggle?.includes('badge')) {
-        el.style.fontFamily = style.config.fontFamily
-      }
-    })
+    if (forceTheme || !block.dataset.customFont) {
+      block.style.fontFamily = style.config.fontFamily
+      block.querySelectorAll('*').forEach((el: any) => {
+        // If it has a hardcoded font-family, override it with the theme font
+        // unless it's already being handled by badge logic below
+        if (el.style.fontFamily && !el.dataset.customFont && !el.dataset.toggle?.includes('badge')) {
+          el.style.fontFamily = style.config.fontFamily
+        }
+      })
+    }
 
     // 1. Content background & Borders
     if (!block.classList.contains('header-block')) {

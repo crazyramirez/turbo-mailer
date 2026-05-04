@@ -363,6 +363,8 @@
     "style_midnight_desc": "Ultra-premium aesthetic: deep navy gradients, golden accents and high contrast.",
     "style_global_color_title": "Global Color (Background)",
     "style_global_color_label": "Define the tone for the body and main background:",
+    "card_border_radius": "Card border radius",
+    "card_shadow": "Card shadow",
     "style_notice": "Changing the style will affect the base structure and default colors.",
     "layers_empty_title": "Empty Structure",
     "layers_empty_desc": "Drag modules from the left to start your design",

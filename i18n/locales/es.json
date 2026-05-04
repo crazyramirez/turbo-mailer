@@ -363,6 +363,8 @@
     "style_midnight_desc": "Estética ultra-premium: degradados azul profundo, acentos dorados y alto contraste.",
     "style_global_color_title": "Color Global (Fondo)",
     "style_global_color_label": "Define el tono para el cuerpo y fondo principal:",
+    "card_border_radius": "Bordes de la tarjeta",
+    "card_shadow": "Sombra de la tarjeta",
     "style_notice": "Cambiar el estilo afectará a la estructura base y colores por defecto.",
     "layers_empty_title": "Estructura Vacía",
     "layers_empty_desc": "Arrastra módulos desde la izquierda para comenzar tu diseño",
