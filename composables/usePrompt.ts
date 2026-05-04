@@ -10,7 +10,7 @@ function openPrompt(
   callback: (val: string) => void,
   variant: 'primary' | 'danger' = 'primary',
   confirmLabel?: string,
-  colorTarget?: 'block' | 'text' | 'button' | 'border',
+  colorTarget?: 'block' | 'text' | 'button' | 'border' | 'body',
 ) {
   promptData.title = title
   promptData.label = label
@@ -61,6 +61,11 @@ function handlePromptInput(val: string) {
       previewTextColor(val)
     } else if (promptData.colorTarget === 'block') {
       previewBlockColor(val)
+    } else if (promptData.colorTarget === 'body') {
+      const doc = iframeRef.value?.contentDocument
+      if (doc) {
+        doc.body.style.backgroundColor = val
+      }
     } else if (promptData.colorTarget === 'button') {
       const btn = selectedSubElement.value?.closest('[data-toggle="button"]') as HTMLElement
       if (btn) {

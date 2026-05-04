@@ -37,7 +37,10 @@ const openGlobalColorPicker = () => {
         }
         triggerAutosave(true);
       }
-    }
+    },
+    'primary',
+    undefined,
+    'body'
   );
 };
 
