@@ -27,6 +27,8 @@ const { showToast, showDialog } = useDashboardState();
 const { startMonitoring } = useSendingMonitor();
 const resendingSingle = ref<number | null>(null);
 const checkingBounces = ref(false);
+const bounceLog = ref<string[]>([]);
+const showBounceLog = ref(false);
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
@@ -281,25 +283,40 @@ async function resendSingle(sendId: number) {
 }
 
 // ─── Bounce check ────────────────────────────────────────────
-async function checkBounces() {
+async function checkBounces(silent = false) {
+  if (checkingBounces.value) return;
   checkingBounces.value = true;
   try {
     const r = await $fetch<{ checked: number; bounced: number; errors: string[] }>(
       "/api/bounces/process",
       { method: "POST" },
     );
+    // Always refresh log after any check
+    await refreshBounceLog();
+    if (r.errors?.length) {
+      showToast(`Error IMAP: ${r.errors[0]}`, "error");
+      showBounceLog.value = true;
+      return;
+    }
     if (r.bounced > 0) {
-      showToast(`${r.bounced} rebote(s) detectado(s) y actualizados`, "info");
+      showToast(`${r.bounced} rebote(s) detectado(s)`, "info");
       await Promise.all([fetchCampaign(), fetchSends()]);
-    } else {
-      showToast(`${r.checked} mensajes revisados — sin rebotes nuevos`, "success");
+    } else if (!silent) {
+      showToast(`${r.checked} emails revisados — sin rebotes`, "success");
     }
   } catch (e: any) {
-    const msg = e.data?.statusMessage || e.message;
-    showToast(`Error al verificar rebotes: ${msg}`, "error");
+    if (!silent)
+      showToast(`Error: ${e.data?.statusMessage || e.message}`, "error");
   } finally {
     checkingBounces.value = false;
   }
+}
+
+async function refreshBounceLog() {
+  try {
+    const r = await $fetch<{ lines: string[] }>("/api/bounces/log");
+    bounceLog.value = r.lines;
+  } catch {}
 }
 
 // ─── Polling ─────────────────────────────────────────────────
@@ -414,6 +431,11 @@ onMounted(async () => {
     dismissOverlay.value = true;
     startMonitoring(id);
     startPolling();
+  }
+
+  // Auto-check bounces silently when opening a sent campaign
+  if (campaign.value?.status === "sent") {
+    checkBounces(true);
   }
 });
 onUnmounted(() => {
@@ -737,14 +759,24 @@ onUnmounted(() => {
               <button
                 class="btn-check-bounces"
                 :disabled="checkingBounces"
-                @click="checkBounces"
+                @click="checkBounces(false)"
                 title="Conecta al buzón IMAP del remitente y procesa NDR (Non-Delivery Reports)"
               >
                 <Loader2 v-if="checkingBounces" :size="13" class="spin" />
                 <RotateCcw v-else :size="13" />
                 {{ checkingBounces ? "Verificando…" : "Verificar rebotes" }}
               </button>
-              <span class="bounce-check-hint">Detecta rebotes asíncronos vía IMAP</span>
+              <button
+                class="btn-bounce-log"
+                @click="showBounceLog = !showBounceLog; if (showBounceLog) refreshBounceLog()"
+                title="Ver log de diagnóstico IMAP"
+              >
+                {{ showBounceLog ? "▲ Log" : "▼ Log" }}
+              </button>
+            </div>
+            <div v-if="showBounceLog && (campaign.status === 'sent' || campaign.status === 'paused')" class="bounce-log-box">
+              <div v-if="bounceLog.length === 0" class="bounce-log-empty">Sin entradas de log — haz click en "Verificar rebotes"</div>
+              <div v-for="(line, i) in bounceLog" :key="i" class="bounce-log-line">{{ line }}</div>
             </div>
 
             <!-- Paused banner -->
@@ -1898,6 +1930,45 @@ select.field-input option {
 .bounce-check-hint {
   font-size: 11px;
   color: var(--text-dim);
+}
+.btn-bounce-log {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 9px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-bounce-log:hover {
+  background: rgb(0 0 0 / 6%);
+  color: var(--text);
+}
+.bounce-log-box {
+  background: rgb(0 0 0 / 40%);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: monospace;
+  font-size: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.bounce-log-line {
+  color: var(--text-muted);
+  line-height: 1.5;
+  word-break: break-all;
+}
+.bounce-log-empty {
+  color: var(--text-dim);
+  font-size: 11px;
+  text-align: center;
+  padding: 12px 0;
 }
 
 /* Paused banner */

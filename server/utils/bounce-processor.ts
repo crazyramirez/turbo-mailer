@@ -1,8 +1,18 @@
 import { ImapFlow } from 'imapflow'
+import { appendFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { db } from '~/server/db/index'
 import { sends, contacts, campaigns } from '~/server/db/schema'
 import { eq, inArray } from 'drizzle-orm'
-import { useServerConfig } from './serverConfig'
+import { useServerConfig, dataDir } from './serverConfig'
+
+function blog(msg: string) {
+  const line = `[${new Date().toISOString()}] ${msg}\n`
+  console.log(msg)
+  try {
+    appendFileSync(resolve(dataDir, 'bounce.log'), line, 'utf-8')
+  } catch {}
+}
 
 export interface ImapConfig {
   host: string
@@ -109,8 +119,11 @@ export async function processBounces(cfg: ImapConfig): Promise<{
   const errors: string[] = []
 
   try {
+    blog(`[bounce] START host=${cfg.host} port=${cfg.port} user=${cfg.user} tls=${cfg.tls}`)
+    blog(`[bounce] connecting...`)
     await client.connect()
     await client.mailboxOpen('INBOX')
+    blog('[bounce] INBOX opened')
 
     // Multiple searches — NDR senders and common subjects
     const toArr = (r: number[] | false): number[] => Array.isArray(r) ? r : []
@@ -128,6 +141,8 @@ export async function processBounces(cfg: ImapConfig): Promise<{
     ])
 
     const uidSet = [...new Set([...s1, ...s2, ...s3, ...s4])]
+    console.log(`[bounce] UIDs found: ${uidSet.length} (s1=${s1.length} s2=${s2.length} s3=${s3.length} s4=${s4.length})`)
+
     if (!uidSet.length) {
       await client.logout()
       return { checked: 0, bounced: 0, errors: [] }
@@ -139,7 +154,10 @@ export async function processBounces(cfg: ImapConfig): Promise<{
       checked++
       if (!msg.source) continue
       try {
-        for (const b of parseBounces(msg.source)) {
+        const parsed = parseBounces(msg.source)
+        console.log(`[bounce] UID ${msg.uid}: parsed ${parsed.length} bounce(s)`)
+        for (const b of parsed) {
+          console.log(`[bounce]   → ${b.email} permanent=${b.permanent} status=${b.statusCode}`)
           allBounces.set(b.email, b)
         }
       } catch (e: any) {
@@ -194,7 +212,9 @@ export async function processBounces(cfg: ImapConfig): Promise<{
     }
 
     await client.logout()
+    console.log(`[bounce] done: checked=${checked} bounced=${bounced} errors=${errors.length}`)
   } catch (e: any) {
+    blog(`[bounce] FATAL: ${e.message}`)
     errors.push(e.message)
     try { await client.logout() } catch {}
   }
