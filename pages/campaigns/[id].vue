@@ -821,10 +821,10 @@ onUnmounted(() => {
                   <tr v-for="s in sendsList" :key="s.id">
                     <td class="td-action">
                       <button
-                        v-if="s.status === 'failed' || s.status === 'pending'"
+                        v-if="s.status === 'failed' || s.status === 'pending' || s.status === 'bounced'"
                         class="row-resend-btn"
                         :disabled="resendingSingle !== null || campaign.status === 'sending'"
-                        :title="s.status === 'failed' ? 'Reintentar envío' : 'Enviar ahora'"
+                        :title="s.status === 'bounced' ? 'Reenviar (rebotado)' : s.status === 'failed' ? 'Reintentar envío' : 'Enviar ahora'"
                         @click="resendSingle(s.id)"
                       >
                         <Loader2
