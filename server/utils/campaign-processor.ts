@@ -4,6 +4,7 @@ import { campaigns, contacts, listContacts, sends } from '~/server/db/schema'
 import { eq, and, inArray, sql } from 'drizzle-orm'
 import { applyVars } from '~/server/utils/template'
 import { signUnsubscribeToken, signClickToken, signOpenToken } from '~/server/utils/auth'
+import { getImapConfig, processBounces } from '~/server/utils/bounce-processor'
 
 export interface SendConfig {
   smtpHost: string
@@ -247,4 +248,12 @@ export async function processCampaign(campaignId: number, cfg: SendConfig): Prom
   await db.update(campaigns)
     .set(updateData)
     .where(eq(campaigns.id, campaignId))
+
+  // Auto-check bounces 5 min after campaign ends — NDR emails need time to arrive
+  if (final?.status !== 'paused') {
+    setTimeout(() => {
+      const cfg = getImapConfig()
+      if (cfg) processBounces(cfg).catch(() => {})
+    }, 5 * 60 * 1000)
+  }
 }

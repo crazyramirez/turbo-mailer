@@ -115,11 +115,16 @@ export async function processBounces(cfg: ImapConfig): Promise<{
     // Multiple searches — NDR senders and common subjects
     const toArr = (r: number[] | false): number[] => Array.isArray(r) ? r : []
 
+    // No `seen: false` — NDR could be already read by the user.
+    // Limit to last 30 days to avoid scanning entire inbox history.
+    const since = new Date()
+    since.setDate(since.getDate() - 30)
+
     const [s1, s2, s3, s4] = await Promise.all([
-      client.search({ seen: false, from: 'mailer-daemon' }).then(toArr).catch(() => [] as number[]),
-      client.search({ seen: false, from: 'postmaster' }).then(toArr).catch(() => [] as number[]),
-      client.search({ seen: false, subject: 'Undelivered' }).then(toArr).catch(() => [] as number[]),
-      client.search({ seen: false, subject: 'Delivery' }).then(toArr).catch(() => [] as number[]),
+      client.search({ from: 'mailer-daemon', since }).then(toArr).catch(() => [] as number[]),
+      client.search({ from: 'postmaster', since }).then(toArr).catch(() => [] as number[]),
+      client.search({ subject: 'Undelivered', since }).then(toArr).catch(() => [] as number[]),
+      client.search({ subject: 'Delivery Status', since }).then(toArr).catch(() => [] as number[]),
     ])
 
     const uidSet = [...new Set([...s1, ...s2, ...s3, ...s4])]
@@ -137,8 +142,6 @@ export async function processBounces(cfg: ImapConfig): Promise<{
         for (const b of parseBounces(msg.source)) {
           allBounces.set(b.email, b)
         }
-        // Mark as read to avoid reprocessing on next run
-        await client.messageFlagsAdd(String(msg.uid), ['\\Seen'], { uid: true }).catch(() => {})
       } catch (e: any) {
         errors.push(`UID ${msg.uid}: ${e.message}`)
       }
