@@ -72,11 +72,10 @@ function parseBounces(raw: Buffer): ParsedBounce[] {
   const text = raw.toString('utf-8')
   const bounces: ParsedBounce[] = []
 
-  // Early exit with diagnostics logged via console (called from fetch loop where blog is available)
-  const hasFR = text.includes('Final-Recipient')
+  const hasFR = /Final-Recipient/i.test(text)
   const hasAF = /Action:\s*failed/i.test(text)
   if (!hasFR || !hasAF) {
-    console.log(`[parse] skip: hasFinalRecipient=${hasFR} hasActionFailed=${hasAF}`)
+    blog(`[parse] skip: hasFinalRecipient=${hasFR} hasActionFailed=${hasAF}`)
     return bounces
   }
 
@@ -92,12 +91,12 @@ function parseBounces(raw: Buffer): ParsedBounce[] {
     const diagM   = /Diagnostic-Code\s*:[^\r\n;]*;\s*([^\r\n]+)/i.exec(block)
 
     if (!emailM) {
-      console.log(`[parse] block has FR+AF but no emailM. block=${block.slice(0, 200)}`)
+      blog(`[parse] block has FR+AF but no emailM. block=${block.slice(0, 200)}`)
       continue
     }
     const email = emailM[1].trim().toLowerCase().replace(/[<>\s]/g, '')
     if (!email.includes('@') || !email.includes('.')) {
-      console.log(`[parse] bad email extracted: "${email}"`)
+      blog(`[parse] bad email extracted: "${email}"`)
       continue
     }
 

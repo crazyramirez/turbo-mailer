@@ -1,6 +1,6 @@
 import { db } from '~/server/db/index'
 import { sends, contacts } from '~/server/db/schema'
-import { eq, desc } from 'drizzle-orm'
+import { eq, asc } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const campaignId = Number(getRouterParam(event, 'id'))
@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
     .from(sends)
     .leftJoin(contacts, eq(contacts.id, sends.contactId))
     .where(eq(sends.campaignId, campaignId))
-    .orderBy(desc(sends.sentAt))
+    .orderBy(asc(sends.id))
 
   return rows
 })
