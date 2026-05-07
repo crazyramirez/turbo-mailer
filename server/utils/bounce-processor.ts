@@ -125,23 +125,36 @@ export async function processBounces(cfg: ImapConfig): Promise<{
     await client.mailboxOpen('INBOX')
     blog('[bounce] INBOX opened')
 
-    // Multiple searches — NDR senders and common subjects
-    const toArr = (r: number[] | false): number[] => Array.isArray(r) ? r : []
-
-    // No `seen: false` — NDR could be already read by the user.
-    // Limit to last 30 days to avoid scanning entire inbox history.
+    // IMAP is serial — run searches one at a time with individual timeouts.
+    // Promise.all on one connection causes Gmail IMAP to deadlock.
     const since = new Date()
     since.setDate(since.getDate() - 30)
 
-    const [s1, s2, s3, s4] = await Promise.all([
-      client.search({ from: 'mailer-daemon', since }).then(toArr).catch(() => [] as number[]),
-      client.search({ from: 'postmaster', since }).then(toArr).catch(() => [] as number[]),
-      client.search({ subject: 'Undelivered', since }).then(toArr).catch(() => [] as number[]),
-      client.search({ subject: 'Delivery Status', since }).then(toArr).catch(() => [] as number[]),
-    ])
+    const safeSearch = async (criteria: Record<string, unknown>, label: string): Promise<number[]> => {
+      blog(`[bounce] search: ${label}`)
+      try {
+        const result = await Promise.race<number[] | false>([
+          client.search(criteria),
+          new Promise<never>((_, rej) =>
+            setTimeout(() => rej(new Error(`timeout: ${label}`)), 20_000)
+          ),
+        ])
+        const uids = Array.isArray(result) ? result : []
+        blog(`[bounce] search "${label}": ${uids.length} hit(s)`)
+        return uids
+      } catch (e: any) {
+        blog(`[bounce] search "${label}" SKIP: ${e.message}`)
+        return []
+      }
+    }
+
+    const s1 = await safeSearch({ from: 'mailer-daemon', since }, 'from:mailer-daemon')
+    const s2 = await safeSearch({ from: 'postmaster', since }, 'from:postmaster')
+    const s3 = await safeSearch({ subject: 'Undelivered', since }, 'subject:Undelivered')
+    const s4 = await safeSearch({ subject: 'Delivery Status', since }, 'subject:Delivery Status')
 
     const uidSet = [...new Set([...s1, ...s2, ...s3, ...s4])]
-    console.log(`[bounce] UIDs found: ${uidSet.length} (s1=${s1.length} s2=${s2.length} s3=${s3.length} s4=${s4.length})`)
+    blog(`[bounce] UIDs total: ${uidSet.length} (s1=${s1.length} s2=${s2.length} s3=${s3.length} s4=${s4.length})`)
 
     if (!uidSet.length) {
       await client.logout()
@@ -155,9 +168,9 @@ export async function processBounces(cfg: ImapConfig): Promise<{
       if (!msg.source) continue
       try {
         const parsed = parseBounces(msg.source)
-        console.log(`[bounce] UID ${msg.uid}: parsed ${parsed.length} bounce(s)`)
+        blog(`[bounce] UID ${msg.uid}: ${parsed.length} bounce(s)`)
         for (const b of parsed) {
-          console.log(`[bounce]   → ${b.email} permanent=${b.permanent} status=${b.statusCode}`)
+          blog(`[bounce]   → ${b.email} permanent=${b.permanent} status=${b.statusCode}`)
           allBounces.set(b.email, b)
         }
       } catch (e: any) {
@@ -212,7 +225,7 @@ export async function processBounces(cfg: ImapConfig): Promise<{
     }
 
     await client.logout()
-    console.log(`[bounce] done: checked=${checked} bounced=${bounced} errors=${errors.length}`)
+    blog(`[bounce] done: checked=${checked} bounced=${bounced} errors=${errors.length}`)
   } catch (e: any) {
     blog(`[bounce] FATAL: ${e.message}`)
     errors.push(e.message)
