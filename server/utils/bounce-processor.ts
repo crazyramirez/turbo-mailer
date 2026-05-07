@@ -1,5 +1,5 @@
 import { ImapFlow } from 'imapflow'
-import { appendFileSync } from 'node:fs'
+import { appendFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { db } from '~/server/db/index'
 import { sends, contacts, campaigns } from '~/server/db/schema'
@@ -72,22 +72,34 @@ function parseBounces(raw: Buffer): ParsedBounce[] {
   const text = raw.toString('utf-8')
   const bounces: ParsedBounce[] = []
 
-  if (!text.includes('Final-Recipient') || !/Action:\s*failed/i.test(text)) return bounces
+  // Early exit with diagnostics logged via console (called from fetch loop where blog is available)
+  const hasFR = text.includes('Final-Recipient')
+  const hasAF = /Action:\s*failed/i.test(text)
+  if (!hasFR || !hasAF) {
+    console.log(`[parse] skip: hasFinalRecipient=${hasFR} hasActionFailed=${hasAF}`)
+    return bounces
+  }
 
-  // Split on double blank lines — each block is a per-recipient DSN group
-  const blocks = text.split(/(?:\r?\n){2,}/)
+  // Split on one or more blank lines — handles both \n and \r\n
+  const blocks = text.split(/\r?\n(?:\r?\n)+/)
 
   for (const block of blocks) {
     if (!/Final-Recipient/i.test(block)) continue
     if (!/Action:\s*failed/i.test(block)) continue
 
     const emailM  = /Final-Recipient\s*:\s*(?:rfc822\s*;\s*)?([^\r\n]+)/i.exec(block)
-    const statusM = /Status\s*:\s*(\d\.\d+\.\d+)/i.exec(block)
+    const statusM = /Status\s*:\s*(\d+\.\d+\.\d+)/i.exec(block)
     const diagM   = /Diagnostic-Code\s*:[^\r\n;]*;\s*([^\r\n]+)/i.exec(block)
 
-    if (!emailM) continue
+    if (!emailM) {
+      console.log(`[parse] block has FR+AF but no emailM. block=${block.slice(0, 200)}`)
+      continue
+    }
     const email = emailM[1].trim().toLowerCase().replace(/[<>\s]/g, '')
-    if (!email.includes('@') || !email.includes('.')) continue
+    if (!email.includes('@') || !email.includes('.')) {
+      console.log(`[parse] bad email extracted: "${email}"`)
+      continue
+    }
 
     const statusCode  = statusM?.[1] ?? '5.0.0'
     const description = (diagM?.[1]?.trim() ?? `SMTP bounce ${statusCode}`).slice(0, 250)
@@ -118,6 +130,9 @@ export async function processBounces(cfg: ImapConfig): Promise<{
   let bounced = 0
   const errors: string[] = []
 
+  // Clear log so each run is fresh — stale entries are confusing
+  try { writeFileSync(resolve(dataDir, 'bounce.log'), '', 'utf-8') } catch {}
+
   try {
     blog(`[bounce] START host=${cfg.host} port=${cfg.port} user=${cfg.user} tls=${cfg.tls}`)
     blog(`[bounce] connecting...`)
@@ -130,11 +145,13 @@ export async function processBounces(cfg: ImapConfig): Promise<{
     const since = new Date()
     since.setDate(since.getDate() - 30)
 
+    // Use { uid: true } on search so it returns UIDs (not seq numbers).
+    // fetch() below also uses { uid: true } — must be consistent.
     const safeSearch = async (criteria: Record<string, unknown>, label: string): Promise<number[]> => {
       blog(`[bounce] search: ${label}`)
       try {
         const result = await Promise.race<number[] | false>([
-          client.search(criteria),
+          client.search(criteria, { uid: true }),
           new Promise<never>((_, rej) =>
             setTimeout(() => rej(new Error(`timeout: ${label}`)), 20_000)
           ),
@@ -163,9 +180,12 @@ export async function processBounces(cfg: ImapConfig): Promise<{
 
     const allBounces = new Map<string, ParsedBounce>()
 
-    for await (const msg of client.fetch(uidSet, { source: true }, { uid: true })) {
+    for await (const msg of client.fetch(uidSet, { source: true, envelope: true }, { uid: true })) {
       checked++
-      if (!msg.source) continue
+      const subject = (msg as any).envelope?.subject ?? '?'
+      const from    = (msg as any).envelope?.from?.[0]?.address ?? '?'
+      blog(`[bounce] UID ${msg.uid}: from=${from} subj="${subject.slice(0, 60)}"`)
+      if (!msg.source) { blog(`[bounce] UID ${msg.uid}: no source, skip`); continue }
       try {
         const parsed = parseBounces(msg.source)
         blog(`[bounce] UID ${msg.uid}: ${parsed.length} bounce(s)`)
