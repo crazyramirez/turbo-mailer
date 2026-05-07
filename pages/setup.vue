@@ -176,6 +176,9 @@ async function install() {
       },
     });
     isDone.value = true;
+    // Reset cached install state so auth middleware re-fetches after restart
+    const isInstalled = useState<boolean | null>("isInstalled");
+    isInstalled.value = true;
   } catch (e: any) {
     installError.value = e?.data?.message || t("setup.install_error");
   } finally {
@@ -207,6 +210,8 @@ async function checkRestart() {
       if (startedAt > originalStartedAt) {
         clearInterval(pollTimer!);
         pollStatus.value = "ready";
+        const isInstalled = useState<boolean | null>("isInstalled");
+        isInstalled.value = null;
         setTimeout(() => navigateTo("/login"), 2000);
       } else if (tries >= MAX_TRIES) {
         clearInterval(pollTimer!);
