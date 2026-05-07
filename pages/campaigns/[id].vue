@@ -26,6 +26,7 @@ definePageMeta({ layout: "app" });
 const { showToast, showDialog } = useDashboardState();
 const { startMonitoring } = useSendingMonitor();
 const resendingSingle = ref<number | null>(null);
+const checkingBounces = ref(false);
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
@@ -276,6 +277,28 @@ async function resendSingle(sendId: number) {
     showToast(`Error: ${e.data?.statusMessage || e.message}`, "error");
   } finally {
     resendingSingle.value = null;
+  }
+}
+
+// ─── Bounce check ────────────────────────────────────────────
+async function checkBounces() {
+  checkingBounces.value = true;
+  try {
+    const r = await $fetch<{ checked: number; bounced: number; errors: string[] }>(
+      "/api/bounces/process",
+      { method: "POST" },
+    );
+    if (r.bounced > 0) {
+      showToast(`${r.bounced} rebote(s) detectado(s) y actualizados`, "info");
+      await Promise.all([fetchCampaign(), fetchSends()]);
+    } else {
+      showToast(`${r.checked} mensajes revisados — sin rebotes nuevos`, "success");
+    }
+  } catch (e: any) {
+    const msg = e.data?.statusMessage || e.message;
+    showToast(`Error al verificar rebotes: ${msg}`, "error");
+  } finally {
+    checkingBounces.value = false;
   }
 }
 
@@ -709,6 +732,21 @@ onUnmounted(() => {
                 </button>
               </div>
             </div>
+            <!-- Bounce check -->
+            <div v-if="campaign.status === 'sent' || campaign.status === 'paused'" class="bounce-check-row">
+              <button
+                class="btn-check-bounces"
+                :disabled="checkingBounces"
+                @click="checkBounces"
+                title="Conecta al buzón IMAP del remitente y procesa NDR (Non-Delivery Reports)"
+              >
+                <Loader2 v-if="checkingBounces" :size="13" class="spin" />
+                <RotateCcw v-else :size="13" />
+                {{ checkingBounces ? "Verificando…" : "Verificar rebotes" }}
+              </button>
+              <span class="bounce-check-hint">Detecta rebotes asíncronos vía IMAP</span>
+            </div>
+
             <!-- Paused banner -->
             <div
               v-if="campaign.status === 'paused' && campaign.totalRecipients > 0"
@@ -1826,6 +1864,40 @@ select.field-input option {
   line-height: 1.5;
   padding-top: 8px;
   padding-bottom: 8px;
+}
+
+/* Bounce check row */
+.bounce-check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.btn-check-bounces {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(99, 102, 241, 0.06);
+  border: 1px solid rgba(99, 102, 241, 0.18);
+  border-radius: 9px;
+  color: var(--accent-light);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.btn-check-bounces:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.14);
+  border-color: rgba(99, 102, 241, 0.35);
+}
+.btn-check-bounces:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.bounce-check-hint {
+  font-size: 11px;
+  color: var(--text-dim);
 }
 
 /* Paused banner */

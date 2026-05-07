@@ -39,6 +39,12 @@ const ENV_MAP: Record<string, string> = {
   dkimDomain:            'DKIM_DOMAIN',
   dkimSelector:          'DKIM_SELECTOR',
   dkimPrivateKey:        'DKIM_PRIVATE_KEY',
+  imapAutoDetect:        'IMAP_AUTO_DETECT',
+  imapHost:              'IMAP_HOST',
+  imapPort:              'IMAP_PORT',
+  imapUser:              'IMAP_USER',
+  imapPass:              'IMAP_PASS',
+  imapTls:               'IMAP_TLS',
 }
 
 export function useServerConfig(): Record<string, any> {

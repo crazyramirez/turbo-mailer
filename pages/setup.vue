@@ -67,6 +67,12 @@ const smtpMaxRetries = ref(3);
 const smtpRetryDelayMs = ref(5000);
 const showSmtpPass = ref(false);
 const showAdvanced = ref(false);
+const imapAutoDetect = ref(true);
+const imapHost = ref("");
+const imapPort = ref("993");
+const imapUser = ref("");
+const imapPass = ref("");
+const showImapPass = ref(false);
 const smtpTesting = ref(false);
 const smtpResult = ref<"idle" | "ok" | "error">("idle");
 const smtpErrMsg = ref("");
@@ -160,6 +166,11 @@ async function install() {
           sendJitterMs: smtpSendJitterMs.value,
           maxRetries: smtpMaxRetries.value,
           retryDelayMs: smtpRetryDelayMs.value,
+          imapAutoDetect: imapAutoDetect.value,
+          imapHost: imapHost.value,
+          imapPort: imapPort.value,
+          imapUser: imapUser.value,
+          imapPass: imapPass.value,
         },
         app: {
           trackingBaseUrl: trackingBaseUrl.value,
@@ -613,6 +624,55 @@ onUnmounted(() => {
                       </div>
                     </div>
                   </div>
+
+                  <!-- IMAP Bounce Detection -->
+                  <div class="sw-section-sep" style="margin-top:4px">Bandeja de rebotes (IMAP)</div>
+                  <p class="sw-field-hint">
+                    Necesario para detectar rebotes asíncronos — emails aceptados por SMTP pero rechazados después (ej. usuario inexistente en Gmail). Auto-detecta el host IMAP a partir del host SMTP.
+                  </p>
+                  <label class="sw-toggle">
+                    <input v-model="imapAutoDetect" type="checkbox" />
+                    <span class="sw-toggle-track"></span>
+                    <span>Auto-detectar host IMAP (Gmail, Outlook, Yahoo…)</span>
+                  </label>
+                  <template v-if="!imapAutoDetect">
+                    <div class="sw-field-row">
+                      <div class="sw-field" style="flex: 1">
+                        <label>IMAP Host</label>
+                        <div class="sw-input-wrap">
+                          <input v-model="imapHost" placeholder="imap.gmail.com" autocomplete="off" />
+                        </div>
+                      </div>
+                      <div class="sw-field" style="width: 90px">
+                        <label>Puerto</label>
+                        <div class="sw-input-wrap">
+                          <input v-model="imapPort" type="number" placeholder="993" />
+                        </div>
+                      </div>
+                    </div>
+                    <div class="sw-field">
+                      <label>Usuario IMAP (vacío = mismo que SMTP)</label>
+                      <div class="sw-input-wrap">
+                        <input v-model="imapUser" type="email" autocomplete="off" placeholder="usuario@dominio.com" />
+                      </div>
+                    </div>
+                    <div class="sw-field">
+                      <label>Contraseña IMAP (vacío = misma que SMTP)</label>
+                      <div class="sw-input-wrap">
+                        <Lock :size="15" class="sw-field-icon" />
+                        <input
+                          v-model="imapPass"
+                          :type="showImapPass ? 'text' : 'password'"
+                          autocomplete="off"
+                          placeholder="••••••••"
+                        />
+                        <button type="button" class="sw-eye" @click="showImapPass = !showImapPass">
+                          <Eye v-if="!showImapPass" :size="15" />
+                          <EyeOff v-else :size="15" />
+                        </button>
+                      </div>
+                    </div>
+                  </template>
                 </div>
               </Transition>
             </div>

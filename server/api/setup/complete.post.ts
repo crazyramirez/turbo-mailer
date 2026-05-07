@@ -49,6 +49,16 @@ export default defineEventHandler(async (event) => {
     config.dkimPrivateKey = String(advanced.dkimPrivateKey).trim()
   }
 
+  // IMAP bounce detection
+  config.imapAutoDetect = smtp.imapAutoDetect !== false
+  if (!config.imapAutoDetect) {
+    config.imapHost = String(smtp.imapHost || '').trim()
+    config.imapPort = Number(smtp.imapPort || 993)
+    config.imapUser = String(smtp.imapUser || smtp.user).trim()
+    config.imapPass = String(smtp.imapPass || smtp.pass).trim()
+    config.imapTls  = true
+  }
+
   writeFileSync(
     resolve(process.cwd(), 'data/config.json'),
     JSON.stringify(config, null, 2),
@@ -88,6 +98,13 @@ export default defineEventHandler(async (event) => {
     config.dkimDomain     ? `DKIM_DOMAIN=${config.dkimDomain}`         : `# DKIM_DOMAIN=`,
     config.dkimSelector   ? `DKIM_SELECTOR=${config.dkimSelector}`     : `# DKIM_SELECTOR=default`,
     config.dkimPrivateKey ? `DKIM_PRIVATE_KEY="${config.dkimPrivateKey}"` : `# DKIM_PRIVATE_KEY=`,
+    ``,
+    `# IMAP Bounce Detection`,
+    `IMAP_AUTO_DETECT=${config.imapAutoDetect}`,
+    config.imapHost ? `IMAP_HOST=${config.imapHost}` : `# IMAP_HOST=imap.gmail.com`,
+    config.imapHost ? `IMAP_PORT=${config.imapPort}` : `# IMAP_PORT=993`,
+    config.imapHost ? `IMAP_USER=${config.imapUser}` : `# IMAP_USER=`,
+    config.imapHost ? `IMAP_PASS=${config.imapPass}` : `# IMAP_PASS=`,
   ]
   writeFileSync(resolve(process.cwd(), '.env'), envLines.join('\n'), 'utf-8')
 
