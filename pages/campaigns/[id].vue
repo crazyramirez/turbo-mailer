@@ -346,12 +346,14 @@ const SEND_BADGE: Record<string, string> = {
   failed: "bd-failed",
   pending: "bd-pending",
   opened: "bd-opened",
+  bounced: "bd-bounced",
 };
 const SEND_LABEL: Record<string, string> = {
   sent: "Enviado",
   failed: "Fallido",
   pending: "Pendiente",
   opened: "Abierto",
+  bounced: "Rebotado",
 };
 
 onMounted(async () => {
@@ -766,9 +768,16 @@ onUnmounted(() => {
                     <td class="td-email">{{ s.email }}</td>
                     <td class="td-name">{{ s.contactCompany || "—" }}</td>
                     <td>
-                      <span class="send-badge" :class="SEND_BADGE[s.status]">
+                      <span
+                        class="send-badge"
+                        :class="SEND_BADGE[s.status]"
+                        :title="s.errorMsg || undefined"
+                      >
                         {{ SEND_LABEL[s.status] || s.status }}
                       </span>
+                      <div v-if="s.errorMsg && (s.status === 'failed' || s.status === 'bounced')" class="send-error-hint">
+                        {{ s.errorMsg }}
+                      </div>
                     </td>
                     <td class="td-date">{{ fmtDate(s.sentAt) }}</td>
                   </tr>
@@ -1994,6 +2003,20 @@ select.field-input option {
 .bd-opened {
   background: rgba(56, 189, 248, 0.1);
   color: #38bdf8;
+}
+.bd-bounced {
+  background: rgba(249, 115, 22, 0.12);
+  color: #f97316;
+}
+.send-error-hint {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 3px;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.75;
 }
 
 /* Right preview */

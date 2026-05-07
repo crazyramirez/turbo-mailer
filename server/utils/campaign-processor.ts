@@ -225,7 +225,7 @@ export async function processCampaign(campaignId: number, cfg: SendConfig): Prom
   // Final stats update based on the sends table
   const allSends = await db.select().from(sends).where(eq(sends.campaignId, campaignId))
   const sentCount = allSends.filter(s => ['sent', 'opened'].includes(s.status)).length
-  const failCount = allSends.filter(s => s.status === 'failed').length
+  const failCount = allSends.filter(s => ['failed', 'bounced'].includes(s.status)).length
   const openCount = allSends.filter(s => s.status === 'opened').length
 
   const [final] = await db
