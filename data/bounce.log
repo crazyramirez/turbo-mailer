@@ -1,22 +1,40 @@
-[2026-05-08T10:49:21.301Z] [bounce] START host=imap.gmail.com port=993 user=info@viseni.com tls=true
-[2026-05-08T10:49:21.304Z] [bounce] connecting...
-[2026-05-08T10:49:22.036Z] [bounce] INBOX opened
-[2026-05-08T10:49:22.037Z] [bounce] search: from:mailer-daemon
-[2026-05-08T10:49:22.203Z] [bounce] search "from:mailer-daemon": 3 hit(s)
-[2026-05-08T10:49:22.204Z] [bounce] search: from:postmaster
-[2026-05-08T10:49:22.316Z] [bounce] search "from:postmaster": 0 hit(s)
-[2026-05-08T10:49:22.316Z] [bounce] search: subject:Undelivered
-[2026-05-08T10:49:22.445Z] [bounce] search "subject:Undelivered": 0 hit(s)
-[2026-05-08T10:49:22.446Z] [bounce] search: subject:Delivery Status
-[2026-05-08T10:49:22.527Z] [bounce] search "subject:Delivery Status": 3 hit(s)
-[2026-05-08T10:49:22.528Z] [bounce] UIDs total: 3 (s1=3 s2=0 s3=0 s4=3)
-[2026-05-08T10:49:22.709Z] [bounce] UID 16741: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Failure)"
-[2026-05-08T10:49:22.710Z] [bounce] UID 16741: 1 bounce(s)
-[2026-05-08T10:49:22.710Z] [bounce]   → diegoramirez@icloud.com permanent=true status=5.7.1
-[2026-05-08T10:49:22.727Z] [bounce] UID 16818: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Failure)"
-[2026-05-08T10:49:22.728Z] [bounce] UID 16818: 1 bounce(s)
-[2026-05-08T10:49:22.728Z] [bounce]   → pepepetruebing@gmail.com permanent=true status=5.1.1
-[2026-05-08T10:49:22.729Z] [bounce] UID 16820: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Failure)"
-[2026-05-08T10:49:22.730Z] [bounce] UID 16820: 1 bounce(s)
-[2026-05-08T10:49:22.730Z] [bounce]   → pepepetruebing@gmail.com permanent=true status=5.1.1
-[2026-05-08T10:49:22.782Z] [bounce] done: checked=3 bounced=1 errors=0
+[2026-05-08T11:08:39.078Z] [bounce] START host=imap.gmail.com port=993 user=info@viseni.com tls=true
+[2026-05-08T11:08:39.079Z] [bounce] connecting...
+[2026-05-08T11:08:40.976Z] [bounce] INBOX opened
+[2026-05-08T11:08:40.977Z] [bounce] search: from:mailer-daemon
+[2026-05-08T11:08:41.124Z] [bounce] search "from:mailer-daemon": 9 hit(s)
+[2026-05-08T11:08:41.125Z] [bounce] search: from:postmaster
+[2026-05-08T11:08:41.257Z] [bounce] search "from:postmaster": 0 hit(s)
+[2026-05-08T11:08:41.258Z] [bounce] search: subject:Undelivered
+[2026-05-08T11:08:41.404Z] [bounce] search "subject:Undelivered": 0 hit(s)
+[2026-05-08T11:08:41.404Z] [bounce] search: subject:Delivery Status
+[2026-05-08T11:08:41.508Z] [bounce] search "subject:Delivery Status": 9 hit(s)
+[2026-05-08T11:08:41.510Z] [bounce] UIDs total: 9 (s1=9 s2=0 s3=0 s4=9)
+[2026-05-08T11:08:41.715Z] [bounce] UID 16741: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Failure)"
+[2026-05-08T11:08:41.716Z] [bounce] UID 16741: 1 bounce(s)
+[2026-05-08T11:08:41.716Z] [bounce]   → diegoramirez@icloud.com date=2026-04-26T13:44:23.000Z permanent=true
+[2026-05-08T11:08:41.768Z] [bounce] UID 16818: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Failure)"
+[2026-05-08T11:08:41.768Z] [bounce] UID 16818: 1 bounce(s)
+[2026-05-08T11:08:41.768Z] [bounce]   → pepepetruebing@gmail.com date=2026-05-08T08:54:34.000Z permanent=true
+[2026-05-08T11:08:41.796Z] [bounce] UID 16820: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Failure)"
+[2026-05-08T11:08:41.797Z] [bounce] UID 16820: 1 bounce(s)
+[2026-05-08T11:08:41.798Z] [bounce]   → pepepetruebing@gmail.com date=2026-05-08T10:48:05.000Z permanent=true
+[2026-05-08T11:08:41.852Z] [bounce] UID 16821: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Failure)"
+[2026-05-08T11:08:41.853Z] [bounce] UID 16821: 1 bounce(s)
+[2026-05-08T11:08:41.854Z] [bounce]   → pepepetruebing@gmail.com date=2026-05-08T10:50:37.000Z permanent=true
+[2026-05-08T11:08:41.879Z] [bounce] UID 16822: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Failure)"
+[2026-05-08T11:08:41.880Z] [bounce] UID 16822: 1 bounce(s)
+[2026-05-08T11:08:41.880Z] [bounce]   → pepepetruebing@gmail.com date=2026-05-08T10:51:27.000Z permanent=true
+[2026-05-08T11:08:41.999Z] [bounce] UID 16823: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Failure)"
+[2026-05-08T11:08:42.000Z] [bounce] UID 16823: 1 bounce(s)
+[2026-05-08T11:08:42.000Z] [bounce]   → pepepetruebing@gmail.com date=2026-05-08T10:55:52.000Z permanent=true
+[2026-05-08T11:08:42.101Z] [bounce] UID 16824: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Failure)"
+[2026-05-08T11:08:42.102Z] [bounce] UID 16824: 1 bounce(s)
+[2026-05-08T11:08:42.103Z] [bounce]   → pepepetruebing@gmail.com date=2026-05-08T11:00:56.000Z permanent=true
+[2026-05-08T11:08:42.137Z] [bounce] UID 16825: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Failure)"
+[2026-05-08T11:08:42.138Z] [bounce] UID 16825: 1 bounce(s)
+[2026-05-08T11:08:42.138Z] [bounce]   → pepepetruebing@gmail.com date=2026-05-08T11:06:17.000Z permanent=true
+[2026-05-08T11:08:42.140Z] [bounce] UID 16826: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Failure)"
+[2026-05-08T11:08:42.142Z] [bounce] UID 16826: 1 bounce(s)
+[2026-05-08T11:08:42.143Z] [bounce]   → pepepetruebing@gmail.com date=2026-05-08T11:07:18.000Z permanent=true
+[2026-05-08T11:08:42.235Z] [bounce] done: checked=9 bounced=0 errors=0

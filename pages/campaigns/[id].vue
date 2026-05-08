@@ -761,19 +761,6 @@ onUnmounted(() => {
                   <span class="stat-num">{{ campaign.failCount ?? 0 }}</span>
                   <span class="stat-lbl">{{ t("results.failed") }}</span>
                 </div>
-                <button
-                  v-if="
-                    campaign.failCount > 0 &&
-                    campaign.status === 'sent' &&
-                    !sending
-                  "
-                  class="stat-retry-btn"
-                  @click="retryCampaign"
-                  title="Reintentar envíos fallidos"
-                >
-                  <RotateCcw :size="14" />
-                  <span>Reintentar</span>
-                </button>
               </div>
             </div>
             <!-- Bounce check -->
