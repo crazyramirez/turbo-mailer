@@ -2,6 +2,7 @@ import { validateSession } from '~/server/utils/auth'
 
 const PUBLIC_PATHS = [
   '/api/auth/login',
+  '/api/auth/refresh',
   '/api/track/open',
   '/api/track/click',
   '/api/unsubscribe',
