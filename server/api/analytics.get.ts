@@ -63,8 +63,8 @@ export default defineEventHandler(async (event) => {
     .select({
       id: sends.id,
       createdAt: sends.sentAt,
-      ip: sql<string | null>`NULL`,
-      userAgent: sql<string | null>`NULL`,
+      ip: sql<string | null>`(SELECT ip FROM tracking_events WHERE send_id = ${sends.id} AND event_type = 'open' ORDER BY created_at DESC LIMIT 1)`,
+      userAgent: sql<string | null>`(SELECT user_agent FROM tracking_events WHERE send_id = ${sends.id} AND event_type = 'open' ORDER BY created_at DESC LIMIT 1)`,
       campaignId: sends.campaignId,
       campaignName: campaigns.name,
       contactEmail: sends.email,
