@@ -49,6 +49,32 @@ function toIsoDate(d: Date) {
 const today = toIsoDate(new Date());
 const thirtyAgo = toIsoDate(new Date(Date.now() - 30 * 86400000));
 
+const PRESETS = [
+  { label: "24h", days: 1 },
+  { label: "48h", days: 2 },
+  { label: "7d", days: 7 },
+  { label: "15d", days: 15 },
+  { label: "1m", days: 30 },
+  { label: "3m", days: 90 },
+];
+
+function daysAgo(n: number) {
+  return toIsoDate(new Date(Date.now() - n * 86400000));
+}
+
+function selectPreset(days: number) {
+  dateFrom.value = daysAgo(days);
+  dateTo.value = today;
+}
+
+const activePreset = computed(() => {
+  if (dateTo.value !== today) return null;
+  const from = new Date(dateFrom.value + "T00:00:00");
+  const toD = new Date(today + "T00:00:00");
+  const diff = Math.round((toD.getTime() - from.getTime()) / 86400000);
+  return PRESETS.find((p) => p.days === diff)?.days ?? null;
+});
+
 const RANGE_KEY = "analytics_range";
 function loadRange(): { from: string; to: string } {
   try {
@@ -440,6 +466,15 @@ onUnmounted(() => {
           <p>{{ t("analytics_page.subtitle") }}</p>
         </div>
         <div class="header-actions">
+          <div class="preset-row">
+            <button
+              v-for="p in PRESETS"
+              :key="p.days"
+              class="preset-btn"
+              :class="{ active: activePreset === p.days }"
+              @click="selectPreset(p.days)"
+            >{{ p.label }}</button>
+          </div>
           <div class="date-range-row">
             <input
               type="date"
@@ -796,6 +831,35 @@ onUnmounted(() => {
   color: var(--text-dim);
   font-size: 13px;
   user-select: none;
+}
+
+.preset-row {
+  display: flex;
+  gap: 5px;
+  width: 100%;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.preset-btn {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.preset-btn:hover {
+  background: rgb(255 255 255 / 5%);
+  color: var(--text-muted);
+}
+.preset-btn.active {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.35);
+  color: var(--accent-light);
 }
 
 
@@ -1353,15 +1417,26 @@ onUnmounted(() => {
     width: 100%;
     justify-content: flex-start;
   }
+  .preset-row {
+    justify-content: flex-start;
+  }
+  .preset-row .preset-btn {
+    flex: 1;
+    text-align: center;
+  }
   .page-header h1 {
     font-size: 22px;
   }
   .btn-refresh {
     align-self: flex-end;
   }
+  .date-range-row {
+    flex: 1;
+  }
   .date-input {
     font-size: 11px;
     padding: 6px 8px;
+    flex: 1;
   }
   .kpi-grid {
     gap: 10px;
