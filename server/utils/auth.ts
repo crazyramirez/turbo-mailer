@@ -1,13 +1,14 @@
 import { randomBytes, createHmac, createHash, timingSafeEqual } from 'crypto'
 import { sqlite } from '~/server/db/index'
 import { db } from '~/server/db/index'
-import { sessions } from '~/server/db/schema'
+import { sessions, refreshTokens } from '~/server/db/schema'
 import { eq, lt } from 'drizzle-orm'
 
 const MAX_ATTEMPTS = 10
 const BLOCK_DURATION = 15 * 60 // seconds
 const WINDOW = 15 * 60 // seconds
 const SESSION_TTL = 24 * 60 * 60 * 1000
+const REFRESH_TOKEN_TTL = 30 * 24 * 60 * 60 * 1000
 
 // ─── IP helpers ────────────────────────────────────────────────────────────────
 
@@ -124,6 +125,30 @@ export async function validateSession(token: string): Promise<boolean> {
 
 export async function destroySession(token: string): Promise<void> {
   await db.delete(sessions).where(eq(sessions.token, token))
+}
+
+export async function createRefreshToken(ip: string): Promise<string> {
+  const token = randomBytes(40).toString('hex')
+  const now = new Date()
+  const expiresAt = new Date(now.getTime() + REFRESH_TOKEN_TTL)
+  await db.insert(refreshTokens).values({ token, ip, createdAt: now, expiresAt })
+  await db.delete(refreshTokens).where(lt(refreshTokens.expiresAt, now)).catch(() => {})
+  return token
+}
+
+export async function validateAndRotateRefreshToken(token: string, ip: string): Promise<string | null> {
+  const [row] = await db.select().from(refreshTokens).where(eq(refreshTokens.token, token))
+  if (!row) return null
+  if (row.expiresAt < new Date()) {
+    await db.delete(refreshTokens).where(eq(refreshTokens.token, token)).catch(() => {})
+    return null
+  }
+  await db.delete(refreshTokens).where(eq(refreshTokens.token, token))
+  return createRefreshToken(ip)
+}
+
+export async function destroyRefreshToken(token: string): Promise<void> {
+  await db.delete(refreshTokens).where(eq(refreshTokens.token, token))
 }
 
 // ─── API Key verification ───────────────────────────────────────────────────────

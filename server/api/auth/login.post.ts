@@ -1,6 +1,6 @@
 ﻿import bcrypt from 'bcryptjs'
 import { timingSafeEqual } from 'crypto'
-import { checkRateLimit, recordFailedAttempt, clearAttempts, createSession, getClientIp } from '~/server/utils/auth'
+import { checkRateLimit, recordFailedAttempt, clearAttempts, createSession, createRefreshToken, getClientIp } from '~/server/utils/auth'
 import { logAudit } from '~/server/utils/audit'
 
 function safePasswordCompare(input: string, expected: string): boolean {
@@ -61,7 +61,7 @@ export default defineEventHandler(async (event) => {
 
   clearAttempts(ip)
   logAudit('login.success', { ip }, ip)
-  const token = await createSession(ip)
+  const [token, refreshToken] = await Promise.all([createSession(ip), createRefreshToken(ip)])
 
   setCookie(event, 'tm_session', token, {
     httpOnly: true,
@@ -71,5 +71,5 @@ export default defineEventHandler(async (event) => {
     secure: process.env.NODE_ENV === 'production'
   })
 
-  return { success: true }
+  return { success: true, refreshToken }
 })

@@ -84,6 +84,13 @@ export const sessions = sqliteTable('sessions', {
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
 })
 
+export const refreshTokens = sqliteTable('refresh_tokens', {
+  token: text('token').primaryKey(),
+  ip: text('ip').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+})
+
 export const trackingEvents = sqliteTable('tracking_events', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   sendId: integer('send_id').references(() => sends.id, { onDelete: 'cascade' }),

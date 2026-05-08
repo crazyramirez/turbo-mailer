@@ -48,7 +48,27 @@ export default defineNuxtRouteMiddleware(async (to) => {
       await $fetch('/api/auth/check')
       isAuthed.value = true
     } catch {
-      isAuthed.value = false
+      // Session cookie missing/expired — try refresh token (PWA cookie loss)
+      if (process.client) {
+        const storedRefreshToken = localStorage.getItem('tm_refresh_token')
+        if (storedRefreshToken) {
+          try {
+            const { refreshToken: newToken } = await $fetch<{ refreshToken: string }>('/api/auth/refresh', {
+              method: 'POST',
+              body: { refreshToken: storedRefreshToken },
+            })
+            localStorage.setItem('tm_refresh_token', newToken)
+            isAuthed.value = true
+          } catch {
+            localStorage.removeItem('tm_refresh_token')
+            isAuthed.value = false
+          }
+        } else {
+          isAuthed.value = false
+        }
+      } else {
+        isAuthed.value = false
+      }
     }
   }
 

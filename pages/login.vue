@@ -280,10 +280,11 @@ async function submit() {
   errorMsg.value = "";
 
   try {
-    await $fetch("/api/auth/login", {
+    const { refreshToken } = await $fetch<{ refreshToken: string }>("/api/auth/login", {
       method: "POST",
       body: { password: password.value },
     });
+    if (refreshToken) localStorage.setItem("tm_refresh_token", refreshToken);
     isAuthed.value = true;
     await navigateTo("/dashboard");
   } catch (err: any) {

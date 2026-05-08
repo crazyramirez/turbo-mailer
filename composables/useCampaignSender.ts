@@ -82,7 +82,12 @@ function performFullReset() {
 
 async function logout() {
   const config = useRuntimeConfig()
-  await $fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
+  const refreshToken = localStorage.getItem('tm_refresh_token')
+  localStorage.removeItem('tm_refresh_token')
+  await $fetch('/api/auth/logout', {
+    method: 'POST',
+    body: refreshToken ? { refreshToken } : {},
+  }).catch(() => {})
   window.location.href = `/login?portal=${config.public.portalKey}`
 }
 
