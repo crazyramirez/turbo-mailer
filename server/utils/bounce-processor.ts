@@ -187,13 +187,14 @@ export async function processBounces(cfg: ImapConfig): Promise<{
       blog(`[bounce] UID ${msg.uid}: from=${from} subj="${subject.slice(0, 60)}"`)
       if (!msg.source) { blog(`[bounce] UID ${msg.uid}: no source, skip`); continue }
       try {
-        const parsed = parseBounces(msg.source, msg.internalDate)
+        const bounceDate = msg.internalDate || (msg as any).envelope?.date || new Date()
+        const parsed = parseBounces(msg.source, bounceDate)
         blog(`[bounce] UID ${msg.uid}: ${parsed.length} bounce(s)`)
         for (const b of parsed) {
-          blog(`[bounce]   → ${b.email} date=${b.date.toISOString()} permanent=${b.permanent}`)
+          blog(`[bounce]   → ${b.email} date=${b.date?.toISOString() || 'unknown'} permanent=${b.permanent}`)
           // Si hay varios rebotes para el mismo email, nos quedamos con el más reciente
           const existing = allBounces.get(b.email)
-          if (!existing || b.date > existing.date) {
+          if (!existing || (b.date && b.date > existing.date)) {
             allBounces.set(b.email, b)
           }
         }
