@@ -52,8 +52,8 @@ const dismissOverlay = ref(false);
 const showEmailConfig = ref(false);
 
 const isDraft = computed(() => campaign.value?.status === "draft");
-const pendingCount = computed(() =>
-  sendsList.value.filter((s) => s.status === "pending").length,
+const pendingCount = computed(
+  () => sendsList.value.filter((s) => s.status === "pending").length,
 );
 const canSend = computed(
   () =>
@@ -214,7 +214,9 @@ async function sendCampaign() {
     if (campaign.value?.status === "sending") {
       startMonitoring(id);
       dismissOverlay.value = false;
-      setTimeout(() => { dismissOverlay.value = true }, 4000);
+      setTimeout(() => {
+        dismissOverlay.value = true;
+      }, 4000);
       startPolling();
     }
   } catch (e: any) {
@@ -241,7 +243,9 @@ async function retryCampaign() {
     if (campaign.value?.status === "sending") {
       startMonitoring(id);
       dismissOverlay.value = false;
-      setTimeout(() => { dismissOverlay.value = true }, 4000);
+      setTimeout(() => {
+        dismissOverlay.value = true;
+      }, 4000);
       startPolling();
     }
   } catch (e: any) {
@@ -287,10 +291,11 @@ async function checkBounces(silent = false) {
   if (checkingBounces.value) return;
   checkingBounces.value = true;
   try {
-    const r = await $fetch<{ checked: number; bounced: number; errors: string[] }>(
-      "/api/bounces/process",
-      { method: "POST" },
-    );
+    const r = await $fetch<{
+      checked: number;
+      bounced: number;
+      errors: string[];
+    }>("/api/bounces/process", { method: "POST" });
     // Always refresh log after any check
     await refreshBounceLog();
     if (r.errors?.length) {
@@ -743,8 +748,12 @@ onUnmounted(() => {
                   <span class="stat-num">{{ campaign.failCount ?? 0 }}</span>
                   <span class="stat-lbl">{{ t("results.failed") }}</span>
                 </div>
-                <button 
-                  v-if="campaign.failCount > 0 && campaign.status === 'sent' && !sending"
+                <button
+                  v-if="
+                    campaign.failCount > 0 &&
+                    campaign.status === 'sent' &&
+                    !sending
+                  "
                   class="stat-retry-btn"
                   @click="retryCampaign"
                   title="Reintentar envíos fallidos"
@@ -755,7 +764,10 @@ onUnmounted(() => {
               </div>
             </div>
             <!-- Bounce check -->
-            <div v-if="campaign.status === 'sent' || campaign.status === 'paused'" class="bounce-check-row">
+            <div
+              v-if="campaign.status === 'sent' || campaign.status === 'paused'"
+              class="bounce-check-row"
+            >
               <button
                 class="btn-check-bounces"
                 :disabled="checkingBounces"
@@ -768,20 +780,39 @@ onUnmounted(() => {
               </button>
               <button
                 class="btn-bounce-log"
-                @click="showBounceLog = !showBounceLog; if (showBounceLog) refreshBounceLog()"
+                @click="
+                  showBounceLog = !showBounceLog;
+                  if (showBounceLog) refreshBounceLog();
+                "
                 title="Ver log de diagnóstico IMAP"
               >
                 {{ showBounceLog ? "▲ Log" : "▼ Log" }}
               </button>
             </div>
-            <div v-if="showBounceLog && (campaign.status === 'sent' || campaign.status === 'paused')" class="bounce-log-box">
-              <div v-if="bounceLog.length === 0" class="bounce-log-empty">Sin entradas de log — haz click en "Verificar rebotes"</div>
-              <div v-for="(line, i) in bounceLog" :key="i" class="bounce-log-line">{{ line }}</div>
+            <div
+              v-if="
+                showBounceLog &&
+                (campaign.status === 'sent' || campaign.status === 'paused')
+              "
+              class="bounce-log-box"
+            >
+              <div v-if="bounceLog.length === 0" class="bounce-log-empty">
+                Sin entradas de log — haz click en "Verificar rebotes"
+              </div>
+              <div
+                v-for="(line, i) in bounceLog"
+                :key="i"
+                class="bounce-log-line"
+              >
+                {{ line }}
+              </div>
             </div>
 
             <!-- Paused banner -->
             <div
-              v-if="campaign.status === 'paused' && campaign.totalRecipients > 0"
+              v-if="
+                campaign.status === 'paused' && campaign.totalRecipients > 0
+              "
               class="paused-banner"
             >
               <div class="paused-banner-left">
@@ -821,10 +852,23 @@ onUnmounted(() => {
                   <tr v-for="s in sendsList" :key="s.id">
                     <td class="td-action">
                       <button
-                        v-if="s.status === 'failed' || s.status === 'pending' || s.status === 'bounced'"
+                        v-if="
+                          s.status === 'failed' ||
+                          s.status === 'pending' ||
+                          s.status === 'bounced'
+                        "
                         class="row-resend-btn"
-                        :disabled="resendingSingle !== null || campaign.status === 'sending'"
-                        :title="s.status === 'bounced' ? 'Reenviar (rebotado)' : s.status === 'failed' ? 'Reintentar envío' : 'Enviar ahora'"
+                        :disabled="
+                          resendingSingle !== null ||
+                          campaign.status === 'sending'
+                        "
+                        :title="
+                          s.status === 'bounced'
+                            ? 'Reenviar (rebotado)'
+                            : s.status === 'failed'
+                              ? 'Reintentar envío'
+                              : 'Enviar ahora'
+                        "
                         @click="resendSingle(s.id)"
                       >
                         <Loader2
@@ -845,9 +889,6 @@ onUnmounted(() => {
                       >
                         {{ SEND_LABEL[s.status] || s.status }}
                       </span>
-                      <div v-if="s.errorMsg && (s.status === 'failed' || s.status === 'bounced')" class="send-error-hint">
-                        {{ s.errorMsg }}
-                      </div>
                     </td>
                     <td class="td-date">{{ fmtDate(s.sentAt) }}</td>
                   </tr>
@@ -1282,7 +1323,7 @@ onUnmounted(() => {
   color: var(--text);
 }
 .stat-retry-btn {
-  margin-left: auto;
+  margin: auto;
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.2);
   color: #f87171;

@@ -1,6 +1,6 @@
 import { db } from '~/server/db/index'
 import { campaigns, sends } from '~/server/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, inArray } from 'drizzle-orm'
 import { processCampaign, SendConfig } from '~/server/utils/campaign-processor'
 
 export default defineEventHandler(async (event) => {
@@ -11,14 +11,20 @@ export default defineEventHandler(async (event) => {
   if (!campaign) throw createError({ statusCode: 404, statusMessage: 'Campaign not found' })
   if (campaign.status === 'sending') throw createError({ statusCode: 409, statusMessage: 'Already sending' })
 
-  // Reset failed sends to pending
+  // Reset failed and bounced sends to pending
   await db.update(sends)
     .set({ status: 'pending', errorMsg: null })
-    .where(and(eq(sends.campaignId, campaignId), eq(sends.status, 'failed')))
+    .where(and(
+      eq(sends.campaignId, campaignId), 
+      inArray(sends.status, ['failed', 'bounced'])
+    ))
 
-  // Set campaign to sending
+  // Set campaign to sending and reset failCount (it will be recalculated by the processor)
   await db.update(campaigns)
-    .set({ status: 'sending' })
+    .set({ 
+      status: 'sending',
+      failCount: 0 
+    })
     .where(eq(campaigns.id, campaignId))
 
   const {

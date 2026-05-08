@@ -1,0 +1,19 @@
+[2026-05-08T10:36:28.237Z] [bounce] START host=imap.gmail.com port=993 user=info@viseni.com tls=true
+[2026-05-08T10:36:28.237Z] [bounce] connecting...
+[2026-05-08T10:36:30.091Z] [bounce] INBOX opened
+[2026-05-08T10:36:30.092Z] [bounce] search: from:mailer-daemon
+[2026-05-08T10:36:30.173Z] [bounce] search "from:mailer-daemon": 2 hit(s)
+[2026-05-08T10:36:30.173Z] [bounce] search: from:postmaster
+[2026-05-08T10:36:30.244Z] [bounce] search "from:postmaster": 0 hit(s)
+[2026-05-08T10:36:30.245Z] [bounce] search: subject:Undelivered
+[2026-05-08T10:36:30.317Z] [bounce] search "subject:Undelivered": 0 hit(s)
+[2026-05-08T10:36:30.317Z] [bounce] search: subject:Delivery Status
+[2026-05-08T10:36:30.470Z] [bounce] search "subject:Delivery Status": 2 hit(s)
+[2026-05-08T10:36:30.470Z] [bounce] UIDs total: 2 (s1=2 s2=0 s3=0 s4=2)
+[2026-05-08T10:36:30.769Z] [bounce] UID 16741: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Failure)"
+[2026-05-08T10:36:30.770Z] [bounce] UID 16741: 1 bounce(s)
+[2026-05-08T10:36:30.771Z] [bounce]   → diegoramirez@icloud.com permanent=true status=5.7.1
+[2026-05-08T10:36:30.772Z] [bounce] UID 16818: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Failure)"
+[2026-05-08T10:36:30.773Z] [bounce] UID 16818: 1 bounce(s)
+[2026-05-08T10:36:30.773Z] [bounce]   → pepepetruebing@gmail.com permanent=true status=5.1.1
+[2026-05-08T10:36:30.825Z] [bounce] done: checked=2 bounced=0 errors=0

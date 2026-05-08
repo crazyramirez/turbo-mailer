@@ -7,7 +7,7 @@
   padding: 18px 32px;
   background: rgba(3, 4, 10, 0.8);
   backdrop-filter: var(--glass);
-  border: 5px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: 50px;
   display: flex;
   align-items: center;
@@ -15,6 +15,9 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
   color: white;
   animation: toastSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  font-size: 12px;
+  max-width: 300px;
+  text-align: center;
 }
 
 button {

@@ -254,6 +254,6 @@ export async function processCampaign(campaignId: number, cfg: SendConfig): Prom
     setTimeout(() => {
       const cfg = getImapConfig()
       if (cfg) processBounces(cfg).catch(() => {})
-    }, 5 * 60 * 1000)
+    }, 15 * 1000)
   }
 }
