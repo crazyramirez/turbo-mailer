@@ -2,6 +2,9 @@ import { db } from '~/server/db/index'
 import { campaigns, contacts, listContacts, sends } from '~/server/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { processCampaign, SendConfig } from '~/server/utils/campaign-processor'
+import { clearSignal } from '~/server/utils/campaign-state'
+import { logAudit } from '~/server/utils/audit'
+import { getClientIp } from '~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
   const campaignId = Number(getRouterParam(event, 'id'))
@@ -92,6 +95,11 @@ export default defineEventHandler(async (event) => {
     dkimSelector: config.dkimSelector as string,
     dkimPrivateKey: config.dkimPrivateKey as string,
   }
+
+  // Clear any leftover pause signal from a prior pause/resume cycle
+  clearSignal(campaignId)
+
+  logAudit('campaign.send', { campaignId, name: campaign.name, resume: campaign.status === 'paused' }, getClientIp(event))
 
   // Process in background
   processCampaign(campaignId, cfg).catch(async (err) => {

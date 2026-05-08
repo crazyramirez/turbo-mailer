@@ -1,4 +1,4 @@
-import { randomBytes, createHmac, timingSafeEqual } from 'crypto'
+import { randomBytes, createHmac, createHash, timingSafeEqual } from 'crypto'
 import { sqlite } from '~/server/db/index'
 import { db } from '~/server/db/index'
 import { sessions } from '~/server/db/schema'
@@ -11,12 +11,31 @@ const SESSION_TTL = 24 * 60 * 60 * 1000
 
 // ─── IP helpers ────────────────────────────────────────────────────────────────
 
+// B4: Only trust forwarded headers if the connecting socket is a known private/loopback range
+const TRUSTED_PROXY_RE = [
+  /^127\./,
+  /^10\./,
+  /^172\.(1[6-9]|2\d|3[01])\./,
+  /^192\.168\./,
+  /^::1$/,
+  /^fc00:/i,
+  /^fd[0-9a-f]{2}:/i,
+]
+
+function isTrustedProxy(socketIp: string): boolean {
+  return TRUSTED_PROXY_RE.some(r => r.test(socketIp))
+}
+
 export function getClientIp(event: Parameters<typeof import('h3').getHeader>[0]): string {
-  const forwarded = getHeader(event, 'x-forwarded-for')
-  const realIp = getHeader(event, 'x-real-ip')
   // @ts-ignore
-  const socketIp = event.node?.req?.socket?.remoteAddress
-  return forwarded?.split(',')[0]?.trim() ?? realIp ?? socketIp ?? 'unknown'
+  const socketIp: string = event.node?.req?.socket?.remoteAddress ?? ''
+  if (isTrustedProxy(socketIp)) {
+    const forwarded = getHeader(event, 'x-forwarded-for')
+    if (forwarded) return forwarded.split(',')[0].trim()
+    const realIp = getHeader(event, 'x-real-ip')
+    if (realIp) return realIp.trim()
+  }
+  return socketIp || 'unknown'
 }
 
 // ─── Rate limiting (SQLite-backed, survives restarts) ──────────────────────────
@@ -107,72 +126,116 @@ export async function destroySession(token: string): Promise<void> {
   await db.delete(sessions).where(eq(sessions.token, token))
 }
 
+// ─── API Key verification ───────────────────────────────────────────────────────
+
+/**
+ * Hashes an API key with SHA-256 for storage. Prefix "sha256:" marks hashed values.
+ */
+export function hashApiKey(key: string): string {
+  return `sha256:${createHash('sha256').update(key).digest('hex')}`
+}
+
+/**
+ * Timing-safe API key verification.
+ * Supports both hashed ("sha256:...") and legacy plaintext stored values.
+ */
+export function verifyApiKey(incoming: string, stored: string): boolean {
+  try {
+    if (stored.startsWith('sha256:')) {
+      const incomingHash = `sha256:${createHash('sha256').update(incoming).digest('hex')}`
+      const a = Buffer.from(incomingHash)
+      const b = Buffer.from(stored)
+      if (a.length !== b.length) return false
+      return timingSafeEqual(a, b)
+    }
+    // Legacy plaintext: timing-safe comparison
+    const a = Buffer.from(incoming)
+    const b = Buffer.from(stored)
+    if (a.length !== b.length) return false
+    return timingSafeEqual(a, b)
+  } catch {
+    return false
+  }
+}
+
 // ─── HMAC tokens ───────────────────────────────────────────────────────────────
 
+// B2: Derive a purpose-specific sub-key from the master secret.
+// Prevents cross-operation token forgery even if one purpose is compromised.
+function deriveSecret(master: string, purpose: string): string {
+  return createHmac('sha256', master).update(`purpose:${purpose}`).digest('hex')
+}
+
+const DEFAULT_TOKEN_TTL_DAYS = 30
+
+// B3: Timestamp-based token format: "ts.sig"
+// Legacy format (no dot, 64-char hex) is accepted during migration period.
+function signTimestamped(payload: string, secret: string): string {
+  const ts = Math.floor(Date.now() / 1000)
+  const sig = createHmac('sha256', secret).update(`${payload}:${ts}`).digest('hex')
+  return `${ts}.${sig}`
+}
+
+function verifyTimestamped(
+  payload: string,
+  token: string,
+  secret: string,
+  ttlDays: number,
+): boolean {
+  const dot = token.indexOf('.')
+  // Legacy token (no dot): verify with old format for backwards compatibility
+  if (dot === -1) {
+    const expected = createHmac('sha256', secret).update(payload).digest('hex')
+    try {
+      const a = Buffer.from(expected, 'hex')
+      const b = Buffer.from(token, 'hex')
+      if (a.length !== b.length) return false
+      return timingSafeEqual(a, b)
+    } catch { return false }
+  }
+  // New format: "ts.sig"
+  const ts = Number(token.slice(0, dot))
+  const sig = token.slice(dot + 1)
+  if (!ts || !sig) return false
+  const ageSec = Math.floor(Date.now() / 1000) - ts
+  if (ageSec > ttlDays * 86400) return false
+  const expected = createHmac('sha256', secret).update(`${payload}:${ts}`).digest('hex')
+  try {
+    const a = Buffer.from(expected, 'hex')
+    const b = Buffer.from(sig, 'hex')
+    if (a.length !== b.length) return false
+    return timingSafeEqual(a, b)
+  } catch { return false }
+}
+
 export function signUnsubscribeToken(sendId: number, secret: string): string {
-  return createHmac('sha256', secret).update(`unsub:${sendId}`).digest('hex')
+  return signTimestamped(`unsub:${sendId}`, deriveSecret(secret, 'unsub'))
 }
 
 export function verifyUnsubscribeToken(sendId: number, token: string, secret: string): boolean {
-  try {
-    const expected = signUnsubscribeToken(sendId, secret)
-    const a = Buffer.from(expected, 'hex')
-    const b = Buffer.from(token, 'hex')
-    if (a.length !== b.length) return false
-    return timingSafeEqual(a, b)
-  } catch {
-    return false
-  }
+  return verifyTimestamped(`unsub:${sendId}`, token, deriveSecret(secret, 'unsub'), DEFAULT_TOKEN_TTL_DAYS)
 }
 
 export function signClickToken(sendId: number, url: string, secret: string): string {
-  return createHmac('sha256', secret)
-    .update(`click:${sendId}:${url}`)
-    .digest('hex') // full 64-char hex — no truncation
+  return signTimestamped(`click:${sendId}:${url}`, deriveSecret(secret, 'click'))
 }
 
 export function verifyClickToken(sendId: number, url: string, token: string, secret: string): boolean {
-  try {
-    const expected = signClickToken(sendId, url, secret)
-    const a = Buffer.from(expected, 'hex')
-    const b = Buffer.from(token, 'hex')
-    if (a.length !== b.length) return false
-    return timingSafeEqual(a, b)
-  } catch {
-    return false
-  }
+  return verifyTimestamped(`click:${sendId}:${url}`, token, deriveSecret(secret, 'click'), DEFAULT_TOKEN_TTL_DAYS)
 }
 
 export function signOpenToken(sendId: number, secret: string): string {
-  return createHmac('sha256', secret)
-    .update(`open:${sendId}`)
-    .digest('hex')
+  return signTimestamped(`open:${sendId}`, deriveSecret(secret, 'open'))
 }
 
 export function verifyOpenToken(sendId: number, token: string, secret: string): boolean {
-  try {
-    const expected = signOpenToken(sendId, secret)
-    const a = Buffer.from(expected, 'hex')
-    const b = Buffer.from(token, 'hex')
-    if (a.length !== b.length) return false
-    return timingSafeEqual(a, b)
-  } catch {
-    return false
-  }
+  return verifyTimestamped(`open:${sendId}`, token, deriveSecret(secret, 'open'), DEFAULT_TOKEN_TTL_DAYS)
 }
 
 export function signResubscribeToken(sendId: number, secret: string): string {
-  return createHmac('sha256', secret).update(`resub:${sendId}`).digest('hex')
+  return signTimestamped(`resub:${sendId}`, deriveSecret(secret, 'resub'))
 }
 
 export function verifyResubscribeToken(sendId: number, token: string, secret: string): boolean {
-  try {
-    const expected = signResubscribeToken(sendId, secret)
-    const a = Buffer.from(expected, 'hex')
-    const b = Buffer.from(token, 'hex')
-    if (a.length !== b.length) return false
-    return timingSafeEqual(a, b)
-  } catch {
-    return false
-  }
+  return verifyTimestamped(`resub:${sendId}`, token, deriveSecret(secret, 'resub'), DEFAULT_TOKEN_TTL_DAYS)
 }

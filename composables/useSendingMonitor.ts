@@ -6,6 +6,7 @@ interface CampaignProgress {
   sent: number
   total: number
   fail: number
+  etaMs: number | null
 }
 
 // Module-level singleton — survives page navigation

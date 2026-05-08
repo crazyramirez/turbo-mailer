@@ -1,10 +1,14 @@
 import nodemailer from 'nodemailer'
-import { db } from '~/server/db/index'
-import { campaigns, contacts, listContacts, sends } from '~/server/db/schema'
+import { db, sqlite } from '~/server/db/index'
+import { campaigns, contacts, sends } from '~/server/db/schema'
 import { eq, and, inArray, sql } from 'drizzle-orm'
-import { applyVars } from '~/server/utils/template'
+import { compileTemplate } from '~/server/utils/template'
 import { signUnsubscribeToken, signClickToken, signOpenToken } from '~/server/utils/auth'
 import { getImapConfig, processBounces } from '~/server/utils/bounce-processor'
+import { isPaused, clearSignal } from '~/server/utils/campaign-state'
+import { userFriendlySmtpError } from '~/server/utils/errors'
+
+const COUNTER_FLUSH_EVERY = 50
 
 export interface SendConfig {
   smtpHost: string
@@ -80,6 +84,9 @@ export async function sendWithRetry(
 }
 
 export async function processCampaign(campaignId: number, cfg: SendConfig): Promise<void> {
+  // Clear any leftover pause signal from prior cycle
+  clearSignal(campaignId)
+
   const dkim = (cfg.dkimDomain && cfg.dkimSelector && cfg.dkimPrivateKey) ? {
     domainName: cfg.dkimDomain,
     keySelector: cfg.dkimSelector,
@@ -117,20 +124,38 @@ export async function processCampaign(campaignId: number, cfg: SendConfig): Prom
   const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, campaignId))
   if (!campaign?.templateHtml) return
 
+  // A5: Compile template and subject once — not per email
+  const compiledHtml = compileTemplate(campaign.templateHtml)
+  const compiledSubject = compileTemplate(campaign.subject)
+
+  // A6: Batch campaign counter flushes every COUNTER_FLUSH_EVERY emails
+  let batchSent = 0
+  let batchFail = 0
+  const flushCounters = () => {
+    if (batchSent === 0 && batchFail === 0) return
+    sqlite.transaction(() => {
+      if (batchSent > 0) {
+        sqlite.prepare('UPDATE campaigns SET sent_count = COALESCE(sent_count, 0) + ? WHERE id = ?').run(batchSent, campaignId)
+      }
+      if (batchFail > 0) {
+        sqlite.prepare('UPDATE campaigns SET fail_count = COALESCE(fail_count, 0) + ? WHERE id = ?').run(batchFail, campaignId)
+      }
+    })()
+    batchSent = 0
+    batchFail = 0
+  }
+
   for (const send of pendingSends) {
-    const [current] = await db
-      .select({ status: campaigns.status })
-      .from(campaigns)
-      .where(eq(campaigns.id, campaignId))
-    if (current?.status === 'paused') break
+    // A2: Check in-memory pause signal instead of querying DB per email
+    if (isPaused(campaignId)) break
 
     const contact = send.contactId ? contactMap.get(send.contactId) : null
     const vars = contact ?? { email: send.email }
 
     try {
-      const personalizedSubject = applyVars(campaign.subject, vars)
+      const personalizedSubject = compiledSubject.applyTo(vars)
       const trackedHtml = injectTracking(
-        applyVars(campaign.templateHtml, vars),
+        compiledHtml.applyTo(vars),
         send.sendId,
         cfg.baseUrl,
         cfg.secret,
@@ -138,10 +163,10 @@ export async function processCampaign(campaignId: number, cfg: SendConfig): Prom
       const senderEmail = cfg.smtpFromEmail || cfg.smtpUser
       const unsubToken = signUnsubscribeToken(send.sendId, cfg.secret)
       const unsubUrl = `${cfg.baseUrl}/unsubscribe?s=${send.sendId}&t=${unsubToken}`
-      const personalizedHtml = trackedHtml.replace(
-        /\{\{\s*UNSUBSCRIBE_URL\s*\}\}/gi,
-        unsubUrl
-      )
+      const prefUrl = `${cfg.baseUrl}/preferences?s=${send.sendId}&t=${unsubToken}`
+      const personalizedHtml = trackedHtml
+        .replace(/\{\{\s*UNSUBSCRIBE_URL\s*\}\}/gi, unsubUrl)
+        .replace(/\{\{\s*PREFERENCES_URL\s*\}\}/gi, prefUrl)
 
       await sendWithRetry(transporter, {
         from: `"${cfg.smtpFromName}" <${senderEmail}>`,
@@ -160,9 +185,8 @@ export async function processCampaign(campaignId: number, cfg: SendConfig): Prom
         sentAt: new Date(),
         errorMsg: null
       }).where(eq(sends.id, send.sendId))
-      await db.update(campaigns)
-        .set({ sentCount: sql`COALESCE(${campaigns.sentCount}, 0) + 1` })
-        .where(eq(campaigns.id, campaignId))
+
+      batchSent++
 
       // Reset failCount on successful send
       if (send.contactId) {
@@ -171,12 +195,15 @@ export async function processCampaign(campaignId: number, cfg: SendConfig): Prom
     } catch (err: any) {
       const isHardBounce = err.responseCode >= 500 && err.responseCode < 600
       const status = isHardBounce ? 'bounced' : 'failed'
+      const { message: friendlyMsg } = userFriendlySmtpError(err)
 
       await db.update(sends).set({
         status,
-        errorMsg: err.message,
+        errorMsg: friendlyMsg,
         sentAt: new Date(),
       }).where(eq(sends.id, send.sendId))
+
+      batchFail++
 
       if (isHardBounce && send.contactId) {
         await db.update(contacts).set({
@@ -184,28 +211,17 @@ export async function processCampaign(campaignId: number, cfg: SendConfig): Prom
           updatedAt: new Date()
         }).where(eq(contacts.id, send.contactId))
       } else if (!isHardBounce && send.contactId) {
-        // Soft Bounce logic: increment failCount
-        const [c] = await db.select({ failCount: contacts.failCount }).from(contacts).where(eq(contacts.id, send.contactId))
-        const newCount = (c?.failCount ?? 0) + 1
-        
-        if (newCount >= 5) {
-          await db.update(contacts).set({ 
-            status: 'inactive', 
-            failCount: newCount, 
-            updatedAt: new Date() 
-          }).where(eq(contacts.id, send.contactId))
-        } else {
-          await db.update(contacts).set({ 
-            failCount: newCount, 
-            updatedAt: new Date() 
-          }).where(eq(contacts.id, send.contactId))
-        }
+        // A3: Atomic increment — no read-then-write N+1
+        await db.update(contacts).set({
+          failCount: sql`COALESCE(${contacts.failCount}, 0) + 1`,
+          status: sql`CASE WHEN COALESCE(${contacts.failCount}, 0) + 1 >= 5 THEN 'inactive' ELSE ${contacts.status} END`,
+          updatedAt: new Date(),
+        }).where(eq(contacts.id, send.contactId))
       }
-
-      await db.update(campaigns)
-        .set({ failCount: sql`COALESCE(${campaigns.failCount}, 0) + 1` })
-        .where(eq(campaigns.id, campaignId))
     }
+
+    // A6: Flush campaign counters every COUNTER_FLUSH_EVERY emails
+    if ((batchSent + batchFail) % COUNTER_FLUSH_EVERY === 0) flushCounters()
 
     const minDelayByRate = cfg.maxEmailsPerSecond > 0 ? (1000 / cfg.maxEmailsPerSecond) : 0
     const baseDelay = Math.max(cfg.delayMs || 0, minDelayByRate)
@@ -217,30 +233,34 @@ export async function processCampaign(campaignId: number, cfg: SendConfig): Prom
       const actualDelay = Math.max(50, baseDelay + jitter)
       await new Promise(r => setTimeout(r, actualDelay))
     } else {
-      // If no delay is configured, use a small 500ms delay to make progress visible in the UI
-      // and prevent "all at once" feeling reported by the user.
+      // Small delay when no rate configured — keeps UI progress visible
       await new Promise(r => setTimeout(r, 500))
     }
   }
 
-  // Final stats update based on the sends table
-  const allSends = await db.select().from(sends).where(eq(sends.campaignId, campaignId))
-  const sentCount = allSends.filter(s => ['sent', 'opened'].includes(s.status)).length
-  const failCount = allSends.filter(s => ['failed', 'bounced'].includes(s.status)).length
-  const openCount = allSends.filter(s => s.status === 'opened').length
+  // Flush any remaining counters
+  flushCounters()
 
-  const [final] = await db
-    .select({ status: campaigns.status })
-    .from(campaigns)
-    .where(eq(campaigns.id, campaignId))
+  // A4: SQL COUNT instead of loading all 50k records into memory
+  const [stats] = await db
+    .select({
+      sentCount: sql<number>`COUNT(*) FILTER (WHERE status IN ('sent','opened'))`,
+      failCount: sql<number>`COUNT(*) FILTER (WHERE status IN ('failed','bounced'))`,
+      openCount: sql<number>`COUNT(*) FILTER (WHERE status = 'opened')`,
+    })
+    .from(sends)
+    .where(eq(sends.campaignId, campaignId))
+
+  // Check final pause state without reloading all records
+  const wasPaused = isPaused(campaignId)
 
   const updateData: any = {
-    sentCount,
-    failCount,
-    openCount,
+    sentCount: stats?.sentCount ?? 0,
+    failCount: stats?.failCount ?? 0,
+    openCount: stats?.openCount ?? 0,
   }
 
-  if (final?.status !== 'paused') {
+  if (!wasPaused) {
     updateData.status = 'sent'
     updateData.finishedAt = new Date()
   }
@@ -249,11 +269,11 @@ export async function processCampaign(campaignId: number, cfg: SendConfig): Prom
     .set(updateData)
     .where(eq(campaigns.id, campaignId))
 
-  // Auto-check bounces 5 min after campaign ends — NDR emails need time to arrive
-  if (final?.status !== 'paused') {
+  // Auto-check bounces after campaign ends — NDR emails need time to arrive
+  if (!wasPaused) {
     setTimeout(() => {
-      const cfg = getImapConfig()
-      if (cfg) processBounces(cfg).catch(() => {})
+      const imapCfg = getImapConfig()
+      if (imapCfg) processBounces(imapCfg).catch(() => {})
     }, 15 * 1000)
   }
 }

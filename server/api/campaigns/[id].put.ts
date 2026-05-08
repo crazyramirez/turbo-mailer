@@ -1,12 +1,14 @@
 import { db } from '~/server/db/index'
 import { campaigns } from '~/server/db/schema'
 import { eq } from 'drizzle-orm'
+import { sanitizeEmailHtml } from '~/server/utils/html-sanitize'
 
 export default defineEventHandler(async (event) => {
   const id = Number(getRouterParam(event, 'id'))
   const body = await readBody(event)
-  const { name, subject, templateName, templateHtml, listId, status, scheduledAt,
+  const { name, subject, templateName, listId, status, scheduledAt,
     unsubEmailSubject, unsubEmailMessage, resubEmailSubject, resubEmailMessage } = body
+  const templateHtml = body.templateHtml ? sanitizeEmailHtml(String(body.templateHtml)) : body.templateHtml
 
   const CAMPAIGN_STATUSES = ['draft', 'scheduled', 'paused'] as const
   type CampaignStatus = typeof CAMPAIGN_STATUSES[number]

@@ -1,6 +1,7 @@
 ﻿import bcrypt from 'bcryptjs'
 import { timingSafeEqual } from 'crypto'
 import { checkRateLimit, recordFailedAttempt, clearAttempts, createSession, getClientIp } from '~/server/utils/auth'
+import { logAudit } from '~/server/utils/audit'
 
 function safePasswordCompare(input: string, expected: string): boolean {
   if (expected.startsWith('$2a$') || expected.startsWith('$2b$') || expected.startsWith('$2y$')) {
@@ -43,12 +44,14 @@ export default defineEventHandler(async (event) => {
   if (!safePasswordCompare(password, correctPassword)) {
     const result = recordFailedAttempt(ip)
     if (result.blocked) {
+      logAudit('login.blocked', { ip }, ip)
       throw createError({
         statusCode: 429,
         message: `IP bloqueada 15 min tras ${10} intentos fallidos.`,
         data: { remaining: 0, blocked: true }
       })
     }
+    logAudit('login.failed', { ip, remaining: result.remaining }, ip)
     throw createError({
       statusCode: 401,
       message: `Contraseña incorrecta. ${result.remaining} intentos restantes.`,
@@ -57,6 +60,7 @@ export default defineEventHandler(async (event) => {
   }
 
   clearAttempts(ip)
+  logAudit('login.success', { ip }, ip)
   const token = await createSession(ip)
 
   setCookie(event, 'tm_session', token, {

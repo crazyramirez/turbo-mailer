@@ -8,6 +8,7 @@ const ALLOWED_PREFIXES = [
   '/api/unsubscribe',
   '/api/resubscribe',
   '/api/subscribe',
+  '/api/preferences',
 ]
 
 let _installed: boolean | null = null

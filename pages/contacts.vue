@@ -240,13 +240,10 @@ async function batchRemoveFromList() {
   if (!selectedListId.value || selectedContactIds.value.size === 0) return;
   const ids = [...selectedContactIds.value];
   removingIds.value = new Set(ids);
-  await Promise.all(
-    ids.map((id) =>
-      $fetch(`/api/lists/${selectedListId.value}/contacts/${id}`, {
-        method: "DELETE",
-      }),
-    ),
-  );
+  await $fetch('/api/contacts/bulk', {
+    method: 'POST',
+    body: { action: 'removeFromList', ids, listId: selectedListId.value },
+  });
   selectedContactIds.value = new Set();
   setTimeout(() => {
     removingIds.value = new Set();
@@ -266,11 +263,10 @@ async function batchDelete() {
 
   const ids = [...selectedContactIds.value];
   removingIds.value = new Set(ids);
-  
-  await Promise.all(
-    ids.map((id) => $fetch(`/api/contacts/${id}`, { method: "DELETE" }))
-  );
-  
+  await $fetch('/api/contacts/bulk', {
+    method: 'POST',
+    body: { action: 'delete', ids },
+  });
   selectedContactIds.value = new Set();
   setTimeout(() => {
     removingIds.value = new Set();
@@ -327,6 +323,7 @@ async function deleteList(list: any) {
 
 // ── Import / Export ───────────────────────────────────────────────────────
 const xlsxInputRef = ref<HTMLInputElement | null>(null);
+const importMode = ref<'upsert' | 'skipExisting' | 'updateOnly'>('upsert');
 const listNameInputRef = ref<HTMLInputElement | null>(null);
 const emailInputRef = ref<HTMLInputElement | null>(null);
 
@@ -375,13 +372,15 @@ async function doImport(e: Event) {
 
   const res = await $fetch<any>("/api/contacts/import", {
     method: "POST",
-    body: { rows, listId: selectedListId.value },
+    body: { rows, listId: selectedListId.value, importMode: importMode.value },
   });
   (e.target as HTMLInputElement).value = "";
-  showToast(
-    `Importados: ${res.inserted} | Omitidos: ${res.skipped}`,
-    "success",
-  );
+  const parts = [`Insertados: ${res.inserted}`];
+  if (res.updated > 0) parts.push(`Actualizados: ${res.updated}`);
+  if (res.duplicates > 0) parts.push(`Duplicados: ${res.duplicates}`);
+  if (res.skipped > 0) parts.push(`Omitidos: ${res.skipped}`);
+  if (res.invalidCount > 0) parts.push(`Inválidos: ${res.invalidCount}`);
+  showToast(parts.join(' | '), 'success');
   fetchContacts();
   fetchLists();
 }
@@ -484,6 +483,11 @@ watch([search, statusFilter], () => {
             style="display: none"
             @change="doImport"
           />
+          <select v-model="importMode" class="import-mode-select" :title="t('contacts_page.import_mode')">
+            <option value="upsert">{{ t('contacts_page.import_mode_upsert') }}</option>
+            <option value="skipExisting">{{ t('contacts_page.import_mode_skip') }}</option>
+            <option value="updateOnly">{{ t('contacts_page.import_mode_update') }}</option>
+          </select>
           <button
             class="btn-secondary"
             @click="xlsxInputRef?.click()"
@@ -571,8 +575,13 @@ watch([search, statusFilter], () => {
 
       <!-- Table -->
       <div class="table-wrap">
-        <div v-if="loading" class="loading-state">
-          {{ t("common.loading") }}
+        <div v-if="loading" class="skeleton-table">
+          <div class="sk-thead">
+            <div v-for="i in 5" :key="i" class="sk-th" :style="{ width: ['180px','130px','130px','100px','80px'][i-1] }" />
+          </div>
+          <div v-for="r in 8" :key="r" class="sk-row">
+            <div v-for="c in 5" :key="c" class="sk-cell" :style="{ width: ['55%','20%','15%','8%','6%'][c-1] }" />
+          </div>
         </div>
         <div v-else-if="contacts.length === 0" class="empty-state">
           <Users :size="40" class="empty-icon" />
@@ -1089,6 +1098,23 @@ watch([search, statusFilter], () => {
   align-items: center;
 }
 
+.import-mode-select {
+  background: rgb(0 0 0 / 18%);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 7px 10px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.18s;
+  color-scheme: dark;
+  max-width: 160px;
+}
+.import-mode-select:focus {
+  border-color: var(--accent);
+}
+
 /* Filters */
 .filters-bar {
   display: flex;
@@ -1158,7 +1184,6 @@ watch([search, statusFilter], () => {
   border: 1px solid var(--border);
   border-radius: 16px;
 }
-.loading-state,
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -1167,6 +1192,52 @@ watch([search, statusFilter], () => {
   padding: 60px;
   color: var(--text-dim);
   gap: 12px;
+}
+
+/* Skeleton table */
+.skeleton-table {
+  padding: 0 4px;
+}
+.sk-thead {
+  display: flex;
+  gap: 16px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.sk-th {
+  height: 10px;
+  border-radius: 6px;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.05) 25%,
+    rgba(255,255,255,0.10) 50%,
+    rgba(255,255,255,0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: sk-shimmer 1.4s ease-in-out infinite;
+}
+.sk-row {
+  display: flex;
+  gap: 16px;
+  padding: 13px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  align-items: center;
+}
+.sk-cell {
+  height: 12px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.04) 75%
+  );
+  background-size: 200% 100%;
+  animation: sk-shimmer 1.4s ease-in-out infinite;
+}
+.sk-row:nth-child(odd) .sk-cell { animation-delay: 0.1s; }
+@keyframes sk-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 .empty-icon {
   opacity: 0.3;

@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, primaryKey } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, primaryKey, index } from 'drizzle-orm/sqlite-core'
 
 export const contacts = sqliteTable('contacts', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -13,12 +13,15 @@ export const contacts = sqliteTable('contacts', {
   instagram: text('instagram'),
   tags: text('tags', { mode: 'json' }).$type<string[]>().default([]),
   status: text('status', { enum: ['active', 'unsubscribed', 'bounced', 'inactive'] }).notNull().default('active'),
+  preferences: text('preferences', { mode: 'json' }).$type<{ frequency?: 'all' | 'weekly' | 'monthly' }>(),
   failCount: integer('fail_count').default(0),
   subChangeCount: integer('sub_change_count').default(0),
   subChangeWindowStart: integer('sub_change_window_start', { mode: 'timestamp' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
-})
+}, (t) => ({
+  statusIdx: index('contacts_status_idx').on(t.status),
+}))
 
 export const lists = sqliteTable('lists', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -56,7 +59,9 @@ export const campaigns = sqliteTable('campaigns', {
   unsubEmailMessage: text('unsub_email_message'),
   resubEmailSubject: text('resub_email_subject'),
   resubEmailMessage: text('resub_email_message'),
-})
+}, (t) => ({
+  statusIdx: index('campaigns_status_idx').on(t.status),
+}))
 
 export const sends = sqliteTable('sends', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -67,7 +72,10 @@ export const sends = sqliteTable('sends', {
   status: text('status', { enum: ['pending', 'sent', 'failed', 'bounced', 'opened'] }).notNull().default('pending'),
   sentAt: integer('sent_at', { mode: 'timestamp' }),
   errorMsg: text('error_msg'),
-})
+}, (t) => ({
+  campaignStatusIdx: index('sends_campaign_status_idx').on(t.campaignId, t.status),
+  sentAtIdx: index('sends_sent_at_idx').on(t.sentAt),
+}))
 
 export const sessions = sqliteTable('sessions', {
   token: text('token').primaryKey(),
@@ -86,7 +94,11 @@ export const trackingEvents = sqliteTable('tracking_events', {
   ip: text('ip'),
   userAgent: text('user_agent'),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
-})
+}, (t) => ({
+  campaignIdx: index('te_campaign_idx').on(t.campaignId),
+  sendIdx: index('te_send_idx').on(t.sendId),
+  typeIdx: index('te_type_idx').on(t.eventType),
+}))
 
 export const settings = sqliteTable('settings', {
   key: text('key').primaryKey(),
@@ -100,3 +112,14 @@ export const loginAttempts = sqliteTable('login_attempts', {
   firstAttempt: integer('first_attempt', { mode: 'timestamp' }).notNull(),
   blockedUntil: integer('blocked_until', { mode: 'timestamp' }),
 })
+
+export const auditLog = sqliteTable('audit_log', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  action: text('action').notNull(),
+  detail: text('detail', { mode: 'json' }).$type<Record<string, unknown>>(),
+  ip: text('ip'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+}, (t) => ({
+  createdAtIdx: index('audit_log_created_at_idx').on(t.createdAt),
+  actionIdx: index('audit_log_action_idx').on(t.action),
+}))

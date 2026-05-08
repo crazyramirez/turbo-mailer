@@ -10,6 +10,7 @@ import {
   Menu,
   X,
   LayoutDashboard,
+  ShieldCheck,
 } from "lucide-vue-next";
 import { APP_VERSION } from "~/utils/version";
 import { useRoute } from "vue-router";
@@ -192,6 +193,15 @@ watch([() => route.path, () => locale.value], () => {
           <BarChart2 :size="15" stroke-width="2.5" />
           <span>{{ t("nav.analytics") }}</span>
         </NuxtLink>
+        <NuxtLink
+          to="/audit"
+          class="nav-link"
+          active-class="router-link-active"
+          :title="t('nav.audit')"
+        >
+          <ShieldCheck :size="15" stroke-width="2.5" />
+          <span>{{ t("nav.audit") }}</span>
+        </NuxtLink>
       </nav>
 
       <!-- Desktop right actions -->
@@ -325,6 +335,12 @@ watch([() => route.path, () => locale.value], () => {
               <BarChart2 :size="17" stroke-width="2" />
             </span>
             <span>{{ t("nav.analytics") }}</span>
+          </NuxtLink>
+          <NuxtLink to="/audit" class="drawer-link" @click="closeMenu">
+            <span class="drawer-link-icon">
+              <ShieldCheck :size="17" stroke-width="2" />
+            </span>
+            <span>{{ t("nav.audit") }}</span>
           </NuxtLink>
         </nav>
 

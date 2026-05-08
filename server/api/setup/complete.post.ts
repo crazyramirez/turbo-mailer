@@ -2,6 +2,8 @@ import bcrypt from 'bcryptjs'
 import { randomBytes } from 'node:crypto'
 import { writeFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { encryptField } from '~/server/utils/encryption'
+import { hashApiKey } from '~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
   const sentinelPath = resolve(process.cwd(), 'data/.installed')
@@ -18,14 +20,15 @@ export default defineEventHandler(async (event) => {
 
   const hashedPassword = await bcrypt.hash(String(password), 12)
   const unsubscribeSecret = app.unsubscribeSecret?.trim() || randomBytes(32).toString('hex')
-  const apiSecret = app.apiSecret?.trim() || randomBytes(32).toString('hex')
+  const rawApiSecret = app.apiSecret?.trim() || randomBytes(32).toString('hex')
+  const apiSecret = hashApiKey(rawApiSecret)
 
   const config: Record<string, any> = {
     appPassword: hashedPassword,
     smtpHost: String(smtp.host),
     smtpPort: String(smtp.port || '465'),
     smtpUser: String(smtp.user),
-    smtpPass: String(smtp.pass),
+    smtpPass: encryptField(String(smtp.pass)),
     smtpSecure: smtp.secure !== false,
     smtpFromName: String(smtp.fromName || 'TurboMailer'),
     smtpFromEmail: String(smtp.fromEmail || smtp.user),
@@ -39,14 +42,14 @@ export default defineEventHandler(async (event) => {
   }
 
   if (advanced?.openaiApiKey?.trim()) {
-    config.openaiApiKey = String(advanced.openaiApiKey).trim()
+    config.openaiApiKey = encryptField(String(advanced.openaiApiKey).trim())
     config.openaiModel = String(advanced.openaiModel || 'gpt-4o-mini')
   }
 
   if (advanced?.dkimDomain?.trim() && advanced?.dkimPrivateKey?.trim()) {
     config.dkimDomain = String(advanced.dkimDomain).trim()
     config.dkimSelector = String(advanced.dkimSelector || 'default').trim()
-    config.dkimPrivateKey = String(advanced.dkimPrivateKey).trim()
+    config.dkimPrivateKey = encryptField(String(advanced.dkimPrivateKey).trim())
   }
 
   // IMAP bounce detection
@@ -55,7 +58,7 @@ export default defineEventHandler(async (event) => {
     config.imapHost = String(smtp.imapHost || '').trim()
     config.imapPort = Number(smtp.imapPort || 993)
     config.imapUser = String(smtp.imapUser || smtp.user).trim()
-    config.imapPass = String(smtp.imapPass || smtp.pass).trim()
+    config.imapPass = encryptField(String(smtp.imapPass || smtp.pass).trim())
     config.imapTls  = true
   }
 
@@ -83,7 +86,8 @@ export default defineEventHandler(async (event) => {
     ``,
     `TRACKING_BASE_URL=${config.trackingBaseUrl}`,
     `UNSUBSCRIBE_SECRET=${config.unsubscribeSecret}`,
-    `API_SECRET=${config.apiSecret}`,
+    `# API_SECRET below is the RAW key — config.json stores a SHA-256 hash`,
+    `API_SECRET=${rawApiSecret}`,
     ``,
     `SMTP_SEND_DELAY_MS=${config.smtpSendDelayMs}`,
     `SMTP_SEND_JITTER_MS=${config.smtpSendJitterMs}`,

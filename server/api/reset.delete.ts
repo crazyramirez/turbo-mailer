@@ -3,11 +3,35 @@ import { contacts, lists, listContacts, campaigns, sends, trackingEvents, settin
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { createBackup } from '~/server/utils/backup'
+import { getClientIp } from '~/server/utils/auth'
+import { logAudit } from '~/server/utils/audit'
 
 const VALID_SCOPES = ['all', 'db', 'contacts', 'campaigns', 'analytics', 'security', 'setup'] as const
 type Scope = typeof VALID_SCOPES[number]
 
+// Simple in-memory rate limit for destructive reset operations (3 per 10 min per IP)
+const resetAttempts = new Map<string, { count: number; firstAt: number }>()
+const RESET_MAX = 3
+const RESET_WINDOW = 10 * 60 * 1000 // 10 minutes
+
+function checkResetRateLimit(ip: string): boolean {
+  const now = Date.now()
+  const entry = resetAttempts.get(ip)
+  if (!entry || now - entry.firstAt > RESET_WINDOW) {
+    resetAttempts.set(ip, { count: 1, firstAt: now })
+    return true
+  }
+  if (entry.count >= RESET_MAX) return false
+  entry.count++
+  return true
+}
+
 export default defineEventHandler(async (event) => {
+  const ip = getClientIp(event)
+  if (!checkResetRateLimit(ip)) {
+    throw createError({ statusCode: 429, message: 'Too many reset requests. Try again in 10 minutes.' })
+  }
+
   const body = await readBody(event)
   const scope = body?.scope as Scope
 
@@ -75,5 +99,6 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  logAudit('reset', { scope, backupPath }, ip)
   return { ok: true, backupPath }
 })

@@ -1,10 +1,12 @@
 import { db } from '~/server/db/index'
 import { campaigns } from '~/server/db/schema'
+import { sanitizeEmailHtml } from '~/server/utils/html-sanitize'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
-  const { name, subject, templateName, templateHtml, listId,
+  const { name, subject, templateName, listId,
     unsubEmailSubject, unsubEmailMessage, resubEmailSubject, resubEmailMessage } = body
+  const templateHtml = body.templateHtml ? sanitizeEmailHtml(String(body.templateHtml)) : body.templateHtml
 
   if (!name?.trim()) throw createError({ statusCode: 400, statusMessage: 'name required' })
   if (!subject?.trim()) throw createError({ statusCode: 400, statusMessage: 'subject required' })

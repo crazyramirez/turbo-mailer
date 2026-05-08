@@ -1,14 +1,24 @@
 import { readFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { decryptField } from '~/server/utils/encryption'
 
 let _cache: Record<string, any> | null = null
 
 export const dataDir = process.env.DATA_DIR || resolve(process.cwd(), 'data')
 
+// Fields that may be AES-256-GCM encrypted in config.json
+const ENCRYPTED_FIELDS = new Set(['smtpPass', 'imapPass', 'openaiApiKey', 'dkimPrivateKey'])
+
 function getFileConfig(): Record<string, any> {
   if (_cache) return _cache
   const p = resolve(dataDir, 'config.json')
-  _cache = existsSync(p) ? (JSON.parse(readFileSync(p, 'utf-8')) as Record<string, any>) : {}
+  if (!existsSync(p)) { _cache = {}; return _cache }
+  const raw = JSON.parse(readFileSync(p, 'utf-8')) as Record<string, any>
+  // Decrypt sensitive fields transparently (legacy plaintext values pass through unchanged)
+  for (const field of ENCRYPTED_FIELDS) {
+    if (typeof raw[field] === 'string') raw[field] = decryptField(raw[field])
+  }
+  _cache = raw
   return _cache
 }
 

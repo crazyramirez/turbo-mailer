@@ -158,6 +158,11 @@ function stopPolling() {
 }
 
 onUnmounted(stopPolling);
+
+const { showHelp } = useKeyboardShortcuts([
+  { key: 'n', description: 'Nueva campaña', action: () => router.push('/campaigns/new') },
+  { key: 'r', description: 'Refrescar lista', action: () => fetchCampaigns(false) },
+])
 </script>
 
 <template>
@@ -176,7 +181,23 @@ onUnmounted(stopPolling);
         </div>
       </div>
 
-      <div v-if="loading" class="loading-state">{{ t("common.loading") }}</div>
+      <div v-if="loading" class="campaigns-grid">
+        <div v-for="i in 6" :key="i" class="campaign-card skeleton-card">
+          <div class="sk-block sk-badge" />
+          <div class="sk-block sk-title" />
+          <div class="sk-block sk-subtitle" />
+          <div class="sk-sep" />
+          <div class="sk-row">
+            <div class="sk-block sk-chip" />
+            <div class="sk-block sk-chip" />
+            <div class="sk-block sk-chip" />
+          </div>
+          <div class="sk-row sk-row-end">
+            <div class="sk-block sk-btn" />
+            <div class="sk-block sk-btn" />
+          </div>
+        </div>
+      </div>
 
       <div v-else-if="campaigns.length === 0 && !hasDraft" class="empty-state">
         <Mail :size="48" class="empty-icon" />
@@ -305,6 +326,26 @@ onUnmounted(stopPolling);
       </TransitionGroup>
     </main>
   </div>
+
+  <!-- Keyboard shortcuts help overlay -->
+  <Teleport to="body">
+    <Transition name="help-fade">
+      <div v-if="showHelp" class="help-overlay" @click="showHelp = false">
+        <div class="help-box" @click.stop>
+          <div class="help-head">
+            <span>Atajos de teclado</span>
+            <button class="help-close" @click="showHelp = false">✕</button>
+          </div>
+          <div class="help-list">
+            <div class="help-row"><kbd>N</kbd><span>Nueva campaña</span></div>
+            <div class="help-row"><kbd>R</kbd><span>Refrescar lista</span></div>
+            <div class="help-row"><kbd>?</kbd><span>Mostrar/ocultar atajos</span></div>
+            <div class="help-row"><kbd>Esc</kbd><span>Cerrar este panel</span></div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <style scoped>
@@ -395,7 +436,6 @@ onUnmounted(stopPolling);
   margin-top: 4px;
 }
 
-.loading-state,
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -405,6 +445,33 @@ onUnmounted(stopPolling);
   padding: 80px 0;
   color: var(--text-dim);
 }
+
+/* Skeleton */
+.skeleton-card {
+  pointer-events: none;
+}
+.sk-block {
+  border-radius: 8px;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.09) 50%,
+    rgba(255,255,255,0.04) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.sk-badge   { height: 18px; width: 70px; }
+.sk-title   { height: 20px; width: 60%; margin-top: 10px; }
+.sk-subtitle{ height: 14px; width: 85%; margin-top: 8px; }
+.sk-sep     { height: 1px; background: var(--border); margin: 14px 0; }
+.sk-row     { display: flex; gap: 8px; }
+.sk-row-end { justify-content: flex-end; margin-top: 8px; }
+.sk-chip    { height: 22px; width: 52px; border-radius: 20px; }
+.sk-btn     { height: 30px; width: 72px; border-radius: 10px; }
 .empty-icon {
   opacity: 0.7;
 }
@@ -726,4 +793,72 @@ onUnmounted(stopPolling);
     transform: rotate(360deg);
   }
 }
+
+/* Keyboard help overlay */
+.help-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.help-box {
+  background: #0d0f1a;
+  border: 1px solid rgba(99,102,241,0.3);
+  border-radius: 18px;
+  padding: 24px 28px;
+  min-width: 300px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+.help-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 20px;
+}
+.help-close {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: color 0.15s;
+}
+.help-close:hover { color: #fff; }
+.help-list { display: flex; flex-direction: column; gap: 12px; }
+.help-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 26px;
+  padding: 0 8px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.help-fade-enter-active { transition: opacity 0.2s ease, transform 0.2s ease; }
+.help-fade-leave-active { transition: opacity 0.15s ease; }
+.help-fade-enter-from { opacity: 0; transform: scale(0.96); }
+.help-fade-leave-to { opacity: 0; }
 </style>

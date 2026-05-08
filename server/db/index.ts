@@ -34,6 +34,11 @@ const sqlite = new Database(dbPath)
 // Enable WAL mode for better concurrent read performance
 sqlite.pragma('journal_mode = WAL')
 sqlite.pragma('foreign_keys = ON')
+sqlite.pragma('synchronous = NORMAL')      // safe with WAL, faster than FULL
+sqlite.pragma('cache_size = -64000')       // 64 MB page cache
+sqlite.pragma('temp_store = MEMORY')       // temp tables in RAM
+sqlite.pragma('mmap_size = 134217728')     // 128 MB memory-mapped I/O
+sqlite.pragma('wal_autocheckpoint = 1000') // less frequent checkpoints during bulk sends
 
 export const db = drizzle(sqlite, { schema })
 

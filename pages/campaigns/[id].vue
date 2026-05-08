@@ -973,7 +973,7 @@ onUnmounted(() => {
   margin: 0 auto;
   width: 100%;
   overflow-x: hidden;
-  padding: 0 40px;
+  padding: 0;
 }
 @media (max-width: 1024px) {
   .cpage {

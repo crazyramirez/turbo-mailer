@@ -1,13 +1,14 @@
 ﻿import { db } from '~/server/db/index'
 import { contacts, listContacts } from '~/server/db/schema'
 import { isValidEmail, sanitizeContactFields } from '~/server/utils/validate'
+import { verifyApiKey } from '~/server/utils/auth'
 import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const config = useServerConfig()
-  const secret = event.headers.get('x-api-key') || event.headers.get('authorization')?.replace('Bearer ', '') || ''
+  const incoming = event.headers.get('x-api-key') || event.headers.get('authorization')?.replace('Bearer ', '') || ''
 
-  if (!config.apiSecret || secret !== config.apiSecret) {
+  if (!config.apiSecret || !incoming || !verifyApiKey(incoming, String(config.apiSecret))) {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
   }
 

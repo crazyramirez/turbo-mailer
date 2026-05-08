@@ -13,6 +13,7 @@
     "analytics": "Analytics",
     "settings": "Ajustes",
     "dashboard": "Dashboard",
+    "audit": "Registro de Auditoría",
     "editor_desktop_only_title": "Funcionalidad de Escritorio",
     "editor_desktop_only_desc": "El Editor PRO requiere una pantalla grande para funcionar correctamente. Úsalo desde tu ordenador para una experiencia óptima.",
     "got_it": "Entendido"
@@ -138,7 +139,11 @@
     "contacts": "contactos",
     "prev": "Anterior",
     "next": "Siguiente",
-    "list_contacts_count": "{count} contactos"
+    "list_contacts_count": "{count} contactos",
+    "import_mode": "Modo de importación",
+    "import_mode_upsert": "Insertar + Actualizar",
+    "import_mode_skip": "Omitir existentes",
+    "import_mode_update": "Actualizar solo existentes"
   },
   "campaigns_page": {
     "title": "Campañas",
@@ -223,7 +228,11 @@
     "sent_label": "Enviados",
     "delivery_funnel": "Embudo de Entrega",
     "open_rate_label": "% Apertura",
-    "click_rate_label": "% Click"
+    "click_rate_label": "% Click",
+    "date_from": "Desde",
+    "date_to": "Hasta",
+    "apply": "Aplicar",
+    "date_range_label": "Rango de fechas"
   },
   "unsubscribe_page": {
     "title": "Baja de suscripción",

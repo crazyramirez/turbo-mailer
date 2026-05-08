@@ -43,6 +43,35 @@ const { t } = useI18n();
 const data = ref<any>(null);
 const loading = ref(true);
 
+function toIsoDate(d: Date) {
+  return d.toISOString().slice(0, 10);
+}
+const today = toIsoDate(new Date());
+const thirtyAgo = toIsoDate(new Date(Date.now() - 30 * 86400000));
+
+const RANGE_KEY = "analytics_range";
+function loadRange(): { from: string; to: string } {
+  try {
+    const saved = localStorage.getItem(RANGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.from && parsed.to) return parsed;
+    }
+  } catch {}
+  return { from: thirtyAgo, to: today };
+}
+const _saved = loadRange();
+const dateFrom = ref(_saved.from);
+const dateTo = ref(_saved.to);
+const appliedFrom = ref(_saved.from);
+const appliedTo = ref(_saved.to);
+
+function rangeLabel() {
+  if (appliedFrom.value === thirtyAgo && appliedTo.value === today)
+    return t("analytics_page.last_30_days");
+  return `${appliedFrom.value} — ${appliedTo.value}`;
+}
+
 const trendCanvas = ref<HTMLCanvasElement>();
 const deviceCanvas = ref<HTMLCanvasElement>();
 const perfCanvas = ref<HTMLCanvasElement>();
@@ -328,11 +357,13 @@ function buildPerfChart() {
   });
 }
 
-async function fetchAnalytics() {
+async function fetchAnalytics(from?: string, to?: string) {
   loading.value = true;
   const start = Date.now();
   try {
-    data.value = await $fetch<any>("/api/analytics");
+    data.value = await $fetch<any>("/api/analytics", {
+      query: { from: from ?? appliedFrom.value, to: to ?? appliedTo.value },
+    });
     destroyCharts();
     buildCharts();
   } finally {
@@ -343,6 +374,14 @@ async function fetchAnalytics() {
     loading.value = false;
   }
 }
+
+watch([dateFrom, dateTo], ([from, to]) => {
+  if (!from || !to || from > to) return;
+  appliedFrom.value = from;
+  appliedTo.value = to;
+  try { localStorage.setItem(RANGE_KEY, JSON.stringify({ from, to })); } catch {}
+  fetchAnalytics(from, to);
+});
 
 function fmtDate(d: any) {
   if (!d) return "—";
@@ -384,7 +423,7 @@ function deviceIcon(label: string) {
 let timer: any;
 onMounted(() => {
   fetchAnalytics();
-  timer = setInterval(fetchAnalytics, 30000);
+  timer = setInterval(() => fetchAnalytics(), 30000);
 });
 onUnmounted(() => {
   clearInterval(timer);
@@ -400,17 +439,59 @@ onUnmounted(() => {
           <h1>{{ t("analytics_page.title") }}</h1>
           <p>{{ t("analytics_page.subtitle") }}</p>
         </div>
-        <button
-          class="btn-refresh"
-          @click="fetchAnalytics"
-          :title="t('common.loading')"
-        >
-          <RefreshCcw :size="15" :class="{ spin: loading }" />
-        </button>
+        <div class="header-actions">
+          <div class="date-range-row">
+            <input
+              type="date"
+              class="date-input"
+              v-model="dateFrom"
+              :max="dateTo"
+              :aria-label="t('analytics_page.date_from')"
+            />
+            <span class="date-sep">–</span>
+            <input
+              type="date"
+              class="date-input"
+              v-model="dateTo"
+              :min="dateFrom"
+              :max="today"
+              :aria-label="t('analytics_page.date_to')"
+            />
+          </div>
+          <button
+            class="btn-refresh"
+            @click="fetchAnalytics()"
+            :title="t('common.loading')"
+          >
+            <RefreshCcw :size="15" :class="{ spin: loading }" />
+          </button>
+        </div>
       </div>
 
-      <div v-if="loading && !data" class="loading-state">
-        {{ t("common.loading") }}
+      <div v-if="loading && !data" class="sk-page">
+        <div class="kpi-grid">
+          <div v-for="i in 4" :key="i" class="kpi-card sk-kpi">
+            <div class="sk-block sk-icon" />
+            <div class="sk-lines">
+              <div class="sk-block sk-val" />
+              <div class="sk-block sk-lbl" />
+            </div>
+          </div>
+        </div>
+        <div class="sk-chart-row">
+          <div class="panel sk-chart-main">
+            <div class="sk-block sk-chart-head" />
+            <div class="sk-block sk-chart-body" />
+          </div>
+          <div class="panel sk-chart-side">
+            <div class="sk-block sk-chart-head" />
+            <div class="sk-block sk-donut" />
+          </div>
+        </div>
+        <div class="panel sk-perf">
+          <div class="sk-block sk-chart-head" />
+          <div class="sk-block sk-chart-body" />
+        </div>
       </div>
 
       <template v-else-if="data">
@@ -461,9 +542,7 @@ onUnmounted(() => {
             <div class="panel-head">
               <div>
                 <h2>{{ t("analytics_page.opens_trend") }}</h2>
-                <span class="panel-sub">{{
-                  t("analytics_page.last_14_days")
-                }}</span>
+                <span class="panel-sub">{{ rangeLabel() }}</span>
               </div>
               <div class="trend-controls">
                 <button
@@ -683,6 +762,43 @@ onUnmounted(() => {
   color: var(--text-muted);
   margin-top: 4px;
 }
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.date-range-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.date-input {
+  background: rgb(0 0 0 / 18%);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 12px;
+  padding: 7px 10px;
+  outline: none;
+  transition: border-color 0.18s;
+  cursor: pointer;
+  color-scheme: dark;
+}
+.date-input:focus {
+  border-color: var(--accent);
+}
+
+.date-sep {
+  color: var(--text-dim);
+  font-size: 13px;
+  user-select: none;
+}
+
+
 .btn-refresh {
   width: 36px;
   height: 36px;
@@ -715,14 +831,42 @@ onUnmounted(() => {
   }
 }
 
-.loading-state {
+/* Skeleton analytics */
+.sk-page {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  color: var(--text-dim);
-  padding: 80px;
+  flex-direction: column;
+  gap: 28px;
 }
+.sk-block {
+  border-radius: 10px;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.09) 50%,
+    rgba(255,255,255,0.04) 75%
+  );
+  background-size: 200% 100%;
+  animation: sk-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes sk-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.sk-kpi { gap: 16px; }
+.sk-icon { width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0; }
+.sk-lines { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.sk-val { height: 28px; width: 70px; }
+.sk-lbl { height: 12px; width: 110px; }
+.sk-chart-row {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 20px;
+}
+.sk-chart-main { min-height: 280px; }
+.sk-chart-side { min-height: 280px; }
+.sk-chart-head { height: 18px; width: 160px; margin-bottom: 20px; }
+.sk-chart-body { height: 200px; }
+.sk-donut { height: 180px; border-radius: 50%; width: 180px; margin: 0 auto; }
+.sk-perf { min-height: 220px; }
 
 /* ── KPI ──────────────────────────────────────────────────── */
 .kpi-grid {
@@ -1203,12 +1347,21 @@ onUnmounted(() => {
   .page-header {
     align-items: flex-start;
     gap: 12px;
+    flex-wrap: wrap;
+  }
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
   }
   .page-header h1 {
     font-size: 22px;
   }
   .btn-refresh {
     align-self: flex-end;
+  }
+  .date-input {
+    font-size: 11px;
+    padding: 6px 8px;
   }
   .kpi-grid {
     gap: 10px;

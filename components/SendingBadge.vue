@@ -2,6 +2,18 @@
 import { useSendingMonitor } from '~/composables/useSendingMonitor'
 
 const { visible, progress, isActive, isDone, isPaused, progressPct, completing, cancelSend, resumeSend, dismiss } = useSendingMonitor()
+
+function formatEta(ms: number): string {
+  if (ms <= 0) return '< 1 min'
+  const sec = Math.round(ms / 1000)
+  if (sec < 60) return `${sec}s`
+  const min = Math.floor(sec / 60)
+  const s = sec % 60
+  if (min < 60) return s > 0 ? `${min}m ${s}s` : `${min}m`
+  const h = Math.floor(min / 60)
+  const m = min % 60
+  return m > 0 ? `${h}h ${m}m` : `${h}h`
+}
 </script>
 
 <template>
@@ -33,6 +45,11 @@ const { visible, progress, isActive, isDone, isPaused, progressPct, completing, 
         <template v-else-if="isPaused">
           {{ $t('sending_badge.paused', { sent: progress.sent, total: progress.total }) }}
         </template>
+      </div>
+
+      <!-- ETA -->
+      <div v-if="isActive && progress.etaMs != null" class="badge-eta">
+        ~{{ formatEta(progress.etaMs) }} restante
       </div>
 
       <!-- Progress bar -->
@@ -158,6 +175,13 @@ const { visible, progress, isActive, isDone, isPaused, progressPct, completing, 
   font-size: 12px;
   color: var(--text-muted, #9ca3af);
   line-height: 1.4;
+}
+
+.badge-eta {
+  font-size: 11px;
+  color: #6366f1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
 }
 
 .badge-bar-track {

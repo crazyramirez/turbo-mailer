@@ -36,6 +36,20 @@
       "when": 1777552553813,
       "tag": "0004_chilly_sugar_man",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1778268963592,
+      "tag": "0005_normal_zodiak",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1778270484592,
+      "tag": "0006_fearless_mastermind",
+      "breakpoints": true
     }
   ]
 }

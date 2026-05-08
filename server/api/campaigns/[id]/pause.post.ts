@@ -1,6 +1,7 @@
 import { db } from '~/server/db/index'
 import { campaigns } from '~/server/db/schema'
 import { eq } from 'drizzle-orm'
+import { signalPause } from '~/server/utils/campaign-state'
 
 export default defineEventHandler(async (event) => {
   const campaignId = Number(getRouterParam(event, 'id'))
@@ -16,6 +17,9 @@ export default defineEventHandler(async (event) => {
   await db.update(campaigns)
     .set({ status: 'paused' })
     .where(eq(campaigns.id, campaignId))
+
+  // Signal in-memory so the send loop stops immediately without polling the DB
+  signalPause(campaignId)
 
   return { paused: true }
 })
