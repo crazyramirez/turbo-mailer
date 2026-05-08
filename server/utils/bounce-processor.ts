@@ -27,6 +27,7 @@ interface ParsedBounce {
   statusCode: string
   permanent: boolean
   description: string
+  date: Date
 }
 
 export function autoDetectImapHost(smtpHost: string): string {
@@ -68,7 +69,7 @@ export function getImapConfig(): ImapConfig | null {
 }
 
 // Parse RFC 3464 Delivery Status Notification from raw email buffer
-function parseBounces(raw: Buffer): ParsedBounce[] {
+function parseBounces(raw: Buffer, date: Date): ParsedBounce[] {
   const text = raw.toString('utf-8')
   const bounces: ParsedBounce[] = []
 
@@ -103,7 +104,7 @@ function parseBounces(raw: Buffer): ParsedBounce[] {
     const statusCode  = statusM?.[1] ?? '5.0.0'
     const description = (diagM?.[1]?.trim() ?? `SMTP bounce ${statusCode}`).slice(0, 250)
 
-    bounces.push({ email, statusCode, permanent: statusCode.startsWith('5.'), description })
+    bounces.push({ email, statusCode, permanent: statusCode.startsWith('5.'), description, date })
   }
 
   return bounces
@@ -186,11 +187,15 @@ export async function processBounces(cfg: ImapConfig): Promise<{
       blog(`[bounce] UID ${msg.uid}: from=${from} subj="${subject.slice(0, 60)}"`)
       if (!msg.source) { blog(`[bounce] UID ${msg.uid}: no source, skip`); continue }
       try {
-        const parsed = parseBounces(msg.source)
+        const parsed = parseBounces(msg.source, msg.internalDate)
         blog(`[bounce] UID ${msg.uid}: ${parsed.length} bounce(s)`)
         for (const b of parsed) {
-          blog(`[bounce]   → ${b.email} permanent=${b.permanent} status=${b.statusCode}`)
-          allBounces.set(b.email, b)
+          blog(`[bounce]   → ${b.email} date=${b.date.toISOString()} permanent=${b.permanent}`)
+          // Si hay varios rebotes para el mismo email, nos quedamos con el más reciente
+          const existing = allBounces.get(b.email)
+          if (!existing || b.date > existing.date) {
+            allBounces.set(b.email, b)
+          }
         }
       } catch (e: any) {
         errors.push(`UID ${msg.uid}: ${e.message}`)
@@ -207,12 +212,21 @@ export async function processBounces(cfg: ImapConfig): Promise<{
           contactId:  sends.contactId,
           email:      sends.email,
           status:     sends.status,
+          sentAt:     sends.sentAt,
         })
         .from(sends)
         .where(inArray(sends.email, emailList))
 
-      // Only update sends that are currently 'sent' or 'opened' (not already marked failed/bounced)
-      const toUpdate = affected.filter(s => s.status === 'sent' || s.status === 'opened')
+      // Only update sends that are currently 'sent' or 'opened' 
+      // AND where the bounce happened AFTER the email was sent
+      const toUpdate = affected.filter(s => {
+        if (s.status !== 'sent' && s.status !== 'opened') return false
+        const b = allBounces.get(s.email.toLowerCase())
+        if (!b || !s.sentAt) return false
+        
+        // El rebote debe ser posterior al envío (con un margen de 2 segundos por desajustes de reloj)
+        return b.date.getTime() > (s.sentAt.getTime() - 2000)
+      })
       const affectedCampaigns = new Set<number>()
 
       for (const send of toUpdate) {

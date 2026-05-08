@@ -326,13 +326,25 @@ async function refreshBounceLog() {
 
 // ─── Polling ─────────────────────────────────────────────────
 let pollTimer: ReturnType<typeof setInterval> | null = null;
+let finishedPollingAt: number | null = null;
+
 function startPolling() {
   if (pollTimer) return;
+  finishedPollingAt = null;
   pollTimer = setInterval(async () => {
     // Actualizamos tanto la campaña (stats) como la lista de envíos en paralelo
     await Promise.all([fetchCampaign(), fetchSends()]);
+
     if (campaign.value?.status !== "sending") {
-      stopPolling();
+      if (!finishedPollingAt) {
+        finishedPollingAt = Date.now();
+      }
+      // Seguimos pulleando 45 segundos extra después de terminar para captar los rebotes automáticos (delay de 15s)
+      if (Date.now() - finishedPollingAt > 45000) {
+        stopPolling();
+      }
+    } else {
+      finishedPollingAt = null;
     }
   }, 1000); // Poll every 1s instead of 3s for real-time precision
 }
@@ -340,6 +352,7 @@ function stopPolling() {
   if (pollTimer) {
     clearInterval(pollTimer);
     pollTimer = null;
+    finishedPollingAt = null;
   }
 }
 
