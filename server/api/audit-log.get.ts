@@ -1,8 +1,12 @@
 import { db } from '~/server/db/index'
 import { auditLog } from '~/server/db/schema'
-import { desc, like, sql } from 'drizzle-orm'
+import { desc, like, sql, lt } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
+  // Clean up old audit logs (> 72h)
+  const seventyTwoHoursAgo = new Date(Date.now() - 72 * 60 * 60 * 1000)
+  await db.delete(auditLog).where(lt(auditLog.createdAt, seventyTwoHoursAgo))
+
   const query = getQuery(event)
   const page = Math.max(1, Number(query.page) || 1)
   const perPage = Math.min(100, Math.max(1, Number(query.limit) || 50))

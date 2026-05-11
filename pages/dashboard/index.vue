@@ -281,7 +281,7 @@ async function duplicateCampaign() {
 </script>
 
 <template>
-  <div class="page-layout">
+  <div class="page-layout" style="user-select: none">
     <main class="page-main">
       <!-- Hero Header -->
       <div class="dash-header">

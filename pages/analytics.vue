@@ -405,7 +405,9 @@ watch([dateFrom, dateTo], ([from, to]) => {
   if (!from || !to || from > to) return;
   appliedFrom.value = from;
   appliedTo.value = to;
-  try { localStorage.setItem(RANGE_KEY, JSON.stringify({ from, to })); } catch {}
+  try {
+    localStorage.setItem(RANGE_KEY, JSON.stringify({ from, to }));
+  } catch {}
   fetchAnalytics(from, to);
 });
 
@@ -458,7 +460,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="page-layout">
+  <div class="page-layout" style="user-select: none">
     <main class="page-main">
       <div class="page-header">
         <div>
@@ -473,7 +475,9 @@ onUnmounted(() => {
               class="preset-btn"
               :class="{ active: activePreset === p.days }"
               @click="selectPreset(p.days)"
-            >{{ p.label }}</button>
+            >
+              {{ p.label }}
+            </button>
           </div>
           <div class="date-range-row">
             <input
@@ -862,7 +866,6 @@ onUnmounted(() => {
   color: var(--accent-light);
 }
 
-
 .btn-refresh {
   width: 36px;
   height: 36px;
@@ -903,34 +906,74 @@ onUnmounted(() => {
 }
 .sk-block {
   border-radius: 10px;
-  background: linear-gradient(90deg,
-    rgba(255,255,255,0.04) 25%,
-    rgba(255,255,255,0.09) 50%,
-    rgba(255,255,255,0.04) 75%
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.09) 50%,
+    rgba(255, 255, 255, 0.04) 75%
   );
   background-size: 200% 100%;
   animation: sk-shimmer 1.4s ease-in-out infinite;
 }
 @keyframes sk-shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
-.sk-kpi { gap: 16px; }
-.sk-icon { width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0; }
-.sk-lines { display: flex; flex-direction: column; gap: 8px; flex: 1; }
-.sk-val { height: 28px; width: 70px; }
-.sk-lbl { height: 12px; width: 110px; }
+.sk-kpi {
+  gap: 16px;
+}
+.sk-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+.sk-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+.sk-val {
+  height: 28px;
+  width: 70px;
+}
+.sk-lbl {
+  height: 12px;
+  width: 110px;
+}
 .sk-chart-row {
   display: grid;
   grid-template-columns: 1fr 300px;
   gap: 20px;
 }
-.sk-chart-main { min-height: 280px; }
-.sk-chart-side { min-height: 280px; }
-.sk-chart-head { height: 18px; width: 160px; margin-bottom: 20px; }
-.sk-chart-body { height: 200px; }
-.sk-donut { height: 180px; border-radius: 50%; width: 180px; margin: 0 auto; }
-.sk-perf { min-height: 220px; }
+.sk-chart-main {
+  min-height: 280px;
+}
+.sk-chart-side {
+  min-height: 280px;
+}
+.sk-chart-head {
+  height: 18px;
+  width: 160px;
+  margin-bottom: 20px;
+}
+.sk-chart-body {
+  height: 200px;
+}
+.sk-donut {
+  height: 180px;
+  border-radius: 50%;
+  width: 180px;
+  margin: 0 auto;
+}
+.sk-perf {
+  min-height: 220px;
+}
 
 /* ── KPI ──────────────────────────────────────────────────── */
 .kpi-grid {

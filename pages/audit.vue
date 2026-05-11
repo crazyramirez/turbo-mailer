@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { ShieldCheck, RefreshCcw, ChevronLeft, ChevronRight } from "lucide-vue-next";
+import {
+  ShieldCheck,
+  RefreshCcw,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-vue-next";
 
 definePageMeta({ layout: "app" });
 
@@ -24,9 +29,16 @@ const appliedFilter = ref("");
 async function fetch() {
   loading.value = true;
   try {
-    const res = await $fetch<{ rows: AuditRow[]; total: number }>("/api/audit-log", {
-      query: { page: page.value, limit: perPage, action: appliedFilter.value || undefined },
-    });
+    const res = await $fetch<{ rows: AuditRow[]; total: number }>(
+      "/api/audit-log",
+      {
+        query: {
+          page: page.value,
+          limit: perPage,
+          action: appliedFilter.value || undefined,
+        },
+      },
+    );
     rows.value = res.rows;
     total.value = res.total;
   } finally {
@@ -40,19 +52,37 @@ function applyFilter() {
   fetch();
 }
 
-function prevPage() { if (page.value > 1) { page.value--; fetch(); } }
-function nextPage() { if (page.value * perPage < total.value) { page.value++; fetch(); } }
+function prevPage() {
+  if (page.value > 1) {
+    page.value--;
+    fetch();
+  }
+}
+function nextPage() {
+  if (page.value * perPage < total.value) {
+    page.value++;
+    fetch();
+  }
+}
 
 function fmtDate(v: any) {
   if (!v) return "—";
-  return new Date(typeof v === "number" ? v * 1000 : v).toLocaleString("es-ES", {
-    day: "2-digit", month: "short", year: "numeric",
-    hour: "2-digit", minute: "2-digit", second: "2-digit",
-  });
+  return new Date(typeof v === "number" ? v * 1000 : v).toLocaleString(
+    "es-ES",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    },
+  );
 }
 
 function actionColor(action: string) {
-  if (action.startsWith("login.failed") || action.startsWith("login.blocked")) return "red";
+  if (action.startsWith("login.failed") || action.startsWith("login.blocked"))
+    return "red";
   if (action.startsWith("login")) return "green";
   if (action.startsWith("reset")) return "orange";
   if (action.startsWith("campaign.send")) return "purple";
@@ -66,7 +96,7 @@ onMounted(fetch);
 </script>
 
 <template>
-  <div class="page-layout">
+  <div class="page-layout" style="user-select: none">
     <main class="page-main">
       <div class="page-header">
         <div class="header-left">
@@ -101,43 +131,53 @@ onMounted(fetch);
           No hay registros de auditoría.
         </div>
         <template v-else>
-          <table class="audit-table">
-            <thead>
-              <tr>
-                <th class="col-time">Fecha</th>
-                <th class="col-action">Acción</th>
-                <th class="col-ip">IP</th>
-                <th class="col-detail">Detalle</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in rows" :key="row.id">
-                <td class="col-time">
-                  <span class="time-text">{{ fmtDate(row.createdAt) }}</span>
-                </td>
-                <td class="col-action">
-                  <span class="action-badge" :class="actionColor(row.action)">
-                    {{ row.action }}
-                  </span>
-                </td>
-                <td class="col-ip">
-                  <span class="ip-text">{{ row.ip || "—" }}</span>
-                </td>
-                <td class="col-detail">
-                  <span class="detail-text">
-                    {{ row.detail && Object.keys(row.detail).length ? JSON.stringify(row.detail) : "—" }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="table-container">
+            <table class="audit-table">
+              <thead>
+                <tr>
+                  <th class="col-time">Fecha</th>
+                  <th class="col-action">Acción</th>
+                  <th class="col-ip">IP</th>
+                  <th class="col-detail">Detalle</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in rows" :key="row.id">
+                  <td class="col-time">
+                    <span class="time-text">{{ fmtDate(row.createdAt) }}</span>
+                  </td>
+                  <td class="col-action">
+                    <span class="action-badge" :class="actionColor(row.action)">
+                      {{ row.action }}
+                    </span>
+                  </td>
+                  <td class="col-ip">
+                    <span class="ip-text">{{ row.ip || "—" }}</span>
+                  </td>
+                  <td class="col-detail">
+                    <span class="detail-text">
+                      {{
+                        row.detail && Object.keys(row.detail).length
+                          ? JSON.stringify(row.detail)
+                          : "—"
+                      }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
           <div v-if="totalPages > 1" class="pagination">
             <button class="page-btn" @click="prevPage" :disabled="page === 1">
               <ChevronLeft :size="14" />
             </button>
             <span class="page-info">{{ page }} / {{ totalPages }}</span>
-            <button class="page-btn" @click="nextPage" :disabled="page >= totalPages">
+            <button
+              class="page-btn"
+              @click="nextPage"
+              :disabled="page >= totalPages"
+            >
               <ChevronRight :size="14" />
             </button>
           </div>
@@ -225,7 +265,9 @@ p {
   transition: background 0.18s;
   white-space: nowrap;
 }
-.btn-apply:hover { background: rgba(99, 102, 241, 0.22); }
+.btn-apply:hover {
+  background: rgba(99, 102, 241, 0.22);
+}
 .btn-refresh {
   width: 34px;
   height: 34px;
@@ -239,16 +281,36 @@ p {
   justify-content: center;
   transition: all 0.2s;
 }
-.btn-refresh:hover { background: rgb(255 255 255 / 6%); color: #fff; }
-.btn-refresh:disabled { opacity: 0.4; cursor: not-allowed; }
-.spin { animation: spin 0.7s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+.btn-refresh:hover {
+  background: rgb(255 255 255 / 6%);
+  color: #fff;
+}
+.btn-refresh:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.spin {
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 .audit-panel {
   background: rgb(0 0 0 / 6%);
   border: 1px solid var(--border);
   border-radius: 18px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 220px);
+}
+
+.table-container {
+  overflow-y: auto;
+  flex: 1;
 }
 
 .loading-state,
@@ -274,19 +336,38 @@ p {
   color: var(--text-dim);
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+  backdrop-filter: blur(10px);
 }
 .audit-table tbody tr {
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   transition: background 0.12s;
 }
-.audit-table tbody tr:last-child { border-bottom: none; }
-.audit-table tbody tr:hover { background: rgba(255,255,255,0.025); }
-.audit-table td { padding: 10px 16px; vertical-align: middle; }
+.audit-table tbody tr:last-child {
+  border-bottom: none;
+}
+.audit-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.025);
+}
+.audit-table td {
+  padding: 10px 16px;
+  vertical-align: middle;
+}
 
-.col-time { width: 190px; }
-.col-action { width: 200px; }
-.col-ip { width: 130px; }
-.col-detail { }
+.col-time {
+  width: 190px;
+}
+.col-action {
+  width: 200px;
+}
+.col-ip {
+  width: 130px;
+}
+.col-detail {
+}
 
 .time-text {
   color: var(--text-dim);
@@ -304,12 +385,30 @@ p {
   border-radius: 6px;
   white-space: nowrap;
 }
-.action-badge.green  { background: rgba(16,185,129,0.12); color: #10b981; }
-.action-badge.red    { background: rgba(239,68,68,0.12);  color: #ef4444; }
-.action-badge.orange { background: rgba(245,158,11,0.12); color: #f59e0b; }
-.action-badge.purple { background: rgba(99,102,241,0.12); color: #818cf8; }
-.action-badge.blue   { background: rgba(56,189,248,0.12); color: #38bdf8; }
-.action-badge.gray   { background: rgba(255,255,255,0.07); color: var(--text-muted); }
+.action-badge.green {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+.action-badge.red {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+.action-badge.orange {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+}
+.action-badge.purple {
+  background: rgba(99, 102, 241, 0.12);
+  color: #818cf8;
+}
+.action-badge.blue {
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+}
+.action-badge.gray {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text-muted);
+}
 
 .ip-text {
   color: var(--text-muted);
@@ -349,18 +448,39 @@ p {
   justify-content: center;
   transition: all 0.15s;
 }
-.page-btn:hover:not(:disabled) { background: rgb(255 255 255 / 8%); color: #fff; }
-.page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-.page-info { font-size: 12px; color: var(--text-muted); }
+.page-btn:hover:not(:disabled) {
+  background: rgb(255 255 255 / 8%);
+  color: #fff;
+}
+.page-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.page-info {
+  font-size: 12px;
+  color: var(--text-muted);
+}
 
 @media (max-width: 900px) {
-  .page-layout { margin: 0 20px; }
-  .col-detail { display: none; }
+  .page-layout {
+    margin: 0 20px;
+  }
+  .col-detail {
+    display: none;
+  }
 }
 @media (max-width: 640px) {
-  .page-layout { margin: 0 16px; }
-  .filter-input { width: 140px; }
-  h1 { font-size: 20px; }
-  .col-ip { display: none; }
+  .page-layout {
+    margin: 0 16px;
+  }
+  .filter-input {
+    width: 140px;
+  }
+  h1 {
+    font-size: 20px;
+  }
+  .col-ip {
+    display: none;
+  }
 }
 </style>
