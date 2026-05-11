@@ -1726,7 +1726,7 @@
   height: 100%;
   border-radius: 32px;
   padding: 0;
-  background: #fff;
+  /* background: #fff; */
   border: none;
 }
 
