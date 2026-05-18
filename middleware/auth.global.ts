@@ -47,10 +47,19 @@ export default defineNuxtRouteMiddleware(async (to) => {
     try {
       await $fetch('/api/auth/check')
       isAuthed.value = true
-    } catch {
+      if (process.client) localStorage.removeItem('_tm_auth_debug')
+    } catch (e: any) {
       // Session cookie missing/expired — try refresh token (PWA cookie loss)
       if (process.client) {
         const storedRefreshToken = localStorage.getItem('tm_refresh_token')
+        const debugInfo = {
+          ts: new Date().toISOString(),
+          cookieCheckError: e?.status ?? e?.message ?? String(e),
+          hasRefreshToken: !!storedRefreshToken,
+          refreshTokenLen: storedRefreshToken?.length ?? 0,
+          refreshResult: '',
+          refreshError: '',
+        }
         if (storedRefreshToken) {
           try {
             const { refreshToken: newToken } = await $fetch<{ refreshToken: string }>('/api/auth/refresh', {
@@ -58,12 +67,18 @@ export default defineNuxtRouteMiddleware(async (to) => {
               body: { refreshToken: storedRefreshToken },
             })
             localStorage.setItem('tm_refresh_token', newToken)
+            debugInfo.refreshResult = 'ok'
+            localStorage.setItem('_tm_auth_debug', JSON.stringify(debugInfo))
             isAuthed.value = true
-          } catch {
+          } catch (e2: any) {
+            debugInfo.refreshError = e2?.status ?? e2?.message ?? String(e2)
+            localStorage.setItem('_tm_auth_debug', JSON.stringify(debugInfo))
             localStorage.removeItem('tm_refresh_token')
             isAuthed.value = false
           }
         } else {
+          debugInfo.refreshResult = 'skipped-no-token'
+          localStorage.setItem('_tm_auth_debug', JSON.stringify(debugInfo))
           isAuthed.value = false
         }
       } else {

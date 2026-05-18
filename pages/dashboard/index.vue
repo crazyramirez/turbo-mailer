@@ -363,7 +363,11 @@ async function duplicateCampaign() {
             <div class="kpi-icon green"><Eye :size="22" /></div>
             <div>
               <div class="kpi-val">
-                {{ analyticsData ? analyticsData.totalOpened.toLocaleString() : "—" }}
+                {{
+                  analyticsData
+                    ? analyticsData.totalOpened.toLocaleString()
+                    : "—"
+                }}
               </div>
               <div class="kpi-lbl">
                 {{ t("analytics_page.opens_label") }}
@@ -374,7 +378,11 @@ async function duplicateCampaign() {
             <div class="kpi-icon orange"><MousePointerClick :size="22" /></div>
             <div>
               <div class="kpi-val">
-                {{ analyticsData ? analyticsData.totalClicked.toLocaleString() : "—" }}
+                {{
+                  analyticsData
+                    ? analyticsData.totalClicked.toLocaleString()
+                    : "—"
+                }}
               </div>
               <div class="kpi-lbl">
                 {{ t("analytics_page.clicks_label") }}
@@ -1300,7 +1308,8 @@ async function duplicateCampaign() {
   .campaign-list-panel,
   .preview-panel {
     height: auto;
-    min-height: 500px;
+    min-height: 200px;
+    max-height: 430px;
   }
   /* Preview */
   .preview-frame-wrap {
