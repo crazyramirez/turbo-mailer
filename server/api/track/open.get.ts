@@ -83,7 +83,7 @@ export default defineEventHandler(async (event) => {
 
           const [marked] = await db.update(sends)
             .set({ status: 'opened' })
-            .where(and(eq(sends.id, sendId), ne(sends.status, 'opened')))
+            .where(and(eq(sends.id, sendId), eq(sends.status, 'sent')))
             .returning({ id: sends.id })
 
           if (marked) {

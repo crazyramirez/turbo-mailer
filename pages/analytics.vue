@@ -301,12 +301,8 @@ function buildPerfChart() {
   const labels = campaigns.map((c: any) =>
     c.name.length > 22 ? c.name.slice(0, 22) + "…" : c.name,
   );
-  const openRates = campaigns.map((c: any) =>
-    c.sentCount ? Math.round((c.openCount / c.sentCount) * 100) : 0,
-  );
-  const clickRates = campaigns.map((c: any) =>
-    c.sentCount ? Math.round((c.clickCount / c.sentCount) * 100) : 0,
-  );
+  const openRates = campaigns.map((c: any) => c.openCount ?? 0);
+  const clickRates = campaigns.map((c: any) => c.clickCount ?? 0);
 
   perfChart = new Chart(ctx, {
     type: "bar",
@@ -314,7 +310,7 @@ function buildPerfChart() {
       labels,
       datasets: [
         {
-          label: t("analytics_page.open_rate_label"),
+          label: t("analytics_page.opens_label"),
           data: openRates,
           backgroundColor: "rgba(129,140,248,0.75)",
           hoverBackgroundColor: "#818cf8",
@@ -322,7 +318,7 @@ function buildPerfChart() {
           borderSkipped: false,
         },
         {
-          label: t("analytics_page.click_rate_label"),
+          label: t("analytics_page.clicks_label"),
           data: clickRates,
           backgroundColor: "rgba(56,189,248,0.65)",
           hoverBackgroundColor: "#38bdf8",
@@ -360,7 +356,7 @@ function buildPerfChart() {
           padding: { x: 14, y: 10 },
           cornerRadius: 10,
           callbacks: {
-            label: (item) => ` ${item.dataset.label}: ${item.parsed.x}%`,
+            label: (item) => ` ${item.dataset.label}: ${item.parsed.x}`,
           },
         },
       },
@@ -371,10 +367,9 @@ function buildPerfChart() {
           ticks: {
             color: TICK,
             font: { size: 11 },
-            callback: (v) => `${v}%`,
             maxTicksLimit: 6,
+            precision: 0,
           },
-          max: 100,
         },
         y: {
           grid: { display: false },
@@ -428,12 +423,10 @@ function fmtDate(d: any) {
 }
 
 function openRate(c: any) {
-  if (!c.sentCount) return "0%";
-  return `${Math.round((c.openCount / c.sentCount) * 100)}%`;
+  return c.openCount ?? 0;
 }
 function clickRate(c: any) {
-  if (!c.sentCount) return "0%";
-  return `${Math.round((c.clickCount / c.sentCount) * 100)}%`;
+  return c.clickCount ?? 0;
 }
 
 function parseUA(ua: string) {
@@ -562,16 +555,16 @@ onUnmounted(() => {
           <div class="kpi-card">
             <div class="kpi-icon green"><Eye :size="22" /></div>
             <div>
-              <div class="kpi-val">{{ data.avgOpenRate }}%</div>
-              <div class="kpi-lbl">{{ t("analytics_page.avg_open_rate") }}</div>
+              <div class="kpi-val">{{ data.totalOpened.toLocaleString() }}</div>
+              <div class="kpi-lbl">{{ t("analytics_page.opens_label") }}</div>
             </div>
           </div>
           <div class="kpi-card">
             <div class="kpi-icon orange"><MousePointerClick :size="22" /></div>
             <div>
-              <div class="kpi-val">{{ data.avgClickRate }}%</div>
+              <div class="kpi-val">{{ data.totalClicked.toLocaleString() }}</div>
               <div class="kpi-lbl">
-                {{ t("analytics_page.avg_click_rate") }}
+                {{ t("analytics_page.clicks_label") }}
               </div>
             </div>
           </div>

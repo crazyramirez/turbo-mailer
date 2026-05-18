@@ -730,12 +730,7 @@ onUnmounted(() => {
                 <div class="stat-icon-wrap si-purple"><Eye :size="18" /></div>
                 <div class="stat-body">
                   <span class="stat-num">{{ campaign.openCount ?? 0 }}</span>
-                  <span class="stat-lbl"
-                    >{{ t("campaigns_page.open_rate") }} ·
-                    <strong>{{
-                      pct(campaign.openCount, campaign.sentCount)
-                    }}</strong></span
-                  >
+                  <span class="stat-lbl">{{ t("campaigns_page.open_rate") }}</span>
                 </div>
               </div>
               <div class="stat-card">
@@ -744,12 +739,7 @@ onUnmounted(() => {
                 </div>
                 <div class="stat-body">
                   <span class="stat-num">{{ campaign.clickCount ?? 0 }}</span>
-                  <span class="stat-lbl"
-                    >{{ t("campaigns_page.click_rate") }} ·
-                    <strong>{{
-                      pct(campaign.clickCount, campaign.sentCount)
-                    }}</strong></span
-                  >
+                  <span class="stat-lbl">{{ t("campaigns_page.click_rate") }}</span>
                 </div>
               </div>
               <div

@@ -94,12 +94,10 @@ async function duplicateCampaign(c: any) {
 }
 
 function openRate(c: any) {
-  if (!c.sentCount) return "—";
-  return `${Math.round((c.openCount / c.sentCount) * 100)}%`;
+  return c.openCount ?? 0;
 }
 function clickRate(c: any) {
-  if (!c.sentCount) return "—";
-  return `${Math.round((c.clickCount / c.sentCount) * 100)}%`;
+  return c.clickCount ?? 0;
 }
 
 function statusIcon(s: string) {
