@@ -910,7 +910,7 @@ button.dot:hover {
     gap: 6px;
   }
   .cp-viewport {
-    padding: 10px;
+    padding: 10px 0;
   }
   .cp-canvas.desktop {
     height: calc(100vh - 300px);
