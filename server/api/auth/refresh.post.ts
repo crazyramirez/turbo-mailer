@@ -19,8 +19,8 @@ export default defineEventHandler(async (event) => {
 
   setCookie(event, 'tm_session', sessionToken, {
     httpOnly: true,
-    sameSite: 'strict',
-    maxAge: 24 * 60 * 60,
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60,
     path: '/',
     secure: process.env.NODE_ENV === 'production'
   })

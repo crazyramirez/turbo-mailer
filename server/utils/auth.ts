@@ -7,7 +7,7 @@ import { eq, lt } from 'drizzle-orm'
 const MAX_ATTEMPTS = 10
 const BLOCK_DURATION = 15 * 60 // seconds
 const WINDOW = 15 * 60 // seconds
-const SESSION_TTL = 24 * 60 * 60 * 1000
+const SESSION_TTL = 7 * 24 * 60 * 60 * 1000
 const REFRESH_TOKEN_TTL = 30 * 24 * 60 * 60 * 1000
 
 // ─── IP helpers ────────────────────────────────────────────────────────────────

@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 
   deleteCookie(event, 'tm_session', {
     httpOnly: true,
-    sameSite: 'strict',
+    sameSite: 'lax',
     path: '/'
   })
 
