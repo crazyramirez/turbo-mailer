@@ -81,7 +81,10 @@ function loadRange(): { from: string; to: string } {
     const saved = localStorage.getItem(RANGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (parsed.from && parsed.to) return parsed;
+      if (parsed.from) {
+        const from = parsed.from > today ? thirtyAgo : parsed.from;
+        return { from, to: today };
+      }
     }
   } catch {}
   return { from: thirtyAgo, to: today };
