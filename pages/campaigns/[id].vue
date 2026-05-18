@@ -730,7 +730,9 @@ onUnmounted(() => {
                 <div class="stat-icon-wrap si-purple"><Eye :size="18" /></div>
                 <div class="stat-body">
                   <span class="stat-num">{{ campaign.openCount ?? 0 }}</span>
-                  <span class="stat-lbl">{{ t("campaigns_page.open_rate") }}</span>
+                  <span class="stat-lbl">{{
+                    t("campaigns_page.open_rate")
+                  }}</span>
                 </div>
               </div>
               <div class="stat-card">
@@ -739,7 +741,9 @@ onUnmounted(() => {
                 </div>
                 <div class="stat-body">
                   <span class="stat-num">{{ campaign.clickCount ?? 0 }}</span>
-                  <span class="stat-lbl">{{ t("campaigns_page.click_rate") }}</span>
+                  <span class="stat-lbl">{{
+                    t("campaigns_page.click_rate")
+                  }}</span>
                 </div>
               </div>
               <div
@@ -2102,7 +2106,7 @@ select.field-input option {
   border-radius: 14px;
   overflow-y: auto;
   overflow-x: auto;
-  max-height: calc(100vh - 340px);
+  max-height: 44vh;
 }
 .table-empty {
   padding: 48px;
@@ -2311,7 +2315,7 @@ select.field-input option {
     height: 36px;
   }
   .table-wrap {
-    max-height: calc(100vh - 280px);
+    max-height: 300px;
     border-radius: 12px;
   }
   .data-table th,

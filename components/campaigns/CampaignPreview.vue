@@ -486,7 +486,7 @@ onUnmounted(() => {
 .cp-canvas.desktop {
   width: 100%;
   max-width: 960px;
-  height: calc(100vh - 380px);
+  height: 70vh;
   transform: scale(1);
 }
 .cp-canvas.mobile {

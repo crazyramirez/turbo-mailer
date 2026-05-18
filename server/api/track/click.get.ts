@@ -1,6 +1,6 @@
 ﻿import { db } from '~/server/db/index'
 import { sends, campaigns, trackingEvents } from '~/server/db/schema'
-import { eq, sql, and, gt, ne } from 'drizzle-orm'
+import { eq, sql, and, gt } from 'drizzle-orm'
 import { verifyClickToken } from '~/server/utils/auth'
 
 // In-memory lock to prevent race conditions from rapid-fire mobile clicks
@@ -67,12 +67,12 @@ export default defineEventHandler(async (event) => {
             .set({ clickCount: sql`${campaigns.clickCount} + 1` })
             .where(eq(campaigns.id, send.campaignId))
           
-          if (send.status !== 'opened') {
+          if (send.status === 'sent') {
             const [marked] = await db.update(sends)
               .set({ status: 'opened' })
-              .where(and(eq(sends.id, sendId), ne(sends.status, 'opened')))
+              .where(and(eq(sends.id, sendId), eq(sends.status, 'sent')))
               .returning({ id: sends.id })
-            
+
             if (marked) {
               await db.update(campaigns)
                 .set({ openCount: sql`${campaigns.openCount} + 1` })
