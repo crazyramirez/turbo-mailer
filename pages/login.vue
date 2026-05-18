@@ -97,9 +97,6 @@
             </Transition>
           </div>
 
-          <!-- Auth debug (temporary, remove after diagnosis) -->
-          <div v-if="authDebug" style="margin-top:8px;padding:8px;background:#1a1a2e;border:1px solid #ff4444;border-radius:6px;font-size:11px;color:#ff9999;word-break:break-all;white-space:pre-wrap;font-family:monospace">{{ authDebug }}</div>
-
           <!-- Attempts bar -->
           <Transition name="err-fade">
             <div
@@ -202,7 +199,6 @@ const config = useRuntimeConfig();
 const isAuthed = useState<boolean | null>("isAuthed", () => null);
 
 const showSetupWelcome = ref(false);
-const authDebug = ref<string | null>(null);
 
 const { t } = useI18n();
 
@@ -218,11 +214,6 @@ if (process.client && route.query.portal === ACCESS_KEY) {
 }
 
 onMounted(async () => {
-  if (process.client) {
-    const raw = localStorage.getItem('_tm_auth_debug')
-    if (raw) authDebug.value = raw
-  }
-
   if (process.client && route.query.portal === ACCESS_KEY) {
     // Clear query param from the URL immediately so it's not visible
     const newUrl = window.location.pathname;

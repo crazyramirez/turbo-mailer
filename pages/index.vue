@@ -5,11 +5,11 @@ import { ArrowRight } from "lucide-vue-next";
 definePageMeta({ layout: false });
 
 const config = useRuntimeConfig();
-if (!config.public.ghostMode) {
-  navigateTo('/login');
-}
-
 const isAuthed = useState<boolean | null>("isAuthed", () => null);
+
+if (!config.public.ghostMode) {
+  navigateTo(isAuthed.value === true ? '/dashboard' : '/login');
+}
 const showSetupWelcome = ref(false);
 const portalKey = ref("");
 
