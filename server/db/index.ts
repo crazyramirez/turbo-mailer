@@ -20,6 +20,7 @@ const sqlite = new Database(dbPath)
 
 // Enable WAL mode for better concurrent read performance
 sqlite.pragma('journal_mode = WAL')
+sqlite.pragma('busy_timeout = 5000')
 sqlite.pragma('foreign_keys = ON')
 sqlite.pragma('synchronous = NORMAL')
 sqlite.pragma('cache_size = -64000')
