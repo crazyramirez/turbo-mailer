@@ -1043,7 +1043,7 @@ async function duplicateCampaign() {
   height: 100%;
 }
 .preview-frame-wrap :deep(.cp-viewport) {
-  padding: 20px;
+  padding: 0;
 }
 .preview-no-template {
   display: flex;
@@ -1058,7 +1058,7 @@ async function duplicateCampaign() {
 .preview-actions {
   display: flex;
   gap: 8px;
-  padding: 12px 20px;
+  padding: 12px 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   flex-wrap: wrap;
   flex-shrink: 0;
@@ -1304,7 +1304,7 @@ async function duplicateCampaign() {
   }
   /* Preview */
   .preview-frame-wrap {
-    padding: 0 5px 5px;
+    padding: 0px;
   }
   .kpi-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -1493,13 +1493,13 @@ async function duplicateCampaign() {
   }
 
   .preview-header {
-    padding: 14px 16px 10px;
+    padding: 14px 0;
   }
   .preview-name {
     font-size: 14px;
   }
   .preview-actions {
-    padding: 10px 14px;
+    padding: 10px 0;
     gap: 6px;
   }
   .btn-action {

@@ -870,7 +870,7 @@ button.dot:hover {
 
 @media (max-width: 768px) {
   .cp-toolbar {
-    padding: 10px 12px;
+    padding: 10px 0;
     gap: 8px;
   }
   .cp-subject {
@@ -898,7 +898,7 @@ button.dot:hover {
 
 @media (max-width: 480px) {
   .cp-toolbar {
-    padding: 8px 10px;
+    padding: 8px 0;
   }
   .cp-label {
     display: none;

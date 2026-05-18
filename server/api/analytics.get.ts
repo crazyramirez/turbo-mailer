@@ -93,16 +93,15 @@ export default defineEventHandler(async (event) => {
     .orderBy(desc(campaigns.openCount))
     .limit(5)
 
-  // Opens by day — use sends table (status='opened') so demo/imported data shows;
-  // tracking_events is only populated when the open pixel fires on real sends
+  // Opens by day — use tracking_events so timestamps reflect when opens occurred, not when sent
   const rawOpensByDay = await db.select({
-    date: sql<string>`strftime('%Y-%m-%d', datetime(sent_at, 'unixepoch'))`,
+    date: sql<string>`strftime('%Y-%m-%d', datetime(created_at, 'unixepoch'))`,
     count: sql<number>`COUNT(*)`,
   })
-    .from(sends)
-    .where(sql`status = 'opened' AND sent_at IS NOT NULL AND sent_at >= ${fromTs} AND sent_at <= ${toTs}`)
-    .groupBy(sql`strftime('%Y-%m-%d', datetime(sent_at, 'unixepoch'))`)
-    .orderBy(sql`strftime('%Y-%m-%d', datetime(sent_at, 'unixepoch'))`)
+    .from(trackingEvents)
+    .where(sql`event_type = 'open' AND created_at >= ${fromTs} AND created_at <= ${toTs}`)
+    .groupBy(sql`strftime('%Y-%m-%d', datetime(created_at, 'unixepoch'))`)
+    .orderBy(sql`strftime('%Y-%m-%d', datetime(created_at, 'unixepoch'))`)
 
   const opensByDay = fillDays(rawOpensByDay, fromStr, toStr)
 
