@@ -71,6 +71,8 @@ interface AnalyticsResponse {
   totalCampaigns: number;
   avgOpenRate: number;
   avgClickRate: number;
+  totalOpened: number;
+  totalClicked: number;
   recentOpens: RecentOpen[];
   topCampaigns: any[];
 }
@@ -179,13 +181,11 @@ onUnmounted(() => {
 });
 
 // ── Helpers ──────────────────────────────────────────────────────
-function openRatePct(c: Campaign): string {
-  if (!c.sentCount) return "—";
-  return `${Math.round(((c.openCount ?? 0) / c.sentCount) * 100)}%`;
+function openRatePct(c: Campaign): number | string {
+  return c.openCount ?? 0;
 }
-function clickRatePct(c: Campaign): string {
-  if (!c.sentCount) return "—";
-  return `${Math.round(((c.clickCount ?? 0) / c.sentCount) * 100)}%`;
+function clickRatePct(c: Campaign): number | string {
+  return c.clickCount ?? 0;
 }
 function fmtDate(d: any): string {
   if (!d) return "—";
@@ -363,10 +363,10 @@ async function duplicateCampaign() {
             <div class="kpi-icon green"><Eye :size="22" /></div>
             <div>
               <div class="kpi-val">
-                {{ analyticsData ? `${analyticsData.avgOpenRate}%` : "—" }}
+                {{ analyticsData ? analyticsData.totalOpened.toLocaleString() : "—" }}
               </div>
               <div class="kpi-lbl">
-                {{ t("analytics_page.avg_open_rate") }}
+                {{ t("analytics_page.opens_label") }}
               </div>
             </div>
           </div>
@@ -374,10 +374,10 @@ async function duplicateCampaign() {
             <div class="kpi-icon orange"><MousePointerClick :size="22" /></div>
             <div>
               <div class="kpi-val">
-                {{ analyticsData ? `${analyticsData.avgClickRate}%` : "—" }}
+                {{ analyticsData ? analyticsData.totalClicked.toLocaleString() : "—" }}
               </div>
               <div class="kpi-lbl">
-                {{ t("analytics_page.avg_click_rate") }}
+                {{ t("analytics_page.clicks_label") }}
               </div>
             </div>
           </div>
