@@ -909,6 +909,9 @@ button.dot:hover {
   .cp-controls {
     gap: 6px;
   }
+  .cp-viewport {
+    padding: 10px 0;
+  }
   .cp-canvas.desktop {
     height: calc(100vh - 300px);
     min-height: 260px;

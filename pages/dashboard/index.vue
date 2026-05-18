@@ -1043,7 +1043,7 @@ async function duplicateCampaign() {
   height: 100%;
 }
 .preview-frame-wrap :deep(.cp-viewport) {
-  padding: 0;
+  padding: 10px 0;
 }
 .preview-no-template {
   display: flex;
