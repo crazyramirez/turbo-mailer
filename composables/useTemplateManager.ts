@@ -84,6 +84,23 @@ async function deleteTemplate(name: string) {
   )
 }
 
+async function duplicateTemplate(name: string) {
+  const { openPrompt } = await import('~/composables/usePrompt').then((m) => m.usePrompt())
+  const i18n = (useNuxtApp().$i18n as any)
+  const copyName = `${name}-copy`
+  openPrompt(i18n.t('editor.template_duplicate_title'), i18n.t('editor.template_duplicate_label'), copyName, 'text', async (newName) => {
+    if (!newName) return
+    try {
+      const data = await $fetch<{ content: string }>('/api/templates', { query: { name } })
+      await $fetch('/api/templates', { method: 'POST', body: { name: newName, content: data.content } })
+      await loadTemplates()
+      showToast(i18n.t('editor.template_duplicated'), 'success')
+    } catch {
+      showToast(i18n.t('editor.template_duplicate_error'), 'error')
+    }
+  })
+}
+
 async function renameTemplate(oldName: string) {
   const { openPrompt } = await import('~/composables/usePrompt').then((m) => m.usePrompt())
   const i18n = (useNuxtApp().$i18n as any)
@@ -250,6 +267,7 @@ export function useTemplateManager() {
     loadTemplates,
     loadTemplate,
     deleteTemplate,
+    duplicateTemplate,
     renameTemplate,
     saveTemplate,
     handleSave,

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { Plus, Edit3, Trash2, Lock } from "lucide-vue-next";
+import { Plus, Edit3, Copy, Trash2, Lock } from "lucide-vue-next";
 import { useEditorState } from "~/composables/useEditorState";
 import { useTemplateManager } from "~/composables/useTemplateManager";
 import { useBlockEditor } from "~/composables/useBlockEditor";
 import { editorBlocks } from "~/utils/editorBlocks";
 
 const { templates, currentTemplate, showTemplateModal } = useEditorState();
-const { loadTemplate, deleteTemplate, renameTemplate } = useTemplateManager();
+const { loadTemplate, deleteTemplate, duplicateTemplate, renameTemplate } = useTemplateManager();
 const { handleSidebarDragStart, handleSidebarDragEnd } = useBlockEditor();
 </script>
 
@@ -37,6 +37,13 @@ const { handleSidebarDragStart, handleSidebarDragEnd } = useBlockEditor();
                 :title="$t('editor.sidebar_rename')"
               >
                 <Edit3 :size="12" />
+              </button>
+              <button
+                @click.stop="duplicateTemplate(t.name)"
+                class="btn-item-action"
+                :title="$t('editor.sidebar_duplicate')"
+              >
+                <Copy :size="12" />
               </button>
               <button
                 @click.stop="deleteTemplate(t.name)"
