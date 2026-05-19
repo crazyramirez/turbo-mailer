@@ -6,6 +6,19 @@ import { verifyClickToken } from '~/server/utils/auth'
 // In-memory lock to prevent race conditions from rapid-fire mobile clicks
 const clickLock = new Set<string>()
 
+// Email security scanners (SafeLinks, Proofpoint, Barracuda, etc.) pre-fetch all links.
+// They have no Accept: text/html header and often have telltale UAs.
+// We redirect them silently without counting the click.
+const BOT_UA_PATTERN = /SafeLinks|UrlScan|LinkScan|Microsoft.*Security|Barracuda|Mimecast|Proofpoint|Symantec|Sophos|IronPort|MessageLabs|MSRBOT|TrendMicro|Forcepoint|Cisco.*Email|ZeroFOX|Agari|Abnormal|Avanan|Tessian|Inky|GreatHorn|MailMarshal|MimeCast|Hornetsecurity|SpamTitan|AppRiver|Cloudmark|Postini|McAfee.*Email|Webroot|SolarWinds|Vade/i
+
+function isBot(ua: string, accept: string): boolean {
+  if (!ua) return true
+  if (BOT_UA_PATTERN.test(ua)) return true
+  // Real browsers always send Accept with text/html; scanners often send */* or nothing
+  if (accept && !accept.includes('text/html') && !accept.includes('text/*')) return true
+  return false
+}
+
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const sendId = Number(query.s)
@@ -25,6 +38,13 @@ export default defineEventHandler(async (event) => {
 
   if (sendId) {
     try {
+      const ua = getHeader(event, 'user-agent') || ''
+      const accept = getHeader(event, 'accept') || ''
+      if (isBot(ua, accept)) {
+        console.log('[track/click] bot/scanner ignored ua=%s', ua.slice(0, 80))
+        return await sendRedirect(event, targetUrl, 302)
+      }
+
       const ip = String(getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown').split(',')[0].trim()
       
       // 1. Memory debounce (handles race conditions better than DB check alone)
@@ -59,7 +79,7 @@ export default defineEventHandler(async (event) => {
             eventType: 'click',
             url: targetUrl,
             ip,
-            userAgent: getHeader(event, 'user-agent') || '',
+            userAgent: ua,
             createdAt: new Date(),
           })
 
