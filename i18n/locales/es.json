@@ -556,7 +556,9 @@
     "resource_manager_empty_search": "No se encontraron imágenes para \"{query}\"",
     "resource_manager_first": "Subir mi primera imagen",
     "image_name_exists": "Ese nombre ya existe",
-    "resource_manager_delete_confirm": "¿Estás seguro de que quieres eliminar esta imagen?"
+    "resource_manager_delete_confirm": "¿Estás seguro de que quieres eliminar esta imagen?",
+    "edit_image_height": "Altura Imagen"
+
   },
   "common": {
     "loading": "Cargando...",
