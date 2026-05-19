@@ -1075,6 +1075,9 @@ function improveBlockWithAI(el?: HTMLElement) {
   }
 
   const { aiImproveModal } = useEditorState()
+  const snapClone = target.cloneNode(true) as HTMLElement
+  snapClone.querySelectorAll('.visor-drag-handle').forEach(el => el.remove())
+  aiImproveModal.snapshot = snapClone.innerHTML
   aiImproveModal.targetEl = target
   aiImproveModal.context = ''
   aiImproveModal.visible = true

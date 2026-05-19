@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { X, Sparkles, MessageSquare, Lightbulb } from 'lucide-vue-next'
 import { useEditorState } from '~/composables/useEditorState'
 import { useToast } from '~/composables/useToast'
@@ -7,14 +7,6 @@ import { useToast } from '~/composables/useToast'
 const { aiImproveModal } = useEditorState()
 const { showToast } = useToast()
 const isImproving = ref(false)
-
-const cleanedHtml = computed(() => {
-  const target = aiImproveModal.targetEl
-  if (!target) return ''
-  const clone = target.cloneNode(true) as HTMLElement
-  clone.querySelectorAll('.visor-drag-handle').forEach(el => el.remove())
-  return clone.innerHTML
-})
 
 function close() {
   if (isImproving.value) return
@@ -26,7 +18,7 @@ async function handleImprove() {
   const target = aiImproveModal.targetEl
   if (!target) return
 
-  const textToImprove = cleanedHtml.value
+  const textToImprove = aiImproveModal.snapshot
   const context = aiImproveModal.context
 
   isImproving.value = true
@@ -110,7 +102,7 @@ async function handleImprove() {
               <!-- Content preview -->
               <div class="original-preview-box">
                 <label><MessageSquare :size="14" /> Contenido original del bloque</label>
-                <div class="original-text-content" v-html="cleanedHtml || 'Sin contenido'"></div>
+                <div class="original-text-content" v-html="aiImproveModal.snapshot || 'Sin contenido'"></div>
               </div>
 
               <!-- Context Input -->

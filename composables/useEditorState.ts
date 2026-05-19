@@ -145,6 +145,7 @@ const aiImproveModal = reactive({
   visible: false,
   context: '',
   targetEl: null as HTMLElement | null,
+  snapshot: '',
 })
 
 const confirmData = reactive({
