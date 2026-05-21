@@ -220,6 +220,8 @@ async function deleteContact(c: any) {
   });
   if (!ok) return;
   await $fetch(`/api/contacts/${c.id}`, { method: "DELETE" });
+  selectedContactIds.value.delete(c.id);
+  selectedContactIds.value = new Set(selectedContactIds.value);
   fetchContacts();
 }
 
@@ -231,6 +233,8 @@ async function removeFromList(contactId: number, listId: number) {
   setTimeout(() => {
     removingIds.value.delete(contactId);
     removingIds.value = new Set(removingIds.value);
+    selectedContactIds.value.delete(contactId);
+    selectedContactIds.value = new Set(selectedContactIds.value);
     fetchContacts();
     fetchLists();
   }, 320);
