@@ -368,7 +368,7 @@ onUnmounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 280px;
+  max-width: 400px;
 }
 .cp-controls {
   display: flex;
