@@ -492,7 +492,7 @@ onUnmounted(() => {
 .cp-canvas.mobile {
   width: 360px;
   height: 720px;
-  margin: 10px auto;
+  margin: 20px auto;
   position: relative;
   overflow: visible;
 }
@@ -500,7 +500,6 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .cp-canvas.mobile {
     width: 320px;
-    height: 640px;
   }
 }
 
@@ -603,6 +602,8 @@ onUnmounted(() => {
   border: none;
   display: block;
 }
+
+
 
 .cp-empty {
   flex: 1;

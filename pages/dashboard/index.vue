@@ -1320,6 +1320,7 @@ async function duplicateCampaign() {
   }
   .preview-panel {
     position: static;
+    max-height: unset !important;
   }
   .dash-header {
     flex-direction: column;
@@ -1408,21 +1409,17 @@ async function duplicateCampaign() {
     border-radius: 10px;
   }
   .preview-stats {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
-  .ps-item {
-    border-right: none;
-  }
+
   .ps-item:nth-child(odd) {
     border-right: 1px solid var(--border);
-  }
-  .ps-item:nth-child(n + 3) {
-    border-top: 1px solid var(--border);
   }
 
   /* Activity */
   .activity-grid {
     grid-template-columns: 1fr;
+    overflow: auto;
   }
 }
 
