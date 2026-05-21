@@ -2244,8 +2244,8 @@ select.field-input option {
 @media (max-width: 640px) {
   .cpage-header {
     flex-wrap: wrap;
-    align-items: center;
     gap: 12px;
+    align-items: flex-start;
   }
   .hdr-left {
     flex: 1;
