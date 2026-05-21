@@ -2243,39 +2243,41 @@ select.field-input option {
 
 @media (max-width: 640px) {
   .cpage-header {
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: flex-start;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 16px 0;
   }
   .hdr-left {
-    flex: 1;
+    flex: none;
     min-width: 0;
     gap: 10px;
   }
   .hdr-actions {
-    flex: 0 0 auto;
+    flex: none;
     display: flex;
     align-items: center;
     gap: 8px;
-    flex-wrap: nowrap;
+    width: 100%;
   }
   .hdr-warning {
     display: none;
   }
   .btn-send,
   .btn-ghost {
-    flex: none;
-    min-width: auto;
-    min-height: 38px;
+    flex: 1 1 0%;
+    height: 40px;
+    min-height: unset;
     padding: 0 12px;
-    font-size: 12px;
+    font-size: 13px;
+    justify-content: center;
   }
   .hdr-actions span {
-    display: none;
+    display: inline;
   }
   .btn-delete {
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
     flex-shrink: 0;
   }
   .hdr-name {

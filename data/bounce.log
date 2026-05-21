@@ -1,16 +1,34 @@
-[2026-05-18T15:39:15.444Z] [bounce] START host=imap.gmail.com port=993 user=info@viseni.com tls=true
-[2026-05-18T15:39:15.445Z] [bounce] connecting...
-[2026-05-18T15:39:16.145Z] [bounce] INBOX opened
-[2026-05-18T15:39:16.146Z] [bounce] search: from:mailer-daemon
-[2026-05-18T15:39:16.223Z] [bounce] search "from:mailer-daemon": 1 hit(s)
-[2026-05-18T15:39:16.224Z] [bounce] search: from:postmaster
-[2026-05-18T15:39:16.278Z] [bounce] search "from:postmaster": 0 hit(s)
-[2026-05-18T15:39:16.279Z] [bounce] search: subject:Undelivered
-[2026-05-18T15:39:16.357Z] [bounce] search "subject:Undelivered": 0 hit(s)
-[2026-05-18T15:39:16.358Z] [bounce] search: subject:Delivery Status
-[2026-05-18T15:39:16.415Z] [bounce] search "subject:Delivery Status": 1 hit(s)
-[2026-05-18T15:39:16.416Z] [bounce] UIDs total: 1 (s1=1 s2=0 s3=0 s4=1)
-[2026-05-18T15:39:16.497Z] [bounce] UID 16741: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Failure)"
-[2026-05-18T15:39:16.497Z] [bounce] UID 16741: 1 bounce(s)
-[2026-05-18T15:39:16.498Z] [bounce]   → diegoramirez@icloud.com date=2026-04-26T13:44:23.000Z permanent=true
-[2026-05-18T15:39:16.537Z] [bounce] done: checked=1 bounced=0 errors=0
+[2026-05-21T20:16:07.914Z] [bounce] START host=imap.gmail.com port=993 user=info@viseni.com tls=true
+[2026-05-21T20:16:07.915Z] [bounce] connecting...
+[2026-05-21T20:16:08.619Z] [bounce] INBOX opened
+[2026-05-21T20:16:08.621Z] [bounce] search: from:mailer-daemon
+[2026-05-21T20:16:08.699Z] [bounce] search "from:mailer-daemon": 7 hit(s)
+[2026-05-21T20:16:08.700Z] [bounce] search: from:postmaster
+[2026-05-21T20:16:08.755Z] [bounce] search "from:postmaster": 0 hit(s)
+[2026-05-21T20:16:08.756Z] [bounce] search: subject:Undelivered
+[2026-05-21T20:16:08.828Z] [bounce] search "subject:Undelivered": 0 hit(s)
+[2026-05-21T20:16:08.829Z] [bounce] search: subject:Delivery Status
+[2026-05-21T20:16:08.883Z] [bounce] search "subject:Delivery Status": 7 hit(s)
+[2026-05-21T20:16:08.884Z] [bounce] UIDs total: 7 (s1=7 s2=0 s3=0 s4=7)
+[2026-05-21T20:16:08.989Z] [bounce] UID 16741: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Failure)"
+[2026-05-21T20:16:08.990Z] [bounce] UID 16741: 1 bounce(s)
+[2026-05-21T20:16:08.991Z] [bounce]   → diegoramirez@icloud.com date=2026-04-26T13:44:23.000Z permanent=true
+[2026-05-21T20:16:09.019Z] [bounce] UID 16901: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Delay)"
+[2026-05-21T20:16:09.020Z] [parse] skip: hasFinalRecipient=true hasActionFailed=false
+[2026-05-21T20:16:09.020Z] [bounce] UID 16901: 0 bounce(s)
+[2026-05-21T20:16:09.049Z] [bounce] UID 16902: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Delay)"
+[2026-05-21T20:16:09.050Z] [parse] skip: hasFinalRecipient=true hasActionFailed=false
+[2026-05-21T20:16:09.050Z] [bounce] UID 16902: 0 bounce(s)
+[2026-05-21T20:16:09.091Z] [bounce] UID 16910: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Delay)"
+[2026-05-21T20:16:09.092Z] [parse] skip: hasFinalRecipient=true hasActionFailed=false
+[2026-05-21T20:16:09.092Z] [bounce] UID 16910: 0 bounce(s)
+[2026-05-21T20:16:09.113Z] [bounce] UID 16911: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Delay)"
+[2026-05-21T20:16:09.114Z] [parse] skip: hasFinalRecipient=true hasActionFailed=false
+[2026-05-21T20:16:09.115Z] [bounce] UID 16911: 0 bounce(s)
+[2026-05-21T20:16:09.133Z] [bounce] UID 16918: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Failure)"
+[2026-05-21T20:16:09.134Z] [bounce] UID 16918: 1 bounce(s)
+[2026-05-21T20:16:09.135Z] [bounce]   → info@eventologies.es date=2026-05-21T14:16:27.000Z permanent=false
+[2026-05-21T20:16:09.139Z] [bounce] UID 16919: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Failure)"
+[2026-05-21T20:16:09.140Z] [bounce] UID 16919: 1 bounce(s)
+[2026-05-21T20:16:09.141Z] [bounce]   → info@threevents.com date=2026-05-21T18:26:57.000Z permanent=false
+[2026-05-21T20:16:09.187Z] [bounce] done: checked=7 bounced=0 errors=0
