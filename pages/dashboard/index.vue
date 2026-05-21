@@ -1320,7 +1320,7 @@ async function duplicateCampaign() {
   }
   .preview-panel {
     position: static;
-    max-height: unset !important;
+    max-height: 240vw !important;
   }
   .dash-header {
     flex-direction: column;
