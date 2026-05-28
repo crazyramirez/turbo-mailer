@@ -8,7 +8,7 @@ import { getImapConfig, processBounces } from '~/server/utils/bounce-processor'
 import { isPaused, clearSignal } from '~/server/utils/campaign-state'
 import { userFriendlySmtpError } from '~/server/utils/errors'
 
-const COUNTER_FLUSH_EVERY = 50
+const COUNTER_FLUSH_EVERY = 1
 
 export interface SendConfig {
   smtpHost: string

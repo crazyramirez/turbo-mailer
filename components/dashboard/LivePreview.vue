@@ -242,7 +242,7 @@ async function copyHtml() {
               <iframe
                 ref="previewIframe"
                 class="preview-frame"
-                sandbox="allow-same-origin"
+                sandbox="allow-same-origin allow-scripts"
               ></iframe>
             </div>
           </div>

@@ -57,6 +57,7 @@ export default defineNuxtConfig({
         { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" },
         { name: "theme-color", content: "#05060b" },
         { name: "apple-mobile-web-app-capable", content: "yes" },
+        { name: "mobile-web-app-capable", content: "yes" },
         { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
         { name: "format-detection", content: "telephone=no" },
         { name: "description", content: "Premium Email Marketing Dashboard" },

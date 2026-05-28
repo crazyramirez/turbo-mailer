@@ -186,7 +186,7 @@ onUnmounted(() => {
           <iframe
             ref="frame"
             class="cp-frame"
-            sandbox="allow-same-origin"
+            sandbox="allow-same-origin allow-scripts"
           ></iframe>
         </div>
       </div>
@@ -316,7 +316,7 @@ onUnmounted(() => {
             ref="fsFrame"
             class="fs-frame"
             :class="viewMode"
-            sandbox="allow-same-origin"
+            sandbox="allow-same-origin allow-scripts"
           ></iframe>
         </div>
       </div>

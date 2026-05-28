@@ -1,6 +1,6 @@
 import { db } from '~/server/db/index'
-import { campaigns } from '~/server/db/schema'
-import { eq } from 'drizzle-orm'
+import { campaigns, sends } from '~/server/db/schema'
+import { eq, sql } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const campaignId = Number(getRouterParam(event, 'id'))
@@ -9,9 +9,7 @@ export default defineEventHandler(async (event) => {
     .select({
       name: campaigns.name,
       status: campaigns.status,
-      sent: campaigns.sentCount,
       total: campaigns.totalRecipients,
-      fail: campaigns.failCount,
       startedAt: campaigns.startedAt,
     })
     .from(campaigns)
@@ -19,10 +17,21 @@ export default defineEventHandler(async (event) => {
 
   if (!c) throw createError({ statusCode: 404, statusMessage: 'Campaign not found' })
 
-  // Calculate ETA based on current send rate
+  // Count live from sends table for real-time accuracy (not batched campaign counters)
+  const [live] = await db
+    .select({
+      sent: sql<number>`COUNT(*) FILTER (WHERE ${sends.status} IN ('sent', 'opened'))`,
+      fail: sql<number>`COUNT(*) FILTER (WHERE ${sends.status} IN ('failed', 'bounced'))`,
+    })
+    .from(sends)
+    .where(eq(sends.campaignId, campaignId))
+
+  const sent = live?.sent ?? 0
+  const fail = live?.fail ?? 0
+
   let etaMs: number | null = null
   if (c.status === 'sending' && c.startedAt && c.total && c.total > 0) {
-    const processed = (c.sent ?? 0) + (c.fail ?? 0)
+    const processed = sent + fail
     const elapsedMs = Date.now() - new Date(c.startedAt).getTime()
     if (processed > 0 && elapsedMs > 0) {
       const ratePerMs = processed / elapsedMs
@@ -31,5 +40,5 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  return { ...c, etaMs }
+  return { name: c.name, status: c.status, total: c.total ?? 0, sent, fail, etaMs }
 })
