@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, nextTick, onMounted, onUnmounted } from "vue";
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
 import {
   Monitor,
   Smartphone,
@@ -17,8 +17,6 @@ const viewMode = ref<"desktop" | "mobile">("desktop");
 const darkMode = ref(false);
 const isMorphing = ref(false);
 const isFullscreen = ref(false);
-const frame = ref<HTMLIFrameElement | null>(null);
-const fsFrame = ref<HTMLIFrameElement | null>(null);
 const viewport = ref<HTMLElement | null>(null);
 const mobileScale = ref(1);
 
@@ -42,57 +40,29 @@ const darkStyles = `
   .dark-sim a:not([data-toggle="button"]) { color: #8ab4f8 !important; }
 `;
 
-function renderInto(targetFrame: HTMLIFrameElement | null) {
-  const doc =
-    targetFrame?.contentDocument || targetFrame?.contentWindow?.document;
-  if (!doc) return;
-  doc.open();
-  doc.write(`<style>
+const iframeHtml = computed(() => {
+  if (!props.html) return "";
+  const bodyClass = darkMode.value ? "dark-sim" : "";
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <style>
     html,body{background:#fff;overflow-x:hidden;margin:0;word-break:break-word;scrollbar-width:none;}
     html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;}
     img{max-width:100%!important;height:auto!important;}
-    a,button{cursor:default!important;}
+    a,button{cursor:default!important;pointer-events:none!important;}
     ${darkStyles}
-  </style>${props.html}`);
-  doc.close();
-  if (darkMode.value) doc.body?.classList.add("dark-sim");
-  doc.addEventListener(
-    "click",
-    (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-    },
-    true,
-  );
-}
-
-function render() {
-  renderInto(frame.value);
-}
+  </style>
+</head>
+<body class="${bodyClass}">
+  ${props.html}
+</body>
+</html>`;
+});
 
 function onKeydown(e: KeyboardEvent) {
   if (e.key === "Escape" && isFullscreen.value) isFullscreen.value = false;
 }
-
-watch(
-  () => props.html,
-  async () => {
-    await nextTick();
-    render();
-    if (isFullscreen.value) renderInto(fsFrame.value);
-  },
-  { immediate: true },
-);
-
-watch(darkMode, (val) => {
-  [frame.value, isFullscreen.value ? fsFrame.value : null].forEach((f) => {
-    const doc = f?.contentDocument || f?.contentWindow?.document;
-    if (doc?.body)
-      val
-        ? doc.body.classList.add("dark-sim")
-        : doc.body.classList.remove("dark-sim");
-  });
-});
 
 watch(viewMode, () => {
   isMorphing.value = true;
@@ -100,18 +70,15 @@ watch(viewMode, () => {
   nextTick(updateScale);
 });
 
-watch(isFullscreen, async (val) => {
+watch(isFullscreen, (val) => {
   if (val) {
     document.body.style.overflow = "hidden";
-    await nextTick();
-    renderInto(fsFrame.value);
   } else {
     document.body.style.overflow = "";
   }
 });
 
 onMounted(() => {
-  if (props.html) render();
   document.addEventListener("keydown", onKeydown);
   if (import.meta.client && viewport.value) {
     observer = new ResizeObserver(updateScale);
@@ -184,9 +151,9 @@ onUnmounted(() => {
             <div class="phone-bottom"><div class="phone-bar"></div></div>
           </div>
           <iframe
-            ref="frame"
             class="cp-frame"
-            sandbox="allow-same-origin allow-scripts"
+            sandbox=""
+            :srcdoc="iframeHtml"
           ></iframe>
         </div>
       </div>
@@ -313,10 +280,10 @@ onUnmounted(() => {
         <!-- Content -->
         <div class="fs-body" :class="[viewMode, { 'fs-dark': darkMode }]">
           <iframe
-            ref="fsFrame"
             class="fs-frame"
             :class="viewMode"
-            sandbox="allow-same-origin allow-scripts"
+            sandbox=""
+            :srcdoc="iframeHtml"
           ></iframe>
         </div>
       </div>

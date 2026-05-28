@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { nextTick } from "vue";
 import {
   Zap,
@@ -24,8 +24,6 @@ const {
 // Share state with the editor system for consistency
 const { viewMode, darkModePreview, isMorphing } = useEditorState();
 
-const previewIframe = ref<HTMLIFrameElement | null>(null);
-
 // Simulation styles for dark mode (from editor engine)
 const darkModeSimulationStyles = `
   body { transition: filter 0.5s ease, background-color 0.5s ease; }
@@ -40,64 +38,30 @@ const darkModeSimulationStyles = `
   .dark-mode-simulation a:not([data-toggle="button"]) { color: #8ab4f8 !important; }
 `;
 
-function updateIframeContent() {
-  const iframe = previewIframe.value;
-  if (!iframe) return;
-  const doc = iframe.contentDocument || iframe.contentWindow?.document;
-  if (doc) {
-    doc.open();
-    doc.write(
-      `<style>
-        html, body { 
-          overflow-x: hidden !important; 
-          margin: 0; 
-          word-break: break-word; 
-          -ms-overflow-style: none; 
-          scrollbar-width: none; 
-        } 
-        html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
-        img { max-width: 100% !important; height: auto !important; }
-        a, button { cursor: default !important; }
-        ${darkModeSimulationStyles}
-      </style>` + personalizedPreviewHtml.value,
-    );
-    doc.close();
-
-    // Apply dark mode if active
-    if (darkModePreview.value) {
-      doc.body.classList.add("dark-mode-simulation");
-    }
-
-    // Prevent navigation and clicks while allowing scroll
-    doc.addEventListener(
-      "click",
-      (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-      },
-      true,
-    );
-  }
-}
-
-// Update iframe whenever personalized HTML changes
-watch(
-  personalizedPreviewHtml,
-  async () => {
-    await nextTick();
-    updateIframeContent();
-  },
-  { immediate: true },
-);
-
-// Watch for dark mode changes to apply/remove class without reloading iframe
-watch(darkModePreview, (isDark) => {
-  const iframe = previewIframe.value;
-  const doc = iframe?.contentDocument || iframe?.contentWindow?.document;
-  if (doc && doc.body) {
-    if (isDark) doc.body.classList.add("dark-mode-simulation");
-    else doc.body.classList.remove("dark-mode-simulation");
-  }
+const iframeHtml = computed(() => {
+  if (!personalizedPreviewHtml.value) return "";
+  const bodyClass = darkModePreview.value ? "dark-mode-simulation" : "";
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    html, body { 
+      overflow-x: hidden !important; 
+      margin: 0; 
+      word-break: break-word; 
+      -ms-overflow-style: none; 
+      scrollbar-width: none; 
+    } 
+    html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
+    img { max-width: 100% !important; height: auto !important; }
+    a, button { cursor: default !important; pointer-events: none !important; }
+    ${darkModeSimulationStyles}
+  </style>
+</head>
+<body class="${bodyClass}">
+  ${personalizedPreviewHtml.value}
+</body>
+</html>`;
 });
 
 // Watch view mode for morphing effect
@@ -107,18 +71,16 @@ watch(viewMode, () => {
 });
 
 async function copyHtml() {
-  const iframe = previewIframe.value;
-  if (!iframe) return;
-  const doc = iframe.contentDocument || iframe.contentWindow?.document;
-  if (!doc) return;
+  if (!personalizedPreviewHtml.value) return;
 
   try {
-    const clone = doc.documentElement.cloneNode(true) as HTMLElement;
-    const titleEl = clone.querySelector("title");
-    if (titleEl) titleEl.remove();
+    // Extractor of plain text from the HTML on the main document
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = personalizedPreviewHtml.value;
+    const plainText = tempDiv.textContent || tempDiv.innerText || "";
 
-    const blobHtml = new Blob([clone.outerHTML], { type: "text/html" });
-    const blobText = new Blob([doc.body.innerText], { type: "text/plain" });
+    const blobHtml = new Blob([personalizedPreviewHtml.value], { type: "text/html" });
+    const blobText = new Blob([plainText], { type: "text/plain" });
     await navigator.clipboard.write([
       new ClipboardItem({ "text/html": blobHtml, "text/plain": blobText }),
     ]);
@@ -127,23 +89,12 @@ async function copyHtml() {
     showToast("Diseño copiado al portapapeles", "success");
     setTimeout(() => (copied.value = false), 2000);
   } catch {
-    // Fallback: select + execCommand
+    // Fallback: copy raw HTML text if ClipboardItem API fails or is not supported
     try {
-      const win = iframe.contentWindow;
-      if (win) {
-        win.focus();
-        const selection = win.getSelection();
-        const range = doc.createRange();
-        range.selectNodeContents(doc.body);
-        selection?.removeAllRanges();
-        selection?.addRange(range);
-        doc.execCommand("copy");
-        selection?.removeAllRanges();
-
-        copied.value = true;
-        showToast("Diseño copiado al portapapeles", "success");
-        setTimeout(() => (copied.value = false), 2000);
-      }
+      await navigator.clipboard.writeText(personalizedPreviewHtml.value);
+      copied.value = true;
+      showToast("Diseño copiado al portapapeles", "success");
+      setTimeout(() => (copied.value = false), 2000);
     } catch {
       showToast("Error al copiar diseño", "error");
     }
@@ -240,9 +191,9 @@ async function copyHtml() {
               </div>
 
               <iframe
-                ref="previewIframe"
                 class="preview-frame"
-                sandbox="allow-same-origin allow-scripts"
+                sandbox=""
+                :srcdoc="iframeHtml"
               ></iframe>
             </div>
           </div>
