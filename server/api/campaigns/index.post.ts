@@ -4,7 +4,7 @@ import { sanitizeEmailHtml } from '~/server/utils/html-sanitize'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
-  const { name, subject, templateName, listId,
+  const { name, subject, templateName, listId, status, scheduledAt,
     unsubEmailSubject, unsubEmailMessage, resubEmailSubject, resubEmailMessage } = body
   const templateHtml = body.templateHtml ? sanitizeEmailHtml(String(body.templateHtml)) : body.templateHtml
 
@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
     templateName: templateName || null,
     templateHtml: templateHtml || null,
     listId: listId ? Number(listId) : null,
-    status: 'draft',
+    status: status === 'scheduled' ? 'scheduled' : 'draft',
     createdAt: new Date(),
     unsubEmailSubject: unsubEmailSubject?.trim() || null,
     unsubEmailMessage: unsubEmailMessage?.trim() || null,
@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
     failCount: 0,
     startedAt: null,
     finishedAt: null,
-    scheduledAt: null,
+    scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
   }).returning()
 
   return row

@@ -17,6 +17,8 @@ import {
   Loader2,
   AlertCircle,
   RotateCcw,
+  Clock,
+  Calendar,
 } from "lucide-vue-next";
 import CampaignPreview from "~/components/campaigns/CampaignPreview.vue";
 import CampaignLibraryModal from "~/components/campaigns/CampaignLibraryModal.vue";
@@ -51,7 +53,30 @@ const showLibrary = ref(false);
 const dismissOverlay = ref(false);
 const showEmailConfig = ref(false);
 
+const isScheduledMode = ref(false);
+const scheduleInput = ref("");
+const dateInputRef = ref<HTMLInputElement | null>(null);
+const countdownText = ref("");
+let countdownInterval: ReturnType<typeof setInterval> | null = null;
+
 const isDraft = computed(() => campaign.value?.status === "draft");
+const isScheduled = computed(() => campaign.value?.status === "scheduled");
+
+const isScheduleInputValid = computed(() => {
+  if (!scheduleInput.value) return false;
+  return new Date(scheduleInput.value) > new Date();
+});
+
+const minDateTime = computed(() => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+});
+
 const pendingCount = computed(
   () => sendsList.value.filter((s) => s.status === "pending").length,
 );
@@ -67,12 +92,140 @@ const canSend = computed(
 async function fetchCampaign() {
   campaign.value = await $fetch<any>(`/api/campaigns/${id}`);
   subjectInput.value = campaign.value.subject;
+  
+  if (campaign.value.scheduledAt) {
+    const d = new Date(campaign.value.scheduledAt);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const hours = String(d.getHours()).padStart(2, "0");
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    scheduleInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+  } else {
+    scheduleInput.value = "";
+  }
+  
+  if (campaign.value?.status === "scheduled") {
+    startCountdown();
+  } else {
+    stopCountdown();
+  }
 }
 async function fetchSends() {
   sendsList.value = await $fetch<any[]>(`/api/campaigns/${id}/sends`);
 }
 async function fetchLists() {
   lists.value = await $fetch<any[]>("/api/lists");
+}
+
+// ─── Scheduled Actions ───────────────────────────────────────
+function startCountdown() {
+  stopCountdown();
+  countdownInterval = setInterval(() => {
+    if (campaign.value?.status !== "scheduled" || !campaign.value.scheduledAt) {
+      stopCountdown();
+      return;
+    }
+    const target = new Date(campaign.value.scheduledAt).getTime();
+    const now = new Date().getTime();
+    const diff = target - now;
+    if (diff <= 0) {
+      countdownText.value = "Enviando ahora...";
+      stopCountdown();
+      fetchCampaign();
+      return;
+    }
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    const parts = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours > 0 || days > 0) parts.push(`${hours}h`);
+    if (minutes > 0 || hours > 0 || days > 0) parts.push(`${minutes}m`);
+    parts.push(`${seconds}s`);
+    countdownText.value = `Se enviará en ${parts.join(" ")}`;
+  }, 1000);
+}
+
+function stopCountdown() {
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+  }
+}
+
+async function scheduleCampaign() {
+  if (!scheduleInput.value) return;
+  saving.value = true;
+  try {
+    const payload = {
+      ...campaign.value,
+      status: "scheduled",
+      scheduledAt: new Date(scheduleInput.value).toISOString(),
+    };
+    await $fetch(`/api/campaigns/${id}`, {
+      method: "PUT",
+      body: payload,
+    });
+    isScheduledMode.value = false;
+    showToast("Campaña programada correctamente", "success");
+    await fetchCampaign();
+  } catch (err: any) {
+    showToast(`Error al programar: ${err.message}`, "error");
+  } finally {
+    saving.value = false;
+  }
+}
+
+async function unscheduleCampaign() {
+  saving.value = true;
+  try {
+    const payload = {
+      ...campaign.value,
+      status: "draft",
+      scheduledAt: null,
+    };
+    await $fetch(`/api/campaigns/${id}`, {
+      method: "PUT",
+      body: payload,
+    });
+    isScheduledMode.value = false;
+    showToast("Campaña devuelta a borrador", "info");
+    await fetchCampaign();
+  } catch (err: any) {
+    showToast(`Error al desprogramar: ${err.message}`, "error");
+  } finally {
+    saving.value = false;
+  }
+}
+
+async function sendScheduledNow() {
+  const ok = await showDialog({
+    type: "confirm",
+    title: "Enviar ahora",
+    message: "¿Estás seguro de que quieres enviar la campaña programada inmediatamente?",
+  });
+  if (!ok) return;
+  
+  saving.value = true;
+  try {
+    const payload = {
+      ...campaign.value,
+      status: "draft",
+      scheduledAt: null,
+    };
+    await $fetch(`/api/campaigns/${id}`, {
+      method: "PUT",
+      body: payload,
+    });
+    await fetchCampaign();
+    await sendCampaign();
+  } catch (err: any) {
+    showToast(`Error al enviar: ${err.message}`, "error");
+  } finally {
+    saving.value = false;
+  }
 }
 
 // ─── Save (debounced) ────────────────────────────────────────
@@ -459,6 +612,7 @@ onMounted(async () => {
 onUnmounted(() => {
   clearTimeout(saveTimer);
   stopPolling();
+  stopCountdown();
 });
 </script>
 
@@ -561,7 +715,117 @@ onUnmounted(() => {
       <div class="cpage-body">
         <!-- Left panel -->
         <div class="left-panel">
-          <template v-if="isDraft">
+          <template v-if="isDraft || isScheduled">
+            <!-- Planificación de Envío Premium -->
+            <div class="config-card" :class="{ 'card-scheduled': isScheduled }">
+              <div class="cc-label">Programación de envío</div>
+              
+              <!-- Case 1: Campaign is Draft -->
+              <template v-if="isDraft">
+                <div class="sched-toggle-row">
+                  <label class="sched-switch-label">
+                    <input type="checkbox" v-model="isScheduledMode" class="sched-checkbox" />
+                    <span>Programar envío automático</span>
+                  </label>
+                </div>
+                
+                <Transition name="fade-slide">
+                  <div v-if="isScheduledMode" class="sched-picker-container">
+                    <div 
+                      class="premium-date-container" 
+                      :class="{ 'has-error': scheduleInput && !isScheduleInputValid }"
+                      @click="dateInputRef?.showPicker()"
+                    >
+                      <Calendar :size="16" class="picker-icon" />
+                      <input 
+                        ref="dateInputRef"
+                        v-model="scheduleInput" 
+                        type="datetime-local" 
+                        class="premium-date-input" 
+                        :min="minDateTime"
+                      />
+                    </div>
+                    <p v-if="scheduleInput && !isScheduleInputValid" class="field-hint" style="color: #ef4444; display: flex; align-items: center; gap: 4px; margin-top: 6px;">
+                      <AlertCircle :size="12" /> La fecha debe estar en el futuro.
+                    </p>
+                    <button 
+                      class="btn-schedule-action" 
+                      :disabled="!isScheduleInputValid || saving"
+                      @click="scheduleCampaign"
+                    >
+                      <Loader2 v-if="saving" :size="13" class="spin" />
+                      Programar Campaña
+                    </button>
+                  </div>
+                </Transition>
+              </template>
+
+              <!-- Case 2: Campaign is Scheduled -->
+              <template v-else-if="isScheduled">
+                <div class="scheduled-dashboard">
+                  <div class="sched-dash-header">
+                    <div class="sched-dash-icon-wrap">
+                      <Clock :size="20" class="spin-slow" />
+                    </div>
+                    <div class="sched-dash-info">
+                      <span class="sched-dash-time-title">Envío automático programado</span>
+                      <span class="sched-dash-time-val">{{ fmtDate(campaign.scheduledAt) }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Dynamic pulsing countdown banner -->
+                  <div class="countdown-banner">
+                    <span class="countdown-pulse-dot"></span>
+                    <span class="countdown-lbl">{{ countdownText || "Calculando..." }}</span>
+                  </div>
+
+                  <!-- Actions -->
+                  <div class="sched-dash-actions">
+                    <button class="btn-dash-action secondary" @click="isScheduledMode = !isScheduledMode">
+                      {{ isScheduledMode ? "Ocultar" : "Editar" }}
+                    </button>
+                    <button class="btn-dash-action danger" @click="unscheduleCampaign" :disabled="saving">
+                      Desprogramar
+                    </button>
+                    <button class="btn-dash-action primary" @click="sendScheduledNow" :disabled="saving">
+                      Enviar ahora
+                    </button>
+                  </div>
+
+                  <!-- Edit form if inside editing schedule mode -->
+                  <Transition name="fade-slide">
+                    <div v-if="isScheduledMode" class="sched-picker-container" style="margin-top: 14px;">
+                      <div 
+                        class="premium-date-container" 
+                        :class="{ 'has-error': scheduleInput && !isScheduleInputValid }"
+                        @click="dateInputRef?.showPicker()"
+                      >
+                        <Calendar :size="16" class="picker-icon" />
+                        <input 
+                          ref="dateInputRef"
+                          v-model="scheduleInput" 
+                          type="datetime-local" 
+                          class="premium-date-input" 
+                          :min="minDateTime"
+                        />
+                      </div>
+                      <p v-if="scheduleInput && !isScheduleInputValid" class="field-hint" style="color: #ef4444; display: flex; align-items: center; gap: 4px; margin-top: 6px;">
+                        <AlertCircle :size="12" /> La fecha debe estar en el futuro.
+                      </p>
+                      <button 
+                        class="btn-schedule-action" 
+                        :disabled="!isScheduleInputValid || saving"
+                        @click="scheduleCampaign"
+                      >
+                        <Loader2 v-if="saving" :size="13" class="spin" />
+                        Actualizar Programación
+                      </button>
+                    </div>
+                  </Transition>
+                </div>
+              </template>
+            </div>
+
             <!-- Subject -->
             <div class="config-card">
               <div class="cc-label">Asunto del email</div>
@@ -574,9 +838,10 @@ onUnmounted(() => {
                   type="text"
                   class="field-input"
                   placeholder="Escribe el asunto de tu campaña…"
+                  :disabled="isScheduled"
                 />
                 <button
-                  v-if="subjectInput"
+                  v-if="subjectInput && !isScheduled"
                   @click="
                     subjectInput = '';
                     scheduleSave();
@@ -592,10 +857,14 @@ onUnmounted(() => {
                   :key="v"
                   @click="insertVar(v)"
                   class="var-chip"
+                  :disabled="isScheduled"
                 >
                   {{ v.replaceAll("{", "").replaceAll("}", "") }}
                 </button>
               </div>
+              <p v-if="isScheduled" class="field-hint" style="color: #f59e0b; display: flex; align-items: center; gap: 4px; margin-top: 8px;">
+                <AlertCircle :size="12" /> Campaña programada · Desprograma para modificar
+              </p>
             </div>
 
             <!-- List -->
@@ -606,6 +875,7 @@ onUnmounted(() => {
                   class="field-input"
                   :value="campaign.listId ?? ''"
                   @change="changeList"
+                  :disabled="isScheduled"
                 >
                   <option value="">Sin lista asignada</option>
                   <option v-for="l in lists" :key="l.id" :value="l.id">
@@ -617,16 +887,19 @@ onUnmounted(() => {
               <p v-if="!campaign.listId" class="field-hint">
                 <AlertCircle :size="12" /> Necesitas una lista para enviar
               </p>
+              <p v-if="isScheduled" class="field-hint" style="color: #f59e0b; display: flex; align-items: center; gap: 4px; margin-top: 8px;">
+                <AlertCircle :size="12" /> Campaña programada · Desprograma para modificar
+              </p>
             </div>
 
             <!-- Template -->
             <div class="config-card">
               <div class="cc-label">Plantilla HTML</div>
               <div class="tpl-btns">
-                <button class="tpl-btn" @click="showLibrary = true">
+                <button class="tpl-btn" @click="showLibrary = true" :disabled="isScheduled">
                   <BookOpen :size="15" /> Biblioteca
                 </button>
-                <button class="tpl-btn" @click="triggerFile">
+                <button class="tpl-btn" @click="triggerFile" :disabled="isScheduled">
                   <Upload :size="15" /> Importar HTML
                 </button>
               </div>
@@ -645,7 +918,11 @@ onUnmounted(() => {
                 <AlertCircle :size="13" />
                 <span>Sin plantilla · elige una de la biblioteca</span>
               </div>
+              <p v-if="isScheduled" class="field-hint" style="color: #f59e0b; display: flex; align-items: center; gap: 4px; margin-top: 8px;">
+                <AlertCircle :size="12" /> Campaña programada · Desprograma para modificar
+              </p>
             </div>
+
             <!-- Subscription emails (optional) -->
             <div class="config-card">
               <button
@@ -669,6 +946,7 @@ onUnmounted(() => {
                       type="text"
                       class="field-input"
                       placeholder="Predeterminado: Has sido dado de baja"
+                      :disabled="isScheduled"
                     />
                     <div class="cc-sublabel" style="margin-top: 8px">
                       Mensaje — email de baja
@@ -679,6 +957,7 @@ onUnmounted(() => {
                       class="field-input field-textarea"
                       placeholder="Predeterminado: hemos procesado tu solicitud…"
                       rows="3"
+                      :disabled="isScheduled"
                     />
                   </div>
                   <div class="email-cfg-group">
@@ -689,6 +968,7 @@ onUnmounted(() => {
                       type="text"
                       class="field-input"
                       placeholder="Predeterminado: Suscripción restaurada"
+                      :disabled="isScheduled"
                     />
                     <div class="cc-sublabel" style="margin-top: 8px">
                       Mensaje — email de alta
@@ -699,10 +979,14 @@ onUnmounted(() => {
                       class="field-input field-textarea"
                       placeholder="Predeterminado: Hemos restaurado tu suscripción…"
                       rows="3"
+                      :disabled="isScheduled"
                     />
                   </div>
                 </div>
               </template>
+              <p v-if="isScheduled" class="field-hint" style="color: #f59e0b; display: flex; align-items: center; gap: 4px; margin-top: 8px;">
+                <AlertCircle :size="12" /> Campaña programada · Desprograma para modificar
+              </p>
             </div>
           </template>
 
@@ -2355,5 +2639,327 @@ select.field-input option {
   .stat-num {
     font-size: 20px;
   }
+}
+
+/* ── Planificación de Envío Premium ───────────────────────── */
+.card-scheduled {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(15, 17, 35, 0.5)) !important;
+  border-color: rgba(245, 158, 11, 0.25) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 1px rgba(245, 158, 11, 0.1);
+}
+
+.sched-toggle-row {
+  display: flex;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.sched-switch-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-dim);
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+}
+
+.sched-checkbox {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 2px solid var(--border);
+  background: rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sched-checkbox:checked {
+  background: var(--accent);
+  border-color: var(--accent-light);
+}
+
+.sched-checkbox:checked::before {
+  content: "✓";
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+  position: absolute;
+}
+
+.sched-picker-container {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: slideDownFade 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.premium-date-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  max-width: 320px;
+  position: relative;
+  overflow: hidden;
+}
+
+.premium-date-container:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.1);
+}
+
+.premium-date-container:focus-within {
+  background: rgba(0, 0, 0, 0.45);
+  border-color: var(--accent);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+}
+
+.premium-date-container.has-error {
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.15) !important;
+}
+
+.picker-icon {
+  color: var(--accent-light);
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.premium-date-container:hover .picker-icon {
+  transform: scale(1.1);
+}
+
+.premium-date-input {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
+  width: 100%;
+  cursor: pointer;
+  font-family: inherit;
+  color-scheme: dark;
+}
+
+.premium-date-input::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  cursor: pointer;
+}
+
+.btn-schedule-action {
+  width: 100%;
+  padding: 11px 16px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.btn-schedule-action:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.25);
+}
+
+.btn-schedule-action:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Scheduled Dashboard */
+.scheduled-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sched-dash-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sched-dash-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(245, 158, 11, 0.1);
+}
+
+.spin-slow {
+  animation: spinSlow 8s linear infinite;
+}
+
+@keyframes spinSlow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.sched-dash-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sched-dash-time-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sched-dash-time-val {
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+}
+
+/* Pulsing Countdown */
+.countdown-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+
+.countdown-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f59e0b;
+  box-shadow: 0 0 10px #f59e0b;
+  animation: pulseDot 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.3);
+  }
+}
+
+.countdown-lbl {
+  font-size: 12px;
+  font-weight: 700;
+  color: #f59e0b;
+  letter-spacing: 0.02em;
+}
+
+/* Dashboard Actions */
+.sched-dash-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-dash-action {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.btn-dash-action.secondary {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+
+.btn-dash-action.secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.btn-dash-action.danger {
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.btn-dash-action.danger:hover {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.btn-dash-action.primary {
+  background: var(--accent);
+  border: none;
+  color: #fff;
+}
+
+.btn-dash-action.primary:hover {
+  filter: brightness(1.12);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+/* Slide Down Fade Transition */
+@keyframes slideDownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 </style>

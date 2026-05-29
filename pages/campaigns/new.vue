@@ -7,6 +7,7 @@ import {
   LayoutGrid,
   Upload,
   Send,
+  Calendar,
 } from "lucide-vue-next";
 import CampaignLibraryModal from "~/components/campaigns/CampaignLibraryModal.vue";
 import CampaignPreview from "~/components/campaigns/CampaignPreview.vue";
@@ -23,6 +24,26 @@ const fileInput = ref<HTMLInputElement | null>(null);
 const htmlDragging = ref(false);
 const isSaving = ref(false);
 const subjectRef = ref<HTMLInputElement | null>(null);
+
+const isScheduled = ref(false);
+const scheduleDate = ref("");
+const dateInputRef = ref<HTMLInputElement | null>(null);
+
+const isScheduleDateValid = computed(() => {
+  if (!isScheduled.value) return true;
+  if (!scheduleDate.value) return false;
+  return new Date(scheduleDate.value) > new Date();
+});
+
+const minDateTime = computed(() => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+});
 
 async function fetchLists() {
   lists.value = await $fetch<any[]>("/api/lists");
@@ -95,9 +116,14 @@ function canNext() {
 async function save() {
   isSaving.value = true;
   try {
+    const payload = {
+      ...form.value,
+      status: isScheduled.value ? "scheduled" : "draft",
+      scheduledAt: isScheduled.value && scheduleDate.value ? new Date(scheduleDate.value).toISOString() : null,
+    };
     const campaign = await $fetch<any>("/api/campaigns", {
       method: "POST",
-      body: form.value,
+      body: payload,
     });
     // Artificial delay to show the premium overlay
     await new Promise((r) => setTimeout(r, 2000));
@@ -342,6 +368,69 @@ onMounted(() => {
                 <span class="rev-val">{{ form.templateName || "—" }}</span>
               </div>
             </div>
+
+            <!-- Planificación de Envío Premium -->
+            <div class="scheduling-section">
+              <div class="section-divider"></div>
+              <h3 class="scheduling-title">Planificación de Envío</h3>
+              
+              <div class="scheduling-options">
+                <div 
+                  class="sched-option" 
+                  :class="{ active: !isScheduled }" 
+                  @click="isScheduled = false"
+                >
+                  <div class="sched-radio">
+                    <div class="radio-inner" v-if="!isScheduled"></div>
+                  </div>
+                  <div class="sched-text">
+                    <span class="sched-opt-title">Guardar como Borrador</span>
+                    <span class="sched-opt-desc">La campaña se guardará para enviarla de forma manual más adelante</span>
+                  </div>
+                </div>
+
+                <div 
+                  class="sched-option" 
+                  :class="{ active: isScheduled }" 
+                  @click="isScheduled = true"
+                >
+                  <div class="sched-radio">
+                    <div class="radio-inner" v-if="isScheduled"></div>
+                  </div>
+                  <div class="sched-text">
+                    <span class="sched-opt-title">Programar Envío Automático</span>
+                    <span class="sched-opt-desc">El sistema enviará los correos en la fecha y hora seleccionada</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sleek Date Picker UI -->
+              <Transition name="fade-slide">
+                <div v-if="isScheduled" class="date-picker-wrap">
+                  <label class="date-picker-label">Selecciona Fecha y Hora</label>
+                  <div 
+                    class="premium-date-container" 
+                    :class="{ 'has-error': scheduleDate && !isScheduleDateValid }"
+                    @click="dateInputRef?.showPicker()"
+                  >
+                    <Calendar :size="16" class="picker-icon" />
+                    <input 
+                      ref="dateInputRef"
+                      v-model="scheduleDate" 
+                      type="datetime-local" 
+                      class="premium-date-input" 
+                      :min="minDateTime"
+                    />
+                  </div>
+                  <span v-if="scheduleDate && !isScheduleDateValid" class="date-error-msg">
+                    La fecha debe ser en el futuro.
+                  </span>
+                  <span v-else-if="scheduleDate && isScheduleDateValid" class="date-success-msg">
+                    Programado correctamente.
+                  </span>
+                </div>
+              </Transition>
+            </div>
           </div>
 
           <!-- Navigation -->
@@ -358,8 +447,8 @@ onMounted(() => {
             >
               {{ t("campaigns_page.next") }}<ChevronRight :size="15" />
             </button>
-            <button v-else class="btn-primary" @click="save">
-              <Check :size="15" />{{ t("campaigns_page.save_draft") }}
+            <button v-else class="btn-primary" :disabled="isScheduled && !isScheduleDateValid" @click="save">
+              <Check :size="15" />{{ isScheduled ? "Programar campaña" : t("campaigns_page.save_draft") }}
             </button>
           </div>
         </div>
@@ -1165,5 +1254,182 @@ label {
   .btn-secondary {
     width: 100%;
   }
+}
+
+/* Planificación de Envío Premium */
+.scheduling-section {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.section-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 8px 0;
+}
+.scheduling-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+.scheduling-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 640px) {
+  .scheduling-options {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+.sched-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.01);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sched-option:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.03);
+}
+.sched-option.active {
+  border-color: var(--accent);
+  background: rgba(99, 102, 241, 0.08);
+}
+.sched-radio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+  flex-shrink: 0;
+  transition: border-color 0.2s;
+}
+.sched-option.active .sched-radio {
+  border-color: var(--accent-light);
+}
+.radio-inner {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-light);
+}
+.sched-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sched-opt-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+.sched-opt-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Date picker */
+.date-picker-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: slideDownFade 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes slideDownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.date-picker-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.premium-date-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  max-width: 320px;
+  position: relative;
+  overflow: hidden;
+}
+.premium-date-container:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.1);
+}
+.premium-date-container:focus-within {
+  background: rgba(0, 0, 0, 0.45);
+  border-color: var(--accent);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+}
+.premium-date-container.has-error {
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.15) !important;
+}
+.picker-icon {
+  color: var(--accent-light);
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+.premium-date-container:hover .picker-icon {
+  transform: scale(1.1);
+}
+.premium-date-input {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
+  width: 100%;
+  cursor: pointer;
+  font-family: inherit;
+  color-scheme: dark;
+}
+.premium-date-input::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  cursor: pointer;
+}
+.date-error-msg {
+  font-size: 11px;
+  color: #ef4444;
+  font-weight: 600;
+  margin-top: 2px;
+}
+.date-success-msg {
+  font-size: 11px;
+  color: #10b981;
+  font-weight: 600;
+  margin-top: 2px;
 }
 </style>
