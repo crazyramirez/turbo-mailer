@@ -68,15 +68,33 @@ export default defineEventHandler(async (event) => {
     }
 
     const files = await fs.readdir(templatesDir);
-    return files
-      .filter(f => f.endsWith('.html'))
-      .map(f => {
-        const name = f.replace('.html', '');
-        return {
-          name,
-          path: `/api/templates?name=${encodeURIComponent(name)}&preview=1`
-        };
-      });
+    const templatesWithStats = await Promise.all(
+      files
+        .filter(f => f.endsWith('.html'))
+        .map(async (f) => {
+          const name = f.replace('.html', '');
+          const filePath = path.join(templatesDir, f);
+          try {
+            const stats = await fs.stat(filePath);
+            return {
+              name,
+              path: `/api/templates?name=${encodeURIComponent(name)}&preview=1`,
+              createdAt: stats.birthtimeMs || stats.mtimeMs || 0
+            };
+          } catch {
+            return {
+              name,
+              path: `/api/templates?name=${encodeURIComponent(name)}&preview=1`,
+              createdAt: 0
+            };
+          }
+        })
+    );
+
+    // Sort by createdAt descending (newest first)
+    templatesWithStats.sort((a, b) => b.createdAt - a.createdAt);
+
+    return templatesWithStats.map(({ name, path }) => ({ name, path }));
   }
 
   if (method === 'POST') {
