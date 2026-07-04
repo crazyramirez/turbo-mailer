@@ -8,6 +8,10 @@
 
 TurboMailer is a **self-hosted, single-account application designed for VPS deployment**, built with **Nuxt 3**. It provides full data sovereignty, complete contact and list management, a visual HTML template editor with drag & drop blocks, a campaign system with open and click tracking, real-time analytics, AI copywriting integration, and a multilingual interface (ES/EN). All with SQLite persistence and mass sending via any SMTP service (Gmail, Outlook, Amazon SES, etc.).
 
+> If this tool saves you time, consider supporting its development — every contribution funds more experiments and free tools for the community. ☕
+>
+> <a href="https://www.buymeacoffee.com/drlerian" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="50"></a>
+
 ## 🛡️ Your Data, Only Yours
 
 As a self-hosted application on your own server:
