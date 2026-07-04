@@ -1,5 +1,6 @@
 ﻿import nodemailer from 'nodemailer'
 import { applyVars } from '~/server/utils/template'
+import { htmlToText } from '~/server/utils/html-to-text'
 
 export default defineEventHandler(async (event) => {
   const config = useServerConfig()
@@ -52,6 +53,7 @@ export default defineEventHandler(async (event) => {
         to: email,
         subject: personalizedSubject,
         html: personalizedHtml,
+        text: htmlToText(personalizedHtml),
       })
       results.push({ email, status: 'sent' })
     } catch (err: any) {

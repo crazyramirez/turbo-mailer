@@ -560,6 +560,100 @@
     "edit_image_height": "Altura Imagen"
 
   },
+  "palette": {
+    "title": "Paleta de comandos",
+    "placeholder": "Buscar página o acción… (Ctrl+K)",
+    "no_results": "Sin resultados",
+    "navigate": "navegar",
+    "open": "abrir",
+    "go_dashboard": "Ir al Dashboard",
+    "go_campaigns": "Ir a Campañas",
+    "new_campaign": "Nueva campaña",
+    "go_contacts": "Ir a Contactos",
+    "go_editor": "Ir al Editor",
+    "go_analytics": "Ir a Analíticas",
+    "go_audit": "Ir al Registro de auditoría"
+  },
+  "timeline": {
+    "title": "Actividad",
+    "sent": "enviados",
+    "opens": "aperturas",
+    "clicks": "clics",
+    "bounced": "rebotados",
+    "empty": "Sin actividad todavía — este contacto no ha recibido campañas",
+    "type_sent": "Email enviado",
+    "type_open": "Abierto",
+    "type_click": "Clic",
+    "type_failed": "Fallo de envío",
+    "type_bounced": "Rebotado"
+  },
+  "segment": {
+    "title": "Segmentación por etiquetas",
+    "hint_all": "Sin filtro — se enviará a todos los contactos activos de la lista",
+    "hint_active": "Solo contactos con al menos una de las {count} etiqueta(s) seleccionadas"
+  },
+  "precheck": {
+    "title": "Comprobación previa al envío",
+    "subtitle": "Revisión automática de entregabilidad y cumplimiento",
+    "running": "Analizando campaña...",
+    "blocked": "Corrige los errores antes de enviar",
+    "warnings": "{count} advertencia(s) — puedes enviar igualmente",
+    "all_good": "Todo correcto",
+    "send_now": "Enviar a {count} contactos",
+    "items": {
+      "subject": {
+        "pass": "Asunto definido",
+        "fail": "Falta el asunto del email"
+      },
+      "subject_length": {
+        "warn": "Asunto largo ({length} caracteres) — se cortará en muchos clientes (recomendado ≤ 78)"
+      },
+      "subject_spam": {
+        "pass": "Asunto sin señales de spam",
+        "warn": "El asunto contiene palabras o formato que pueden activar filtros de spam"
+      },
+      "template": {
+        "pass": "Plantilla HTML presente",
+        "fail": "La campaña no tiene contenido HTML"
+      },
+      "unsubscribe": {
+        "pass": "Enlace de baja incluido",
+        "fail": "Falta {'{{'}UNSUBSCRIBE_URL{'}}'} en la plantilla — obligatorio por normativa anti-spam"
+      },
+      "size": {
+        "pass": "Tamaño del email correcto ({kb} KB)",
+        "warn": "Email de {kb} KB — Gmail recorta mensajes de más de 102 KB"
+      },
+      "links": {
+        "pass": "Enlaces correctos ({count})",
+        "warn": "Hay enlaces http:// sin cifrar — usa https:// si es posible",
+        "fail": "La plantilla contiene enlaces a localhost o IPs privadas"
+      },
+      "links_live": {
+        "pass": "Enlaces verificados en vivo: todos responden ({count})",
+        "warn": "{count} enlace(s) rotos o inaccesibles: {broken}"
+      },
+      "recipients": {
+        "pass": "{active} destinatarios activos ({unsubscribed} dados de baja, {bounced} rebotados y {inactive} inactivos excluidos)",
+        "fail": "No hay destinatarios activos en la lista"
+      },
+      "segment": {
+        "pass": "Segmento activo: etiquetas [{tags}] — {filteredOut} contactos activos quedan fuera del filtro"
+      },
+      "dkim": {
+        "pass": "Firma DKIM configurada",
+        "warn": "DKIM no configurado — mejora mucho la entregabilidad"
+      },
+      "tracking_url": {
+        "pass": "URL de tracking válida (https)",
+        "warn": "La URL de tracking no es https pública — los enlaces del email pueden no funcionar"
+      },
+      "bounce_processing": {
+        "pass": "Procesado de rebotes (IMAP) activo",
+        "warn": "IMAP no configurado — los rebotes no se detectarán automáticamente"
+      }
+    }
+  },
   "common": {
     "loading": "Cargando...",
     "error": "Error",

@@ -27,6 +27,7 @@ import {
   UserMinus,
 } from "lucide-vue-next";
 import * as XLSX from "xlsx";
+import ContactTimeline from "~/components/ContactTimeline.vue";
 
 definePageMeta({ layout: "app" });
 
@@ -885,6 +886,13 @@ watch([search, statusFilter], () => {
                   </label>
                 </div>
               </div>
+
+              <!-- Activity timeline (existing contacts only) -->
+              <ContactTimeline
+                v-if="editContact"
+                :key="editContact.id"
+                :contact-id="editContact.id"
+              />
             </div>
           </div>
           <div class="modal-footer">

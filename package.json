@@ -10,6 +10,8 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "hash-password": "node scripts/hash-password.js"
@@ -35,6 +37,7 @@
     "@types/archiver": "^7.0.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/nodemailer": "^6.4.17",
-    "@vite-pwa/nuxt": "^1.1.1"
+    "@vite-pwa/nuxt": "^1.1.1",
+    "vitest": "^4.1.9"
   }
 }

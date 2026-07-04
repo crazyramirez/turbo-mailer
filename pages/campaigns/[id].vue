@@ -22,6 +22,7 @@ import {
 } from "lucide-vue-next";
 import CampaignPreview from "~/components/campaigns/CampaignPreview.vue";
 import CampaignLibraryModal from "~/components/campaigns/CampaignLibraryModal.vue";
+import PreSendChecklist from "~/components/campaigns/PreSendChecklist.vue";
 
 definePageMeta({ layout: "app" });
 
@@ -274,6 +275,41 @@ async function commitName() {
 async function changeList(e: Event) {
   const val = Number((e.target as HTMLSelectElement).value) || null;
   campaign.value.listId = val;
+  campaign.value.tagFilter = [];
+  await $fetch(`/api/campaigns/${id}`, { method: "PUT", body: campaign.value });
+  await fetchListTags();
+}
+
+// ─── Segmentation (tag filter) ───────────────────────────────
+const availableTags = ref<{ tag: string; count: number }[]>([]);
+
+async function fetchListTags() {
+  if (!campaign.value?.listId) {
+    availableTags.value = [];
+    return;
+  }
+  try {
+    availableTags.value = await $fetch<{ tag: string; count: number }[]>(
+      `/api/lists/${campaign.value.listId}/tags`,
+    );
+  } catch {
+    availableTags.value = [];
+  }
+}
+
+function tagSelected(tag: string): boolean {
+  const f = campaign.value?.tagFilter;
+  return Array.isArray(f) && f.some((t: string) => t.toLowerCase() === tag.toLowerCase());
+}
+
+async function toggleTag(tag: string) {
+  const current: string[] = Array.isArray(campaign.value.tagFilter)
+    ? [...campaign.value.tagFilter]
+    : [];
+  const idx = current.findIndex((t) => t.toLowerCase() === tag.toLowerCase());
+  if (idx >= 0) current.splice(idx, 1);
+  else current.push(tag);
+  campaign.value.tagFilter = current;
   await $fetch(`/api/campaigns/${id}`, { method: "PUT", body: campaign.value });
 }
 
@@ -350,13 +386,15 @@ function insertVar(v: string) {
 }
 
 // ─── Send / Delete ───────────────────────────────────────────
-async function sendCampaign() {
-  const ok = await showDialog({
-    type: "confirm",
-    title: "Enviar campaña",
-    message: `¿Enviar "${campaign.value.name}" a todos los contactos activos de la lista?`,
-  });
-  if (!ok) return;
+const showPrecheck = ref(false);
+
+// Opens the pre-send checklist; the actual send happens on confirm
+function sendCampaign() {
+  showPrecheck.value = true;
+}
+
+async function doSendCampaign() {
+  showPrecheck.value = false;
   sending.value = true;
   try {
     await $fetch<any>(`/api/campaigns/${id}/send`, {
@@ -597,6 +635,7 @@ onMounted(async () => {
   }
 
   loading.value = false;
+  fetchListTags();
 
   if (campaign.value?.status === "sending") {
     dismissOverlay.value = true;
@@ -889,6 +928,30 @@ onUnmounted(() => {
               </p>
               <p v-if="isScheduled" class="field-hint" style="color: #f59e0b; display: flex; align-items: center; gap: 4px; margin-top: 8px;">
                 <AlertCircle :size="12" /> Campaña programada · Desprograma para modificar
+              </p>
+            </div>
+
+            <!-- Segmentation -->
+            <div v-if="campaign.listId && availableTags.length" class="config-card">
+              <div class="cc-label">{{ t("segment.title") }}</div>
+              <div class="seg-tags">
+                <button
+                  v-for="tg in availableTags"
+                  :key="tg.tag"
+                  class="seg-tag"
+                  :class="{ active: tagSelected(tg.tag) }"
+                  :disabled="isScheduled"
+                  @click="toggleTag(tg.tag)"
+                >
+                  {{ tg.tag }} <span class="seg-count">{{ tg.count }}</span>
+                </button>
+              </div>
+              <p class="field-hint">
+                {{
+                  campaign.tagFilter?.length
+                    ? t("segment.hint_active", { count: campaign.tagFilter.length })
+                    : t("segment.hint_all")
+                }}
               </p>
             </div>
 
@@ -1191,6 +1254,16 @@ onUnmounted(() => {
           v-if="showLibrary"
           @select="applyTemplate"
           @close="showLibrary = false"
+        />
+      </Transition>
+
+      <!-- Pre-send checklist -->
+      <Transition name="fade-scale">
+        <PreSendChecklist
+          v-if="showPrecheck"
+          :campaign-id="id"
+          @confirm="doSendCampaign"
+          @close="showPrecheck = false"
         />
       </Transition>
 
@@ -2961,5 +3034,41 @@ select.field-input option {
 .fade-slide-leave-to {
   opacity: 0;
   transform: translateY(-8px);
+}
+
+/* Segmentation tag chips */
+.seg-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.seg-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-hi);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-dim, #c9cbe0);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.seg-tag:hover:not(:disabled) {
+  border-color: var(--accent, #6366f1);
+}
+.seg-tag.active {
+  background: var(--accent, #6366f1);
+  border-color: var(--accent, #6366f1);
+  color: #fff;
+}
+.seg-tag:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.seg-count {
+  opacity: 0.65;
+  font-size: 0.68rem;
 }
 </style>

@@ -7,6 +7,7 @@ import { signUnsubscribeToken, signClickToken, signOpenToken } from '~/server/ut
 import { getImapConfig, processBounces } from '~/server/utils/bounce-processor'
 import { isPaused, clearSignal } from '~/server/utils/campaign-state'
 import { userFriendlySmtpError } from '~/server/utils/errors'
+import { htmlToText } from '~/server/utils/html-to-text'
 
 const COUNTER_FLUSH_EVERY = 1
 
@@ -168,11 +169,20 @@ export async function processCampaign(campaignId: number, cfg: SendConfig): Prom
         .replace(/\{\{\s*UNSUBSCRIBE_URL\s*\}\}/gi, unsubUrl)
         .replace(/\{\{\s*PREFERENCES_URL\s*\}\}/gi, prefUrl)
 
+      // Plain-text alternative from the untracked HTML (no pixel/click-wrapped URLs),
+      // with the real unsubscribe link appended — better spam score than HTML-only.
+      const plainText = htmlToText(
+        compiledHtml.applyTo(vars)
+          .replace(/\{\{\s*UNSUBSCRIBE_URL\s*\}\}/gi, unsubUrl)
+          .replace(/\{\{\s*PREFERENCES_URL\s*\}\}/gi, prefUrl)
+      ) + `\n\n--\nUnsubscribe: ${unsubUrl}`
+
       await sendWithRetry(transporter, {
         from: `"${cfg.smtpFromName}" <${senderEmail}>`,
         to: send.email,
         subject: personalizedSubject,
         html: personalizedHtml,
+        text: plainText,
         headers: {
           'List-Unsubscribe': `<${unsubUrl}>`,
           'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',

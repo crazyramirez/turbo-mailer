@@ -4,6 +4,7 @@ import DashboardHeader from '~/components/dashboard/DashboardHeader.vue'
 import AppToast from '~/components/AppToast.vue'
 import AppDialog from '~/components/AppDialog.vue'
 import SendingBadge from '~/components/SendingBadge.vue'
+import CommandPalette from '~/components/CommandPalette.vue'
 </script>
 
 <template>
@@ -13,6 +14,7 @@ import SendingBadge from '~/components/SendingBadge.vue'
     <AppToast />
     <AppDialog />
     <SendingBadge />
+    <CommandPalette />
     <slot />
   </div>
 </template>

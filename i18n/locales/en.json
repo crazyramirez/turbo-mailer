@@ -559,6 +559,100 @@
     "resource_manager_delete_confirm": "Are you sure you want to delete this image?",
     "edit_image_height": "Image height"
   },
+  "palette": {
+    "title": "Command palette",
+    "placeholder": "Search page or action… (Ctrl+K)",
+    "no_results": "No results",
+    "navigate": "navigate",
+    "open": "open",
+    "go_dashboard": "Go to Dashboard",
+    "go_campaigns": "Go to Campaigns",
+    "new_campaign": "New campaign",
+    "go_contacts": "Go to Contacts",
+    "go_editor": "Go to Editor",
+    "go_analytics": "Go to Analytics",
+    "go_audit": "Go to Audit log"
+  },
+  "timeline": {
+    "title": "Activity",
+    "sent": "sent",
+    "opens": "opens",
+    "clicks": "clicks",
+    "bounced": "bounced",
+    "empty": "No activity yet — this contact hasn't received any campaigns",
+    "type_sent": "Email sent",
+    "type_open": "Opened",
+    "type_click": "Click",
+    "type_failed": "Send failed",
+    "type_bounced": "Bounced"
+  },
+  "segment": {
+    "title": "Tag segmentation",
+    "hint_all": "No filter — all active list contacts will receive the campaign",
+    "hint_active": "Only contacts with at least one of the {count} selected tag(s)"
+  },
+  "precheck": {
+    "title": "Pre-send check",
+    "subtitle": "Automatic deliverability and compliance review",
+    "running": "Analyzing campaign...",
+    "blocked": "Fix the errors before sending",
+    "warnings": "{count} warning(s) — you can still send",
+    "all_good": "All checks passed",
+    "send_now": "Send to {count} contacts",
+    "items": {
+      "subject": {
+        "pass": "Subject line set",
+        "fail": "Email subject is missing"
+      },
+      "subject_length": {
+        "warn": "Long subject ({length} characters) — many clients truncate above 78"
+      },
+      "subject_spam": {
+        "pass": "Subject shows no spam signals",
+        "warn": "Subject contains words or formatting that may trigger spam filters"
+      },
+      "template": {
+        "pass": "HTML template present",
+        "fail": "Campaign has no HTML content"
+      },
+      "unsubscribe": {
+        "pass": "Unsubscribe link included",
+        "fail": "Missing {'{{'}UNSUBSCRIBE_URL{'}}'} in template — required by anti-spam law"
+      },
+      "size": {
+        "pass": "Email size OK ({kb} KB)",
+        "warn": "Email is {kb} KB — Gmail clips messages over 102 KB"
+      },
+      "links": {
+        "pass": "Links look good ({count})",
+        "warn": "Unencrypted http:// links found — use https:// where possible",
+        "fail": "Template contains links to localhost or private IPs"
+      },
+      "links_live": {
+        "pass": "Live link check: all links respond ({count})",
+        "warn": "{count} broken or unreachable link(s): {broken}"
+      },
+      "recipients": {
+        "pass": "{active} active recipients ({unsubscribed} unsubscribed, {bounced} bounced and {inactive} inactive excluded)",
+        "fail": "No active recipients in the list"
+      },
+      "segment": {
+        "pass": "Segment active: tags [{tags}] — {filteredOut} active contacts excluded by the filter"
+      },
+      "dkim": {
+        "pass": "DKIM signing configured",
+        "warn": "DKIM not configured — greatly improves deliverability"
+      },
+      "tracking_url": {
+        "pass": "Tracking URL valid (https)",
+        "warn": "Tracking URL is not public https — email links may not work"
+      },
+      "bounce_processing": {
+        "pass": "Bounce processing (IMAP) active",
+        "warn": "IMAP not configured — bounces won't be detected automatically"
+      }
+    }
+  },
   "common": {
     "loading": "Loading...",
     "error": "Error",

@@ -31,6 +31,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Missing target URL' })
   }
 
+  // Defense-in-depth: even with a valid signature, only redirect to http(s)
+  if (!/^https?:\/\//i.test(targetUrl)) {
+    throw createError({ statusCode: 400, statusMessage: 'Invalid target URL scheme' })
+  }
+
   const config = useServerConfig()
   if (!verifyClickToken(sendId, targetUrl, sig, config.unsubscribeSecret as string)) {
     throw createError({ statusCode: 403, statusMessage: 'Invalid link signature' })

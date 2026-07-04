@@ -1,31 +1,12 @@
-[2026-05-29T10:49:46.838Z] [bounce] START host=imap.gmail.com port=993 user=info@viseni.com tls=true
-[2026-05-29T10:49:46.839Z] [bounce] connecting...
-[2026-05-29T10:49:47.767Z] [bounce] INBOX opened
-[2026-05-29T10:49:47.768Z] [bounce] search: from:mailer-daemon
-[2026-05-29T10:49:47.865Z] [bounce] search "from:mailer-daemon": 6 hit(s)
-[2026-05-29T10:49:47.865Z] [bounce] search: from:postmaster
-[2026-05-29T10:49:47.942Z] [bounce] search "from:postmaster": 0 hit(s)
-[2026-05-29T10:49:47.942Z] [bounce] search: subject:Undelivered
-[2026-05-29T10:49:48.078Z] [bounce] search "subject:Undelivered": 0 hit(s)
-[2026-05-29T10:49:48.078Z] [bounce] search: subject:Delivery Status
-[2026-05-29T10:49:48.291Z] [bounce] search "subject:Delivery Status": 6 hit(s)
-[2026-05-29T10:49:48.291Z] [bounce] UIDs total: 6 (s1=6 s2=0 s3=0 s4=6)
-[2026-05-29T10:49:48.560Z] [bounce] UID 16927: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Delay)"
-[2026-05-29T10:49:48.561Z] [parse] skip: hasFinalRecipient=true hasActionFailed=false
-[2026-05-29T10:49:48.561Z] [bounce] UID 16927: 0 bounce(s)
-[2026-05-29T10:49:48.591Z] [bounce] UID 16928: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Delay)"
-[2026-05-29T10:49:48.592Z] [parse] skip: hasFinalRecipient=true hasActionFailed=false
-[2026-05-29T10:49:48.592Z] [bounce] UID 16928: 0 bounce(s)
-[2026-05-29T10:49:48.684Z] [bounce] UID 16931: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Delay)"
-[2026-05-29T10:49:48.684Z] [parse] skip: hasFinalRecipient=true hasActionFailed=false
-[2026-05-29T10:49:48.684Z] [bounce] UID 16931: 0 bounce(s)
-[2026-05-29T10:49:48.687Z] [bounce] UID 16932: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Delay)"
-[2026-05-29T10:49:48.688Z] [parse] skip: hasFinalRecipient=true hasActionFailed=false
-[2026-05-29T10:49:48.688Z] [bounce] UID 16932: 0 bounce(s)
-[2026-05-29T10:49:48.695Z] [bounce] UID 16940: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Failure)"
-[2026-05-29T10:49:48.696Z] [bounce] UID 16940: 1 bounce(s)
-[2026-05-29T10:49:48.696Z] [bounce]   → info@threevents.com date=2026-05-25T14:20:47.000Z permanent=false
-[2026-05-29T10:49:48.702Z] [bounce] UID 16941: from=mailer-daemon@googlemail.com subj="Delivery Status Notification (Failure)"
-[2026-05-29T10:49:48.703Z] [bounce] UID 16941: 1 bounce(s)
-[2026-05-29T10:49:48.704Z] [bounce]   → info@eventologies.es date=2026-05-25T14:22:04.000Z permanent=false
-[2026-05-29T10:49:48.902Z] [bounce] done: checked=6 bounced=0 errors=0
+[2026-07-04T22:57:59.407Z] [bounce] START host=imap.gmail.com port=993 user=info@viseni.com tls=true
+[2026-07-04T22:57:59.410Z] [bounce] connecting...
+[2026-07-04T22:58:00.964Z] [bounce] INBOX opened
+[2026-07-04T22:58:00.965Z] [bounce] search: from:mailer-daemon
+[2026-07-04T22:58:01.200Z] [bounce] search "from:mailer-daemon": 0 hit(s)
+[2026-07-04T22:58:01.201Z] [bounce] search: from:postmaster
+[2026-07-04T22:58:01.358Z] [bounce] search "from:postmaster": 0 hit(s)
+[2026-07-04T22:58:01.359Z] [bounce] search: subject:Undelivered
+[2026-07-04T22:58:01.542Z] [bounce] search "subject:Undelivered": 0 hit(s)
+[2026-07-04T22:58:01.543Z] [bounce] search: subject:Delivery Status
+[2026-07-04T22:58:01.754Z] [bounce] search "subject:Delivery Status": 0 hit(s)
+[2026-07-04T22:58:01.755Z] [bounce] UIDs total: 0 (s1=0 s2=0 s3=0 s4=0)

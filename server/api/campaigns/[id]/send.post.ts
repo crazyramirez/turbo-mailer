@@ -5,6 +5,7 @@ import { processCampaign, SendConfig } from '~/server/utils/campaign-processor'
 import { clearSignal } from '~/server/utils/campaign-state'
 import { logAudit } from '~/server/utils/audit'
 import { getClientIp } from '~/server/utils/auth'
+import { contactMatchesTags } from '~/server/utils/segment'
 
 export default defineEventHandler(async (event) => {
   const campaignId = Number(getRouterParam(event, 'id'))
@@ -41,6 +42,9 @@ export default defineEventHandler(async (event) => {
         .where(eq(contacts.status, 'active'))
         .then(r => r.map(x => x.contacts))
     }
+
+    // Segmentation: apply campaign tag filter
+    recipientRows = recipientRows.filter(c => contactMatchesTags(c.tags, campaign.tagFilter))
 
     if (recipientRows.length === 0) {
       throw createError({ statusCode: 400, statusMessage: 'No active recipients in list' })

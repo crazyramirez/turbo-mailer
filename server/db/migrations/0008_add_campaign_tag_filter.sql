@@ -1,0 +1,1 @@
+ALTER TABLE `campaigns` ADD `tag_filter` text DEFAULT '[]';

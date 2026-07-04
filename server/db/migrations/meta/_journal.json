@@ -57,6 +57,13 @@
       "when": 1778274896733,
       "tag": "0007_dashing_princess_powerful",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1783205018862,
+      "tag": "0008_add_campaign_tag_filter",
+      "breakpoints": true
     }
   ]
 }

@@ -2,6 +2,7 @@ import { db } from '~/server/db/index'
 import { campaigns } from '~/server/db/schema'
 import { eq } from 'drizzle-orm'
 import { sanitizeEmailHtml } from '~/server/utils/html-sanitize'
+import { sanitizeTagFilter } from '~/server/utils/segment'
 
 export default defineEventHandler(async (event) => {
   const id = Number(getRouterParam(event, 'id'))
@@ -21,6 +22,7 @@ export default defineEventHandler(async (event) => {
     templateName: templateName || null,
     templateHtml: templateHtml || null,
     listId: listId ? Number(listId) : null,
+    tagFilter: sanitizeTagFilter(body.tagFilter),
     status: safeStatus,
     scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
     unsubEmailSubject: unsubEmailSubject?.trim() || null,
