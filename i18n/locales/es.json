@@ -558,7 +558,6 @@
     "image_name_exists": "Ese nombre ya existe",
     "resource_manager_delete_confirm": "¿Estás seguro de que quieres eliminar esta imagen?",
     "edit_image_height": "Altura Imagen"
-
   },
   "palette": {
     "title": "Paleta de comandos",

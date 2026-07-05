@@ -395,6 +395,56 @@ async function doExport() {
   window.location.href = `/api/contacts/export${params}`;
 }
 
+// ── Hover activity popover ────────────────────────────────────────────────
+const hoverContact = ref<any>(null);
+const hoverPos = ref({ top: 0, left: 0, above: false });
+let hoverOpenTimer: any = null;
+let hoverCloseTimer: any = null;
+
+function onRowEnter(e: MouseEvent, c: any) {
+  clearTimeout(hoverCloseTimer);
+  clearTimeout(hoverOpenTimer);
+  const row = e.currentTarget as HTMLElement;
+  hoverOpenTimer = setTimeout(() => {
+    const rect = row.getBoundingClientRect();
+    const popW = 400;
+    const popH = 320;
+    let left = rect.left + 60;
+    left = Math.min(left, window.innerWidth - popW - 16);
+    left = Math.max(left, 8);
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const above = spaceBelow < popH + 12;
+    hoverPos.value = {
+      top: above ? rect.top - 8 : rect.bottom + 6,
+      left,
+      above,
+    };
+    hoverContact.value = c;
+  }, 400);
+}
+
+function onRowLeave() {
+  clearTimeout(hoverOpenTimer);
+  hoverCloseTimer = setTimeout(() => {
+    hoverContact.value = null;
+  }, 200);
+}
+
+function onPopoverEnter() {
+  clearTimeout(hoverCloseTimer);
+}
+
+function closeHoverPopover() {
+  clearTimeout(hoverOpenTimer);
+  clearTimeout(hoverCloseTimer);
+  hoverContact.value = null;
+}
+
+onBeforeUnmount(() => {
+  clearTimeout(hoverOpenTimer);
+  clearTimeout(hoverCloseTimer);
+});
+
 // ── Status badge ──────────────────────────────────────────────────────────
 function statusLabel(s: string) {
   if (s === "active") return t("contacts_page.status_active");
@@ -579,7 +629,7 @@ watch([search, statusFilter], () => {
       </Transition>
 
       <!-- Table -->
-      <div class="table-wrap">
+      <div class="table-wrap" @scroll.passive="closeHoverPopover">
         <div v-if="loading" class="skeleton-table">
           <div class="sk-thead">
             <div v-for="i in 5" :key="i" class="sk-th" :style="{ width: ['180px','130px','130px','100px','80px'][i-1] }" />
@@ -626,8 +676,10 @@ watch([search, statusFilter], () => {
                 removing: removingIds.has(c.id),
               }"
               draggable="true"
-              @dragstart="onDragStart($event, c.id)"
+              @dragstart="onDragStart($event, c.id); closeHoverPopover()"
               @dragend="onDragEnd"
+              @mouseenter="onRowEnter($event, c)"
+              @mouseleave="onRowLeave"
             >
               <td class="col-check" @click.stop>
                 <input
@@ -720,6 +772,26 @@ watch([search, statusFilter], () => {
         </button>
       </div>
     </main>
+
+    <!-- Hover activity popover -->
+    <Teleport to="body">
+      <Transition name="pop-fade">
+        <div
+          v-if="hoverContact"
+          class="activity-popover"
+          :class="{ above: hoverPos.above }"
+          :style="{ top: hoverPos.top + 'px', left: hoverPos.left + 'px' }"
+          @mouseenter="onPopoverEnter"
+          @mouseleave="onRowLeave"
+        >
+          <div class="activity-popover-head">
+            <span class="activity-popover-email">{{ hoverContact.email }}</span>
+            <span v-if="hoverContact.name" class="activity-popover-name">{{ hoverContact.name }}</span>
+          </div>
+          <ContactTimeline :key="hoverContact.id" :contact-id="hoverContact.id" />
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- Contact Modal -->
     <Transition name="fade-scale">
@@ -1618,6 +1690,68 @@ watch([search, statusFilter], () => {
   background: rgba(239, 68, 68, 0.12);
   color: #ef4444;
   border-color: rgba(239, 68, 68, 0.2);
+}
+
+/* Hover activity popover */
+.activity-popover {
+  position: fixed;
+  z-index: 900;
+  width: 400px;
+  max-width: calc(100vw - 16px);
+  max-height: 320px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  background: #0d0f1c;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+}
+.activity-popover.above {
+  transform: translateY(-100%);
+}
+.activity-popover-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+  min-width: 0;
+}
+.activity-popover-email {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--accent-light);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.activity-popover-name {
+  font-size: 11px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 45%;
+}
+.activity-popover :deep(.ct-wrap) {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+.pop-fade-enter-active,
+.pop-fade-leave-active {
+  transition: opacity 0.15s ease, translate 0.15s ease;
+}
+.pop-fade-enter-from,
+.pop-fade-leave-to {
+  opacity: 0;
+  translate: 0 -4px;
+}
+@media (max-width: 768px) {
+  .activity-popover {
+    display: none;
+  }
 }
 
 /* Modal */
