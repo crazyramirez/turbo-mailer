@@ -514,6 +514,10 @@ watch([() => route.path, () => locale.value], () => {
   border: 1px solid transparent;
   position: relative;
   z-index: 1;
+  user-select: none;
+  -webkit-user-drag: none;
+  -moz-user-drag: none;
+  -ms-user-drag: none;
 }
 
 .nav-link:hover {
