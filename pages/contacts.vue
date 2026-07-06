@@ -397,37 +397,58 @@ async function doExport() {
 
 // ── Hover activity popover ────────────────────────────────────────────────
 const hoverContact = ref<any>(null);
+const hoverPinned = ref(false);
 const hoverPos = ref({ top: 0, left: 0, above: false });
 let hoverOpenTimer: any = null;
 let hoverCloseTimer: any = null;
 
+function positionPopover(row: HTMLElement) {
+  const rect = row.getBoundingClientRect();
+  const popW = Math.min(400, window.innerWidth - 16);
+  const popH = 320;
+  let left = rect.left + 60;
+  left = Math.min(left, window.innerWidth - popW - 8);
+  left = Math.max(left, 8);
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const above = spaceBelow < popH + 12;
+  hoverPos.value = {
+    top: above ? rect.top - 8 : rect.bottom + 6,
+    left,
+    above,
+  };
+}
+
 function onRowEnter(e: MouseEvent, c: any) {
+  if (hoverPinned.value) return;
   clearTimeout(hoverCloseTimer);
   clearTimeout(hoverOpenTimer);
   const row = e.currentTarget as HTMLElement;
   hoverOpenTimer = setTimeout(() => {
-    const rect = row.getBoundingClientRect();
-    const popW = 400;
-    const popH = 320;
-    let left = rect.left + 60;
-    left = Math.min(left, window.innerWidth - popW - 16);
-    left = Math.max(left, 8);
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const above = spaceBelow < popH + 12;
-    hoverPos.value = {
-      top: above ? rect.top - 8 : rect.bottom + 6,
-      left,
-      above,
-    };
+    positionPopover(row);
     hoverContact.value = c;
   }, 400);
 }
 
 function onRowLeave() {
   clearTimeout(hoverOpenTimer);
+  if (hoverPinned.value) return;
   hoverCloseTimer = setTimeout(() => {
     hoverContact.value = null;
   }, 200);
+}
+
+function onRowClick(e: MouseEvent, c: any) {
+  const target = e.target as HTMLElement;
+  if (target.closest("button, input, a")) return;
+  clearTimeout(hoverOpenTimer);
+  clearTimeout(hoverCloseTimer);
+  if (hoverPinned.value && hoverContact.value?.id === c.id) {
+    closeHoverPopover();
+    return;
+  }
+  positionPopover(e.currentTarget as HTMLElement);
+  hoverContact.value = c;
+  hoverPinned.value = true;
 }
 
 function onPopoverEnter() {
@@ -438,11 +459,21 @@ function closeHoverPopover() {
   clearTimeout(hoverOpenTimer);
   clearTimeout(hoverCloseTimer);
   hoverContact.value = null;
+  hoverPinned.value = false;
+}
+
+function onDocClick(e: MouseEvent) {
+  if (!hoverPinned.value) return;
+  const t = e.target as HTMLElement;
+  if (t.closest(".activity-popover")) return;
+  if (t.closest(".data-table tbody tr")) return;
+  closeHoverPopover();
 }
 
 onBeforeUnmount(() => {
   clearTimeout(hoverOpenTimer);
   clearTimeout(hoverCloseTimer);
+  document.removeEventListener("click", onDocClick);
 });
 
 // ── Status badge ──────────────────────────────────────────────────────────
@@ -461,6 +492,7 @@ function statusClass(s: string) {
 onMounted(() => {
   fetchLists();
   fetchContacts();
+  document.addEventListener("click", onDocClick);
 });
 
 watch([search, statusFilter], () => {
@@ -680,6 +712,7 @@ watch([search, statusFilter], () => {
               @dragend="onDragEnd"
               @mouseenter="onRowEnter($event, c)"
               @mouseleave="onRowLeave"
+              @click="onRowClick($event, c)"
             >
               <td class="col-check" @click.stop>
                 <input
@@ -787,6 +820,9 @@ watch([search, statusFilter], () => {
           <div class="activity-popover-head">
             <span class="activity-popover-email">{{ hoverContact.email }}</span>
             <span v-if="hoverContact.name" class="activity-popover-name">{{ hoverContact.name }}</span>
+            <button v-if="hoverPinned" class="activity-popover-close" @click="closeHoverPopover">
+              <X :size="14" />
+            </button>
           </div>
           <ContactTimeline :key="hoverContact.id" :contact-id="hoverContact.id" />
         </div>
@@ -1748,10 +1784,24 @@ watch([search, statusFilter], () => {
   opacity: 0;
   translate: 0 -4px;
 }
-@media (max-width: 768px) {
-  .activity-popover {
-    display: none;
-  }
+.activity-popover-close {
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.activity-popover-close:hover {
+  background: rgb(0 0 0 / 8%);
+  color: var(--text);
 }
 
 /* Modal */
