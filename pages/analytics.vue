@@ -639,7 +639,7 @@ onUnmounted(() => {
                         '#10b981',
                         '#f59e0b',
                         '#f472b6',
-                      ][i],
+                      ][Number(i)],
                     }"
                   />
                   <span class="leg-icon">{{ deviceIcon(d.label) }}</span>

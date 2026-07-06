@@ -3,6 +3,7 @@ import { useEditorState } from '~/composables/useEditorState'
 import { useToast } from '~/composables/useToast'
 import { iframeEditorStyles } from '~/utils/iframeStyles'
 import { editorStyleBases, type EditorStyleBase } from '~/utils/editorStyles'
+import { sanitizeLinkUrl } from '~/utils/editorLinks'
 
 declare global {
   interface Window {
@@ -37,13 +38,34 @@ let autosaveTimeout: ReturnType<typeof setTimeout> | null = null
 
 // ─── Undo / Redo ─────────────────────────────────────────────────────────────
 
-function pushToHistory() {
+function getHistorySnapshot(): string | null {
   const doc = iframeRef.value?.contentDocument
-  if (!doc) return
-  const toolbar = doc.getElementById('floating-toolbar')
-  if (toolbar) toolbar.remove()
-  const snapshot = doc.body.innerHTML
-  if (toolbar) doc.body.appendChild(toolbar)
+  if (!doc) return null
+  // Snapshot over a clone: never include editor artifacts (toolbars, handles,
+  // placeholders, transient classes) so restores start from clean markup.
+  const clone = doc.body.cloneNode(true) as HTMLElement
+  clone
+    .querySelectorAll('#floating-toolbar, #drop-placeholder, [data-ignore-save], .visor-drag-handle')
+    .forEach((n) => n.remove())
+  clone
+    .querySelectorAll('.selected, .dragging, .drag-over-top, .drag-over-bottom, .module-drop-reveal, .ai-improving, .block-updated-glow')
+    .forEach((n) =>
+      n.classList.remove(
+        'selected',
+        'dragging',
+        'drag-over-top',
+        'drag-over-bottom',
+        'module-drop-reveal',
+        'ai-improving',
+        'block-updated-glow',
+      ),
+    )
+  return clone.innerHTML
+}
+
+function pushToHistory() {
+  const snapshot = getHistorySnapshot()
+  if (snapshot === null) return
   if (undoStack.value.length > 0 && undoStack.value[undoStack.value.length - 1] === snapshot) return
   undoStack.value.push(snapshot)
   if (undoStack.value.length > maxHistory) undoStack.value.shift()
@@ -53,11 +75,25 @@ function pushToHistory() {
 function restoreSnapshot(html: string) {
   const doc = iframeRef.value?.contentDocument
   if (!doc || !html) return
+  // The selected element becomes a detached node after innerHTML replacement:
+  // clear selection so the edit panel never operates on ghost DOM.
+  if (selectedElement.value) selectedElement.value.classList.remove('selected')
+  selectedElement.value = null
+  selectedSubElement.value = null
+  activePanel.value = 'layers'
   doc.body.innerHTML = html
   doc.querySelectorAll('.editable-block').forEach((el: any) => initBlock(el, doc))
   injectFloatingToolbar(doc)
   setupIframeEvents(doc)
   refreshLayers()
+  // Persist the restored state (without touching the history stacks)
+  updateHtml()
+  if (autosaveTimeout) clearTimeout(autosaveTimeout)
+  autosaveTimeout = setTimeout(() => {
+    import('~/composables/useTemplateManager').then(({ useTemplateManager }) => {
+      useTemplateManager().saveTemplate(true)
+    })
+  }, 800)
 }
 
 function undo() {
@@ -145,8 +181,6 @@ function initBlock(el: HTMLElement, doc: Document) {
       })
     })
     el.prepend(handle)
-
-    el.prepend(handle)
   }
 
   el.setAttribute('draggable', 'true')
@@ -220,10 +254,13 @@ function injectFloatingToolbar(doc: Document) {
       if (cmd === 'createLink') {
         if (window.parent && (window.parent as any).openLinkPrompt) {
           ;(window.parent as any).openLinkPrompt((url: string) => {
-            if (url) {
+            const safeUrl = sanitizeLinkUrl(url)
+            if (safeUrl) {
               doc.body.focus()
-              doc.execCommand('createLink', false, url)
+              doc.execCommand('createLink', false, safeUrl)
               triggerAutosave(true)
+            } else if (url) {
+              showToast((useNuxtApp().$i18n as any).t('editor.invalid_link'), 'error')
             }
           })
         }
@@ -845,11 +882,24 @@ function setupIframeEvents(doc: Document) {
 
 // ─── Iframe Content Injection ────────────────────────────────────────────────
 
+// doc.write() can re-fire the iframe's load event in some browsers; swallow
+// that self-inflicted event so content never gets injected twice.
+let suppressNextLoad = false
+
+function handleIframeLoad() {
+  if (suppressNextLoad) {
+    suppressNextLoad = false
+    return
+  }
+  injectIframeContent()
+}
+
 function injectIframeContent() {
   if (!iframeRef.value) return
   const doc = iframeRef.value.contentDocument || iframeRef.value.contentWindow?.document
   if (!doc) return
 
+  suppressNextLoad = true
   doc.open()
   doc.write(htmlContent.value)
   doc.close()
@@ -1162,10 +1212,14 @@ function triggerAutosave(immediate = false) {
   if (immediate) {
     if (historyDebounce) clearTimeout(historyDebounce)
     pushToHistory()
+    // History is pushed instantly, but the disk write is still debounced
+    // briefly: rapid actions (toggles, drags) shouldn't hammer the server.
     if (autosaveTimeout) clearTimeout(autosaveTimeout)
-    import('~/composables/useTemplateManager').then(({ useTemplateManager }) => {
-      useTemplateManager().saveTemplate(true)
-    })
+    autosaveTimeout = setTimeout(() => {
+      import('~/composables/useTemplateManager').then(({ useTemplateManager }) => {
+        useTemplateManager().saveTemplate(true)
+      })
+    }, 400)
   } else {
     if (historyDebounce) clearTimeout(historyDebounce)
     historyDebounce = setTimeout(() => pushToHistory(), 800)
@@ -1222,6 +1276,7 @@ export function useIframeEngine() {
     injectFloatingToolbar,
     setupIframeEvents,
     injectIframeContent,
+    handleIframeLoad,
     applyStyleBase,
     getSurgicalCleanHtml,
     updateHtml,

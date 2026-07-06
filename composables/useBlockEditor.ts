@@ -2,6 +2,7 @@ import { useEditorState } from '~/composables/useEditorState'
 import { usePrompt } from '~/composables/usePrompt'
 import { useToast } from '~/composables/useToast'
 import { rgbToHex } from '~/utils/editorColors'
+import { sanitizeLinkUrl } from '~/utils/editorLinks'
 
 const {
   iframeRef,
@@ -516,7 +517,12 @@ function updateButtonLink() {
   const current = btn.getAttribute('href') || '#'
   const i18n = (useNuxtApp().$i18n as any)
   openPrompt(i18n.t('editor.btn_link_title'), i18n.t('editor.btn_link_label'), current, 'text', (url) => {
-    btn.setAttribute('href', url)
+    const safeUrl = sanitizeLinkUrl(url)
+    if (!safeUrl) {
+      if (url) showToast(i18n.t('editor.invalid_link'), 'error')
+      return
+    }
+    btn.setAttribute('href', safeUrl)
     import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
   })
 }
@@ -644,7 +650,7 @@ function addSocialIcon(targetBlock?: HTMLElement) {
       clone.click()
     }, 50)
   } else {
-    const newIcon = document.createElement('a')
+    const newIcon = container.ownerDocument.createElement('a')
     newIcon.href = '#'
     newIcon.className = 'social-item'
     newIcon.style.display = 'inline-block'
@@ -692,6 +698,7 @@ function removeSocialIcon(targetItem?: HTMLElement) {
 }
 
 function rebalancePricing(block: HTMLElement) {
+  const doc = block.ownerDocument
   const table = block.querySelector('table')
   if (!table) return
   
@@ -723,24 +730,24 @@ function rebalancePricing(block: HTMLElement) {
   chunks.forEach((chunk, rowIndex) => {
     // Add vertical spacer between rows
     if (rowIndex > 0) {
-      const spacerRow = document.createElement('tr')
+      const spacerRow = doc.createElement('tr')
       spacerRow.innerHTML = `<td style="height:32px; line-height:32px; font-size:1px;">&nbsp;</td>`
       table.appendChild(spacerRow)
     }
 
-    const row = document.createElement('tr')
-    const mainTd = document.createElement('td')
+    const row = doc.createElement('tr')
+    const mainTd = doc.createElement('td')
     mainTd.setAttribute('align', 'center')
-    
+
     // Create an inner table for this row to keep it centered
-    const innerTable = document.createElement('table')
+    const innerTable = doc.createElement('table')
     innerTable.setAttribute('cellpadding', '0')
     innerTable.setAttribute('cellspacing', '0')
     innerTable.setAttribute('border', '0')
     innerTable.setAttribute('align', 'center')
     innerTable.style.margin = '0 auto'
     
-    const innerRow = document.createElement('tr')
+    const innerRow = doc.createElement('tr')
     
     // Calculate width based on chunk size
     // 3 items -> 31% each, 2 items -> 48% each, 1 item -> 100%
@@ -760,7 +767,7 @@ function rebalancePricing(block: HTMLElement) {
     innerTable.setAttribute('width', tableWidth)
     
     chunk.forEach((item, itemIndex) => {
-      const td = document.createElement('td')
+      const td = doc.createElement('td')
       td.setAttribute('width', itemWidth)
       td.setAttribute('valign', 'top')
       
@@ -774,7 +781,7 @@ function rebalancePricing(block: HTMLElement) {
       
       // Add horizontal spacer
       if (itemIndex < chunk.length - 1) {
-        const spacer = document.createElement('td')
+        const spacer = doc.createElement('td')
         spacer.setAttribute('width', spacerWidth)
         spacer.innerHTML = '&nbsp;'
         innerRow.appendChild(spacer)
@@ -788,10 +795,11 @@ function rebalancePricing(block: HTMLElement) {
   })
 }
 
-function addPricingItem() {
-  if (!selectedElement.value || selectedElement.value.dataset.type !== 'Precios') return
-  
-  const pricingItems = selectedElement.value.querySelectorAll('.pricing-item')
+function addPricingItem(targetBlock?: HTMLElement) {
+  const block = targetBlock || selectedElement.value
+  if (!block || block.dataset.type !== 'Precios') return
+
+  const pricingItems = block.querySelectorAll('.pricing-item')
   if (pricingItems.length >= 6) {
     const i18n = (useNuxtApp().$i18n as any)
     showToast(i18n.t('editor.pricing_max_error') || 'Maximum 6 plans allowed', 'info')
@@ -814,10 +822,10 @@ function addPricingItem() {
 
   // Add to a temporary place or just use the items list
   currentItem.parentNode?.insertBefore(clone, currentItem.nextSibling)
-  
-  rebalancePricing(selectedElement.value)
-  
-  const allNewItems = selectedElement.value.querySelectorAll('.pricing-item')
+
+  rebalancePricing(block)
+
+  const allNewItems = block.querySelectorAll('.pricing-item')
   const newClone = allNewItems[currentIndex + 1] as HTMLElement
   if (newClone) {
     setTimeout(() => {
@@ -831,8 +839,8 @@ function addPricingItem() {
   })
 }
 
-function removePricingItem() {
-  const item = (selectedSubElement.value?.closest('.pricing-item') || selectedSubElement.value?.closest('td[width="31%"]')) as HTMLElement
+function removePricingItem(targetItem?: HTMLElement) {
+  const item = (targetItem?.closest('.pricing-item') || selectedSubElement.value?.closest('.pricing-item') || selectedSubElement.value?.closest('td[width="31%"]')) as HTMLElement
   if (!item) return
   
   const block = item.closest('.editable-block') as HTMLElement
@@ -878,7 +886,7 @@ function togglePricingFeatured(targetItem?: HTMLElement) {
     item.style.border = `1px solid ${borderColor}`;
   } else {
     // Add it
-    const newBadge = document.createElement('div');
+    const newBadge = item.ownerDocument.createElement('div');
     newBadge.style.cssText = `position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:${accentColor}; color:#ffffff; padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700; text-transform:uppercase; white-space:nowrap;`;
     newBadge.innerText = 'Más Popular';
     item.style.position = 'relative';
@@ -892,6 +900,7 @@ function togglePricingFeatured(targetItem?: HTMLElement) {
 }
 
 function rebalanceMetrics(block: HTMLElement) {
+  const doc = block.ownerDocument
   const table = block.querySelector('.metrics-table') as HTMLTableElement
   if (!table) return
   
@@ -919,17 +928,17 @@ function rebalanceMetrics(block: HTMLElement) {
   }
 
   rows.forEach((rowItems, rowIndex) => {
-    const tr = document.createElement('tr')
-    
+    const tr = doc.createElement('tr')
+
     // CASE: 5 Items - Pyramid centering logic
     if (count === 5 && rowItems.length === 2) {
       // Row 2 of 5: [Spacer(1)] [Item(2)] [Item(2)] [Spacer(1)] = 6 cols
-      const spacerLeft = document.createElement('td')
+      const spacerLeft = doc.createElement('td')
       spacerLeft.setAttribute('colspan', '1')
       tr.appendChild(spacerLeft)
-      
+
       rowItems.forEach((item) => {
-        const td = document.createElement('td')
+        const td = doc.createElement('td')
         td.setAttribute('colspan', '2')
         td.setAttribute('valign', 'top')
         td.setAttribute('align', 'center')
@@ -938,14 +947,14 @@ function rebalanceMetrics(block: HTMLElement) {
         tr.appendChild(td)
       })
       
-      const spacerRight = document.createElement('td')
+      const spacerRight = doc.createElement('td')
       spacerRight.setAttribute('colspan', '1')
       tr.appendChild(spacerRight)
     } 
     // CASE: 4 Items - 2x2 grid
     else if (count === 4) {
       rowItems.forEach((item) => {
-        const td = document.createElement('td')
+        const td = doc.createElement('td')
         td.setAttribute('colspan', '3') // 3+3 = 6
         td.setAttribute('valign', 'top')
         td.setAttribute('align', 'center')
@@ -957,7 +966,7 @@ function rebalanceMetrics(block: HTMLElement) {
     // CASE: 2 Items - 1x2 grid
     else if (count === 2) {
       rowItems.forEach((item) => {
-        const td = document.createElement('td')
+        const td = doc.createElement('td')
         td.setAttribute('colspan', '3') // 3+3 = 6
         td.setAttribute('valign', 'top')
         td.setAttribute('align', 'center')
@@ -970,7 +979,7 @@ function rebalanceMetrics(block: HTMLElement) {
     else {
       const colspan = (6 / rowItems.length).toString()
       rowItems.forEach((item) => {
-        const td = document.createElement('td')
+        const td = doc.createElement('td')
         td.setAttribute('colspan', colspan)
         td.setAttribute('valign', 'top')
         td.setAttribute('align', 'center')
@@ -983,10 +992,11 @@ function rebalanceMetrics(block: HTMLElement) {
   })
 }
 
-function addMetricItem() {
-  if (!selectedElement.value || selectedElement.value.dataset.type !== 'Métricas') return
-  
-  const items = selectedElement.value.querySelectorAll('.metric-item')
+function addMetricItem(targetBlock?: HTMLElement) {
+  const block = targetBlock || selectedElement.value
+  if (!block || block.dataset.type !== 'Métricas') return
+
+  const items = block.querySelectorAll('.metric-item')
   if (items.length >= 6) {
     showToast((useNuxtApp().$i18n as any).t('editor.metrics_max_error') || 'Maximum 6 metrics allowed', 'info')
     return
@@ -999,10 +1009,10 @@ function addMetricItem() {
   
   const clone = current.cloneNode(true) as HTMLElement
   current.closest('td')?.after(clone) // Temporary place
-  
-  rebalanceMetrics(selectedElement.value)
-  
-  const allNewItems = selectedElement.value.querySelectorAll('.metric-item')
+
+  rebalanceMetrics(block)
+
+  const allNewItems = block.querySelectorAll('.metric-item')
   const newClone = allNewItems[currentIndex + 1] as HTMLElement
   if (newClone) {
     setTimeout(() => {
@@ -1016,8 +1026,8 @@ function addMetricItem() {
   })
 }
 
-function removeMetricItem() {
-  const item = selectedSubElement.value?.closest('.metric-item') as HTMLElement
+function removeMetricItem(targetItem?: HTMLElement) {
+  const item = (targetItem?.closest('.metric-item') || selectedSubElement.value?.closest('.metric-item')) as HTMLElement
   if (!item) return
   
   const block = item.closest('.editable-block') as HTMLElement
@@ -1076,7 +1086,8 @@ function improveBlockWithAI(el?: HTMLElement) {
 
   const { aiImproveModal } = useEditorState()
   const snapClone = target.cloneNode(true) as HTMLElement
-  snapClone.querySelectorAll('.visor-drag-handle').forEach(el => el.remove())
+  snapClone.querySelectorAll('[data-ignore-save], .visor-drag-handle').forEach(el => el.remove())
+  snapClone.querySelectorAll('[contenteditable]').forEach(el => (el as HTMLElement).removeAttribute('contenteditable'))
   aiImproveModal.snapshot = snapClone.innerHTML
   aiImproveModal.targetEl = target
   aiImproveModal.context = ''
@@ -1095,10 +1106,19 @@ async function improveAllWithAI() {
   isImprovingAI.value = true
 
   try {
+    const { useIframeEngine } = await import('~/composables/useIframeEngine')
+    const engine = useIframeEngine()
+
     for (const block of Array.from(blocks)) {
       const el = block as HTMLElement
-      const html = el.innerHTML
       if (el.innerText.trim().length < 10 || el.dataset.type === 'Imagen' || el.dataset.type === 'Botón') continue
+
+      // Send clean markup: drag handles / contenteditable are editor
+      // artifacts and must never reach the AI nor come back from it.
+      const snapClone = el.cloneNode(true) as HTMLElement
+      snapClone.querySelectorAll('[data-ignore-save], .visor-drag-handle').forEach((n) => n.remove())
+      snapClone.querySelectorAll('[contenteditable]').forEach((n) => (n as HTMLElement).removeAttribute('contenteditable'))
+      const html = snapClone.innerHTML
 
       // Efecto visual individual
       el.classList.add('ai-improving')
@@ -1111,6 +1131,8 @@ async function improveAllWithAI() {
 
         if (improvedText) {
           el.innerHTML = improvedText
+          // Re-init: restores the drag handle and inline editability
+          engine.initBlock(el, doc)
         }
       } catch (e) {
         console.error('Error mejorando bloque individual', e)
@@ -1134,7 +1156,9 @@ async function improveAllWithAI() {
 
 function openImageModal(el: HTMLImageElement) {
   imageModal.targetEl = el
-  imageModal.src = el.src
+  // getAttribute keeps relative paths intact; el.src would resolve them to
+  // the editor origin and break images in the sent email.
+  imageModal.src = el.getAttribute('src') || ''
   const link = el.closest('a')
   if (link) {
     imageModal.linkEl = link
@@ -1155,7 +1179,12 @@ function applyImageSettings() {
     imageModal.src = 'https://placehold.co/600x400/f8fafc/6366f1?text=Añadir+Imagen'
   }
 
-  imageModal.targetEl.src = imageModal.src
+  imageModal.targetEl.setAttribute('src', imageModal.src)
+
+  if (imageModal.link && !sanitizeLinkUrl(imageModal.link)) {
+    showToast((useNuxtApp().$i18n as any).t('editor.invalid_link'), 'error')
+    imageModal.link = ''
+  }
 
   if (imageModal.link) {
     if (imageModal.linkEl) {

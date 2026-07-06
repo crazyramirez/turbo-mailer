@@ -1,4 +1,4 @@
-import { useEditorState } from '~/composables/useEditorState'
+import { useEditorState, defaultHtml } from '~/composables/useEditorState'
 import { useToast } from '~/composables/useToast'
 import { useIframeEngine } from '~/composables/useIframeEngine'
 
@@ -25,13 +25,19 @@ async function loadTemplates() {
   }
 }
 
+// Monotonic token: discards stale responses when the user switches
+// templates faster than the fetch/animation resolves.
+let loadSeq = 0
+
 async function loadTemplate(name: string, animate = true) {
+  const seq = ++loadSeq
   try {
     if (animate) {
       isTemplateLoading.value = true
       layerList.value = []
     }
     const data = await $fetch<any>('/api/templates', { query: { name } })
+    if (seq !== loadSeq) return
     htmlContent.value = data.content
     currentTemplate.value = name
     localStorage.setItem('last_edited_template', name)
@@ -39,6 +45,7 @@ async function loadTemplate(name: string, animate = true) {
     const { injectIframeContent } = useIframeEngine()
     if (animate) {
       setTimeout(() => {
+        if (seq !== loadSeq) return
         injectIframeContent()
         lastSavedTime.value = ''
         setTimeout(() => (isTemplateLoading.value = false), 150)
@@ -48,6 +55,7 @@ async function loadTemplate(name: string, animate = true) {
       lastSavedTime.value = ''
     }
   } catch {
+    if (seq !== loadSeq) return
     isTemplateLoading.value = false
     currentTemplate.value = ''
     localStorage.removeItem('last_edited_template')
@@ -71,7 +79,9 @@ async function deleteTemplate(name: string) {
         await loadTemplates()
         if (currentTemplate.value === name) {
           currentTemplate.value = ''
-          htmlContent.value = ''
+          localStorage.removeItem('last_edited_template')
+          localStorage.removeItem('editor_html_draft')
+          htmlContent.value = defaultHtml
           useIframeEngine().injectIframeContent()
         }
         showToast(i18n.t('editor.template_deleted'), 'info')
@@ -121,9 +131,14 @@ async function renameTemplate(oldName: string) {
 }
 
 async function saveTemplate(silent = false) {
+  // Without a template name the server rejects the POST: autosave must not
+  // fire blind 400s (the localStorage draft already covers unnamed work).
+  if (!currentTemplate.value) return
   if (!silent) isSaving.value = true
   try {
-    const finalHtml = useIframeEngine().getSurgicalCleanHtml()
+    // Fallback to the serialized state when the iframe is already gone
+    // (e.g. debounced save firing right after leaving the editor).
+    const finalHtml = useIframeEngine().getSurgicalCleanHtml() || htmlContent.value
     if (!finalHtml) return
 
     await $fetch('/api/templates', {
@@ -238,7 +253,7 @@ async function downloadHtml() {
   const i18n = (useNuxtApp().$i18n as any)
   
   if (!currentTemplate.value) {
-    showToast(i18n.t('editor.template_required_download'), 'warning')
+    showToast(i18n.t('editor.template_required_download'), 'info')
     showTemplateModal.value = true
     return
   }

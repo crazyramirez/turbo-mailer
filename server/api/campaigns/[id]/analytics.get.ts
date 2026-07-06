@@ -1,6 +1,6 @@
 import { db } from '~/server/db/index'
 import { campaigns, sends, trackingEvents } from '~/server/db/schema'
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, and, sql, isNotNull } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const campaignId = Number(getRouterParam(event, 'id'))
@@ -51,18 +51,18 @@ export default defineEventHandler(async (event) => {
   // Opens distribution by hour (0–72h after send)
   const openDistribution = await db
     .select({
-      hourBucket: sql<number>`MIN(CAST((te.created_at - s.sent_at) / 3600 AS INTEGER), 72)`,
+      hourBucket: sql<number>`MIN(CAST((${trackingEvents.createdAt} - ${sends.sentAt}) / 3600 AS INTEGER), 72)`,
       count: sql<number>`COUNT(*)`,
     })
-    .from(trackingEvents).as('te')
-    .innerJoin(sends.as('s'), eq(sends.id, trackingEvents.sendId))
+    .from(trackingEvents)
+    .innerJoin(sends, eq(sends.id, trackingEvents.sendId))
     .where(and(
       eq(trackingEvents.campaignId, campaignId),
       eq(trackingEvents.eventType, 'open'),
-      sql`s.sent_at IS NOT NULL`,
-      sql`te.created_at >= s.sent_at`
+      isNotNull(sends.sentAt),
+      sql`${trackingEvents.createdAt} >= ${sends.sentAt}`
     ))
-    .groupBy(sql`MIN(CAST((te.created_at - s.sent_at) / 3600 AS INTEGER), 72)`)
+    .groupBy(sql`MIN(CAST((${trackingEvents.createdAt} - ${sends.sentAt}) / 3600 AS INTEGER), 72)`)
     .orderBy(sql`1`)
 
   return {

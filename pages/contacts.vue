@@ -75,7 +75,7 @@ const form = ref({
 
 // ── Data Fetching ──────────────────────────────────────────────────────────
 async function fetchLists() {
-  lists.value = await $fetch("/api/lists");
+  lists.value = await $fetch<any[]>("/api/lists");
 }
 
 async function fetchContacts() {
@@ -165,6 +165,7 @@ function openNewContact() {
     email: "",
     name: "",
     company: "",
+    role: "",
     phone: "",
     linkedin: "",
     url: "",

@@ -4,6 +4,8 @@ import { verifyCsrfToken } from '~/server/utils/csrf'
 const BYPASS_PREFIXES = [
   '/api/auth/login',
   '/api/auth/csrf',
+  // Se autentica con el refresh token en el body, no con la cookie de sesión
+  '/api/auth/refresh',
   '/api/track/',
   '/api/unsubscribe',
   '/api/resubscribe',

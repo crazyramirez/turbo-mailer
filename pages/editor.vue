@@ -42,7 +42,7 @@ function handleGlobalKeydown(e: KeyboardEvent) {
     e.preventDefault();
     useIframeEngine().redo();
   }
-  if (e.key === "Delete" || e.key === "Suppress") {
+  if (e.key === "Delete") {
     const isEditing =
       (e.target as HTMLElement)?.isContentEditable ||
       ["INPUT", "TEXTAREA"].includes((e.target as HTMLElement)?.tagName);

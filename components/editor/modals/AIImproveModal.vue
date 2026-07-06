@@ -64,8 +64,13 @@ async function handleImprove() {
       }, 350)
 
       import('~/composables/useIframeEngine').then(({ useIframeEngine }) => {
-        useIframeEngine().refreshLayers()
-        useIframeEngine().triggerAutosave(true)
+        const engine = useIframeEngine()
+        // innerHTML replacement wiped the drag handle and contenteditable:
+        // re-init the block so it stays draggable and editable.
+        const targetDoc = iframeRef.value?.contentDocument
+        if (targetDoc) engine.initBlock(target, targetDoc)
+        engine.refreshLayers()
+        engine.triggerAutosave(true)
       })
     }
   } catch (err: any) {

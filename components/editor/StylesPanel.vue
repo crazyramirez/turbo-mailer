@@ -133,7 +133,7 @@ const updateCardShadow = (shadow: string) => {
             class="preview-card"
             :style="{
               backgroundColor: style.config.cardBg,
-              borderRadius: style.config.id === 'corporate' ? '0px' : '8px',
+              borderRadius: style.id === 'corporate' ? '0px' : '8px',
               boxShadow: style.config.cardShadow,
               border: style.config.cardBorder,
             }"

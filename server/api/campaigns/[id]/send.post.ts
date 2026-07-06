@@ -1,7 +1,7 @@
 import { db } from '~/server/db/index'
 import { campaigns, contacts, listContacts, sends } from '~/server/db/schema'
 import { eq, and } from 'drizzle-orm'
-import { processCampaign, SendConfig } from '~/server/utils/campaign-processor'
+import { processCampaign, type SendConfig } from '~/server/utils/campaign-processor'
 import { clearSignal } from '~/server/utils/campaign-state'
 import { logAudit } from '~/server/utils/audit'
 import { getClientIp } from '~/server/utils/auth'

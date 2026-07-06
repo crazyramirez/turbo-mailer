@@ -62,7 +62,7 @@ const maxHistory = 30
 watch(viewMode, (v) => localStorage.setItem('editor_view_mode', v))
 watch(darkModePreview, (v) => localStorage.setItem('editor_dark_mode', String(v)))
 
-const defaultHtml = `<!DOCTYPE html>
+export const defaultHtml = `<!DOCTYPE html>
 <html lang="es">
 <head>
   <style>
@@ -124,7 +124,7 @@ const promptData = reactive({
   mode: 'text' as 'text' | 'color' | 'font' | 'confirm',
   variant: 'primary' as 'primary' | 'danger',
   confirmLabel: '',
-  colorTarget: '' as '' | 'block' | 'text' | 'button' | 'border',
+  colorTarget: '' as '' | 'block' | 'text' | 'button' | 'border' | 'body',
   title: '',
   label: '',
   value: '',

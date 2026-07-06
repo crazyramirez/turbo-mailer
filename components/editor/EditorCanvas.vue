@@ -14,7 +14,7 @@ const {
   isDraggingOverIframe,
   darkModePreview,
 } = useEditorState();
-const { injectIframeContent } = useIframeEngine();
+const { handleIframeLoad } = useIframeEngine();
 </script>
 
 <template>
@@ -67,7 +67,7 @@ const { injectIframeContent } = useIframeEngine();
           </div>
         </div>
 
-        <iframe ref="iframeRef" @load="injectIframeContent"></iframe>
+        <iframe ref="iframeRef" @load="handleIframeLoad"></iframe>
 
         <Transition name="fade">
           <div

@@ -72,8 +72,6 @@ const {
   removePricingItem,
   addMetricItem,
   removeMetricItem,
-  addPricingFeature,
-  removePricingFeature,
   improveBlockWithAI,
   isImprovingAI,
 } = useBlockEditor();

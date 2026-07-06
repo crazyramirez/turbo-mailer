@@ -19,7 +19,7 @@ definePageMeta({ layout: "app" });
 
 const { t } = useI18n();
 const router = useRouter();
-const { showDialog } = useDashboardState();
+const { showDialog, showToast } = useDashboardState();
 const { form, step, resetWizard } = useCampaignWizardState();
 
 const hasDraft = computed(() => {

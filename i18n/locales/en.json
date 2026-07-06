@@ -491,6 +491,7 @@
     "btn_link_title": "Button Link",
     "btn_link_label": "URL or link for this button:",
     "btn_min_error": "The module must have at least one button",
+    "invalid_link": "Invalid link: only http, https, mailto or tel URLs are allowed",
     "btn_delete_title": "Delete Button",
     "btn_delete_label": "Are you sure you want to delete this button?",
     "btn_delete_confirm": "Confirm Delete",

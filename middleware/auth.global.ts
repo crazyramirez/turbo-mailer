@@ -61,6 +61,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
             })
             localStorage.setItem('tm_refresh_token', newToken)
             isAuthed.value = true
+            // La sesión rotó: el token CSRF anterior ya no es válido
+            const { $refreshCsrfToken } = useNuxtApp()
+            if ($refreshCsrfToken) await ($refreshCsrfToken as () => Promise<void>)()
           } catch {
             localStorage.removeItem('tm_refresh_token')
             isAuthed.value = false

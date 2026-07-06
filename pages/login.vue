@@ -286,6 +286,10 @@ async function submit() {
     });
     if (refreshToken) localStorage.setItem("tm_refresh_token", refreshToken);
     isAuthed.value = true;
+    // Nueva sesión = nuevo token CSRF: el que se obtuvo al arrancar la app
+    // (si lo hubo) quedó ligado a la sesión anterior.
+    const { $refreshCsrfToken } = useNuxtApp();
+    await ($refreshCsrfToken as () => Promise<void>)();
     await navigateTo("/dashboard");
   } catch (err: any) {
     const data = err?.data?.data ?? err?.response?._data?.data ?? {};

@@ -491,6 +491,7 @@
     "btn_link_title": "Enlace del Botón",
     "btn_link_label": "URL o enlace para este botón:",
     "btn_min_error": "El módulo debe tener al menos un botón",
+    "invalid_link": "Enlace no válido: solo se permiten URLs http, https, mailto o tel",
     "btn_delete_title": "Eliminar Botón",
     "btn_delete_label": "¿Estás seguro de que quieres eliminar este botón?",
     "btn_delete_confirm": "Confirmar Eliminación",

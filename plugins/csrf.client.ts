@@ -19,13 +19,21 @@ export default defineNuxtPlugin(async () => {
   const nuxtApp = useNuxtApp()
   nuxtApp.hook('app:created', () => {
     globalThis.$fetch = $fetch.create({
-      onRequest({ options }) {
+      async onRequest({ request, options }) {
         const method = (options.method ?? 'GET').toUpperCase()
-        if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && csrfToken.value) {
-          options.headers = {
-            ...options.headers as Record<string, string>,
-            'X-CSRF-Token': csrfToken.value,
-          }
+        if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) return
+
+        // The startup fetch fails when the app loads unauthenticated (login
+        // screen): recover lazily on the first mutating request post-login.
+        const url = typeof request === 'string' ? request : (request as Request).url
+        if (!csrfToken.value && !url.includes('/api/auth/')) {
+          await refreshCsrfToken()
+        }
+
+        if (csrfToken.value) {
+          const headers = new Headers(options.headers as HeadersInit | undefined)
+          headers.set('X-CSRF-Token', csrfToken.value)
+          options.headers = headers
         }
       },
     })

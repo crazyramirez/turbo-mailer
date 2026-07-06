@@ -1,7 +1,7 @@
 import { db } from '~/server/db/index'
 import { campaigns, sends } from '~/server/db/schema'
 import { eq, and } from 'drizzle-orm'
-import { processCampaign, SendConfig } from '~/server/utils/campaign-processor'
+import { processCampaign, type SendConfig } from '~/server/utils/campaign-processor'
 
 export default defineEventHandler(async (event) => {
   const campaignId = Number(getRouterParam(event, 'id'))
