@@ -32,6 +32,39 @@ export const db = drizzle(sqlite, { schema })
 
 export { sqlite }
 
+// Stamp migrations whose objects already exist in the DB (created out-of-band,
+// e.g. via drizzle-kit push or a copied DB file) so the migrator skips them
+// instead of failing with "already exists". `when` must match the entry in
+// migrations/meta/_journal.json. Add a marker here if a new migration ever
+// fails on a legacy production DB.
+function baselineOutOfBandMigrations() {
+  const hasTable = (name: string) => !!sqlite
+    .prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name=?`)
+    .get(name)
+  const hasColumn = (table: string, column: string) =>
+    (sqlite.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[])
+      .some(c => c.name === column)
+
+  if (!hasTable('__drizzle_migrations')) return // fresh DB — migrator handles it
+
+  const markers = [
+    { when: 1778274896733, applied: () => hasTable('refresh_tokens') },        // 0007
+    { when: 1783205018862, applied: () => hasColumn('campaigns', 'tag_filter') }, // 0008
+  ]
+
+  const { m } = sqlite
+    .prepare(`SELECT max(created_at) AS m FROM __drizzle_migrations`)
+    .get() as { m: number | null }
+
+  for (const marker of markers) {
+    if ((m ?? 0) < marker.when && marker.applied()) {
+      sqlite.prepare(`INSERT INTO __drizzle_migrations (hash, created_at) VALUES (?, ?)`)
+        .run(`baseline-${marker.when}`, marker.when)
+      console.log(`[DB] Baselined out-of-band migration ${marker.when}`)
+    }
+  }
+}
+
 // Auto-run migrations on startup
 function runMigrations() {
   try {
@@ -56,6 +89,7 @@ function runMigrations() {
       throw new Error(`Migrations folder not found at ${migrationsPath}`)
     }
 
+    baselineOutOfBandMigrations()
     migrate(db, { migrationsFolder: migrationsPath })
     console.log('[DB] Database migrations completed successfully.')
   } catch (error) {
