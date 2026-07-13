@@ -2,6 +2,7 @@ import { db } from '~/server/db/index'
 import { campaigns, contacts, listContacts } from '~/server/db/schema'
 import { eq, and, sql } from 'drizzle-orm'
 import { contactMatchesTags } from '~/server/utils/segment'
+import { getImapConfig } from '~/server/utils/bounce-processor'
 
 // Pre-send health check: returns a checklist the UI shows before sending.
 // status: 'pass' | 'warn' | 'fail' — any 'fail' should block the send button.
@@ -178,8 +179,14 @@ export default defineEventHandler(async (event) => {
   const baseUrlOk = /^https:\/\//i.test(baseUrl) && !/localhost|127\.0\.0\.1/i.test(baseUrl)
   items.push({ id: 'tracking_url', status: baseUrlOk ? 'pass' : 'warn', data: { baseUrl } })
 
-  const imapOk = Boolean(config.imapHost || config.imapAutoDetect)
-  items.push({ id: 'bounce_processing', status: imapOk ? 'pass' : 'warn' })
+  // Same source of truth as the bounce processor: auto-detect defaults to ON,
+  // so IMAP is effectively configured whenever SMTP host+credentials exist
+  const imapCfg = getImapConfig()
+  items.push({
+    id: 'bounce_processing',
+    status: imapCfg ? 'pass' : 'warn',
+    data: imapCfg ? { host: imapCfg.host } : undefined,
+  })
 
   const blocked = items.some(i => i.status === 'fail')
   const warnings = items.filter(i => i.status === 'warn').length
