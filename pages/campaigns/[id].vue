@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted } from "vue";
+import { ref, computed, nextTick, watch, onMounted, onUnmounted } from "vue";
 import {
   ArrowLeft,
   Send,
@@ -453,6 +453,84 @@ async function retryCampaign() {
   }
 }
 
+// ─── Preview as real contact ─────────────────────────────────
+const previewContactId = ref<number | null>(null);
+const previewContacts = ref<any[]>([]);
+const personalizedPreview = ref<{ html: string; subject: string } | null>(null);
+const loadingPreview = ref(false);
+
+async function fetchPreviewContacts() {
+  if (!campaign.value?.listId) {
+    previewContacts.value = [];
+    return;
+  }
+  try {
+    const res = await $fetch<any>(
+      `/api/contacts?list_id=${campaign.value.listId}`,
+    );
+    previewContacts.value = (res.data || []).slice(0, 25);
+  } catch {
+    previewContacts.value = [];
+  }
+}
+
+watch(previewContactId, async (contactId) => {
+  if (!contactId) {
+    personalizedPreview.value = null;
+    return;
+  }
+  loadingPreview.value = true;
+  try {
+    personalizedPreview.value = await $fetch<any>(
+      `/api/campaigns/${id}/preview?contactId=${contactId}`,
+    );
+  } catch {
+    personalizedPreview.value = null;
+    showToast("No se pudo generar la vista previa personalizada", "error");
+  } finally {
+    loadingPreview.value = false;
+  }
+});
+
+// Template edits invalidate the personalized render — re-fetch on change
+watch(
+  () => campaign.value?.templateHtml,
+  () => {
+    if (previewContactId.value) {
+      const current = previewContactId.value;
+      previewContactId.value = null;
+      nextTick(() => (previewContactId.value = current));
+    }
+  },
+);
+
+// ─── Follow-up: re-send to non-openers ───────────────────────
+const creatingFollowUp = ref(false);
+const unopenedCount = computed(
+  () => sendsList.value.filter((s) => s.status === "sent").length,
+);
+async function createFollowUp() {
+  const ok = await showDialog({
+    type: "confirm",
+    title: "Reenviar a no abiertos",
+    message: `Se creará un borrador de seguimiento dirigido a los ${unopenedCount.value} contactos que recibieron el email pero no lo abrieron. Podrás cambiar el asunto antes de enviar.`,
+  });
+  if (!ok) return;
+  creatingFollowUp.value = true;
+  try {
+    const res = await $fetch<any>(`/api/campaigns/${id}/resend-unopened`, {
+      method: "POST",
+      body: {},
+    });
+    showToast("Borrador de seguimiento creado", "success");
+    router.push(`/campaigns/${res.campaign.id}`);
+  } catch (e: any) {
+    showToast(`Error: ${e.data?.statusMessage || e.message}`, "error");
+  } finally {
+    creatingFollowUp.value = false;
+  }
+}
+
 // ─── Resume / Resend ─────────────────────────────────────────
 async function resumeFromPage() {
   sending.value = true;
@@ -614,6 +692,7 @@ const SEND_LABEL: Record<string, string> = {
 
 onMounted(async () => {
   await Promise.all([fetchCampaign(), fetchSends(), fetchLists()]);
+  fetchPreviewContacts();
 
   // Auto-sync template content if it was updated in the editor (only for non-sent campaigns)
   if (
@@ -1145,6 +1224,21 @@ onUnmounted(() => {
               >
                 {{ showBounceLog ? "▲ Log" : "▼ Log" }}
               </button>
+              <button
+                v-if="
+                  campaign.status === 'sent' &&
+                  !campaign.resendOfId &&
+                  unopenedCount > 0
+                "
+                class="btn-check-bounces"
+                :disabled="creatingFollowUp"
+                @click="createFollowUp"
+                title="Crea un borrador de seguimiento para los contactos que no abrieron este email"
+              >
+                <Loader2 v-if="creatingFollowUp" :size="13" class="spin" />
+                <Mail v-else :size="13" />
+                Reenviar a no abiertos ({{ unopenedCount }})
+              </button>
             </div>
             <div
               v-if="
@@ -1257,9 +1351,29 @@ onUnmounted(() => {
 
         <!-- Right: preview -->
         <div class="right-preview">
+          <div class="preview-as-row">
+            <Eye :size="13" class="preview-as-icon" />
+            <select
+              v-model="previewContactId"
+              class="preview-as-select"
+              title="Renderiza la plantilla con los datos reales de un contacto"
+            >
+              <option :value="null">Vista genérica (sin datos)</option>
+              <option
+                v-for="c in previewContacts"
+                :key="c.id"
+                :value="c.id"
+              >
+                {{ c.name || c.email }}{{ c.company ? ` · ${c.company}` : "" }}
+              </option>
+            </select>
+            <Loader2 v-if="loadingPreview" :size="13" class="spin" />
+          </div>
           <CampaignPreview
-            :html="campaign.templateHtml || ''"
-            :subject="subjectInput || campaign.subject"
+            :html="personalizedPreview?.html ?? campaign.templateHtml ?? ''"
+            :subject="
+              personalizedPreview?.subject ?? (subjectInput || campaign.subject)
+            "
           />
         </div>
       </div>
@@ -2599,6 +2713,32 @@ select.field-input option {
   top: 20px;
   backdrop-filter: blur(5px);
   min-width: 0;
+}
+
+.preview-as-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.preview-as-icon {
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+.preview-as-select {
+  flex: 1;
+  min-width: 0;
+  background: rgb(0 0 0 / 15%);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 7px 10px;
+  cursor: pointer;
+}
+.preview-as-select:focus {
+  outline: none;
+  border-color: #6366f1;
 }
 
 /* Transitions */

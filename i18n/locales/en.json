@@ -541,6 +541,9 @@
     "module_video": "Video",
     "module_socials": "Social Links",
     "module_divider": "Divider",
+    "module_spacer": "Spacer",
+    "module_product": "Product",
+    "module_coupon": "Coupon",
     "module_faq": "FAQ",
     "module_metrics": "Statistics",
     "download": "Download HTML",
@@ -651,6 +654,18 @@
       "bounce_processing": {
         "pass": "Bounce processing (IMAP) active",
         "warn": "IMAP not configured — bounces won't be detected automatically"
+      },
+      "dns_spf": {
+        "pass": "SPF published on {domain}",
+        "warn": "No SPF record on {domain} — many servers will flag your emails as spam"
+      },
+      "dns_dmarc": {
+        "pass": "DMARC published on {domain} (policy: {policy})",
+        "warn": "No DMARC record on {domain} — Gmail and Yahoo require it for bulk sending"
+      },
+      "dns_dkim": {
+        "pass": "Public DKIM record verified ({selector})",
+        "warn": "DKIM selector “{selector}” has no DNS record on {domain} — signature will fail verification"
       }
     }
   },

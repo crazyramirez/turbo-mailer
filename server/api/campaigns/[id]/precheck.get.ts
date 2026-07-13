@@ -1,8 +1,9 @@
 import { db } from '~/server/db/index'
-import { campaigns, contacts, listContacts } from '~/server/db/schema'
+import { campaigns, contacts, listContacts, sends } from '~/server/db/schema'
 import { eq, and, sql } from 'drizzle-orm'
 import { contactMatchesTags } from '~/server/utils/segment'
 import { getImapConfig } from '~/server/utils/bounce-processor'
+import { checkDnsAuth, senderDomainFromEmail } from '~/server/utils/dns-check'
 
 // Pre-send health check: returns a checklist the UI shows before sending.
 // status: 'pass' | 'warn' | 'fail' — any 'fail' should block the send button.
@@ -140,7 +141,26 @@ export default defineEventHandler(async (event) => {
   const tagFilter = Array.isArray(campaign.tagFilter) ? campaign.tagFilter : []
   let active = 0, filteredOut = 0
   const excluded = { unsubscribed: 0, bounced: 0, inactive: 0 }
-  if (campaign.listId) {
+  if (campaign.resendOfId) {
+    // Follow-up campaign: recipients are the source campaign's unopened sends
+    const rows = await db
+      .select({ status: contacts.status, tags: contacts.tags })
+      .from(contacts)
+      .innerJoin(sends, and(
+        eq(sends.contactId, contacts.id),
+        eq(sends.campaignId, campaign.resendOfId),
+        eq(sends.status, 'sent'),
+      ))
+    for (const r of rows) {
+      if (r.status === 'active') {
+        if (contactMatchesTags(r.tags, tagFilter)) active++
+        else filteredOut++
+      }
+      else if (r.status === 'unsubscribed') excluded.unsubscribed++
+      else if (r.status === 'bounced') excluded.bounced++
+      else excluded.inactive++
+    }
+  } else if (campaign.listId) {
     const rows = await db
       .select({ status: contacts.status, tags: contacts.tags })
       .from(contacts)
@@ -174,6 +194,34 @@ export default defineEventHandler(async (event) => {
   // ── Infrastructure ───────────────────────────────────────────────────
   const dkimOk = Boolean(config.dkimDomain && config.dkimSelector && config.dkimPrivateKey)
   items.push({ id: 'dkim', status: dkimOk ? 'pass' : 'warn' })
+
+  // DNS authentication of the sender domain (SPF/DMARC, plus DKIM record when
+  // a selector is configured). Missing records → mail lands in spam.
+  const senderDomain = senderDomainFromEmail(config.smtpFromEmail || config.smtpUser)
+  if (senderDomain) {
+    try {
+      const auth = await checkDnsAuth(senderDomain, dkimOk ? String(config.dkimSelector) : undefined)
+      items.push({
+        id: 'dns_spf',
+        status: auth.spf.found ? 'pass' : 'warn',
+        data: { domain: senderDomain },
+      })
+      items.push({
+        id: 'dns_dmarc',
+        status: auth.dmarc.found ? 'pass' : 'warn',
+        data: { domain: senderDomain, policy: auth.dmarc.policy },
+      })
+      if (auth.dkim) {
+        items.push({
+          id: 'dns_dkim',
+          status: auth.dkim.found ? 'pass' : 'warn',
+          data: { domain: senderDomain, selector: auth.dkim.selector },
+        })
+      }
+    } catch {
+      // DNS resolution unavailable (offline dev) — don't block the checklist
+    }
+  }
 
   const baseUrl = String(config.trackingBaseUrl || '')
   const baseUrlOk = /^https:\/\//i.test(baseUrl) && !/localhost|127\.0\.0\.1/i.test(baseUrl)

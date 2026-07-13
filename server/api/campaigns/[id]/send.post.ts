@@ -32,7 +32,19 @@ export default defineEventHandler(async (event) => {
   // Load recipients from list (only on initial send, not resume)
   if (campaign.status !== 'paused') {
     let recipientRows: typeof contacts.$inferSelect[] = []
-    if (campaign.listId) {
+    if (campaign.resendOfId) {
+      // Follow-up campaign: target contacts whose send in the source campaign
+      // was delivered but never opened, and who are still active
+      recipientRows = await db.select({ contacts })
+        .from(contacts)
+        .innerJoin(sends, eq(sends.contactId, contacts.id))
+        .where(and(
+          eq(sends.campaignId, campaign.resendOfId),
+          eq(sends.status, 'sent'),
+          eq(contacts.status, 'active'),
+        ))
+        .then(r => r.map(x => x.contacts))
+    } else if (campaign.listId) {
       recipientRows = await db.select({ contacts })
         .from(contacts)
         .innerJoin(listContacts, and(

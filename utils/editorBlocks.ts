@@ -396,6 +396,48 @@ export const editorBlocks: EditorBlock[] = [
   </div>`,
   },
   {
+    id: 'spacer',
+    name: 'Espaciador',
+    icon: Minus,
+    content: `<div class="spacer-block editable-block" data-type="Espaciador" style="background:#f6faff;">
+    <div style="height:40px;line-height:40px;font-size:0;">&nbsp;</div>
+  </div>`,
+  },
+  {
+    id: 'product',
+    name: 'Producto',
+    icon: CreditCard,
+    content: `<div class="product-block editable-block" data-type="Producto" style="padding:24px 32px;background:#f6faff;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;border-collapse:separate;overflow:hidden;">
+      <tr>
+        <td width="40%" valign="top" style="padding:16px;">
+          <div data-toggle="image"><img src="${placeholder400x400}" class="main-img-responsive" alt="Producto" style="display:block;width:100%;height:auto;border-radius:10px;"></div>
+        </td>
+        <td width="60%" valign="middle" style="padding:16px 20px 16px 4px;">
+          <div data-toggle="badge" style="font-family:Arial;font-size:11px;font-weight:700;color:#6366f1;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Novedad</div>
+          <div data-toggle="title" style="font-family:Arial;font-size:20px;font-weight:700;color:#0f172a;margin-bottom:8px;">Nombre del Producto</div>
+          <div data-toggle="subtitle" style="font-family:Arial;font-size:14px;line-height:1.5;color:#475569;margin-bottom:12px;">Descripción breve del producto y su beneficio principal.</div>
+          <div data-toggle="price" style="font-family:Arial;font-size:24px;font-weight:800;color:#0f172a;margin-bottom:16px;">49,00&nbsp;€ <span style="font-size:14px;font-weight:400;color:#94a3b8;text-decoration:line-through;">69,00&nbsp;€</span></div>
+          <a href="#" data-toggle="button" style="display:inline-block;background:#6366f1;border-radius:10px;padding:12px 24px;font-family:Arial;font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;">Comprar ahora →</a>
+        </td>
+      </tr>
+    </table>
+  </div>`,
+  },
+  {
+    id: 'coupon',
+    name: 'Cupón',
+    icon: Zap,
+    content: `<div class="coupon-block editable-block" data-type="Cupón" style="padding:32px;background:#f6faff;text-align:center;">
+    <div style="max-width:420px;margin:0 auto;background:#ffffff;border:2px dashed #6366f1;border-radius:16px;padding:28px 24px;">
+      <div data-toggle="badge" style="font-family:Arial;font-size:12px;font-weight:700;color:#6366f1;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Oferta Exclusiva</div>
+      <div data-toggle="title" style="font-family:Arial;font-size:26px;font-weight:800;color:#0f172a;margin-bottom:8px;">-20% en tu próxima compra</div>
+      <div data-toggle="subtitle" style="font-family:Arial;font-size:14px;color:#64748b;margin-bottom:18px;">Usa este código antes del 31 de diciembre</div>
+      <div data-toggle="code" style="display:inline-block;font-family:'Courier New',monospace;font-size:22px;font-weight:700;letter-spacing:4px;color:#6366f1;background:#eef2ff;border-radius:10px;padding:12px 28px;">CODIGO20</div>
+    </div>
+  </div>`,
+  },
+  {
     id: 'unsubscribe',
     name: 'Unsuscribir',
     icon: UserMinus,

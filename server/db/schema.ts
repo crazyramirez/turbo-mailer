@@ -47,6 +47,9 @@ export const campaigns = sqliteTable('campaigns', {
   listId: integer('list_id').references(() => lists.id),
   // Segmentation: if non-empty, only list contacts having at least one of these tags receive the campaign
   tagFilter: text('tag_filter', { mode: 'json' }).$type<string[]>().default([]),
+  // Follow-up campaigns: when set, recipients come from the source campaign's
+  // delivered-but-unopened sends instead of the list
+  resendOfId: integer('resend_of_id'),
   status: text('status', { enum: ['draft', 'scheduled', 'sending', 'sent', 'paused'] }).notNull().default('draft'),
   scheduledAt: integer('scheduled_at', { mode: 'timestamp' }),
   startedAt: integer('started_at', { mode: 'timestamp' }),

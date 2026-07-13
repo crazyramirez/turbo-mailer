@@ -541,6 +541,9 @@
     "module_video": "Video",
     "module_socials": "Redes Sociales",
     "module_divider": "Separador",
+    "module_spacer": "Espaciador",
+    "module_product": "Producto",
+    "module_coupon": "Cupón",
     "module_faq": "FAQ",
     "module_metrics": "Estadísticas",
     "download": "Descargar HTML",
@@ -651,6 +654,18 @@
       "bounce_processing": {
         "pass": "Procesado de rebotes (IMAP) activo",
         "warn": "IMAP no configurado — los rebotes no se detectarán automáticamente"
+      },
+      "dns_spf": {
+        "pass": "SPF publicado en {domain}",
+        "warn": "Sin registro SPF en {domain} — muchos servidores marcarán tus emails como spam"
+      },
+      "dns_dmarc": {
+        "pass": "DMARC publicado en {domain} (política: {policy})",
+        "warn": "Sin registro DMARC en {domain} — Gmail y Yahoo lo exigen para envío masivo"
+      },
+      "dns_dkim": {
+        "pass": "Registro DKIM público verificado ({selector})",
+        "warn": "El selector DKIM «{selector}» no tiene registro DNS en {domain} — la firma fallará"
       }
     }
   },

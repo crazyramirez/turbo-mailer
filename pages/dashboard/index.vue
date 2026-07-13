@@ -18,6 +18,7 @@ import {
 } from "lucide-vue-next";
 import CampaignPreview from "~/components/campaigns/CampaignPreview.vue";
 import ResetModal from "~/components/dashboard/ResetModal.vue";
+import Sparkline from "~/components/dashboard/Sparkline.vue";
 import WelcomeModal from "~/components/dashboard/WelcomeModal.vue";
 import GhostWelcomeModal from "~/components/GhostWelcomeModal.vue";
 
@@ -75,6 +76,8 @@ interface AnalyticsResponse {
   totalClicked: number;
   recentOpens: RecentOpen[];
   topCampaigns: any[];
+  opensByDay?: { date: string; label: string; count: number }[];
+  clicksByDay?: { date: string; label: string; count: number }[];
 }
 interface Campaign {
   id: number;
@@ -361,7 +364,7 @@ async function duplicateCampaign() {
           </div>
           <div class="kpi-card">
             <div class="kpi-icon green"><Eye :size="22" /></div>
-            <div>
+            <div style="flex: 1; min-width: 0">
               <div class="kpi-val">
                 {{
                   analyticsData
@@ -372,11 +375,16 @@ async function duplicateCampaign() {
               <div class="kpi-lbl">
                 {{ t("analytics_page.opens_label") }}
               </div>
+              <Sparkline
+                v-if="analyticsData?.opensByDay?.length"
+                :points="analyticsData.opensByDay"
+                color="#22c55e"
+              />
             </div>
           </div>
           <div class="kpi-card">
             <div class="kpi-icon orange"><MousePointerClick :size="22" /></div>
-            <div>
+            <div style="flex: 1; min-width: 0">
               <div class="kpi-val">
                 {{
                   analyticsData
@@ -387,6 +395,11 @@ async function duplicateCampaign() {
               <div class="kpi-lbl">
                 {{ t("analytics_page.clicks_label") }}
               </div>
+              <Sparkline
+                v-if="analyticsData?.clicksByDay?.length"
+                :points="analyticsData.clicksByDay"
+                color="#f97316"
+              />
             </div>
           </div>
         </template>

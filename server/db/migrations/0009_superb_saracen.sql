@@ -1,0 +1,1 @@
+ALTER TABLE `campaigns` ADD `resend_of_id` integer;
