@@ -11,11 +11,18 @@ export default defineEventHandler(async (event) => {
   const status = query.status ? String(query.status) : null
   const offset = (page - 1) * perPage
 
-  // Common filters (email, name, company, role)
+  // Common filters — search across every text field of the contact
   const filters = []
   if (search) {
+    // Escape LIKE wildcards so a literal % or _ in the query doesn't match everything
+    const term = `%${search.replace(/[\\%_]/g, (c) => `\\${c}`)}%`
+    const searchable = [
+      contacts.email, contacts.name, contacts.company, contacts.role,
+      contacts.phone, contacts.linkedin, contacts.url, contacts.youtube,
+      contacts.instagram, contacts.tags,
+    ]
     filters.push(
-      sql`(${contacts.email} LIKE ${`%${search}%`} OR ${contacts.name} LIKE ${`%${search}%`} OR ${contacts.company} LIKE ${`%${search}%`} OR ${contacts.role} LIKE ${`%${search}%`} OR ${contacts.phone} LIKE ${`%${search}%`})`
+      sql`(${sql.join(searchable.map(f => sql`${f} LIKE ${term} ESCAPE '\\'`), sql` OR `)})`
     )
   }
   if (status && status !== 'all') {
@@ -39,7 +46,8 @@ export default defineEventHandler(async (event) => {
 
     const countRes = await db.select({ count: sql<number>`count(*)` })
       .from(listContacts)
-      .where(eq(listContacts.listId, listId))
+      .innerJoin(contacts, eq(contacts.id, listContacts.contactId))
+      .where(and(eq(listContacts.listId, listId), ...filters))
     total = Number(countRes[0]?.count || 0)
   } else {
     // 2. Query for ALL contacts
