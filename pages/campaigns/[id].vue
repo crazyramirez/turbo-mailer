@@ -483,6 +483,47 @@ const abStats = computed(() => {
   return stats;
 });
 
+// ─── Manual status override ──────────────────────────────────
+const SETTABLE_STATUSES = ["draft", "scheduled", "paused", "sent"] as const;
+const statusMenuOpen = ref(false);
+const changingStatus = ref(false);
+
+const STATUS_CHANGE_WARNING: Record<string, string> = {
+  draft:
+    "La campaña volverá a ser editable y podrá enviarse de nuevo (los registros de envío actuales se conservan hasta el próximo envío).",
+  sent: "La campaña se marcará como enviada sin pasar por el pipeline de envío.",
+  scheduled:
+    "La campaña quedará programada con la fecha configurada actualmente.",
+  paused: "La campaña quedará pausada.",
+};
+
+async function setStatus(target: string) {
+  statusMenuOpen.value = false;
+  const ok = await showDialog({
+    type: "confirm",
+    title: `Cambiar a «${STATUS_LABEL[target]}»`,
+    message: STATUS_CHANGE_WARNING[target],
+  });
+  if (!ok) return;
+  changingStatus.value = true;
+  try {
+    await $fetch<any>(`/api/campaigns/${id}/status`, {
+      method: "POST",
+      body: { status: target },
+    });
+    showToast(`Estado cambiado a ${STATUS_LABEL[target]}`, "success");
+    await Promise.all([fetchCampaign(), fetchSends()]);
+  } catch (e: any) {
+    showToast(`Error: ${e.data?.statusMessage || e.message}`, "error");
+  } finally {
+    changingStatus.value = false;
+  }
+}
+
+function closeStatusMenu() {
+  statusMenuOpen.value = false;
+}
+
 // ─── Link click stats ────────────────────────────────────────
 const linkStats = ref<
   { url: string; clicks: number; uniqueClickers: number }[]
@@ -768,6 +809,7 @@ const SEND_LABEL: Record<string, string> = {
 };
 
 onMounted(async () => {
+  document.addEventListener("click", closeStatusMenu);
   await Promise.all([fetchCampaign(), fetchSends(), fetchLists()]);
   fetchPreviewContacts();
   fetchLinkStats();
@@ -813,6 +855,7 @@ onMounted(async () => {
   }
 });
 onUnmounted(() => {
+  document.removeEventListener("click", closeStatusMenu);
   clearTimeout(saveTimer);
   stopPolling();
   stopCountdown();
@@ -857,9 +900,36 @@ onUnmounted(() => {
               <span v-if="saving" class="saving-dot" title="Guardando…"></span>
             </div>
             <div class="hdr-meta">
-              <span class="camp-badge" :class="STATUS_BADGE[campaign.status]">
-                {{ STATUS_LABEL[campaign.status] || campaign.status }}
-              </span>
+              <div class="status-switch" @click.stop>
+                <button
+                  class="camp-badge status-switch-btn"
+                  :class="STATUS_BADGE[campaign.status]"
+                  :disabled="campaign.status === 'sending' || changingStatus"
+                  title="Cambiar estado manualmente"
+                  @click="statusMenuOpen = !statusMenuOpen"
+                >
+                  <Loader2 v-if="changingStatus" :size="10" class="spin" />
+                  {{ STATUS_LABEL[campaign.status] || campaign.status }}
+                  <ChevronDown
+                    v-if="campaign.status !== 'sending'"
+                    :size="10"
+                    class="status-chevron"
+                  />
+                </button>
+                <div v-if="statusMenuOpen" class="status-menu">
+                  <button
+                    v-for="s in SETTABLE_STATUSES"
+                    :key="s"
+                    class="status-menu-item"
+                    :class="{ current: campaign.status === s }"
+                    :disabled="campaign.status === s"
+                    @click="setStatus(s)"
+                  >
+                    <span class="status-dot" :class="STATUS_BADGE[s]"></span>
+                    {{ STATUS_LABEL[s] }}
+                  </button>
+                </div>
+              </div>
               <span v-if="campaign.finishedAt" class="hdr-date">{{
                 fmtDate(campaign.finishedAt)
               }}</span>
@@ -3113,6 +3183,83 @@ select.field-input option {
 }
 .followup-link:hover {
   text-decoration: underline;
+}
+
+/* ── Manual status switch ── */
+.status-switch {
+  position: relative;
+  display: inline-flex;
+}
+.status-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+}
+.status-switch-btn:disabled {
+  cursor: default;
+}
+.status-chevron {
+  opacity: 0.6;
+}
+.status-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 50;
+  min-width: 160px;
+  background: var(--bg-card, #16182a);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 40%);
+}
+.status-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+}
+.status-menu-item:hover:not(:disabled) {
+  background: rgb(255 255 255 / 7%);
+  color: #fff;
+}
+.status-menu-item:disabled,
+.status-menu-item.current {
+  opacity: 0.45;
+  cursor: default;
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  padding: 0;
+}
+.status-dot.st-draft {
+  background: #94a3b8;
+}
+.status-dot.st-sent {
+  background: #22c55e;
+}
+.status-dot.st-paused {
+  background: #f59e0b;
+}
+.status-dot.st-scheduled {
+  background: #818cf8;
 }
 
 /* ── Link click stats ── */
