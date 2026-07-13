@@ -1,13 +1,17 @@
 <script setup lang="ts">
-import { Plus, Edit3, Copy, Trash2, Lock } from "lucide-vue-next";
+import { ref } from "vue";
+import { Plus, Edit3, Copy, Trash2, Lock, History } from "lucide-vue-next";
 import { useEditorState } from "~/composables/useEditorState";
 import { useTemplateManager } from "~/composables/useTemplateManager";
 import { useBlockEditor } from "~/composables/useBlockEditor";
 import { editorBlocks } from "~/utils/editorBlocks";
+import VersionsModal from "~/components/editor/modals/VersionsModal.vue";
 
 const { templates, currentTemplate, showTemplateModal } = useEditorState();
 const { loadTemplate, deleteTemplate, duplicateTemplate, renameTemplate } = useTemplateManager();
 const { handleSidebarDragStart, handleSidebarDragEnd } = useBlockEditor();
+
+const versionsFor = ref<string | null>(null);
 </script>
 
 <template>
@@ -31,6 +35,13 @@ const { handleSidebarDragStart, handleSidebarDragEnd } = useBlockEditor();
               <span>{{ t.name }}</span>
             </div>
             <div class="nav-item-actions">
+              <button
+                @click.stop="versionsFor = t.name"
+                class="btn-item-action"
+                title="Historial de versiones"
+              >
+                <History :size="12" />
+              </button>
               <button
                 @click.stop="renameTemplate(t.name)"
                 class="btn-item-action"
@@ -77,5 +88,11 @@ const { handleSidebarDragStart, handleSidebarDragEnd } = useBlockEditor();
         </div>
       </div>
     </div>
+
+    <VersionsModal
+      v-if="versionsFor"
+      :template-name="versionsFor"
+      @close="versionsFor = null"
+    />
   </aside>
 </template>

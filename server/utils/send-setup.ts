@@ -49,28 +49,41 @@ export async function createFollowUpCampaign(
 // A/B subject test: when subjectB is set and the list is big enough, an
 // unbiased sample split 50/50 between variants goes out first; the rest is
 // 'held' until the scheduler promotes the winning subject.
+// Pure A/B sample planner: shuffles (Fisher-Yates, unbiased) and assigns the
+// first `pct`% (min 4) alternating A/B; the rest is the held-back holdout.
+export function planAbSplit<T>(
+  recipients: T[],
+  samplePct: number,
+): { item: T; status: 'pending' | 'held'; variant: 'A' | 'B' | null }[] {
+  const pct = Math.min(50, Math.max(5, Number(samplePct) || 20))
+  const sampleSize = Math.max(4, Math.round(recipients.length * pct / 100))
+  const shuffled = [...recipients]
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled.map((item, i) => ({
+    item,
+    status: i < sampleSize ? 'pending' as const : 'held' as const,
+    variant: i < sampleSize ? ((i % 2 === 0 ? 'A' : 'B') as 'A' | 'B') : null,
+  }))
+}
+
 export async function setupCampaignSends(campaign: Campaign, recipientRows: Contact[]): Promise<void> {
   await db.delete(sends).where(eq(sends.campaignId, campaign.id))
 
   const abEnabled = Boolean(campaign.subjectB?.trim()) && recipientRows.length >= 10
 
   if (abEnabled) {
-    const pct = Math.min(50, Math.max(5, Number(campaign.abSamplePct) || 20))
-    const sampleSize = Math.max(4, Math.round(recipientRows.length * pct / 100))
-    // Fisher-Yates shuffle so the sample is unbiased
-    const shuffled = [...recipientRows]
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
-    }
+    const plan = planAbSplit(recipientRows, Number(campaign.abSamplePct) || 20)
     await db.insert(sends).values(
-      shuffled.map((c, i) => ({
+      plan.map(p => ({
         campaignId: campaign.id,
-        contactId: c.id,
-        email: c.email,
+        contactId: p.item.id,
+        email: p.item.email,
         personalizedSubject: null,
-        status: (i < sampleSize ? 'pending' : 'held') as 'pending' | 'held',
-        variant: i < sampleSize ? ((i % 2 === 0 ? 'A' : 'B') as 'A' | 'B') : null,
+        status: p.status,
+        variant: p.variant,
       }))
     )
   } else {

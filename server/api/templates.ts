@@ -1,17 +1,9 @@
 import { defineEventHandler, readBody, send, getQuery, createError, setResponseHeader } from 'h3';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { templatesDir, versionsDirFor, sanitizeTemplateName as sanitizeName } from '~/server/utils/template-files';
 
-const templatesDir = path.resolve(process.cwd(), 'data/templates');
 const baseTemplatePath = path.resolve(process.cwd(), 'data/demo/email_demo.html');
-
-function sanitizeName(raw: string): string | null {
-  const name = String(raw).replace(/\.html$/i, '').trim()
-  if (name.length === 0 || name.length > 100) return null
-  // Evitar caracteres peligrosos para nombres de archivo en cualquier OS
-  if (/[<>:"/\\|?*]/.test(name)) return null
-  return name
-}
 
 function safePath(name: string): string | null {
   const resolved = path.resolve(templatesDir, `${name}.html`)
@@ -19,6 +11,44 @@ function safePath(name: string): string | null {
   // Ensure the resolved path is inside templatesDir and not the directory itself
   if (relative.startsWith('..') || path.isAbsolute(relative) || relative === '') return null
   return resolved
+}
+
+// ── Version history ─────────────────────────────────────────────────────
+// Before each overwrite, the previous content is snapshotted to
+// data/templates/.versions/<name>/<epoch-ms>.html. Autosave fires every few
+// seconds, so snapshots are throttled: a new one only when the latest is
+// older than SNAPSHOT_MIN_GAP_MS. Oldest pruned beyond MAX_VERSIONS.
+const SNAPSHOT_MIN_GAP_MS = 5 * 60 * 1000
+const MAX_VERSIONS = 10
+
+async function snapshotVersion(name: string, filePath: string, newContent: string): Promise<void> {
+  let previous: string
+  try {
+    previous = await fs.readFile(filePath, 'utf-8')
+  } catch {
+    return // first save — nothing to snapshot
+  }
+  if (previous === newContent) return
+
+  const dir = versionsDirFor(name)
+  try {
+    await fs.mkdir(dir, { recursive: true })
+    const existing = (await fs.readdir(dir))
+      .filter(f => /^\d+\.html$/.test(f))
+      .sort((a, b) => Number(b.replace('.html', '')) - Number(a.replace('.html', '')))
+
+    const newestTs = existing.length ? Number(existing[0].replace('.html', '')) : 0
+    if (Date.now() - newestTs < SNAPSHOT_MIN_GAP_MS) return
+
+    await fs.writeFile(path.join(dir, `${Date.now()}.html`), previous, 'utf-8')
+
+    for (const stale of existing.slice(MAX_VERSIONS - 1)) {
+      await fs.unlink(path.join(dir, stale)).catch(() => {})
+    }
+  } catch (err: any) {
+    // Versioning must never block a save
+    console.warn(`[templates] snapshot failed for ${name}: ${err?.message}`)
+  }
 }
 
 export default defineEventHandler(async (event) => {
@@ -113,6 +143,7 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, message: 'Content too large' })
     }
 
+    await snapshotVersion(name, filePath, content);
     await fs.writeFile(filePath, content, 'utf-8');
     return { success: true, path: `/api/templates?name=${name}&preview=1` };
   }
@@ -134,6 +165,8 @@ export default defineEventHandler(async (event) => {
     try {
       await fs.access(oldPath);
       await fs.rename(oldPath, newPath);
+      // Carry the version history along with the rename
+      await fs.rename(versionsDirFor(oldName), versionsDirFor(newName)).catch(() => {})
       return { success: true };
     } catch {
       throw createError({ statusCode: 404, message: 'Source template not found' });
@@ -153,6 +186,7 @@ export default defineEventHandler(async (event) => {
     if (!filePath) throw createError({ statusCode: 400, message: 'Invalid template name' })
 
     await fs.unlink(filePath);
+    await fs.rm(versionsDirFor(name), { recursive: true, force: true }).catch(() => {})
     return { success: true };
   }
 });

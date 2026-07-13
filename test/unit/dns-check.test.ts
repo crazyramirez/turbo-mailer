@@ -42,12 +42,37 @@ describe('checkDnsAuth', () => {
     expect(res.dkim).toBeUndefined()
   })
 
-  it('reports missing records when resolution fails', async () => {
+  it('reports missing records on authoritative negative answers', async () => {
     resolveTxt.mockRejectedValue(Object.assign(new Error('ENOTFOUND'), { code: 'ENOTFOUND' }))
 
     const res = await checkDnsAuth('missing.test')
     expect(res.spf.found).toBe(false)
     expect(res.dmarc.found).toBe(false)
+  })
+
+  it('falls back to DNS-over-HTTPS when the system resolver is unreachable', async () => {
+    resolveTxt.mockRejectedValue(Object.assign(new Error('ECONNREFUSED'), { code: 'ECONNREFUSED' }))
+    const fetchMock = vi.fn(async (url: any) => ({
+      ok: true,
+      json: async () => (String(url).includes('_dmarc')
+        ? { Answer: [] }
+        : { Answer: [{ type: 16, data: '"v=spf1 include:_spf.google.com" " ~all"' }] }),
+    }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const res = await checkDnsAuth('doh-fallback.test')
+    expect(res.spf.found).toBe(true)
+    expect(res.spf.record).toContain('~all')
+    expect(fetchMock).toHaveBeenCalled()
+    vi.unstubAllGlobals()
+  })
+
+  it('throws (unknown) instead of reporting false negatives when DNS is fully unavailable', async () => {
+    resolveTxt.mockRejectedValue(Object.assign(new Error('ECONNREFUSED'), { code: 'ECONNREFUSED' }))
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline') }))
+
+    await expect(checkDnsAuth('offline.test')).rejects.toThrow('DNS unavailable')
+    vi.unstubAllGlobals()
   })
 
   it('checks the DKIM selector record when a selector is given', async () => {

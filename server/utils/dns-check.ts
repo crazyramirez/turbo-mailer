@@ -15,13 +15,43 @@ export interface DnsAuthResult {
 const CACHE_TTL_MS = 5 * 60 * 1000
 const cache = new Map<string, { at: number; result: DnsAuthResult }>()
 
+// Authoritative "no record" answers — an empty result is trustworthy
+const NO_RECORD_CODES = new Set(['ENOTFOUND', 'ENODATA', 'NXDOMAIN'])
+
+// Node's c-ares resolver can't reach some system resolvers (e.g. Windows
+// link-local IPv6 DNS → ECONNREFUSED) even when the OS resolves fine.
+// Fall back to DNS-over-HTTPS so the check reflects reality instead of
+// reporting every record as missing.
+async function resolveTxtViaDoH(name: string): Promise<string[]> {
+  const res = await fetch(
+    `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(name)}&type=TXT`,
+    {
+      headers: { Accept: 'application/dns-json' },
+      signal: AbortSignal.timeout(5000),
+    },
+  )
+  if (!res.ok) throw new Error(`DoH query failed: ${res.status}`)
+  const json = await res.json() as { Answer?: { type: number; data: string }[] }
+  // TXT answers come quoted and possibly chunked: "part1" "part2"
+  return (json.Answer ?? [])
+    .filter(a => a.type === 16)
+    .map(a => a.data.replace(/"\s+"/g, '').replace(/^"|"$/g, ''))
+}
+
 async function resolveTxtJoined(name: string): Promise<string[]> {
   try {
     const records = await dns.resolveTxt(name)
     // TXT answers arrive split into 255-byte chunks — join each record back
     return records.map(chunks => chunks.join(''))
-  } catch {
-    return []
+  } catch (err: any) {
+    if (NO_RECORD_CODES.has(err?.code)) return []
+    // Resolver unreachable/misbehaving — try DoH before giving up
+    try {
+      return await resolveTxtViaDoH(name)
+    } catch {
+      // Signal "unknown" to the caller — do NOT report a false missing-record
+      throw new Error(`DNS unavailable for ${name}`)
+    }
   }
 }
 
