@@ -753,7 +753,8 @@ onUnmounted(() => {
           >
             <Loader2 v-if="sending" :size="15" class="spin" />
             <Send v-else :size="15" />
-            <span>{{ sending ? "Enviando…" : "Enviar campaña" }}</span>
+            <span v-if="sending">Enviando…</span>
+            <span v-else>Enviar<span class="btn-send-long">&nbsp;campaña</span></span>
           </button>
           <button
             class="btn-delete"
@@ -1534,7 +1535,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 22px;
+  height: 38px;
+  padding: 0 22px;
   background: var(--accent);
   color: #fff;
   border: none;
@@ -1558,7 +1560,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 12px 32px;
+  height: 38px;
+  padding: 0 32px;
   background: transparent;
   color: var(--text-muted);
   border: 1px solid var(--border);
@@ -1573,7 +1576,9 @@ onUnmounted(() => {
   color: var(--text);
 }
 .btn-test {
-  padding: 10px 18px;
+  padding: 0 12px;
+  gap: 5px;
+  font-size: 12px;
 }
 .btn-test:hover {
   color: var(--accent-light);
@@ -2127,6 +2132,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  min-width: 0;
 }
 .config-card {
   background: rgb(0 0 0 / 3%);
@@ -2592,6 +2598,7 @@ select.field-input option {
   position: sticky;
   top: 20px;
   backdrop-filter: blur(5px);
+  min-width: 0;
 }
 
 /* Transitions */
@@ -2647,6 +2654,7 @@ select.field-input option {
     flex: none;
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 8px;
     width: 100%;
   }
@@ -2655,7 +2663,7 @@ select.field-input option {
   }
   .btn-send,
   .btn-ghost {
-    flex: 1 1 0%;
+    flex: 0 0 auto;
     height: 40px;
     min-height: unset;
     padding: 0 12px;
@@ -2664,6 +2672,9 @@ select.field-input option {
   }
   .hdr-actions span {
     display: inline;
+  }
+  .hdr-actions span.btn-send-long {
+    display: none;
   }
   .btn-delete {
     width: 40px;

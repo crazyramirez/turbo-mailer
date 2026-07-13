@@ -1,12 +1,12 @@
-[2026-07-06T22:58:47.420Z] [bounce] START host=imap.gmail.com port=993 user=info@viseni.com tls=true
-[2026-07-06T22:58:47.421Z] [bounce] connecting...
-[2026-07-06T22:58:48.916Z] [bounce] INBOX opened
-[2026-07-06T22:58:48.918Z] [bounce] search: from:mailer-daemon
-[2026-07-06T22:58:49.103Z] [bounce] search "from:mailer-daemon": 0 hit(s)
-[2026-07-06T22:58:49.104Z] [bounce] search: from:postmaster
-[2026-07-06T22:58:49.252Z] [bounce] search "from:postmaster": 0 hit(s)
-[2026-07-06T22:58:49.254Z] [bounce] search: subject:Undelivered
-[2026-07-06T22:58:49.414Z] [bounce] search "subject:Undelivered": 0 hit(s)
-[2026-07-06T22:58:49.415Z] [bounce] search: subject:Delivery Status
-[2026-07-06T22:58:49.562Z] [bounce] search "subject:Delivery Status": 0 hit(s)
-[2026-07-06T22:58:49.564Z] [bounce] UIDs total: 0 (s1=0 s2=0 s3=0 s4=0)
+[2026-07-13T19:50:01.912Z] [bounce] START host=imap.gmail.com port=993 user=info@viseni.com tls=true
+[2026-07-13T19:50:01.912Z] [bounce] connecting...
+[2026-07-13T19:50:04.536Z] [bounce] INBOX opened
+[2026-07-13T19:50:04.536Z] [bounce] search: from:mailer-daemon
+[2026-07-13T19:50:04.746Z] [bounce] search "from:mailer-daemon": 0 hit(s)
+[2026-07-13T19:50:04.747Z] [bounce] search: from:postmaster
+[2026-07-13T19:50:04.945Z] [bounce] search "from:postmaster": 0 hit(s)
+[2026-07-13T19:50:04.945Z] [bounce] search: subject:Undelivered
+[2026-07-13T19:50:05.159Z] [bounce] search "subject:Undelivered": 0 hit(s)
+[2026-07-13T19:50:05.160Z] [bounce] search: subject:Delivery Status
+[2026-07-13T19:50:05.331Z] [bounce] search "subject:Delivery Status": 0 hit(s)
+[2026-07-13T19:50:05.331Z] [bounce] UIDs total: 0 (s1=0 s2=0 s3=0 s4=0)
