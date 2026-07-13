@@ -19,10 +19,12 @@ import {
   RotateCcw,
   Clock,
   Calendar,
+  FlaskConical,
 } from "lucide-vue-next";
 import CampaignPreview from "~/components/campaigns/CampaignPreview.vue";
 import CampaignLibraryModal from "~/components/campaigns/CampaignLibraryModal.vue";
 import PreSendChecklist from "~/components/campaigns/PreSendChecklist.vue";
+import TestSendModal from "~/components/campaigns/TestSendModal.vue";
 
 definePageMeta({ layout: "app" });
 
@@ -387,6 +389,11 @@ function insertVar(v: string) {
 
 // ─── Send / Delete ───────────────────────────────────────────
 const showPrecheck = ref(false);
+const showTestModal = ref(false);
+
+const canTest = computed(
+  () => !!campaign.value?.templateHtml && campaign.value?.status !== "sending",
+);
 
 // Opens the pre-send checklist; the actual send happens on confirm
 function sendCampaign() {
@@ -728,6 +735,14 @@ onUnmounted(() => {
             title="Editor de plantillas"
           >
             <ExternalLink :size="14" /> <span>Editor</span>
+          </button>
+          <button
+            v-if="canTest"
+            class="btn-ghost btn-test"
+            @click="showTestModal = true"
+            title="Enviar prueba sin afectar a la campaña"
+          >
+            <FlaskConical :size="14" /> <span>Test</span>
           </button>
           <button
             v-if="canSend"
@@ -1257,6 +1272,16 @@ onUnmounted(() => {
         />
       </Transition>
 
+      <!-- Test send modal -->
+      <Transition name="fade-scale">
+        <TestSendModal
+          v-if="showTestModal"
+          :campaign-id="id"
+          :list-id="campaign.listId"
+          @close="showTestModal = false"
+        />
+      </Transition>
+
       <!-- Pre-send checklist -->
       <Transition name="fade-scale">
         <PreSendChecklist
@@ -1546,6 +1571,14 @@ onUnmounted(() => {
 .btn-ghost:hover {
   background: rgb(0 0 0 / 6%);
   color: var(--text);
+}
+.btn-test {
+  padding: 10px 18px;
+}
+.btn-test:hover {
+  color: var(--accent-light);
+  border-color: rgba(99, 102, 241, 0.35);
+  background: rgba(99, 102, 241, 0.08);
 }
 .btn-delete {
   width: 38px;
