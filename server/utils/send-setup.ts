@@ -1,9 +1,46 @@
 import { db } from '~/server/db/index'
 import { campaigns, contacts, sends } from '~/server/db/schema'
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 
 type Campaign = typeof campaigns.$inferSelect
 type Contact = typeof contacts.$inferSelect
+
+// Contacts who received the source campaign but never opened it and are
+// still active. Used by manual re-sends, auto follow-ups and the send flow.
+export async function getUnopenedRecipients(sourceCampaignId: number): Promise<Contact[]> {
+  return db.select({ contacts })
+    .from(contacts)
+    .innerJoin(sends, eq(sends.contactId, contacts.id))
+    .where(and(
+      eq(sends.campaignId, sourceCampaignId),
+      eq(sends.status, 'sent'),
+      eq(contacts.status, 'active'),
+    ))
+    .then(r => r.map(x => x.contacts))
+}
+
+// Clones a finished campaign as a follow-up draft targeting its non-openers.
+// Shared by the manual resend-unopened endpoint and the drip scheduler.
+export async function createFollowUpCampaign(
+  source: Campaign,
+  opts: { subject?: string; name?: string } = {},
+): Promise<Campaign> {
+  const [created] = await db.insert(campaigns).values({
+    name: opts.name?.trim().slice(0, 255) || `${source.name} — follow-up`,
+    subject: opts.subject?.trim().slice(0, 255) || source.subject,
+    templateName: source.templateName,
+    templateHtml: source.templateHtml,
+    listId: source.listId,
+    tagFilter: Array.isArray(source.tagFilter) ? source.tagFilter : [],
+    resendOfId: source.id,
+    status: 'draft',
+    unsubEmailSubject: source.unsubEmailSubject,
+    unsubEmailMessage: source.unsubEmailMessage,
+    resubEmailSubject: source.resubEmailSubject,
+    resubEmailMessage: source.resubEmailMessage,
+  }).returning()
+  return created
+}
 
 // Creates the send records for a campaign's initial send and flips it to
 // 'sending'. Shared by the manual send endpoint and the scheduler so A/B

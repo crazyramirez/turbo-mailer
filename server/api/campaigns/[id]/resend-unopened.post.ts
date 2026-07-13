@@ -1,8 +1,9 @@
 import { db } from '~/server/db/index'
-import { campaigns, sends } from '~/server/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { campaigns } from '~/server/db/schema'
+import { eq } from 'drizzle-orm'
 import { logAudit } from '~/server/utils/audit'
 import { getClientIp } from '~/server/utils/auth'
+import { createFollowUpCampaign, getUnopenedRecipients } from '~/server/utils/send-setup'
 
 // Creates a follow-up draft campaign targeting contacts who received the
 // original email but never opened it. The draft goes through the normal
@@ -18,38 +19,16 @@ export default defineEventHandler(async (event) => {
   if (source.status !== 'sent') {
     throw createError({ statusCode: 400, statusMessage: 'Only finished campaigns can be re-sent' })
   }
-  if (source.resendOfId) {
-    throw createError({ statusCode: 400, statusMessage: 'Cannot chain re-sends — use the original campaign' })
-  }
 
-  // Delivered but never opened. Clicks flip send status to 'opened' too,
-  // so status='sent' is exactly the never-engaged set.
-  const unopened = await db
-    .select({ id: sends.id })
-    .from(sends)
-    .where(and(eq(sends.campaignId, campaignId), eq(sends.status, 'sent')))
-
+  const unopened = await getUnopenedRecipients(campaignId)
   if (unopened.length === 0) {
     throw createError({ statusCode: 400, statusMessage: 'No unopened recipients to re-send to' })
   }
 
-  const subject = String(body?.subject || '').trim().slice(0, 255) || source.subject
-  const name = String(body?.name || '').trim().slice(0, 255) || `${source.name} — follow-up`
-
-  const [created] = await db.insert(campaigns).values({
-    name,
-    subject,
-    templateName: source.templateName,
-    templateHtml: source.templateHtml,
-    listId: source.listId,
-    tagFilter: Array.isArray(source.tagFilter) ? source.tagFilter : [],
-    resendOfId: campaignId,
-    status: 'draft',
-    unsubEmailSubject: source.unsubEmailSubject,
-    unsubEmailMessage: source.unsubEmailMessage,
-    resubEmailSubject: source.resubEmailSubject,
-    resubEmailMessage: source.resubEmailMessage,
-  }).returning()
+  const created = await createFollowUpCampaign(source, {
+    subject: body?.subject,
+    name: body?.name,
+  })
 
   logAudit('campaign.resend_unopened', {
     sourceCampaignId: campaignId,

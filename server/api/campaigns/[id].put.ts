@@ -21,12 +21,18 @@ export default defineEventHandler(async (event) => {
   const abSamplePct = Math.min(50, Math.max(5, Number(body.abSamplePct) || 20))
   const abWaitMinutes = Math.min(7 * 24 * 60, Math.max(10, Number(body.abWaitMinutes) || 240))
 
+  // Auto follow-up config: empty subject disables it
+  const followUpSubject = typeof body.followUpSubject === 'string' ? body.followUpSubject.trim().slice(0, 255) : ''
+  const followUpDelayHours = Math.min(30 * 24, Math.max(1, Number(body.followUpDelayHours) || 48))
+
   const [row] = await db.update(campaigns).set({
     name: name?.trim(),
     subject: subject?.trim(),
     subjectB: subjectB || null,
     abSamplePct,
     abWaitMinutes,
+    followUpSubject: followUpSubject || null,
+    followUpDelayHours,
     templateName: templateName || null,
     templateHtml: templateHtml || null,
     listId: listId ? Number(listId) : null,

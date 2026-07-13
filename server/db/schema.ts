@@ -58,6 +58,14 @@ export const campaigns = sqliteTable('campaigns', {
   abPhase: text('ab_phase', { enum: ['sample', 'waiting', 'final'] }),
   abDecideAt: integer('ab_decide_at', { mode: 'timestamp' }),
   abWinner: text('ab_winner', { enum: ['A', 'B'] }),
+  // Auto follow-up (drip): once the campaign finishes, after followUpDelayHours
+  // the scheduler sends followUpSubject to recipients who never opened.
+  // followUpDoneAt marks the trigger as consumed; followUpCampaignId links the
+  // created follow-up (null when there was nobody left to contact).
+  followUpSubject: text('follow_up_subject'),
+  followUpDelayHours: integer('follow_up_delay_hours').default(48),
+  followUpDoneAt: integer('follow_up_done_at', { mode: 'timestamp' }),
+  followUpCampaignId: integer('follow_up_campaign_id'),
   status: text('status', { enum: ['draft', 'scheduled', 'sending', 'sent', 'paused'] }).notNull().default('draft'),
   scheduledAt: integer('scheduled_at', { mode: 'timestamp' }),
   startedAt: integer('started_at', { mode: 'timestamp' }),

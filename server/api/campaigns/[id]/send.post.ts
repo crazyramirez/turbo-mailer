@@ -6,7 +6,7 @@ import { clearSignal } from '~/server/utils/campaign-state'
 import { logAudit } from '~/server/utils/audit'
 import { getClientIp } from '~/server/utils/auth'
 import { contactMatchesTags } from '~/server/utils/segment'
-import { setupCampaignSends } from '~/server/utils/send-setup'
+import { setupCampaignSends, getUnopenedRecipients } from '~/server/utils/send-setup'
 
 export default defineEventHandler(async (event) => {
   const campaignId = Number(getRouterParam(event, 'id'))
@@ -36,15 +36,7 @@ export default defineEventHandler(async (event) => {
     if (campaign.resendOfId) {
       // Follow-up campaign: target contacts whose send in the source campaign
       // was delivered but never opened, and who are still active
-      recipientRows = await db.select({ contacts })
-        .from(contacts)
-        .innerJoin(sends, eq(sends.contactId, contacts.id))
-        .where(and(
-          eq(sends.campaignId, campaign.resendOfId),
-          eq(sends.status, 'sent'),
-          eq(contacts.status, 'active'),
-        ))
-        .then(r => r.map(x => x.contacts))
+      recipientRows = await getUnopenedRecipients(campaign.resendOfId)
     } else if (campaign.listId) {
       recipientRows = await db.select({ contacts })
         .from(contacts)

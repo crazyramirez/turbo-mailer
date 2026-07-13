@@ -483,6 +483,22 @@ const abStats = computed(() => {
   return stats;
 });
 
+// ─── Auto follow-up ──────────────────────────────────────────
+const followUpEta = computed(() => {
+  const c = campaign.value;
+  if (!c?.finishedAt) return "";
+  const eta = new Date(
+    new Date(c.finishedAt).getTime() +
+      (Number(c.followUpDelayHours) || 48) * 3600_000,
+  );
+  return eta.toLocaleString("es-ES", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+});
+
 // ─── Preview as real contact ─────────────────────────────────
 const previewContactId = ref<number | null>(null);
 const previewContacts = ref<any[]>([]);
@@ -1107,6 +1123,95 @@ onUnmounted(() => {
               </div>
 
               <p v-else class="field-hint">Sin test A/B en esta campaña.</p>
+            </div>
+
+            <!-- Auto follow-up (drip) -->
+            <div class="config-card">
+              <div class="cc-label ab-label-row">
+                <span>Seguimiento automático</span>
+                <span
+                  v-if="campaign.followUpCampaignId"
+                  class="ab-phase-badge ab-final"
+                  >Enviado</span
+                >
+                <span
+                  v-else-if="campaign.followUpDoneAt"
+                  class="ab-phase-badge ab-final"
+                  >Todos abrieron</span
+                >
+                <span
+                  v-else-if="campaign.followUpSubject && campaign.status === 'sent'"
+                  class="ab-phase-badge ab-waiting"
+                  >Programado</span
+                >
+              </div>
+
+              <template v-if="isDraft">
+                <div class="input-wrap">
+                  <input
+                    v-model="campaign.followUpSubject"
+                    @input="scheduleSave"
+                    @blur="commitSave"
+                    type="text"
+                    class="field-input"
+                    placeholder="Asunto del seguimiento (vacío = sin seguimiento)"
+                  />
+                  <button
+                    v-if="campaign.followUpSubject"
+                    @click="
+                      campaign.followUpSubject = '';
+                      scheduleSave();
+                    "
+                    class="btn-clear"
+                  >
+                    ×
+                  </button>
+                </div>
+                <div v-if="campaign.followUpSubject" class="ab-config-row">
+                  <label class="ab-config-item">
+                    Enviar tras
+                    <select
+                      v-model.number="campaign.followUpDelayHours"
+                      class="field-input ab-select"
+                      @change="commitSave"
+                    >
+                      <option :value="24">24 horas</option>
+                      <option :value="48">48 horas</option>
+                      <option :value="72">3 días</option>
+                      <option :value="168">1 semana</option>
+                    </select>
+                  </label>
+                </div>
+                <p v-if="campaign.followUpSubject" class="field-hint" style="margin-top: 8px">
+                  Tras terminar el envío, quien no haya abierto en ese plazo recibirá
+                  el mismo email con este asunto, automáticamente.
+                </p>
+              </template>
+
+              <template v-else-if="campaign.followUpSubject">
+                <p class="field-hint">
+                  <template v-if="campaign.followUpCampaignId">
+                    Seguimiento enviado ·
+                    <NuxtLink
+                      :to="`/campaigns/${campaign.followUpCampaignId}`"
+                      class="followup-link"
+                      >ver campaña de seguimiento →</NuxtLink
+                    >
+                  </template>
+                  <template v-else-if="campaign.followUpDoneAt">
+                    No hizo falta enviar seguimiento — todos los destinatarios abrieron el email.
+                  </template>
+                  <template v-else-if="campaign.status === 'sent' && campaign.finishedAt">
+                    «{{ campaign.followUpSubject }}» se enviará a los no-abridores el
+                    {{ followUpEta }}.
+                  </template>
+                  <template v-else>
+                    Seguimiento configurado: «{{ campaign.followUpSubject }}» ({{ campaign.followUpDelayHours }}h tras el envío).
+                  </template>
+                </p>
+              </template>
+
+              <p v-else class="field-hint">Sin seguimiento automático en esta campaña.</p>
             </div>
 
             <!-- List -->
@@ -2941,6 +3046,14 @@ select.field-input option {
 .ab-winner-icon {
   color: #22c55e;
   flex-shrink: 0;
+}
+.followup-link {
+  color: #818cf8;
+  text-decoration: none;
+  font-weight: 700;
+}
+.followup-link:hover {
+  text-decoration: underline;
 }
 
 /* Transitions */

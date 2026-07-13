@@ -3,7 +3,8 @@ import { campaigns, contacts, listContacts, sends } from '~/server/db/schema'
 import { eq, lte, and, sql } from 'drizzle-orm'
 import { processCampaign, type SendConfig } from '~/server/utils/campaign-processor'
 import { clearSignal } from '~/server/utils/campaign-state'
-import { setupCampaignSends } from '~/server/utils/send-setup'
+import { setupCampaignSends, createFollowUpCampaign, getUnopenedRecipients } from '~/server/utils/send-setup'
+import { isNull, isNotNull } from 'drizzle-orm'
 
 function buildSendConfig(config: Record<string, any>): SendConfig {
   return {
@@ -75,6 +76,55 @@ async function decideAbWinners(config: Record<string, any>) {
   }
 }
 
+// Auto follow-up (drip): finished campaigns with a configured follow-up
+// subject spawn and send a follow-up to non-openers once the delay elapses.
+async function processAutoFollowUps(config: Record<string, any>) {
+  const candidates = await db
+    .select()
+    .from(campaigns)
+    .where(and(
+      eq(campaigns.status, 'sent'),
+      isNotNull(campaigns.followUpSubject),
+      isNull(campaigns.followUpDoneAt),
+    ))
+
+  const now = Date.now()
+  for (const campaign of candidates) {
+    if (!campaign.finishedAt || !campaign.followUpSubject?.trim()) continue
+    const delayMs = Math.max(1, Number(campaign.followUpDelayHours) || 48) * 3600_000
+    if (new Date(campaign.finishedAt).getTime() + delayMs > now) continue
+
+    // Mark consumed FIRST — a crash mid-processing must never double-send
+    await db.update(campaigns)
+      .set({ followUpDoneAt: new Date() })
+      .where(eq(campaigns.id, campaign.id))
+
+    const recipients = await getUnopenedRecipients(campaign.id)
+    if (recipients.length === 0) {
+      console.log(`[scheduler] follow-up for campaign ${campaign.id}: everyone opened — nothing to send`)
+      continue
+    }
+
+    const followUp = await createFollowUpCampaign(campaign, {
+      subject: campaign.followUpSubject,
+      name: `${campaign.name} — seguimiento`,
+    })
+
+    await db.update(campaigns)
+      .set({ followUpCampaignId: followUp.id })
+      .where(eq(campaigns.id, campaign.id))
+
+    await setupCampaignSends(followUp, recipients)
+    clearSignal(followUp.id)
+    console.log(`[scheduler] follow-up ${followUp.id} for campaign ${campaign.id}: sending to ${recipients.length} non-openers`)
+
+    processCampaign(followUp.id, buildSendConfig(config)).catch(async (err) => {
+      console.error(`[scheduler] follow-up campaignId=${followUp.id} error:`, err)
+      await db.update(campaigns).set({ status: 'paused' }).where(eq(campaigns.id, followUp.id)).catch(() => {})
+    })
+  }
+}
+
 export default defineNitroPlugin(() => {
   // Avoid double-registration during Vite HMR
   if (import.meta.hot) return
@@ -89,6 +139,12 @@ export default defineNitroPlugin(() => {
       await decideAbWinners(config)
     } catch (err) {
       console.error('[scheduler] error deciding A/B winners:', err)
+    }
+
+    try {
+      await processAutoFollowUps(config)
+    } catch (err) {
+      console.error('[scheduler] error processing auto follow-ups:', err)
     }
 
     try {
