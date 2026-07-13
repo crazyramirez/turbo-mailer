@@ -45,54 +45,57 @@ export default defineEventHandler(async (event) => {
       openLock.add(lockKey)
       setTimeout(() => openLock.delete(lockKey), 2000)
 
-      // 2. DB Deduplication
-      const tenSecondsAgo = new Date(Date.now() - 10000)
-      const [existing] = await db.select()
-        .from(trackingEvents)
-        .where(and(
-          eq(trackingEvents.sendId, sendId),
-          eq(trackingEvents.eventType, 'open'),
-          eq(trackingEvents.ip, ip),
-          gt(trackingEvents.createdAt, tenSecondsAgo)
-        ))
-        .limit(1)
+      // Synchronous transaction (better-sqlite3): dedup check, event insert
+      // and counter increment are atomic — no await boundaries where a
+      // concurrent open could double-count
+      db.transaction((tx) => {
+        // 2. DB Deduplication
+        const tenSecondsAgo = new Date(Date.now() - 10000)
+        const existing = tx.select({ id: trackingEvents.id })
+          .from(trackingEvents)
+          .where(and(
+            eq(trackingEvents.sendId, sendId),
+            eq(trackingEvents.eventType, 'open'),
+            eq(trackingEvents.ip, ip),
+            gt(trackingEvents.createdAt, tenSecondsAgo)
+          ))
+          .limit(1)
+          .get()
+        if (existing) return
 
-      if (!existing) {
-        const [send] = await db.select().from(sends).where(eq(sends.id, sendId))
-        if (send && send.sentAt) {
-          const now = Date.now()
-          const sentAt = new Date(send.sentAt).getTime()
-          const diffSeconds = (now - sentAt) / 1000
+        const send = tx.select().from(sends).where(eq(sends.id, sendId)).get()
+        if (!send || !send.sentAt) return
 
-          // Minimal threshold of 1s to filter only near-instant automated server scans
-          if (diffSeconds < 1) {
-            return PIXEL_GIF
-          }
+        const diffSeconds = (Date.now() - new Date(send.sentAt).getTime()) / 1000
 
-          const campaignId = send.campaignId
+        // Minimal threshold of 1s to filter only near-instant automated server scans
+        if (diffSeconds < 1) return
 
-          await db.insert(trackingEvents).values({
-            sendId,
-            campaignId,
-            contactId: send.contactId,
-            eventType: 'open',
-            ip,
-            userAgent: getHeader(event, 'user-agent') || '',
-            createdAt: new Date(),
-          })
+        const campaignId = send.campaignId
 
-          const [marked] = await db.update(sends)
-            .set({ status: 'opened' })
-            .where(and(eq(sends.id, sendId), eq(sends.status, 'sent')))
-            .returning({ id: sends.id })
+        tx.insert(trackingEvents).values({
+          sendId,
+          campaignId,
+          contactId: send.contactId,
+          eventType: 'open',
+          ip,
+          userAgent: ua,
+          createdAt: new Date(),
+        }).run()
 
-          if (marked) {
-            await db.update(campaigns)
-              .set({ openCount: sql`${campaigns.openCount} + 1` })
-              .where(eq(campaigns.id, campaignId))
-          }
+        const marked = tx.update(sends)
+          .set({ status: 'opened' })
+          .where(and(eq(sends.id, sendId), eq(sends.status, 'sent')))
+          .returning({ id: sends.id })
+          .get()
+
+        if (marked) {
+          tx.update(campaigns)
+            .set({ openCount: sql`${campaigns.openCount} + 1` })
+            .where(eq(campaigns.id, campaignId))
+            .run()
         }
-      }
+      })
     } catch {
       // Silently fail for pixel
     }

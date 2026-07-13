@@ -201,12 +201,14 @@ function signTimestamped(payload: string, secret: string): string {
   return `${ts}.${sig}`
 }
 
-function verifyTimestamped(
+export type TokenStatus = 'valid' | 'expired' | 'invalid'
+
+function verifyTimestampedDetailed(
   payload: string,
   token: string,
   secret: string,
   ttlDays: number,
-): boolean {
+): TokenStatus {
   const dot = token.indexOf('.')
   // Legacy token (no dot): verify with old format for backwards compatibility
   if (dot === -1) {
@@ -214,23 +216,34 @@ function verifyTimestamped(
     try {
       const a = Buffer.from(expected, 'hex')
       const b = Buffer.from(token, 'hex')
-      if (a.length !== b.length) return false
-      return timingSafeEqual(a, b)
-    } catch { return false }
+      if (a.length !== b.length) return 'invalid'
+      return timingSafeEqual(a, b) ? 'valid' : 'invalid'
+    } catch { return 'invalid' }
   }
   // New format: "ts.sig"
   const ts = Number(token.slice(0, dot))
   const sig = token.slice(dot + 1)
-  if (!ts || !sig) return false
-  const ageSec = Math.floor(Date.now() / 1000) - ts
-  if (ageSec > ttlDays * 86400) return false
+  if (!ts || !sig) return 'invalid'
   const expected = createHmac('sha256', secret).update(`${payload}:${ts}`).digest('hex')
   try {
     const a = Buffer.from(expected, 'hex')
     const b = Buffer.from(sig, 'hex')
-    if (a.length !== b.length) return false
-    return timingSafeEqual(a, b)
-  } catch { return false }
+    if (a.length !== b.length) return 'invalid'
+    if (!timingSafeEqual(a, b)) return 'invalid'
+  } catch { return 'invalid' }
+  // Signature is authentic — only now decide on expiry, so callers can
+  // distinguish a forged token from a genuine-but-old one
+  const ageSec = Math.floor(Date.now() / 1000) - ts
+  return ageSec > ttlDays * 86400 ? 'expired' : 'valid'
+}
+
+function verifyTimestamped(
+  payload: string,
+  token: string,
+  secret: string,
+  ttlDays: number,
+): boolean {
+  return verifyTimestampedDetailed(payload, token, secret, ttlDays) === 'valid'
 }
 
 export function signUnsubscribeToken(sendId: number, secret: string): string {
@@ -247,6 +260,12 @@ export function signClickToken(sendId: number, url: string, secret: string): str
 
 export function verifyClickToken(sendId: number, url: string, token: string, secret: string): boolean {
   return verifyTimestamped(`click:${sendId}:${url}`, token, deriveSecret(secret, 'click'), DEFAULT_TOKEN_TTL_DAYS)
+}
+
+// Distinguishes expired-but-authentic tokens so old email links can still
+// redirect (without being counted) instead of erroring for the recipient
+export function verifyClickTokenDetailed(sendId: number, url: string, token: string, secret: string): TokenStatus {
+  return verifyTimestampedDetailed(`click:${sendId}:${url}`, token, deriveSecret(secret, 'click'), DEFAULT_TOKEN_TTL_DAYS)
 }
 
 export function signOpenToken(sendId: number, secret: string): string {

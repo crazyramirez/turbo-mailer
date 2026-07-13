@@ -37,7 +37,10 @@ export function injectTracking(html: string, sendId: number, baseUrl: string, se
     /<a\s+([^>]*?)href=(["'])((?:https?:\/\/|www\.)[^"']+)\2([^>]*?)>/gi,
     (_match, pre, _quote, url, post) => {
       linkCount++
-      const fullUrl = /^https?:\/\//i.test(url) ? url : `https://${url}`
+      // Editors emit HTML-entity-encoded hrefs (&amp;); decode so the signed
+      // URL matches the real destination and the redirect isn't malformed
+      const decodedUrl = url.replace(/&amp;/g, '&')
+      const fullUrl = /^https?:\/\//i.test(decodedUrl) ? decodedUrl : `https://${decodedUrl}`
       const sig = signClickToken(sendId, fullUrl, secret)
       const trackUrl = `${baseUrl}/api/track/click?s=${sendId}&amp;u=${encodeURIComponent(fullUrl)}&amp;sig=${sig}`
       return `<a ${pre}href="${trackUrl}"${post}>`

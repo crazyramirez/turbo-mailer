@@ -93,10 +93,11 @@ export default defineEventHandler(async (event) => {
     .orderBy(desc(campaigns.openCount))
     .limit(5)
 
-  // Opens by day — use tracking_events so timestamps reflect when opens occurred, not when sent
+  // Opens by day — use tracking_events so timestamps reflect when opens occurred, not when sent.
+  // DISTINCT send_id: re-opens by the same recipient don't inflate the chart vs openCount
   const rawOpensByDay = await db.select({
     date: sql<string>`strftime('%Y-%m-%d', datetime(created_at, 'unixepoch'))`,
-    count: sql<number>`COUNT(*)`,
+    count: sql<number>`COUNT(DISTINCT send_id)`,
   })
     .from(trackingEvents)
     .where(sql`event_type = 'open' AND created_at >= ${fromTs} AND created_at <= ${toTs}`)
@@ -105,10 +106,11 @@ export default defineEventHandler(async (event) => {
 
   const opensByDay = fillDays(rawOpensByDay, fromStr, toStr)
 
-  // Clicks by day — tracking_events gives actual per-click timestamps
+  // Clicks by day — tracking_events gives actual per-click timestamps.
+  // DISTINCT send_id: repeat clicks by the same recipient don't inflate the chart vs clickCount
   const rawClicksByDay = await db.select({
     date: sql<string>`strftime('%Y-%m-%d', datetime(created_at, 'unixepoch'))`,
-    count: sql<number>`COUNT(*)`,
+    count: sql<number>`COUNT(DISTINCT send_id)`,
   })
     .from(trackingEvents)
     .where(sql`event_type = 'click' AND created_at >= ${fromTs} AND created_at <= ${toTs}`)
@@ -125,12 +127,12 @@ export default defineEventHandler(async (event) => {
       WHEN user_agent LIKE '%Windows%' THEN 'Windows'
       WHEN user_agent LIKE '%Mac%' THEN 'Mac'
       ELSE 'Web' END`,
-    count: sql<number>`COUNT(*)`,
+    count: sql<number>`COUNT(DISTINCT send_id)`,
   })
     .from(trackingEvents)
     .where(eq(trackingEvents.eventType, 'open'))
     .groupBy(sql`1`)
-    .orderBy(sql`COUNT(*) DESC`)
+    .orderBy(sql`COUNT(DISTINCT send_id) DESC`)
 
   return {
     totalContacts,
