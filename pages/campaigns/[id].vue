@@ -484,7 +484,9 @@ const abStats = computed(() => {
 });
 
 // ─── Manual status override ──────────────────────────────────
-const SETTABLE_STATUSES = ["draft", "scheduled", "paused", "sent"] as const;
+// "scheduled" no es forzable a mano: programar requiere fecha y tiene su
+// propio flujo (botón de programación) — forzarlo equivaldría a borrador
+const SETTABLE_STATUSES = ["draft", "paused", "sent"] as const;
 const statusMenuOpen = ref(false);
 const changingStatus = ref(false);
 
@@ -492,8 +494,6 @@ const STATUS_CHANGE_WARNING: Record<string, string> = {
   draft:
     "La campaña volverá a ser editable y podrá enviarse de nuevo (los registros de envío actuales se conservan hasta el próximo envío).",
   sent: "La campaña se marcará como enviada sin pasar por el pipeline de envío.",
-  scheduled:
-    "La campaña quedará programada con la fecha configurada actualmente.",
   paused: "La campaña quedará pausada.",
 };
 

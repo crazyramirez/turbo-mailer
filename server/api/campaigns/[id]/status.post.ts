@@ -6,13 +6,14 @@ import { getClientIp } from '~/server/utils/auth'
 
 // Manual status override from the campaign page. The regular PUT deliberately
 // coerces status to draft/scheduled/paused; this endpoint lets the user force
-// any resting state — e.g. mark an imported campaign as 'sent', or bring a
+// a resting state — e.g. mark an imported campaign as 'sent', or bring a
 // finished one back to 'draft' to edit and re-send.
 //
-// 'sending' is NOT settable: it belongs exclusively to the send pipeline.
-// A campaign actively sending can't be overridden here either — pause it first.
+// NOT settable here: 'sending' belongs exclusively to the send pipeline, and
+// 'scheduled' requires a date so it goes through the scheduling flow instead.
+// A campaign actively sending can't be overridden either — pause it first.
 
-const SETTABLE = ['draft', 'scheduled', 'paused', 'sent'] as const
+const SETTABLE = ['draft', 'paused', 'sent'] as const
 type SettableStatus = typeof SETTABLE[number]
 
 export default defineEventHandler(async (event) => {
@@ -42,10 +43,6 @@ export default defineEventHandler(async (event) => {
     // for reference and get recreated on the next send anyway
     patch.scheduledAt = null
     patch.finishedAt = null
-  } else if (target === 'scheduled') {
-    if (!campaign.scheduledAt || new Date(campaign.scheduledAt) <= new Date()) {
-      throw createError({ statusCode: 400, statusMessage: 'Set a future schedule date before marking as scheduled' })
-    }
   }
 
   const [updated] = await db.update(campaigns)
