@@ -10,6 +10,7 @@ const PUBLIC_PATHS = [
   '/api/preferences',
   '/api/subscribers',
   '/api/subscribe',
+  '/api/confirm',
   '/api/ghost-status',
   '/api/setup/',
   '/api/health',

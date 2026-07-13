@@ -107,11 +107,23 @@ export async function processCampaign(campaignId: number, cfg: SendConfig): Prom
 
   // Load recipients with pending sends (supports resume and retry)
   const pendingSends = await db
-    .select({ sendId: sends.id, contactId: sends.contactId, email: sends.email })
+    .select({ sendId: sends.id, contactId: sends.contactId, email: sends.email, variant: sends.variant })
     .from(sends)
     .where(and(eq(sends.campaignId, campaignId), eq(sends.status, 'pending')))
 
   if (pendingSends.length === 0) {
+    // A/B holdout still waiting for its winner? Re-enter the waiting phase
+    // (covers pause→resume while the sample-phase timer was running)
+    const [held] = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(sends)
+      .where(and(eq(sends.campaignId, campaignId), eq(sends.status, 'held')))
+    if ((held?.count ?? 0) > 0) {
+      await db.update(campaigns)
+        .set({ status: 'sending', abPhase: 'waiting' })
+        .where(eq(campaigns.id, campaignId))
+      return
+    }
     await db.update(campaigns)
       .set({ status: 'sent', finishedAt: new Date() })
       .where(eq(campaigns.id, campaignId))
@@ -131,6 +143,10 @@ export async function processCampaign(campaignId: number, cfg: SendConfig): Prom
   // A5: Compile template and subject once — not per email
   const compiledHtml = compileTemplate(campaign.templateHtml)
   const compiledSubject = compileTemplate(campaign.subject)
+  // A/B: variant-B sample sends use subjectB; the final wave (variant null)
+  // uses whichever subject won the sample phase
+  const compiledSubjectB = campaign.subjectB ? compileTemplate(campaign.subjectB) : null
+  const winnerSubject = (campaign.abWinner === 'B' && compiledSubjectB) ? compiledSubjectB : compiledSubject
 
   // A6: Batch campaign counter flushes every COUNTER_FLUSH_EVERY emails
   let batchSent = 0
@@ -157,7 +173,10 @@ export async function processCampaign(campaignId: number, cfg: SendConfig): Prom
     const vars = contact ?? { email: send.email }
 
     try {
-      const personalizedSubject = compiledSubject.applyTo(vars)
+      const subjectTpl = send.variant === 'B' && compiledSubjectB
+        ? compiledSubjectB
+        : send.variant === 'A' ? compiledSubject : winnerSubject
+      const personalizedSubject = subjectTpl.applyTo(vars)
       const trackedHtml = injectTracking(
         compiledHtml.applyTo(vars),
         send.sendId,
@@ -260,6 +279,7 @@ export async function processCampaign(campaignId: number, cfg: SendConfig): Prom
       sentCount: sql<number>`COUNT(*) FILTER (WHERE status IN ('sent','opened'))`,
       failCount: sql<number>`COUNT(*) FILTER (WHERE status IN ('failed','bounced'))`,
       openCount: sql<number>`COUNT(*) FILTER (WHERE status = 'opened')`,
+      heldCount: sql<number>`COUNT(*) FILTER (WHERE status = 'held')`,
     })
     .from(sends)
     .where(eq(sends.campaignId, campaignId))
@@ -273,7 +293,14 @@ export async function processCampaign(campaignId: number, cfg: SendConfig): Prom
     openCount: stats?.openCount ?? 0,
   }
 
-  if (!wasPaused) {
+  const abWaiting = !wasPaused && (stats?.heldCount ?? 0) > 0 && campaign.abPhase === 'sample'
+
+  if (abWaiting) {
+    // A/B sample done — hold position until the scheduler decides the winner
+    const waitMinutes = Math.max(10, Number(campaign.abWaitMinutes) || 240)
+    updateData.abPhase = 'waiting'
+    updateData.abDecideAt = new Date(Date.now() + waitMinutes * 60_000)
+  } else if (!wasPaused) {
     updateData.status = 'sent'
     updateData.finishedAt = new Date()
   }
@@ -283,7 +310,7 @@ export async function processCampaign(campaignId: number, cfg: SendConfig): Prom
     .where(eq(campaigns.id, campaignId))
 
   // Auto-check bounces after campaign ends — NDR emails need time to arrive
-  if (!wasPaused) {
+  if (!wasPaused && !abWaiting) {
     setTimeout(() => {
       const imapCfg = getImapConfig()
       if (imapCfg) processBounces(imapCfg).catch(() => {})

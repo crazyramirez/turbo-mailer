@@ -6,6 +6,7 @@ import { clearSignal } from '~/server/utils/campaign-state'
 import { logAudit } from '~/server/utils/audit'
 import { getClientIp } from '~/server/utils/auth'
 import { contactMatchesTags } from '~/server/utils/segment'
+import { setupCampaignSends } from '~/server/utils/send-setup'
 
 export default defineEventHandler(async (event) => {
   const campaignId = Number(getRouterParam(event, 'id'))
@@ -62,29 +63,8 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: 'No active recipients in list' })
     }
 
-    // Clear any previous send records for this campaign if it was a draft
-    await db.delete(sends).where(eq(sends.campaignId, campaignId))
-
-    // Create send records
-    await db.insert(sends).values(
-      recipientRows.map(c => ({
-        campaignId,
-        contactId: c.id,
-        email: c.email,
-        personalizedSubject: null,
-        status: 'pending' as const,
-      }))
-    )
-
-    await db.update(campaigns).set({
-      status: 'sending',
-      startedAt: new Date(),
-      totalRecipients: recipientRows.length,
-      sentCount: 0,
-      failCount: 0,
-      openCount: 0,
-      clickCount: 0,
-    }).where(eq(campaigns.id, campaignId))
+    // Create send records (A/B sampling handled inside when subjectB is set)
+    await setupCampaignSends(campaign, recipientRows)
   } else {
     // Resume
     await db.update(campaigns)

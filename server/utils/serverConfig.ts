@@ -49,6 +49,7 @@ const ENV_MAP: Record<string, string> = {
   dkimDomain:            'DKIM_DOMAIN',
   dkimSelector:          'DKIM_SELECTOR',
   dkimPrivateKey:        'DKIM_PRIVATE_KEY',
+  doubleOptIn:           'DOUBLE_OPT_IN',
   imapAutoDetect:        'IMAP_AUTO_DETECT',
   imapHost:              'IMAP_HOST',
   imapPort:              'IMAP_PORT',

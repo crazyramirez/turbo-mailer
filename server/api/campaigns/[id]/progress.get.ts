@@ -11,6 +11,7 @@ export default defineEventHandler(async (event) => {
       status: campaigns.status,
       total: campaigns.totalRecipients,
       startedAt: campaigns.startedAt,
+      abPhase: campaigns.abPhase,
     })
     .from(campaigns)
     .where(eq(campaigns.id, campaignId))
@@ -22,12 +23,14 @@ export default defineEventHandler(async (event) => {
     .select({
       sent: sql<number>`COUNT(*) FILTER (WHERE ${sends.status} IN ('sent', 'opened'))`,
       fail: sql<number>`COUNT(*) FILTER (WHERE ${sends.status} IN ('failed', 'bounced'))`,
+      held: sql<number>`COUNT(*) FILTER (WHERE ${sends.status} = 'held')`,
     })
     .from(sends)
     .where(eq(sends.campaignId, campaignId))
 
   const sent = live?.sent ?? 0
   const fail = live?.fail ?? 0
+  const held = live?.held ?? 0
 
   let etaMs: number | null = null
   if (c.status === 'sending' && c.startedAt && c.total && c.total > 0) {
@@ -35,10 +38,11 @@ export default defineEventHandler(async (event) => {
     const elapsedMs = Date.now() - new Date(c.startedAt).getTime()
     if (processed > 0 && elapsedMs > 0) {
       const ratePerMs = processed / elapsedMs
-      const remaining = c.total - processed
+      // A/B holdout isn't being sent right now — exclude it from the ETA
+      const remaining = c.total - processed - held
       etaMs = remaining > 0 ? Math.round(remaining / ratePerMs) : 0
     }
   }
 
-  return { name: c.name, status: c.status, total: c.total ?? 0, sent, fail, etaMs }
+  return { name: c.name, status: c.status, total: c.total ?? 0, sent, fail, held, abPhase: c.abPhase, etaMs }
 })

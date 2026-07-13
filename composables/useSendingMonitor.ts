@@ -6,6 +6,8 @@ interface CampaignProgress {
   sent: number
   total: number
   fail: number
+  held?: number
+  abPhase?: string | null
   etaMs: number | null
 }
 
@@ -23,7 +25,17 @@ async function fetchProgress(id: number) {
     const data = await $fetch<CampaignProgress>(`/api/campaigns/${id}/progress`)
     progress.value = data
 
-    if (data.status === 'sent' && !completing.value) {
+    if (data.abPhase === 'waiting' && !completing.value) {
+      // A/B sample done — campaign idles until the winner is decided.
+      // Treat like completion for the overlay; the campaign page shows the phase.
+      completing.value = true
+      stopPolling()
+      completionTimer = setTimeout(() => {
+        visible.value = false
+        completing.value = false
+        activeCampaignId.value = null
+      }, 4000)
+    } else if (data.status === 'sent' && !completing.value) {
       completing.value = true
       stopPolling()
       completionTimer = setTimeout(() => {

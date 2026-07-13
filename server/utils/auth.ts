@@ -276,6 +276,15 @@ export function verifyOpenToken(sendId: number, token: string, secret: string): 
   return verifyTimestamped(`open:${sendId}`, token, deriveSecret(secret, 'open'), DEFAULT_TOKEN_TTL_DAYS)
 }
 
+export function signConfirmToken(contactId: number, secret: string): string {
+  return signTimestamped(`confirm:${contactId}`, deriveSecret(secret, 'confirm'))
+}
+
+// Double opt-in confirmation links live shorter than tracking tokens
+export function verifyConfirmToken(contactId: number, token: string, secret: string): boolean {
+  return verifyTimestamped(`confirm:${contactId}`, token, deriveSecret(secret, 'confirm'), 7)
+}
+
 export function signResubscribeToken(sendId: number, secret: string): string {
   return signTimestamped(`resub:${sendId}`, deriveSecret(secret, 'resub'))
 }

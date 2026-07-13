@@ -10,6 +10,7 @@ export default defineEventHandler(async (event) => {
       id: sends.id,
       email: sends.email,
       status: sends.status,
+      variant: sends.variant,
       sentAt: sends.sentAt,
       errorMsg: sends.errorMsg,
       contactName: contacts.name,

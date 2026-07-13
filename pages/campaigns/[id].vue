@@ -453,6 +453,36 @@ async function retryCampaign() {
   }
 }
 
+// ─── A/B subject test ────────────────────────────────────────
+const abPhaseLabel = computed(() => {
+  switch (campaign.value?.abPhase) {
+    case "sample":
+      return "Enviando muestra";
+    case "waiting":
+      return "Esperando ganador";
+    case "final":
+      return `Ganador: ${campaign.value?.abWinner ?? "?"}`;
+    default:
+      return "";
+  }
+});
+
+const abStats = computed(() => {
+  const stats = {
+    A: { sent: 0, opens: 0 },
+    B: { sent: 0, opens: 0 },
+    held: 0,
+  };
+  for (const s of sendsList.value) {
+    if (s.status === "held") stats.held++;
+    if (s.variant !== "A" && s.variant !== "B") continue;
+    const v = stats[s.variant as "A" | "B"];
+    if (s.status === "sent" || s.status === "opened") v.sent++;
+    if (s.status === "opened") v.opens++;
+  }
+  return stats;
+});
+
 // ─── Preview as real contact ─────────────────────────────────
 const previewContactId = ref<number | null>(null);
 const previewContacts = ref<any[]>([]);
@@ -681,6 +711,7 @@ const SEND_BADGE: Record<string, string> = {
   pending: "bd-pending",
   opened: "bd-opened",
   bounced: "bd-bounced",
+  held: "bd-pending",
 };
 const SEND_LABEL: Record<string, string> = {
   sent: "Enviado",
@@ -688,6 +719,7 @@ const SEND_LABEL: Record<string, string> = {
   pending: "Pendiente",
   opened: "Abierto",
   bounced: "Rebotado",
+  held: "En espera (A/B)",
 };
 
 onMounted(async () => {
@@ -999,6 +1031,82 @@ onUnmounted(() => {
               <p v-if="isScheduled" class="field-hint" style="color: #f59e0b; display: flex; align-items: center; gap: 4px; margin-top: 8px;">
                 <AlertCircle :size="12" /> Campaña programada · Desprograma para modificar
               </p>
+            </div>
+
+            <!-- A/B subject test -->
+            <div class="config-card">
+              <div class="cc-label ab-label-row">
+                <span>Test A/B de asunto</span>
+                <span v-if="campaign.abPhase" class="ab-phase-badge" :class="`ab-${campaign.abPhase}`">
+                  {{ abPhaseLabel }}
+                </span>
+              </div>
+
+              <template v-if="isDraft">
+                <div class="input-wrap">
+                  <input
+                    v-model="campaign.subjectB"
+                    @input="scheduleSave"
+                    @blur="commitSave"
+                    type="text"
+                    class="field-input"
+                    placeholder="Asunto B (vacío = sin test A/B)"
+                  />
+                  <button
+                    v-if="campaign.subjectB"
+                    @click="
+                      campaign.subjectB = '';
+                      scheduleSave();
+                    "
+                    class="btn-clear"
+                  >
+                    ×
+                  </button>
+                </div>
+                <div v-if="campaign.subjectB" class="ab-config-row">
+                  <label class="ab-config-item">
+                    Muestra
+                    <select v-model.number="campaign.abSamplePct" class="field-input ab-select" @change="commitSave">
+                      <option v-for="p in [10, 20, 30, 40, 50]" :key="p" :value="p">{{ p }}%</option>
+                    </select>
+                  </label>
+                  <label class="ab-config-item">
+                    Decidir tras
+                    <select v-model.number="campaign.abWaitMinutes" class="field-input ab-select" @change="commitSave">
+                      <option :value="60">1 hora</option>
+                      <option :value="120">2 horas</option>
+                      <option :value="240">4 horas</option>
+                      <option :value="480">8 horas</option>
+                      <option :value="1440">24 horas</option>
+                    </select>
+                  </label>
+                </div>
+                <p v-if="campaign.subjectB" class="field-hint" style="margin-top: 8px">
+                  Se envía la muestra 50/50 entre A y B; el asunto con más aperturas va al resto automáticamente.
+                </p>
+              </template>
+
+              <div v-else-if="campaign.abPhase" class="ab-results">
+                <div class="ab-variant-row">
+                  <span class="ab-variant-tag">A</span>
+                  <span class="ab-variant-subject">{{ campaign.subject }}</span>
+                  <span class="ab-variant-stats">{{ abStats.A.opens }}/{{ abStats.A.sent }} aperturas</span>
+                  <Check v-if="campaign.abWinner === 'A'" :size="14" class="ab-winner-icon" />
+                </div>
+                <div class="ab-variant-row">
+                  <span class="ab-variant-tag b">B</span>
+                  <span class="ab-variant-subject">{{ campaign.subjectB }}</span>
+                  <span class="ab-variant-stats">{{ abStats.B.opens }}/{{ abStats.B.sent }} aperturas</span>
+                  <Check v-if="campaign.abWinner === 'B'" :size="14" class="ab-winner-icon" />
+                </div>
+                <p v-if="campaign.abPhase === 'waiting'" class="field-hint" style="margin-top: 8px">
+                  Muestra enviada · el ganador se decidirá
+                  {{ campaign.abDecideAt ? `el ${new Date(campaign.abDecideAt).toLocaleString("es-ES")}` : "pronto" }}
+                  ({{ abStats.held }} contactos en espera)
+                </p>
+              </div>
+
+              <p v-else class="field-hint">Sin test A/B en esta campaña.</p>
             </div>
 
             <!-- List -->
@@ -2739,6 +2847,100 @@ select.field-input option {
 .preview-as-select:focus {
   outline: none;
   border-color: #6366f1;
+}
+
+/* ── A/B test card ── */
+.ab-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ab-phase-badge {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-radius: 20px;
+  padding: 3px 10px;
+}
+.ab-phase-badge.ab-sample {
+  background: rgb(99 102 241 / 15%);
+  color: #818cf8;
+}
+.ab-phase-badge.ab-waiting {
+  background: rgb(250 204 21 / 12%);
+  color: #facc15;
+}
+.ab-phase-badge.ab-final {
+  background: rgb(34 197 94 / 12%);
+  color: #22c55e;
+}
+.ab-config-row {
+  display: flex;
+  gap: 14px;
+  margin-top: 10px;
+}
+.ab-config-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.ab-select {
+  width: auto;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.ab-results {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ab-variant-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgb(0 0 0 / 12%);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+.ab-variant-tag {
+  font-size: 11px;
+  font-weight: 800;
+  color: #818cf8;
+  background: rgb(99 102 241 / 15%);
+  border-radius: 6px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.ab-variant-tag.b {
+  color: #f97316;
+  background: rgb(249 115 22 / 15%);
+}
+.ab-variant-subject {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ab-variant-stats {
+  font-size: 11px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+.ab-winner-icon {
+  color: #22c55e;
+  flex-shrink: 0;
 }
 
 /* Transitions */

@@ -104,10 +104,13 @@ function runMigrations() {
 // Run migrations synchronously on startup
 runMigrations()
 
-// Recover campaigns stuck in 'sending' after a crash/restart
+// Recover campaigns stuck in 'sending' after a crash/restart.
+// A/B campaigns in the 'waiting' phase are NOT stuck — they idle in 'sending'
+// on purpose until the scheduler decides the winning variant.
 try {
   sqlite.prepare(
-    `UPDATE campaigns SET status = 'paused', finished_at = ? WHERE status = 'sending'`
+    `UPDATE campaigns SET status = 'paused', finished_at = ?
+     WHERE status = 'sending' AND (ab_phase IS NULL OR ab_phase != 'waiting')`
   ).run(Math.floor(Date.now() / 1000))
   console.log('[DB] Recovered any stuck campaigns.')
 } catch {

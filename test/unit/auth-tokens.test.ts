@@ -11,6 +11,7 @@ import {
   signUnsubscribeToken, verifyUnsubscribeToken,
   signClickToken, verifyClickToken,
   signOpenToken, verifyOpenToken,
+  signConfirmToken, verifyConfirmToken,
   hashApiKey, verifyApiKey,
 } from '~/server/utils/auth'
 
@@ -49,6 +50,14 @@ describe('HMAC tokens', () => {
     expect(verifyClickToken(1, 'https://evil.com', t, SECRET)).toBe(false)
   })
 
+  it('confirm token round-trips and is scoped to the contact', () => {
+    const t = signConfirmToken(99, SECRET)
+    expect(verifyConfirmToken(99, t, SECRET)).toBe(true)
+    expect(verifyConfirmToken(100, t, SECRET)).toBe(false)
+    // Purpose-scoped: unusable as unsubscribe token
+    expect(verifyUnsubscribeToken(99, t, SECRET)).toBe(false)
+  })
+
   it('rejects garbage tokens without throwing', () => {
     expect(verifyUnsubscribeToken(1, '', SECRET)).toBe(false)
     expect(verifyUnsubscribeToken(1, 'not-a-token', SECRET)).toBe(false)
@@ -66,6 +75,14 @@ describe('token expiry', () => {
     expect(verifyUnsubscribeToken(7, t, SECRET)).toBe(true)
     vi.advanceTimersByTime(2 * 86400 * 1000)
     expect(verifyUnsubscribeToken(7, t, SECRET)).toBe(false)
+  })
+
+  it('confirm token expires after 7 days', () => {
+    const t = signConfirmToken(7, SECRET)
+    vi.advanceTimersByTime(6 * 86400 * 1000)
+    expect(verifyConfirmToken(7, t, SECRET)).toBe(true)
+    vi.advanceTimersByTime(2 * 86400 * 1000)
+    expect(verifyConfirmToken(7, t, SECRET)).toBe(false)
   })
 })
 

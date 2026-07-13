@@ -50,6 +50,14 @@ export const campaigns = sqliteTable('campaigns', {
   // Follow-up campaigns: when set, recipients come from the source campaign's
   // delivered-but-unopened sends instead of the list
   resendOfId: integer('resend_of_id'),
+  // A/B subject test: when subjectB is set, a sample split between A/B is sent
+  // first; after abWaitMinutes the variant with more opens goes to the rest
+  subjectB: text('subject_b'),
+  abSamplePct: integer('ab_sample_pct').default(20),
+  abWaitMinutes: integer('ab_wait_minutes').default(240),
+  abPhase: text('ab_phase', { enum: ['sample', 'waiting', 'final'] }),
+  abDecideAt: integer('ab_decide_at', { mode: 'timestamp' }),
+  abWinner: text('ab_winner', { enum: ['A', 'B'] }),
   status: text('status', { enum: ['draft', 'scheduled', 'sending', 'sent', 'paused'] }).notNull().default('draft'),
   scheduledAt: integer('scheduled_at', { mode: 'timestamp' }),
   startedAt: integer('started_at', { mode: 'timestamp' }),
@@ -74,7 +82,9 @@ export const sends = sqliteTable('sends', {
   contactId: integer('contact_id').references(() => contacts.id, { onDelete: 'set null' }),
   email: text('email').notNull(),
   personalizedSubject: text('personalized_subject'),
-  status: text('status', { enum: ['pending', 'sent', 'failed', 'bounced', 'opened'] }).notNull().default('pending'),
+  // 'held' = A/B holdout waiting for the winning variant to be decided
+  status: text('status', { enum: ['pending', 'sent', 'failed', 'bounced', 'opened', 'held'] }).notNull().default('pending'),
+  variant: text('variant', { enum: ['A', 'B'] }),
   sentAt: integer('sent_at', { mode: 'timestamp' }),
   errorMsg: text('error_msg'),
 }, (t) => ({
