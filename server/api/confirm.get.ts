@@ -3,6 +3,7 @@ import { contacts } from '~/server/db/schema'
 import { eq } from 'drizzle-orm'
 import { verifyConfirmToken } from '~/server/utils/auth'
 import { logAudit } from '~/server/utils/audit'
+import { emitWebhook } from '~/server/utils/webhook'
 import { getClientIp } from '~/server/utils/auth'
 
 // Double opt-in confirmation link target. Public, HMAC-protected.
@@ -71,6 +72,7 @@ export default defineEventHandler(async (event) => {
     .where(eq(contacts.id, contactId))
 
   logAudit('contact.confirm_opt_in', { contactId, email: contact.email }, getClientIp(event))
+  emitWebhook('contact.subscribe_confirmed', { contactId, email: contact.email })
 
   return htmlPage('¡Suscripción confirmada!', 'Tu dirección ha sido verificada. Ya formas parte de la lista.', true)
 })

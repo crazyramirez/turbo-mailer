@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm'
 import { verifyUnsubscribeToken, signResubscribeToken } from '~/server/utils/auth'
 import { emailT } from '~/server/utils/email-locale'
 import { checkAndIncrementSubLimit } from '~/server/utils/sub-rate-limit'
+import { emitWebhook } from '~/server/utils/webhook'
 
 async function sendConfirmationEmail(
   email: string,
@@ -116,6 +117,12 @@ export default defineEventHandler(async (event) => {
 
     await db.update(contacts).set({ status: 'unsubscribed', updatedAt: new Date() })
       .where(eq(contacts.id, contact.id))
+
+    emitWebhook('contact.unsubscribed', {
+      contactId: contact.id,
+      email: contact.email,
+      campaignId: send.campaignId,
+    })
 
     const resubToken = signResubscribeToken(sendId, config.unsubscribeSecret as string)
     const baseUrl = String(config.trackingBaseUrl || 'http://localhost:3000')

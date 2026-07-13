@@ -483,6 +483,35 @@ const abStats = computed(() => {
   return stats;
 });
 
+// ─── Link click stats ────────────────────────────────────────
+const linkStats = ref<
+  { url: string; clicks: number; uniqueClickers: number }[]
+>([]);
+
+async function fetchLinkStats() {
+  if (!campaign.value || campaign.value.status === "draft") return;
+  try {
+    const res = await $fetch<any>(`/api/campaigns/${id}/analytics`);
+    linkStats.value = res.linkStats ?? [];
+  } catch {
+    linkStats.value = [];
+  }
+}
+
+const maxLinkClicks = computed(() =>
+  Math.max(...linkStats.value.map((l) => l.clicks), 1),
+);
+
+function shortUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    const path = u.pathname === "/" ? "" : u.pathname;
+    return u.hostname + (path.length > 32 ? path.slice(0, 32) + "…" : path);
+  } catch {
+    return url.length > 48 ? url.slice(0, 48) + "…" : url;
+  }
+}
+
 // ─── Auto follow-up ──────────────────────────────────────────
 const followUpEta = computed(() => {
   const c = campaign.value;
@@ -741,6 +770,7 @@ const SEND_LABEL: Record<string, string> = {
 onMounted(async () => {
   await Promise.all([fetchCampaign(), fetchSends(), fetchLists()]);
   fetchPreviewContacts();
+  fetchLinkStats();
 
   // Auto-sync template content if it was updated in the editor (only for non-sent campaigns)
   if (
@@ -1496,6 +1526,35 @@ onUnmounted(() => {
                 Reanudar envío
               </button>
             </div>
+
+            <!-- Top clicked links -->
+            <template v-if="linkStats.length > 0">
+              <div class="section-hdr">Enlaces más clicados</div>
+              <div class="link-stats">
+                <div
+                  v-for="l in linkStats.slice(0, 8)"
+                  :key="l.url"
+                  class="link-stat-row"
+                  :title="l.url"
+                >
+                  <div
+                    class="link-stat-bar"
+                    :style="{ width: `${(l.clicks / maxLinkClicks) * 100}%` }"
+                  ></div>
+                  <MousePointerClick :size="12" class="link-stat-icon" />
+                  <a
+                    :href="l.url"
+                    target="_blank"
+                    rel="noopener"
+                    class="link-stat-url"
+                    >{{ shortUrl(l.url) }}</a
+                  >
+                  <span class="link-stat-count">
+                    {{ l.clicks }} clicks · {{ l.uniqueClickers }} únicos
+                  </span>
+                </div>
+              </div>
+            </template>
 
             <div class="section-hdr">Destinatarios</div>
             <div class="table-wrap">
@@ -3054,6 +3113,55 @@ select.field-input option {
 }
 .followup-link:hover {
   text-decoration: underline;
+}
+
+/* ── Link click stats ── */
+.link-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+.link-stat-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.link-stat-bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: rgb(99 102 241 / 12%);
+  pointer-events: none;
+}
+.link-stat-icon {
+  color: #818cf8;
+  flex-shrink: 0;
+  position: relative;
+}
+.link-stat-url {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  position: relative;
+}
+.link-stat-url:hover {
+  color: #818cf8;
+}
+.link-stat-count {
+  font-size: 11px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  position: relative;
 }
 
 /* Transitions */

@@ -7,7 +7,7 @@ let _cache: Record<string, any> | null = null
 export const dataDir = process.env.DATA_DIR || resolve(process.cwd(), 'data')
 
 // Fields that may be AES-256-GCM encrypted in config.json
-const ENCRYPTED_FIELDS = new Set(['smtpPass', 'imapPass', 'openaiApiKey', 'dkimPrivateKey'])
+const ENCRYPTED_FIELDS = new Set(['smtpPass', 'imapPass', 'openaiApiKey', 'dkimPrivateKey', 'webhookSecret'])
 
 function getFileConfig(): Record<string, any> {
   if (_cache) return _cache
@@ -50,6 +50,8 @@ const ENV_MAP: Record<string, string> = {
   dkimSelector:          'DKIM_SELECTOR',
   dkimPrivateKey:        'DKIM_PRIVATE_KEY',
   doubleOptIn:           'DOUBLE_OPT_IN',
+  webhookUrl:            'WEBHOOK_URL',
+  webhookSecret:         'WEBHOOK_SECRET',
   imapAutoDetect:        'IMAP_AUTO_DETECT',
   imapHost:              'IMAP_HOST',
   imapPort:              'IMAP_PORT',

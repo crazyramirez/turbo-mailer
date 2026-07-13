@@ -2,6 +2,7 @@
 import { sends, campaigns, trackingEvents } from '~/server/db/schema'
 import { eq, sql, and, gt } from 'drizzle-orm'
 import { verifyClickTokenDetailed } from '~/server/utils/auth'
+import { emitWebhook } from '~/server/utils/webhook'
 
 // In-memory lock to prevent race conditions from rapid-fire mobile clicks
 const clickLock = new Set<string>()
@@ -71,7 +72,7 @@ export default defineEventHandler(async (event) => {
       // check, event insert and counter increments are atomic — no await
       // boundaries where a concurrent click on another link of the same send
       // could double-count
-      db.transaction((tx) => {
+      const recorded = db.transaction((tx) => {
         // 2. DB Deduplication (backup)
         const fiveSecondsAgo = new Date(Date.now() - 5000)
         const existing = tx.select({ id: trackingEvents.id })
@@ -85,10 +86,10 @@ export default defineEventHandler(async (event) => {
           ))
           .limit(1)
           .get()
-        if (existing) return
+        if (existing) return null
 
         const send = tx.select().from(sends).where(eq(sends.id, sendId)).get()
-        if (!send) return
+        if (!send) return null
 
         // campaigns.clickCount counts recipients who clicked (like openCount),
         // not total click events — increment only on this send's first click
@@ -133,7 +134,13 @@ export default defineEventHandler(async (event) => {
               .run()
           }
         }
+
+        return { campaignId: send.campaignId, contactId: send.contactId, email: send.email }
       })
+
+      if (recorded) {
+        emitWebhook('email.clicked', { sendId, url: targetUrl, ...recorded })
+      }
     } catch (err) {
       console.error('[track/click] error:', err)
     }

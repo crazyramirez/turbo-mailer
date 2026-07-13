@@ -2,6 +2,7 @@
 import { sends, campaigns, trackingEvents } from '~/server/db/schema'
 import { and, eq, ne, sql, gt } from 'drizzle-orm'
 import { verifyOpenToken } from '~/server/utils/auth'
+import { emitWebhook } from '~/server/utils/webhook'
 
 const PIXEL_GIF = Buffer.from(
   'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
@@ -48,7 +49,7 @@ export default defineEventHandler(async (event) => {
       // Synchronous transaction (better-sqlite3): dedup check, event insert
       // and counter increment are atomic — no await boundaries where a
       // concurrent open could double-count
-      db.transaction((tx) => {
+      const recorded = db.transaction((tx) => {
         // 2. DB Deduplication
         const tenSecondsAgo = new Date(Date.now() - 10000)
         const existing = tx.select({ id: trackingEvents.id })
@@ -61,15 +62,15 @@ export default defineEventHandler(async (event) => {
           ))
           .limit(1)
           .get()
-        if (existing) return
+        if (existing) return null
 
         const send = tx.select().from(sends).where(eq(sends.id, sendId)).get()
-        if (!send || !send.sentAt) return
+        if (!send || !send.sentAt) return null
 
         const diffSeconds = (Date.now() - new Date(send.sentAt).getTime()) / 1000
 
         // Minimal threshold of 1s to filter only near-instant automated server scans
-        if (diffSeconds < 1) return
+        if (diffSeconds < 1) return null
 
         const campaignId = send.campaignId
 
@@ -95,7 +96,13 @@ export default defineEventHandler(async (event) => {
             .where(eq(campaigns.id, campaignId))
             .run()
         }
+
+        return { campaignId, contactId: send.contactId, email: send.email }
       })
+
+      if (recorded) {
+        emitWebhook('email.opened', { sendId, ...recorded })
+      }
     } catch {
       // Silently fail for pixel
     }

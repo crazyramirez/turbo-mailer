@@ -36,7 +36,39 @@ Missing `UNSUBSCRIBE_SECRET` → 500 at runtime, not silent failure.
 
 Only `draft | scheduled | paused` are writable via PUT.
 `sending` and `sent` are set exclusively by the send pipeline.
-Campaigns stuck in `sending` after a crash are reset to `paused` on startup.
+Campaigns stuck in `sending` after a crash are reset to `paused` on startup —
+EXCEPT campaigns with `ab_phase = 'waiting'`, which idle in `sending` on purpose
+until the scheduler decides the A/B winner.
+
+## A/B subject test
+
+`subjectB` set on a campaign → `setupCampaignSends` (server/utils/send-setup.ts)
+sends an unbiased sample split 50/50 (variants on `sends.variant`), holds the rest
+as `sends.status = 'held'`. After `abWaitMinutes` the scheduler picks the variant
+with more opens (tie → A), flips held → pending and sends the final wave.
+Needs ≥10 recipients, otherwise sends normally with subject A.
+
+## Follow-ups and drip
+
+- `campaigns.resend_of_id` — follow-up campaign whose recipients are the source
+  campaign's delivered-but-unopened sends (still-active contacts only).
+- Manual: POST `/api/campaigns/:id/resend-unopened` creates a follow-up draft.
+- Auto (drip): `followUpSubject` + `followUpDelayHours` on a campaign → scheduler
+  auto-creates AND auto-sends the follow-up after the delay. `followUpDoneAt` is
+  set BEFORE processing (crash = lost follow-up, never a double-send).
+
+## Double opt-in
+
+`doubleOptIn: true` in config.json (or `DOUBLE_OPT_IN=true`): `/api/subscribe`
+creates contacts as `inactive` + sends confirmation email (HMAC token, 7-day TTL);
+`GET /api/confirm?c=ID&t=...` activates. Off by default.
+
+## Outgoing webhooks
+
+`webhookUrl` + `webhookSecret` in config.json (or `WEBHOOK_URL`/`WEBHOOK_SECRET`):
+fire-and-forget POST on `email.opened`, `email.clicked`, `contact.unsubscribed`,
+`contact.subscribe_confirmed`. Signed `X-TurboMailer-Signature: sha256=<hmac>`.
+SSRF-guarded, 5s timeout, no retries — never blocks tracking endpoints.
 
 ## Data limits
 
