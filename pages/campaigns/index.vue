@@ -562,6 +562,9 @@ const { showHelp } = useKeyboardShortcuts([
   font-weight: 800;
   color: #fff;
   margin: 4px 0 0;
+  /* Reserva siempre 2 líneas: las cards con nombre corto alinean con las largas */
+  line-height: 1.3;
+  min-height: 2.6em;
 }
 .card-subject {
   font-size: 13px;
