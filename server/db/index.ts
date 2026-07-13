@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
-import { resolve, join } from 'node:path'
+import { resolve, join, dirname } from 'node:path'
 import { mkdirSync, existsSync } from 'node:fs'
 import * as schema from './schema'
 
@@ -38,31 +38,32 @@ function runMigrations() {
     let migrationsPath = resolve(process.cwd(), 'server/db/migrations')
     
     if (!import.meta.dev) {
+      // dirname(process.argv[1]) = .output/server regardless of cwd
+      const entryDir = process.argv[1] ? dirname(process.argv[1]) : null
       const prodPaths = [
+        ...(entryDir ? [join(entryDir, 'assets/migrations')] : []),
         resolve(process.cwd(), '.output/server/assets/migrations'),
         resolve(process.cwd(), 'server/assets/migrations'),
         resolve(process.cwd(), 'server/db/migrations'),
       ]
-      
-      for (const p of prodPaths) {
-        if (existsSync(p)) {
-          migrationsPath = p
-          break
-        }
-      }
+
+      migrationsPath = prodPaths.find(p => existsSync(p)) ?? prodPaths[0]
     }
 
     console.log(`[DB] Checking migrations in: ${migrationsPath}`)
-    
+
     if (!existsSync(migrationsPath)) {
-      console.warn(`[DB] Migrations folder not found at ${migrationsPath}. Skipping auto-migration.`)
-      return
+      throw new Error(`Migrations folder not found at ${migrationsPath}`)
     }
 
     migrate(db, { migrationsFolder: migrationsPath })
     console.log('[DB] Database migrations completed successfully.')
   } catch (error) {
     console.error('[DB] Failed to run database migrations:', error)
+    if (!import.meta.dev) {
+      // Fail loudly: an unmigrated schema causes opaque 500s on every write.
+      throw error
+    }
   }
 }
 

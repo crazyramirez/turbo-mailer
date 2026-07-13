@@ -147,6 +147,21 @@ export default defineNuxtConfig({
         baseName: 'migrations',
         dir: './server/db/migrations'
       }
-    ]
+    ],
+    hooks: {
+      // serverAssets are bundled into chunks, not written as real files,
+      // but the runtime migrator (drizzle) needs a filesystem folder.
+      // Copy the migrations dir into .output/server/assets/migrations.
+      'compiled': async (nitro) => {
+        const { cpSync, existsSync } = await import('node:fs')
+        const { resolve, join } = await import('node:path')
+        const src = resolve(nitro.options.rootDir, 'server/db/migrations')
+        const dest = join(nitro.options.output.serverDir, 'assets/migrations')
+        if (existsSync(src)) {
+          cpSync(src, dest, { recursive: true })
+          console.log(`[DB] Copied migrations to ${dest}`)
+        }
+      }
+    }
   }
 });
