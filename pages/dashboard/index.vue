@@ -856,6 +856,7 @@ async function duplicateCampaign() {
   display: flex;
   align-items: center;
   gap: 10px;
+  padding-bottom: 10px;
 }
 .panel-header h2 {
   font-size: 15px;
