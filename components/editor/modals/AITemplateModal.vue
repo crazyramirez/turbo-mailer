@@ -143,8 +143,16 @@ const applyGeneratedTemplate = async (data: any) => {
                 const a = el.querySelector('a')
                 if (a) {
                   a.innerHTML = value as string
-                  const valStr = value as string
-                  a.href = valStr.includes('@') ? `mailto:${valStr}` : (valStr.startsWith('http') ? valStr : `https://${valStr}`)
+                  // La IA puede devolver "web / teléfono" combinados: usar solo el
+                  // primer tramo sin espacios para no generar hrefs inválidos
+                  const valStr = (value as string).trim().split(/[\s/]+/)[0] || ''
+                  if (valStr.includes('@')) {
+                    a.href = `mailto:${valStr}`
+                  } else if (/^\+?[\d][\d\s().-]*$/.test((value as string).trim())) {
+                    a.href = `tel:${(value as string).replace(/[^+\d]/g, '')}`
+                  } else if (valStr) {
+                    a.href = valStr.startsWith('http') ? valStr : `https://${valStr}`
+                  }
                 } else {
                   el.innerHTML = value as string
                 }

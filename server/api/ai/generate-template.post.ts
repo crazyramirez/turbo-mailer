@@ -42,7 +42,7 @@ REGLAS DE GENERACIÓN DE CONTENIDO:
 - REEMPLAZA ESPACIOS POR %20. NUNCA uses espacios.
 - TEXTOS: Escribe copy real y largo. Usa <br> para saltos de línea y <b> para resaltar palabras clave. NADA de placeholders.
 - GRIDS (grid-2, grid-3, grid-4): Los replacements pueden ser ARRAYS si hay varios elementos (ej. "title": ["Opción A", "Opción B"]). Si pasas un solo string, se repetirá en todos.
-- FIRMA (signature): Genera obligatoriamente "title" (Nombre), "subtitle" (Empresa/Cargo), y "contact" (como un ARRAY de exactamente 2 strings: ["correo@ejemplo.com", "Sitio Web o Teléfono"]).
+- FIRMA (signature): Genera obligatoriamente "title" (Nombre), "subtitle" (Empresa/Cargo), y "contact" (como un ARRAY de exactamente 2 strings: ["correo@ejemplo.com", "www.ejemplo.com"]). Cada string de "contact" debe ser UN SOLO dato (un email, una web O un teléfono). NUNCA combines web y teléfono en el mismo string.
 
 DEBES RESPONDER SIEMPRE EN FORMATO JSON VÁLIDO. 
 

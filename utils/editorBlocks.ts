@@ -468,7 +468,10 @@ export const editorBlocks: EditorBlock[] = [
             <a href="mailto:hola@tudominio.com" style="color:#6366f1;text-decoration:none;">hola@tudominio.com</a>
           </div>
           <div data-toggle="contact" style="font-family:Arial;font-size:14px;color:#334155;margin-top:3px;">
-            <a href="#" style="color:#6366f1;text-decoration:none;">www.tudominio.com</a>
+            <a href="https://www.tudominio.com" style="color:#6366f1;text-decoration:none;">www.tudominio.com</a>
+          </div>
+          <div data-toggle="contact" style="font-family:Arial;font-size:14px;color:#334155;margin-top:3px;">
+            <a href="tel:+34600000000" style="color:#6366f1;text-decoration:none;">+34 600 000 000</a>
           </div>
         </td>
       </tr>

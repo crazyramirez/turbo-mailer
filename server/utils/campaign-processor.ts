@@ -34,7 +34,7 @@ export interface SendConfig {
 export function injectTracking(html: string, sendId: number, baseUrl: string, secret: string): string {
   let linkCount = 0
   const tracked = html.replace(
-    /<a\s+([^>]*?)href=(["'])((?:https?:\/\/|www\.)[^"']+)\2([^>]*?)>/gi,
+    /<a\s+([^>]*?)href=(["'])((?:https?:\/\/|www\.)[^"'\s]+)\2([^>]*?)>/gi,
     (_match, pre, _quote, url, post) => {
       linkCount++
       // Editors emit HTML-entity-encoded hrefs (&amp;); decode so the signed

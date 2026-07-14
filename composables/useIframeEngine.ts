@@ -775,8 +775,35 @@ function setupIframeEvents(doc: Document) {
   doc.addEventListener('selectionchange', updateToolbar, { signal })
   doc.addEventListener('scroll', updateToolbar, { signal })
 
-  doc.addEventListener('input', () => {
+  // Los enlaces de contacto (firma) deben apuntar a lo que dice su texto:
+  // regenerar el href desde el texto editado en cada cambio
+  const syncContactHrefs = (target: HTMLElement | null) => {
+    const el = target?.closest?.('[data-toggle="contact"]') as HTMLElement | null
+    if (!el) return
+    el.querySelectorAll('a').forEach((a) => {
+      const text = (a.textContent || '').trim()
+      if (!text) return
+      if (text.includes('@')) {
+        a.setAttribute('href', `mailto:${text.split(/\s+/)[0]}`)
+      } else if (/^\+?[\d][\d\s().-]*$/.test(text)) {
+        a.setAttribute('href', `tel:${text.replace(/[^+\d]/g, '')}`)
+      } else {
+        const token = text.split(/[\s/]+/)[0]
+        if (token) a.setAttribute('href', /^https?:\/\//i.test(token) ? token : `https://${token}`)
+      }
+    })
+  }
+
+  doc.addEventListener('input', (e: Event) => {
+    syncContactHrefs(e.target as HTMLElement | null)
     refreshLayers()
+    triggerAutosave()
+  }, { signal })
+
+  // Respaldo: al salir del campo, sincronizar de nuevo por si el input no cubrió
+  // el último estado (ej. paste, autocompletar)
+  doc.addEventListener('focusout', (e: Event) => {
+    syncContactHrefs(e.target as HTMLElement | null)
     triggerAutosave()
   }, { signal })
 

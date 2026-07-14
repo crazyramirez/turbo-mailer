@@ -538,6 +538,7 @@ const { showHelp } = useKeyboardShortcuts([
   padding: 22px;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 10px;
   transition:
     border-color 0.2s,
