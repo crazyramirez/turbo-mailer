@@ -807,11 +807,12 @@ button.dot:hover {
   position: relative;
 }
 .fs-body.desktop {
-  background: #ebebeb;
+  /* background: #ebebeb; */
+  background: #1a1a1c; 
   justify-content: center;
 }
 .fs-body.desktop.fs-dark {
-  background: #111;
+  background: #1a1a1c; 
 }
 .fs-body.mobile {
   background: #1a1a1c;
