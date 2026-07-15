@@ -2958,7 +2958,7 @@ select.field-input option {
   border-radius: 14px;
   overflow-y: auto;
   overflow-x: auto;
-  max-height: 44vh;
+  max-height: 34vh;
 }
 .table-empty {
   padding: 48px;
