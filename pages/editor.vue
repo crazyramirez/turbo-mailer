@@ -21,9 +21,15 @@ import AIImproveModal from "~/components/editor/modals/AIImproveModal.vue";
 
 const { t } = useI18n();
 const { editorDragState, resetEditorState } = useEditorState();
-const { injectIframeContent, triggerAutosave, setupEditorWatches } =
-  useIframeEngine();
-const { loadTemplates, loadTemplate, handleSave } = useTemplateManager();
+const {
+  injectIframeContent,
+  triggerAutosave,
+  setupEditorWatches,
+  updateHtml,
+  teardownEditor,
+} = useIframeEngine();
+const { loadTemplates, loadTemplate, handleSave, saveTemplate } =
+  useTemplateManager();
 const { openPrompt } = usePrompt();
 
 function handleGlobalKeydown(e: KeyboardEvent) {
@@ -42,20 +48,59 @@ function handleGlobalKeydown(e: KeyboardEvent) {
     e.preventDefault();
     useIframeEngine().redo();
   }
-  if (e.key === "Delete") {
-    const isEditing =
-      (e.target as HTMLElement)?.isContentEditable ||
-      ["INPUT", "TEXTAREA"].includes((e.target as HTMLElement)?.tagName);
-    if (!isEditing) {
-      const { selectedElement } = useEditorState();
-      if (selectedElement.value) {
-        e.preventDefault();
-        import("~/composables/useBlockEditor").then(({ useBlockEditor }) => {
-          useBlockEditor().deleteSelectedBlock();
-        });
-      }
-    }
+  const isEditing =
+    (e.target as HTMLElement)?.isContentEditable ||
+    ["INPUT", "TEXTAREA"].includes((e.target as HTMLElement)?.tagName);
+  const { selectedElement } = useEditorState();
+
+  if (e.key === "Delete" && !isEditing && selectedElement.value) {
+    e.preventDefault();
+    import("~/composables/useBlockEditor").then(({ useBlockEditor }) => {
+      useBlockEditor().deleteSelectedBlock();
+    });
   }
+
+  // Mirrors the in-iframe shortcuts so they work regardless of where focus is.
+  if (
+    (e.ctrlKey || e.metaKey) &&
+    (e.key === "d" || e.key === "D") &&
+    selectedElement.value
+  ) {
+    e.preventDefault();
+    import("~/composables/useBlockEditor").then(({ useBlockEditor }) => {
+      useBlockEditor().duplicateSelectedBlock();
+    });
+  }
+
+  if (
+    e.altKey &&
+    (e.key === "ArrowUp" || e.key === "ArrowDown") &&
+    selectedElement.value
+  ) {
+    e.preventDefault();
+    import("~/composables/useBlockEditor").then(({ useBlockEditor }) => {
+      useBlockEditor().moveSelectedBlock(e.key === "ArrowUp" ? "up" : "down");
+    });
+  }
+
+  if (e.key === "Escape" && !isEditing && selectedElement.value) {
+    e.preventDefault();
+    import("~/composables/useBlockEditor").then(({ useBlockEditor }) => {
+      useBlockEditor().deselect();
+    });
+  }
+}
+
+// Autosave is debounced by up to 2s, so a tab close can land between the last
+// edit and the write. Flush on the way out and warn only if a write is still
+// in flight.
+function handleBeforeUnload(e: BeforeUnloadEvent) {
+  const { hasPendingWork } = useIframeEngine();
+  if (!hasPendingWork()) return;
+  updateHtml();
+  saveTemplate(true);
+  e.preventDefault();
+  e.returnValue = "";
 }
 
 onMounted(async () => {
@@ -95,12 +140,24 @@ onMounted(async () => {
   (window as any).triggerAutosave = () => triggerAutosave(true);
 
   window.addEventListener("keydown", handleGlobalKeydown);
+  window.addEventListener("beforeunload", handleBeforeUnload);
 });
 
 onUnmounted(() => {
-  triggerAutosave(true);
+  // Serialize and flush synchronously while the iframe still exists, then kill
+  // the debounced timers: a later autosave would run against a null iframeRef
+  // and could persist stale html.
+  updateHtml();
+  saveTemplate(true);
+  teardownEditor();
+
   document.body.style.overflow = "";
   window.removeEventListener("keydown", handleGlobalKeydown);
+  window.removeEventListener("beforeunload", handleBeforeUnload);
+  delete (window as any).editorState;
+  delete (window as any).openLinkPrompt;
+  delete (window as any).openColorPrompt;
+  delete (window as any).triggerAutosave;
   resetEditorState();
 });
 </script>

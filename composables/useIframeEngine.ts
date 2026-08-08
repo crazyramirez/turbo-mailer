@@ -4,6 +4,7 @@ import { useToast } from '~/composables/useToast'
 import { iframeEditorStyles } from '~/utils/iframeStyles'
 import { editorStyleBases, type EditorStyleBase } from '~/utils/editorStyles'
 import { sanitizeLinkUrl } from '~/utils/editorLinks'
+import { sanitizePastedHtml, plainTextToHtml } from '~/utils/editorPaste'
 
 declare global {
   interface Window {
@@ -90,6 +91,7 @@ function restoreSnapshot(html: string) {
   updateHtml()
   if (autosaveTimeout) clearTimeout(autosaveTimeout)
   autosaveTimeout = setTimeout(() => {
+    autosaveTimeout = null
     import('~/composables/useTemplateManager').then(({ useTemplateManager }) => {
       useTemplateManager().saveTemplate(true)
     })
@@ -369,14 +371,40 @@ function setupIframeEvents(doc: Document) {
       e.preventDefault()
       redo()
     }
+    const isEditing = (e.target as HTMLElement)?.isContentEditable
+
     if (e.key === 'Delete') {
-      const isEditing = (e.target as HTMLElement)?.isContentEditable
       if (!isEditing && selectedElement.value) {
         e.preventDefault()
         import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
           useBlockEditor().deleteSelectedBlock()
         })
       }
+    }
+
+    // Ctrl+D duplicates the selected block (browser default is bookmark).
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'd' || e.key === 'D') && selectedElement.value) {
+      e.preventDefault()
+      import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
+        useBlockEditor().duplicateSelectedBlock()
+      })
+    }
+
+    // Alt+Arrow reorders the selected block. Alt keeps it clear of caret
+    // movement, so it stays available while typing inside the block.
+    if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown') && selectedElement.value) {
+      e.preventDefault()
+      import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
+        useBlockEditor().moveSelectedBlock(e.key === 'ArrowUp' ? 'up' : 'down')
+      })
+    }
+
+    // Escape drops the selection and closes the inline toolbar.
+    if (e.key === 'Escape' && !isEditing && selectedElement.value) {
+      e.preventDefault()
+      import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
+        useBlockEditor().deselect()
+      })
     }
   }, { signal })
 
@@ -793,6 +821,29 @@ function setupIframeEvents(doc: Document) {
       }
     })
   }
+
+  // ─── Paste Sanitizing ──────────────────────────────────────────────────────
+  // Pasting from Word/Google Docs/web pages drags in <style> blocks, class
+  // soup, mso-* attributes and sometimes scripts. Insert plain text plus the
+  // inline formatting email actually supports, so blocks keep their own theme.
+  doc.addEventListener('paste', (e: ClipboardEvent) => {
+    const target = e.target as HTMLElement
+    if (!target?.isContentEditable) return
+
+    e.preventDefault()
+    const clipboard = e.clipboardData
+    if (!clipboard) return
+
+    const html = clipboard.getData('text/html')
+    const plain = clipboard.getData('text/plain')
+
+    const safe = html
+      ? sanitizePastedHtml(html, doc)
+      : plainTextToHtml(plain)
+
+    doc.execCommand('insertHTML', false, safe)
+    triggerAutosave(true)
+  }, { signal })
 
   doc.addEventListener('input', (e: Event) => {
     syncContactHrefs(e.target as HTMLElement | null)
@@ -1243,15 +1294,20 @@ function triggerAutosave(immediate = false) {
     // briefly: rapid actions (toggles, drags) shouldn't hammer the server.
     if (autosaveTimeout) clearTimeout(autosaveTimeout)
     autosaveTimeout = setTimeout(() => {
+      autosaveTimeout = null
       import('~/composables/useTemplateManager').then(({ useTemplateManager }) => {
         useTemplateManager().saveTemplate(true)
       })
     }, 400)
   } else {
     if (historyDebounce) clearTimeout(historyDebounce)
-    historyDebounce = setTimeout(() => pushToHistory(), 800)
+    historyDebounce = setTimeout(() => {
+      historyDebounce = null
+      pushToHistory()
+    }, 800)
     if (autosaveTimeout) clearTimeout(autosaveTimeout)
     autosaveTimeout = setTimeout(() => {
+      autosaveTimeout = null
       import('~/composables/useTemplateManager').then(({ useTemplateManager }) => {
         useTemplateManager().saveTemplate(true)
       })
@@ -1260,6 +1316,30 @@ function triggerAutosave(immediate = false) {
 }
 
 // ─── Reactive Watchers (call once from editor.vue setup) ──────────────────────
+
+/** True while an edit has been made but its debounced save has not run yet. */
+function hasPendingWork(): boolean {
+  return autosaveTimeout !== null
+}
+
+// Cancels every pending timer and detaches iframe listeners. Without this a
+// debounced autosave can fire after the editor unmounts: iframeRef is already
+// null by then, getSurgicalCleanHtml() returns '' and saveTemplate falls back
+// to the last serialized html — writing stale content over a newer template.
+function teardownEditor() {
+  if (historyDebounce) {
+    clearTimeout(historyDebounce)
+    historyDebounce = null
+  }
+  if (autosaveTimeout) {
+    clearTimeout(autosaveTimeout)
+    autosaveTimeout = null
+  }
+  if (iframeEventsController) {
+    iframeEventsController.abort()
+    iframeEventsController = null
+  }
+}
 
 function setupEditorWatches() {
   watch(viewMode, () => {
@@ -1309,5 +1389,7 @@ export function useIframeEngine() {
     updateHtml,
     triggerAutosave,
     setupEditorWatches,
+    teardownEditor,
+    hasPendingWork,
   }
 }

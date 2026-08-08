@@ -995,6 +995,25 @@
   box-shadow: 0 0 15px rgba(99, 102, 241, 0.6);
 }
 
+/* Reorder + duplicate row, sits directly above the destructive delete button */
+.block-arrange {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.block-arrange .c-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px;
+}
+
+.block-arrange .c-btn.grow {
+  flex: 1;
+}
+
 .btn-block-remove {
   width: 100%;
   background: rgba(244, 63, 94, 0.08);

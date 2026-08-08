@@ -1,4 +1,4 @@
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, shallowRef, shallowReactive, watch } from 'vue'
 import { editorStyleBases, type EditorStyleBase } from '../utils/editorStyles'
 
 export interface Template {
@@ -16,14 +16,18 @@ export interface LayerItem {
 // ─── Module-level singleton state ────────────────────────────────────────────
 // All reactive refs live here so every composable and component shares one instance.
 
-const iframeRef = ref<HTMLIFrameElement | null>(null)
+// DOM nodes are stored in shallowRef: a plain ref() deep-proxies the whole
+// element tree, which is both very slow on large templates and unsound —
+// identity checks (el === other, closest() results) fail once a node is
+// handed back as a Proxy instead of the raw element.
+const iframeRef = shallowRef<HTMLIFrameElement | null>(null)
 const viewMode = ref<'desktop' | 'mobile'>(
   (localStorage.getItem('editor_view_mode') as 'desktop' | 'mobile') ?? 'desktop'
 )
 const activePanel = ref<'layers' | 'edit' | 'fonts' | 'styles'>('layers')
-const selectedElement = ref<HTMLElement | null>(null)
-const selectedSubElement = ref<HTMLElement | null>(null)
-const layerList = ref<LayerItem[]>([])
+const selectedElement = shallowRef<HTMLElement | null>(null)
+const selectedSubElement = shallowRef<HTMLElement | null>(null)
+const layerList = shallowRef<LayerItem[]>([])
 
 const templates = ref<Template[]>([])
 const currentTemplate = ref('')
@@ -108,7 +112,9 @@ const getInitialHtml = () => {
 const htmlContent = ref(getInitialHtml())
 
 
-const editorDragState = reactive({
+// shallowReactive: draggedLayer holds a live DOM node, and a deep proxy would
+// break the `block === dragged` identity checks the drop logic relies on.
+const editorDragState = shallowReactive({
   draggedModule: null as string | null,
   draggedLayer: null as HTMLElement | null,
 })
@@ -132,7 +138,9 @@ const promptData = reactive({
   callback: (_val: string) => {},
 })
 
-const imageModal = reactive({
+// Holds live <img>/<a> nodes — must stay shallow so the elements written back
+// on apply are the real ones in the iframe, not reactive proxies of them.
+const imageModal = shallowReactive({
   visible: false,
   src: '',
   link: '',
@@ -141,7 +149,7 @@ const imageModal = reactive({
   linkEl: null as HTMLAnchorElement | null,
 })
 
-const aiImproveModal = reactive({
+const aiImproveModal = shallowReactive({
   visible: false,
   context: '',
   targetEl: null as HTMLElement | null,

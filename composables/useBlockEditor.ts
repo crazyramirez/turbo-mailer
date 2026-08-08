@@ -34,6 +34,11 @@ const { showToast } = useToast()
 
 const isImprovingAI = ref(false)
 
+// Font scaling is ratio-based: every element that gets resized must also have
+// had its original size recorded, otherwise it falls back to 16px and jumps to
+// the wrong size. Both passes must walk the exact same set of elements.
+const SCALABLE_TEXT_SELECTOR = 'div, p, span, h1, h2, h3, td, b, strong, a, i, u, font, em'
+
 // ─── Selection ───────────────────────────────────────────────────────────────
 
 function selectElement(el: HTMLElement, subEl?: HTMLElement, skipScroll = false) {
@@ -77,7 +82,7 @@ function selectElement(el: HTMLElement, subEl?: HTMLElement, skipScroll = false)
     el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }
 
-  const elements = el.querySelectorAll('div, p, span, h1, h2, h3, td, b, strong, i, u, font, em')
+  const elements = el.querySelectorAll(SCALABLE_TEXT_SELECTOR)
   if (elements.length > 0) {
     const firstEl = elements[0] as HTMLElement
     const firstSize = parseInt(window.getComputedStyle(firstEl).fontSize) || 16
@@ -157,6 +162,56 @@ function deleteSelectedBlock() {
   }, 380)
 
   deselect()
+}
+
+/**
+ * Clones the selected block directly beneath itself. Ids must be regenerated —
+ * duplicated data-ids would make layer selection ambiguous.
+ */
+function duplicateSelectedBlock() {
+  const el = selectedElement.value
+  const doc = iframeRef.value?.contentDocument
+  if (!el || !doc) return
+
+  const clone = el.cloneNode(true) as HTMLElement
+  clone.classList.remove('selected')
+  // Drop editor artifacts; initBlock re-creates them for the clone.
+  clone.querySelectorAll('[data-ignore-save], .visor-drag-handle').forEach((n) => n.remove())
+  clone.removeAttribute('data-id')
+  clone.querySelectorAll('[data-id]').forEach((n) => (n as HTMLElement).removeAttribute('data-id'))
+
+  el.after(clone)
+
+  import('~/composables/useIframeEngine').then(({ useIframeEngine }) => {
+    const engine = useIframeEngine()
+    engine.initBlock(clone, doc)
+    clone.classList.add('module-drop-reveal')
+    selectElement(clone)
+    engine.refreshLayers()
+    engine.triggerAutosave(true)
+  })
+}
+
+/** Moves the selected block one position up or down among its siblings. */
+function moveSelectedBlock(direction: 'up' | 'down') {
+  const el = selectedElement.value
+  if (!el) return
+
+  if (direction === 'up') {
+    const prev = el.previousElementSibling
+    if (!prev) return
+    el.parentNode?.insertBefore(el, prev)
+  } else {
+    const next = el.nextElementSibling
+    if (!next) return
+    next.after(el)
+  }
+
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  import('~/composables/useIframeEngine').then(({ useIframeEngine }) => {
+    useIframeEngine().refreshLayers()
+    useIframeEngine().triggerAutosave(true)
+  })
 }
 
 function moveLayer(index: number, direction: 'up' | 'down') {
@@ -381,7 +436,12 @@ function updateFontSize(val: number | string) {
   const newSize = typeof val === 'string' ? parseInt(val) : val
   fontSizeRef.value = newSize
   const ratio = newSize / selectionBaseRef.value
-  selectedElement.value.querySelectorAll('div, p, span, h1, h2, td, b, strong, a').forEach((el: any) => {
+  selectedElement.value.querySelectorAll(SCALABLE_TEXT_SELECTOR).forEach((el: any) => {
+    // Record on first touch: a block can be resized without ever having been
+    // through selectElement (e.g. restored from history, dropped from sidebar).
+    if (!el.dataset.orgSize) {
+      el.dataset.orgSize = String(parseInt(window.getComputedStyle(el).fontSize) || 16)
+    }
     const original = parseInt(el.dataset.orgSize) || 16
     const finalSize = Math.max(8, Math.min(Math.round(original * ratio), 60))
     el.style.fontSize = finalSize + 'px'
@@ -1256,6 +1316,8 @@ export function useBlockEditor() {
     deselect,
     switchToEditPanel,
     deleteSelectedBlock,
+    duplicateSelectedBlock,
+    moveSelectedBlock,
     moveLayer,
     toggleVisibility,
     isVisible,

@@ -2,8 +2,19 @@ import { defineEventHandler, readBody, send, getQuery, createError, setResponseH
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { templatesDir, versionsDirFor, sanitizeTemplateName as sanitizeName } from '~/server/utils/template-files';
+import { sanitizeEmailHtml } from '~/server/utils/html-sanitize';
 
 const baseTemplatePath = path.resolve(process.cwd(), 'data/demo/email_demo.html');
+
+// Preview responses render stored markup as a document in our own origin.
+// Images/styles are what an email needs; scripts and network egress are not.
+const PREVIEW_CSP = [
+  "default-src 'none'",
+  "img-src * data:",
+  "style-src 'unsafe-inline'",
+  "font-src *",
+  "sandbox allow-same-origin",
+].join('; ');
 
 function safePath(name: string): string | null {
   const resolved = path.resolve(templatesDir, `${name}.html`)
@@ -72,7 +83,10 @@ export default defineEventHandler(async (event) => {
         console.log(`[templates] Reading: ${filePath}`)
         const content = await fs.readFile(filePath, 'utf-8');
         if (isPreview) {
-          return send(event, content, 'text/html');
+          // Templates written before input sanitizing may still hold payloads;
+          // a locked-down CSP keeps a preview from executing in our origin.
+          setResponseHeader(event, 'Content-Security-Policy', PREVIEW_CSP);
+          return send(event, sanitizeEmailHtml(content), 'text/html');
         }
         return { content };
       } catch {
@@ -81,13 +95,15 @@ export default defineEventHandler(async (event) => {
             const content = await fs.readFile(baseTemplatePath, 'utf-8');
             if (isPreview) {
               setResponseHeader(event, 'Content-Type', 'text/html');
-              return content;
+              setResponseHeader(event, 'Content-Security-Policy', PREVIEW_CSP);
+              return sanitizeEmailHtml(content);
             }
             return { content };
           } catch {
             const fallback = '<!DOCTYPE html><html><body><h1>Demo Fallback</h1></body></html>';
             if (isPreview) {
               setResponseHeader(event, 'Content-Type', 'text/html');
+              setResponseHeader(event, 'Content-Security-Policy', PREVIEW_CSP);
               return fallback;
             }
             return { content: fallback };
@@ -143,8 +159,12 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, message: 'Content too large' })
     }
 
-    await snapshotVersion(name, filePath, content);
-    await fs.writeFile(filePath, content, 'utf-8');
+    // Templates are re-served as text/html by ?preview=1 and mailed out, so
+    // untrusted markup is stripped on the way in, not just on campaign save.
+    const safeContent = sanitizeEmailHtml(content);
+
+    await snapshotVersion(name, filePath, safeContent);
+    await fs.writeFile(filePath, safeContent, 'utf-8');
     return { success: true, path: `/api/templates?name=${name}&preview=1` };
   }
 

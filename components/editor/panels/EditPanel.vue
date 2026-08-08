@@ -18,6 +18,9 @@ import {
   Trash2,
   Zap,
   Plus,
+  Copy,
+  ArrowUp,
+  ArrowDown,
   HelpCircle,
   Share2,
   CreditCard,
@@ -40,6 +43,8 @@ const {
 
 const {
   deleteSelectedBlock,
+  duplicateSelectedBlock,
+  moveSelectedBlock,
   toggleCardLayout,
   getCardLayout,
   toggleButtonLayout,
@@ -541,6 +546,30 @@ const editableTypes = [
           </button>
         </template>
       </div>
+    </div>
+
+    <div class="block-arrange">
+      <button
+        @click="moveSelectedBlock('up')"
+        class="c-btn"
+        :title="$t('editor.edit_move_up')"
+      >
+        <ArrowUp :size="14" />
+      </button>
+      <button
+        @click="moveSelectedBlock('down')"
+        class="c-btn"
+        :title="$t('editor.edit_move_down')"
+      >
+        <ArrowDown :size="14" />
+      </button>
+      <button
+        @click="duplicateSelectedBlock"
+        class="c-btn grow"
+        :title="$t('editor.edit_duplicate_block')"
+      >
+        <Copy :size="14" /> {{ $t('editor.edit_duplicate_block') }}
+      </button>
     </div>
 
     <button @click="deleteSelectedBlock" class="btn-block-remove">
