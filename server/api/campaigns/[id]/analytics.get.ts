@@ -11,6 +11,7 @@ export default defineEventHandler(async (event) => {
       name: campaigns.name,
       sentCount: campaigns.sentCount,
       openCount: campaigns.openCount,
+      confirmedOpenCount: campaigns.confirmedOpenCount,
       clickCount: campaigns.clickCount,
       failCount: campaigns.failCount,
       totalRecipients: campaigns.totalRecipients,
@@ -59,16 +60,30 @@ export default defineEventHandler(async (event) => {
     .where(and(
       eq(trackingEvents.campaignId, campaignId),
       eq(trackingEvents.eventType, 'open'),
+      // Relay prefetches all land in the first minutes after send and would
+      // fabricate a spike at hour 0 that no human produced.
+      sql`COALESCE(${trackingEvents.isProxy}, 0) = 0`,
       isNotNull(sends.sentAt),
       sql`${trackingEvents.createdAt} >= ${sends.sentAt}`
     ))
     .groupBy(sql`MIN(CAST((${trackingEvents.createdAt} - ${sends.sentAt}) / 3600 AS INTEGER), 72)`)
     .orderBy(sql`1`)
 
+  // How much of this campaign's "opens" came from privacy relays rather than
+  // people — the number that explains a suspiciously high open rate.
+  const [openQuality] = await db
+    .select({
+      confirmed: sql<number>`COUNT(*) FILTER (WHERE ${sends.status} = 'opened' AND COALESCE(${sends.openedByProxy}, 0) = 0)`,
+      proxyOnly: sql<number>`COUNT(*) FILTER (WHERE ${sends.status} = 'opened' AND ${sends.openedByProxy} = 1)`,
+    })
+    .from(sends)
+    .where(eq(sends.campaignId, campaignId))
+
   return {
     campaign,
     deliveryBreakdown,
     linkStats,
     openDistribution,
+    openQuality,
   }
 })

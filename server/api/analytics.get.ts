@@ -45,18 +45,29 @@ export default defineEventHandler(async (event) => {
   const sentCampaigns = await db.select({
     sentCount: campaigns.sentCount,
     openCount: campaigns.openCount,
+    confirmedOpenCount: campaigns.confirmedOpenCount,
     clickCount: campaigns.clickCount,
   }).from(campaigns).where(eq(campaigns.status, 'sent'))
 
-  let totalSent = 0, totalOpened = 0, totalClicked = 0
+  let totalSent = 0, totalOpened = 0, totalConfirmedOpened = 0, totalClicked = 0
   for (const c of sentCampaigns) {
     totalSent += c.sentCount ?? 0
     totalOpened += c.openCount ?? 0
+    totalConfirmedOpened += c.confirmedOpenCount ?? 0
     totalClicked += c.clickCount ?? 0
   }
 
+  // avgOpenRate is the raw figure and includes privacy-relay prefetches;
+  // avgConfirmedOpenRate excludes them. Click rate is unaffected by relays and
+  // is the only rate safe to compare against industry benchmarks.
   const avgOpenRate = totalSent > 0 ? Math.round((totalOpened / totalSent) * 100) : 0
+  const avgConfirmedOpenRate = totalSent > 0 ? Math.round((totalConfirmedOpened / totalSent) * 100) : 0
   const avgClickRate = totalSent > 0 ? Math.round((totalClicked / totalSent) * 100) : 0
+  // Click-to-open on confirmed opens only — mixing a relay-inflated denominator
+  // with a relay-free numerator would understate CTOR badly.
+  const avgClickToOpenRate = totalConfirmedOpened > 0
+    ? Math.round((totalClicked / totalConfirmedOpened) * 100)
+    : 0
 
   // Recent opens (last 10) — use sends table so demo/imported opens show even without pixel
   const recentOpens = await db
@@ -70,6 +81,8 @@ export default defineEventHandler(async (event) => {
       contactEmail: sends.email,
       contactName: contacts.name,
       contactCompany: contacts.company,
+      // Lets the UI mark "opened" rows whose only evidence is a relay prefetch.
+      openedByProxy: sends.openedByProxy,
     })
     .from(sends)
     .leftJoin(campaigns, eq(campaigns.id, sends.campaignId))
@@ -85,22 +98,27 @@ export default defineEventHandler(async (event) => {
       name: campaigns.name,
       sentCount: campaigns.sentCount,
       openCount: campaigns.openCount,
+      confirmedOpenCount: campaigns.confirmedOpenCount,
       clickCount: campaigns.clickCount,
       finishedAt: campaigns.finishedAt,
     })
     .from(campaigns)
     .where(eq(campaigns.status, 'sent'))
-    .orderBy(desc(campaigns.openCount))
+    // Ranked by confirmed opens: ordering by the relay-inflated count would
+    // promote whichever campaign happened to hit more Apple Mail inboxes.
+    .orderBy(desc(campaigns.confirmedOpenCount), desc(campaigns.clickCount))
     .limit(5)
 
   // Opens by day — use tracking_events so timestamps reflect when opens occurred, not when sent.
   // DISTINCT send_id: re-opens by the same recipient don't inflate the chart vs openCount
+  // Confirmed opens only: a chart driven by relay prefetches shows traffic
+  // spikes that correspond to no human activity whatsoever.
   const rawOpensByDay = await db.select({
     date: sql<string>`strftime('%Y-%m-%d', datetime(created_at, 'unixepoch'))`,
     count: sql<number>`COUNT(DISTINCT send_id)`,
   })
     .from(trackingEvents)
-    .where(sql`event_type = 'open' AND created_at >= ${fromTs} AND created_at <= ${toTs}`)
+    .where(sql`event_type = 'open' AND COALESCE(is_proxy, 0) = 0 AND created_at >= ${fromTs} AND created_at <= ${toTs}`)
     .groupBy(sql`strftime('%Y-%m-%d', datetime(created_at, 'unixepoch'))`)
     .orderBy(sql`strftime('%Y-%m-%d', datetime(created_at, 'unixepoch'))`)
 
@@ -138,9 +156,12 @@ export default defineEventHandler(async (event) => {
     totalContacts,
     totalCampaigns,
     avgOpenRate,
+    avgConfirmedOpenRate,
     avgClickRate,
+    avgClickToOpenRate,
     totalSent,
     totalOpened,
+    totalConfirmedOpened,
     totalClicked,
     recentOpens,
     topCampaigns,

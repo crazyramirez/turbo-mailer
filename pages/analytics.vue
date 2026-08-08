@@ -422,8 +422,10 @@ function fmtDate(d: any) {
   );
 }
 
+// Confirmed opens exclude privacy-relay prefetches; older campaigns without
+// the field fall back to the raw count.
 function openRate(c: any) {
-  return c.openCount ?? 0;
+  return c.confirmedOpenCount ?? c.openCount ?? 0;
 }
 function clickRate(c: any) {
   return c.clickCount ?? 0;
@@ -748,9 +750,18 @@ onUnmounted(() => {
                     c.name
                   }}</NuxtLink>
                   <div class="camp-stats">
-                    <span class="cs green">{{ openRate(c) }} aperturas</span>
-                    <span class="cs blue">{{ clickRate(c) }} clicks</span>
-                    <span class="cs dim">{{ c.sentCount }} enviados</span>
+                    <span class="cs green"
+                      >{{ openRate(c) }}
+                      {{ $t("analytics_page.opens_label") }}</span
+                    >
+                    <span class="cs blue"
+                      >{{ clickRate(c) }}
+                      {{ $t("analytics_page.clicks_label") }}</span
+                    >
+                    <span class="cs dim"
+                      >{{ c.sentCount }}
+                      {{ $t("analytics_page.sent_label") }}</span
+                    >
                   </div>
                 </div>
               </div>

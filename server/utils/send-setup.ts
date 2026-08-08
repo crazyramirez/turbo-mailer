@@ -1,20 +1,28 @@
 import { db } from '~/server/db/index'
 import { campaigns, contacts, sends } from '~/server/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, or } from 'drizzle-orm'
 
 type Campaign = typeof campaigns.$inferSelect
 type Contact = typeof contacts.$inferSelect
 
-// Contacts who received the source campaign but never opened it and are
+// Contacts who received the source campaign but never really opened it and are
 // still active. Used by manual re-sends, auto follow-ups and the send flow.
+//
+// 'sent' means the pixel never fired at all. Sends marked 'opened' purely by a
+// privacy-relay prefetch (openedByProxy) are included too: nobody read those,
+// so excluding them would silently drop the follow-up for a large share of
+// Apple Mail recipients.
 export async function getUnopenedRecipients(sourceCampaignId: number): Promise<Contact[]> {
   return db.select({ contacts })
     .from(contacts)
     .innerJoin(sends, eq(sends.contactId, contacts.id))
     .where(and(
       eq(sends.campaignId, sourceCampaignId),
-      eq(sends.status, 'sent'),
       eq(contacts.status, 'active'),
+      or(
+        eq(sends.status, 'sent'),
+        and(eq(sends.status, 'opened'), eq(sends.openedByProxy, true)),
+      ),
     ))
     .then(r => r.map(x => x.contacts))
 }

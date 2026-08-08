@@ -1,5 +1,5 @@
 import { db } from '~/server/db/index'
-import { campaigns, contacts, listContacts, sends } from '~/server/db/schema'
+import { campaigns, contacts, listContacts, sends, trackingEvents } from '~/server/db/schema'
 import { eq, lte, and, sql } from 'drizzle-orm'
 import { processCampaign, type SendConfig } from '~/server/utils/campaign-processor'
 import { clearSignal } from '~/server/utils/campaign-state'
@@ -42,19 +42,41 @@ async function decideAbWinners(config: Record<string, any>) {
     ))
 
   for (const campaign of due) {
+    // Ranked by clicks first, then confirmed (non-proxy) opens.
+    //
+    // Raw opens are unusable as a decision metric: privacy relays prefetch the
+    // pixel without a human, and their share differs per variant only by which
+    // mailboxes happened to land in each sample. Clicks cannot be faked by a
+    // relay, so they decide; confirmed opens break ties; raw opens are logged
+    // for visibility but never decide.
     const variantStats = await db
       .select({
         variant: sends.variant,
-        opens: sql<number>`COUNT(*) FILTER (WHERE status = 'opened')`,
+        clicks: sql<number>`COUNT(DISTINCT CASE WHEN ${trackingEvents.eventType} = 'click' THEN ${sends.id} END)`,
+        confirmedOpens: sql<number>`COUNT(DISTINCT CASE WHEN ${sends.status} = 'opened' AND COALESCE(${sends.openedByProxy}, 0) = 0 THEN ${sends.id} END)`,
+        rawOpens: sql<number>`COUNT(DISTINCT CASE WHEN ${sends.status} = 'opened' THEN ${sends.id} END)`,
       })
       .from(sends)
+      .leftJoin(trackingEvents, eq(trackingEvents.sendId, sends.id))
       .where(eq(sends.campaignId, campaign.id))
       .groupBy(sends.variant)
 
-    const opensA = Number(variantStats.find(v => v.variant === 'A')?.opens ?? 0)
-    const opensB = Number(variantStats.find(v => v.variant === 'B')?.opens ?? 0)
-    // Tie goes to A — the sender's primary choice
-    const winner: 'A' | 'B' = opensB > opensA ? 'B' : 'A'
+    const statFor = (v: 'A' | 'B') => {
+      const row = variantStats.find(s => s.variant === v)
+      return {
+        clicks: Number(row?.clicks ?? 0),
+        confirmedOpens: Number(row?.confirmedOpens ?? 0),
+        rawOpens: Number(row?.rawOpens ?? 0),
+      }
+    }
+    const a = statFor('A')
+    const b = statFor('B')
+
+    // Tie on both metrics goes to A — the sender's primary choice
+    const winner: 'A' | 'B' =
+      b.clicks !== a.clicks
+        ? (b.clicks > a.clicks ? 'B' : 'A')
+        : (b.confirmedOpens > a.confirmedOpens ? 'B' : 'A')
 
     await db.update(sends)
       .set({ status: 'pending' })
@@ -67,7 +89,11 @@ async function decideAbWinners(config: Record<string, any>) {
     }).where(eq(campaigns.id, campaign.id))
 
     clearSignal(campaign.id)
-    console.log(`[scheduler] A/B campaign ${campaign.id}: winner ${winner} (A=${opensA} opens, B=${opensB} opens) — sending final wave`)
+    console.log(
+      `[scheduler] A/B campaign ${campaign.id}: winner ${winner} ` +
+      `(A=${a.clicks} clicks/${a.confirmedOpens} confirmed/${a.rawOpens} raw, ` +
+      `B=${b.clicks} clicks/${b.confirmedOpens} confirmed/${b.rawOpens} raw) — sending final wave`
+    )
 
     processCampaign(campaign.id, buildSendConfig(config)).catch(async (err) => {
       console.error(`[scheduler] A/B final wave campaignId=${campaign.id} error:`, err)

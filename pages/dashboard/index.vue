@@ -95,6 +95,7 @@ interface Campaign {
   totalRecipients: number | null;
   sentCount: number | null;
   openCount: number | null;
+  confirmedOpenCount: number | null;
   clickCount: number | null;
   failCount: number | null;
 }
@@ -184,8 +185,16 @@ onUnmounted(() => {
 });
 
 // ── Helpers ──────────────────────────────────────────────────────
+// Confirmed opens exclude privacy-relay prefetches (Apple MPP, Gmail proxy),
+// which fire without anyone reading the mail. Falls back to the raw count for
+// campaigns sent before proxy classification existed.
 function openRatePct(c: Campaign): number | string {
-  return c.openCount ?? 0;
+  return c.confirmedOpenCount ?? c.openCount ?? 0;
+}
+/** Prefetches counted as opens but not confirmed — 0 when there are none. */
+function proxyOpens(c: Campaign): number {
+  if (c.confirmedOpenCount == null) return 0;
+  return Math.max(0, (c.openCount ?? 0) - c.confirmedOpenCount);
 }
 function clickRatePct(c: Campaign): number | string {
   return c.clickCount ?? 0;
@@ -561,6 +570,14 @@ async function duplicateCampaign() {
                   <span class="ps-lbl">{{
                     t("campaigns_page.open_rate")
                   }}</span>
+                  <span
+                    v-if="proxyOpens(selectedCampaign) > 0"
+                    class="ps-sub"
+                    :title="t('campaigns_page.proxy_opens_hint')"
+                  >
+                    +{{ proxyOpens(selectedCampaign) }}
+                    {{ t("campaigns_page.proxy_opens_short") }}
+                  </span>
                 </div>
                 <div class="ps-item">
                   <span class="ps-val blue">{{
@@ -1139,6 +1156,16 @@ async function duplicateCampaign() {
   font-size: 10px;
   color: var(--text-dim);
   text-align: center;
+}
+
+/* Proxy-prefetch note under the confirmed-open figure */
+.ps-sub {
+  font-size: 9px;
+  color: var(--text-dim);
+  opacity: 0.75;
+  text-align: center;
+  margin-top: 2px;
+  cursor: help;
 }
 
 /* ── Activity ────────────────────────────────────────────── */

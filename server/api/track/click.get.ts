@@ -3,22 +3,10 @@ import { sends, campaigns, trackingEvents } from '~/server/db/schema'
 import { eq, sql, and, gt } from 'drizzle-orm'
 import { verifyClickTokenDetailed } from '~/server/utils/auth'
 import { emitWebhook } from '~/server/utils/webhook'
+import { classifyClick } from '~/server/utils/bot-detect'
 
 // In-memory lock to prevent race conditions from rapid-fire mobile clicks
 const clickLock = new Set<string>()
-
-// Email security scanners (SafeLinks, Proofpoint, Barracuda, etc.) pre-fetch all links.
-// They have no Accept: text/html header and often have telltale UAs.
-// We redirect them silently without counting the click.
-const BOT_UA_PATTERN = /SafeLinks|UrlScan|LinkScan|Microsoft.*Security|Barracuda|Mimecast|Proofpoint|Symantec|Sophos|IronPort|MessageLabs|MSRBOT|TrendMicro|Forcepoint|Cisco.*Email|ZeroFOX|Agari|Abnormal|Avanan|Tessian|Inky|GreatHorn|MailMarshal|MimeCast|Hornetsecurity|SpamTitan|AppRiver|Cloudmark|Postini|McAfee.*Email|Webroot|SolarWinds|Vade/i
-
-function isBot(ua: string, accept: string): boolean {
-  if (!ua) return true
-  if (BOT_UA_PATTERN.test(ua)) return true
-  // Real browsers always send Accept with text/html; scanners often send */* or nothing
-  if (accept && !accept.includes('text/html') && !accept.includes('text/*')) return true
-  return false
-}
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
@@ -52,7 +40,7 @@ export default defineEventHandler(async (event) => {
     try {
       const ua = getHeader(event, 'user-agent') || ''
       const accept = getHeader(event, 'accept') || ''
-      if (isBot(ua, accept)) {
+      if (classifyClick(ua, accept) === 'bot') {
         console.log('[track/click] bot/scanner ignored ua=%s', ua.slice(0, 80))
         return await sendRedirect(event, targetUrl, 302)
       }
@@ -120,19 +108,34 @@ export default defineEventHandler(async (event) => {
             .run()
         }
 
-        if (send.status === 'sent') {
-          const marked = tx.update(sends)
-            .set({ status: 'opened' })
-            .where(and(eq(sends.id, sendId), eq(sends.status, 'sent')))
-            .returning({ id: sends.id })
-            .get()
+        // A click is the strongest possible proof of a human: relays prefetch
+        // images, not links. It both implies an open and confirms one that so
+        // far had only proxy evidence.
+        const wasUnopened = send.status === 'sent'
+        const isFirstHumanProof = wasUnopened || send.openedByProxy === true
 
-          if (marked) {
-            tx.update(campaigns)
-              .set({ openCount: sql`${campaigns.openCount} + 1` })
-              .where(eq(campaigns.id, send.campaignId))
-              .run()
-          }
+        if (wasUnopened) {
+          tx.update(sends)
+            .set({ status: 'opened', openedByProxy: false })
+            .where(and(eq(sends.id, sendId), eq(sends.status, 'sent')))
+            .run()
+
+          tx.update(campaigns)
+            .set({ openCount: sql`${campaigns.openCount} + 1` })
+            .where(eq(campaigns.id, send.campaignId))
+            .run()
+        }
+
+        if (isFirstHumanProof) {
+          tx.update(sends)
+            .set({ openedByProxy: false })
+            .where(eq(sends.id, sendId))
+            .run()
+
+          tx.update(campaigns)
+            .set({ confirmedOpenCount: sql`${campaigns.confirmedOpenCount} + 1` })
+            .where(eq(campaigns.id, send.campaignId))
+            .run()
         }
 
         return { campaignId: send.campaignId, contactId: send.contactId, email: send.email }

@@ -3,6 +3,7 @@ import { sends, campaigns, trackingEvents } from '~/server/db/schema'
 import { and, eq, ne, sql, gt } from 'drizzle-orm'
 import { verifyOpenToken } from '~/server/utils/auth'
 import { emitWebhook } from '~/server/utils/webhook'
+import { classifyOpen } from '~/server/utils/bot-detect'
 
 const PIXEL_GIF = Buffer.from(
   'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
@@ -29,12 +30,19 @@ export default defineEventHandler(async (event) => {
 
     try {
       const ua = getHeader(event, 'user-agent') || ''
-      // Only block known non-email bots, allowing email proxies to track opens
-      const isBot = /bot|crawler|spider|slurp|pingdom|lighthouse/i.test(ua)
-      
-      if (isBot) {
+      const accept = getHeader(event, 'accept') || ''
+      const referer = getHeader(event, 'referer') || ''
+
+      const kind = classifyOpen(ua, accept, referer)
+
+      // Crawlers and link scanners carry no signal at all.
+      if (kind === 'bot') {
         return PIXEL_GIF
       }
+
+      // Privacy relays (Apple MPP, Gmail proxy) prefetch the pixel even when
+      // the mail is never opened: recorded, but never counted as confirmed.
+      const isProxy = kind === 'proxy'
 
       const ip = String(getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown').split(',')[0].trim()
       
@@ -81,23 +89,44 @@ export default defineEventHandler(async (event) => {
           eventType: 'open',
           ip,
           userAgent: ua,
+          isProxy,
           createdAt: new Date(),
         }).run()
 
-        const marked = tx.update(sends)
-          .set({ status: 'opened' })
-          .where(and(eq(sends.id, sendId), eq(sends.status, 'sent')))
-          .returning({ id: sends.id })
-          .get()
+        // Decide both counter moves from the state BEFORE this event, so each
+        // counter can only ever be incremented once per send.
+        const wasUnopened = send.status === 'sent'
+        // Confirmed = a human open on a send with no human evidence yet. When
+        // the send was already 'opened' by a proxy prefetch, this upgrades it.
+        const isFirstHumanOpen = !isProxy && (wasUnopened || send.openedByProxy === true)
 
-        if (marked) {
+        if (wasUnopened) {
+          tx.update(sends)
+            .set({ status: 'opened', openedByProxy: isProxy })
+            .where(and(eq(sends.id, sendId), eq(sends.status, 'sent')))
+            .run()
+
+          // openCount tracks recipients whose pixel loaded at all, proxies
+          // included — it is the inflated number, kept for comparison.
           tx.update(campaigns)
             .set({ openCount: sql`${campaigns.openCount} + 1` })
             .where(eq(campaigns.id, campaignId))
             .run()
         }
 
-        return { campaignId, contactId: send.contactId, email: send.email }
+        if (isFirstHumanOpen) {
+          tx.update(sends)
+            .set({ openedByProxy: false })
+            .where(eq(sends.id, sendId))
+            .run()
+
+          tx.update(campaigns)
+            .set({ confirmedOpenCount: sql`${campaigns.confirmedOpenCount} + 1` })
+            .where(eq(campaigns.id, campaignId))
+            .run()
+        }
+
+        return { campaignId, contactId: send.contactId, email: send.email, isProxy }
       })
 
       if (recorded) {

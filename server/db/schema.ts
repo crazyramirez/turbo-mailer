@@ -73,7 +73,11 @@ export const campaigns = sqliteTable('campaigns', {
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
   totalRecipients: integer('total_recipients').default(0),
   sentCount: integer('sent_count').default(0),
+  // openCount includes privacy-proxy prefetches (Apple MPP and friends), which
+  // fire even when the mail is never opened. confirmedOpenCount excludes them
+  // and is the honest number; both are kept so the UI can show the gap.
   openCount: integer('open_count').default(0),
+  confirmedOpenCount: integer('confirmed_open_count').default(0),
   clickCount: integer('click_count').default(0),
   failCount: integer('fail_count').default(0),
   unsubEmailSubject: text('unsub_email_subject'),
@@ -95,6 +99,9 @@ export const sends = sqliteTable('sends', {
   variant: text('variant', { enum: ['A', 'B'] }),
   sentAt: integer('sent_at', { mode: 'timestamp' }),
   errorMsg: text('error_msg'),
+  // True when this send reached 'opened' only through a privacy-proxy prefetch.
+  // Cleared as soon as a human open or any click confirms real engagement.
+  openedByProxy: integer('opened_by_proxy', { mode: 'boolean' }).default(false),
 }, (t) => ({
   campaignStatusIdx: index('sends_campaign_status_idx').on(t.campaignId, t.status),
   sentAtIdx: index('sends_sent_at_idx').on(t.sentAt),
@@ -123,11 +130,18 @@ export const trackingEvents = sqliteTable('tracking_events', {
   url: text('url'),
   ip: text('ip'),
   userAgent: text('user_agent'),
+  // Machine-generated prefetch (Apple MPP, Gmail image proxy...) rather than a
+  // human opening the mail. Kept as data instead of discarded, so historical
+  // rates stay reconstructable either way.
+  isProxy: integer('is_proxy', { mode: 'boolean' }).default(false),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 }, (t) => ({
   campaignIdx: index('te_campaign_idx').on(t.campaignId),
   sendIdx: index('te_send_idx').on(t.sendId),
   typeIdx: index('te_type_idx').on(t.eventType),
+  // Both dedup queries filter on createdAt within a send; without this they
+  // degrade to a scan of the send's whole event history.
+  sendTypeCreatedIdx: index('te_send_type_created_idx').on(t.sendId, t.eventType, t.createdAt),
 }))
 
 export const settings = sqliteTable('settings', {
