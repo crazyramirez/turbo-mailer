@@ -25,7 +25,9 @@ function parseXlsx(file: File) {
   reader.onload = (e) => {
     try {
       const data = new Uint8Array(e.target!.result as ArrayBuffer)
-      const wb = XLSX.read(data, { type: 'array' })
+      // codepage 65001 = UTF-8. Without it SheetJS decodes CSV bytes as
+      // Windows-1252, turning "Andrés" into "AndrÃ©s". Ignored for .xlsx.
+      const wb = XLSX.read(data, { type: 'array', codepage: 65001 })
       const ws = wb.Sheets[wb.SheetNames[0]]
       const json = XLSX.utils.sheet_to_json(ws, { defval: '' }) as Record<string, any>[]
 

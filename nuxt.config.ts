@@ -141,6 +141,14 @@ export default defineNuxtConfig({
   },
 
   nitro: {
+    // Baked in at build time so the server bundle can tell dev from prod.
+    // import.meta.dev is NOT substituted inside Nitro chunks, and NODE_ENV is
+    // not set by the node-server output — so neither is reliable there.
+    // Used by server/utils/csp.ts to allow Vite's ws: HMR socket in dev only.
+    replace: {
+      '__TM_DEV__': String(process.env.NODE_ENV !== 'production'),
+    },
+
     // Ensure migrations are copied to the build output
     serverAssets: [
       {

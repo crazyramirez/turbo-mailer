@@ -9,6 +9,12 @@
 const inlineScriptHashes = new Set<string>()
 let cachedCsp: string | null = null
 
+// Replaced at build time by nitro.replace in nuxt.config.ts — `false` in any
+// production build. import.meta.dev is not substituted inside Nitro chunks and
+// NODE_ENV is not set by the node-server output, so neither works here.
+declare const __TM_DEV__: boolean
+const isDev = typeof __TM_DEV__ !== 'undefined' ? __TM_DEV__ : true
+
 /** Adds CSP source hashes for inline scripts; invalidates the cached policy. */
 export function registerInlineScriptHashes(hashes: string[]): void {
   let added = false
@@ -47,7 +53,11 @@ export function getAppCsp(): string {
 
     // Same-origin API only: the server makes the outbound calls (SMTP,
     // webhooks, AI), never the browser.
-    "connect-src 'self'",
+    //
+    // Vite's HMR client opens a ws:// socket, and 'self' does not reliably
+    // cover the ws:/wss: schemes across browsers — without this, hot reload
+    // silently dies in development. Never added to production builds.
+    `connect-src 'self'${isDev ? ' ws: wss:' : ''}`,
 
     // Service worker (@vite-pwa) is served from our own origin.
     "worker-src 'self' blob:",

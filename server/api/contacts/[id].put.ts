@@ -1,6 +1,6 @@
 import { db } from '~/server/db/index'
 import { contacts, listContacts } from '~/server/db/schema'
-import { eq } from 'drizzle-orm'
+import { and, eq, ne } from 'drizzle-orm'
 import { isValidEmail, sanitizeContactFields } from '~/server/utils/validate'
 
 export default defineEventHandler(async (event) => {
@@ -15,6 +15,17 @@ export default defineEventHandler(async (event) => {
   const CONTACT_STATUSES = ['active', 'unsubscribed', 'bounced'] as const
   type ContactStatus = typeof CONTACT_STATUSES[number]
   const safeStatus: ContactStatus = CONTACT_STATUSES.includes(status) ? status : 'active'
+
+  // Without this, renaming a contact onto an email that already exists hits the
+  // contacts_email_unique index and surfaces as an opaque 500.
+  const [clash] = await db
+    .select({ id: contacts.id })
+    .from(contacts)
+    .where(and(eq(contacts.email, fields.email), ne(contacts.id, id)))
+    .limit(1)
+  if (clash) {
+    throw createError({ statusCode: 409, statusMessage: 'Email already exists' })
+  }
 
   const [row] = await db.update(contacts).set({
     ...fields,

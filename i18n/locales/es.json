@@ -143,7 +143,10 @@
     "import_mode": "Modo de importación",
     "import_mode_upsert": "Insertar + Actualizar",
     "import_mode_skip": "Omitir existentes",
-    "import_mode_update": "Actualizar solo existentes"
+    "import_mode_update": "Actualizar solo existentes",
+    "error_email_exists": "Ese email ya pertenece a otro contacto.",
+    "error_save": "No se pudo guardar el contacto.",
+    "lists_sidebar_title": "Listas de Contactos"
   },
   "campaigns_page": {
     "title": "Campañas",

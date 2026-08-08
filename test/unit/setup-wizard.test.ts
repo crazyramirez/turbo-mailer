@@ -125,3 +125,21 @@ describe('setup wizard page', () => {
     expect(src).not.toMatch(/done_restart_title/)
   })
 })
+
+describe('setup endpoints and CSRF', () => {
+  const src = read('server/middleware/csrf.ts')
+
+  // The wizard runs before any session exists and sends no CSRF token. With a
+  // stale tm_session cookie from a previous install, every wizard POST failed
+  // with "Missing CSRF token" — the endpoints were unreachable.
+  it('bypasses CSRF for /api/setup/', () => {
+    expect(src).toMatch(/'\/api\/setup\/'/)
+  })
+
+  it('still protects ordinary write endpoints', () => {
+    // The bypass must be a prefix list, not a blanket skip.
+    expect(src).toMatch(/BYPASS_PREFIXES\.some/)
+    expect(src).toMatch(/Missing CSRF token/)
+    expect(src).not.toMatch(/'\/api\/'/)
+  })
+})

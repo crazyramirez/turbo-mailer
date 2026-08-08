@@ -38,7 +38,23 @@ describe('app CSP', () => {
   })
 
   it('restricts network calls to our own origin', () => {
-    expect(directive(csp, 'connect-src')).toBe("connect-src 'self'")
+    const connectSrc = directive(csp, 'connect-src')
+    expect(connectSrc).toContain("'self'")
+    // No cross-origin host may be reachable from the browser.
+    expect(connectSrc).not.toMatch(/https?:\/\//)
+    expect(connectSrc).not.toContain('*')
+  })
+
+  it('allows the Vite HMR socket in dev only, never in a production build', () => {
+    // ws:/wss: are separate schemes that 'self' does not reliably cover, so dev
+    // needs them explicitly — but they must never ship to production.
+    const isDevBuild = process.env.NODE_ENV !== 'production'
+    const connectSrc = directive(csp, 'connect-src')
+    if (isDevBuild) {
+      expect(connectSrc).toContain('ws:')
+    } else {
+      expect(connectSrc).not.toContain('ws:')
+    }
   })
 })
 

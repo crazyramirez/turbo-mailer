@@ -14,6 +14,11 @@ const BYPASS_PREFIXES = [
   '/api/preferences',
   '/api/health',
   '/api/ghost-status',
+  // The setup wizard runs before any session exists and issues no CSRF token.
+  // A leftover session cookie from a previous install would otherwise make
+  // every wizard POST fail with "Missing CSRF token". These endpoints guard
+  // themselves: both refuse to run once data/.installed is present.
+  '/api/setup/',
 ]
 
 export default defineEventHandler((event) => {

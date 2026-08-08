@@ -16,7 +16,9 @@ describe('sanitizeEmailHtml on real templates', () => {
   // One assertion loop rather than a test-per-file: the template directory is
   // user data, so a test count derived from it changes as templates come and go.
   it('is idempotent and non-destructive across every template on disk', () => {
-    expect(files.length).toBeGreaterThan(0)
+    // data/templates is user data and legitimately empty on a fresh install or
+    // after a reset; data/demo ships with the repo, so that is what must exist.
+    expect(files.length, 'no template files found — is data/demo missing?').toBeGreaterThan(0)
 
     for (const file of files) {
       const original = fs.readFileSync(file, 'utf-8')

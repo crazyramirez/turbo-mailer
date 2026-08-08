@@ -32,5 +32,8 @@ export default defineEventHandler(async (event) => {
   setHeader(event, 'Content-Type', 'text/csv; charset=utf-8')
   setHeader(event, 'Content-Disposition', `attachment; filename="contacts-${Date.now()}.csv"`)
 
-  return csv
+  // Excel ignores the charset header and falls back to the system codepage,
+  // which mangles accented names ("Andrés" -> "AndrÃ©s"). A UTF-8 BOM is the
+  // only reliable way to make it read the file correctly.
+  return '﻿' + csv
 })

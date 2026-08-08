@@ -91,6 +91,28 @@ async function fetchContacts() {
     contacts.value = res.data;
     total.value = res.total;
     totalPages.value = res.totalPages;
+
+    // The activity popover holds a contact snapshot. After a delete it would
+    // keep rendering and re-request /timeline for an id that no longer exists,
+    // producing a 404. Runs here so every mutation path is covered.
+    if (
+      hoverContact.value &&
+      !contacts.value.some((c: any) => c.id === hoverContact.value.id)
+    ) {
+      closeHoverPopover();
+    }
+
+    // Drop selections pointing at rows that are gone, so batch actions never
+    // operate on stale ids.
+    if (selectedContactIds.value.size) {
+      const visible = new Set(contacts.value.map((c: any) => c.id));
+      const stillValid = [...selectedContactIds.value].filter((id) =>
+        visible.has(id),
+      );
+      if (stillValid.length !== selectedContactIds.value.size) {
+        selectedContactIds.value = new Set(stillValid);
+      }
+    }
   } finally {
     loading.value = false;
   }
@@ -200,18 +222,34 @@ function removeTag(tag: string) {
   form.value.tags = form.value.tags.filter((x) => x !== tag);
 }
 
+const savingContact = ref(false);
+
 async function saveContact() {
-  if (!form.value.email) return;
-  if (editContact.value) {
-    await $fetch(`/api/contacts/${editContact.value.id}`, {
-      method: "PUT",
-      body: form.value,
-    });
-  } else {
-    await $fetch("/api/contacts", { method: "POST", body: form.value });
+  if (!form.value.email || savingContact.value) return;
+  savingContact.value = true;
+  try {
+    if (editContact.value) {
+      await $fetch(`/api/contacts/${editContact.value.id}`, {
+        method: "PUT",
+        body: form.value,
+      });
+    } else {
+      await $fetch("/api/contacts", { method: "POST", body: form.value });
+    }
+    showContactModal.value = false;
+    fetchContacts();
+  } catch (e: any) {
+    // Keep the modal open so the entered data is not lost, and say what failed.
+    // 409 is the common one: the email already belongs to another contact.
+    const status = e?.statusCode ?? e?.response?.status;
+    const message =
+      status === 409
+        ? t("contacts_page.error_email_exists")
+        : e?.data?.message || e?.statusMessage || t("contacts_page.error_save");
+    showToast(message, "error");
+  } finally {
+    savingContact.value = false;
   }
-  showContactModal.value = false;
-  fetchContacts();
 }
 
 async function deleteContact(c: any) {
@@ -338,7 +376,9 @@ async function doImport(e: Event) {
   if (!file) return;
 
   const data = await file.arrayBuffer();
-  const wb = XLSX.read(new Uint8Array(data), { type: "array" });
+  // codepage 65001 = UTF-8. Without it SheetJS decodes CSV bytes as Windows-1252,
+  // turning "Andrés" into "AndrÃ©s". Ignored for .xlsx, which is already UTF-8.
+  const wb = XLSX.read(new Uint8Array(data), { type: "array", codepage: 65001 });
   const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {
     defval: "",
   }) as Record<string, any>[];
@@ -508,7 +548,7 @@ watch([search, statusFilter], () => {
     <!-- Sidebar: Lists -->
     <aside class="sidebar">
       <div class="sidebar-header">
-        <h3>{{ t("nav.contacts") }}</h3>
+        <h3>{{ t("contacts_page.lists_sidebar_title") }}</h3>
         <button
           class="btn-icon"
           @click="openNewList"
@@ -1008,7 +1048,11 @@ watch([search, statusFilter], () => {
             <button class="btn-secondary" @click="showContactModal = false">
               {{ t("common.cancel") }}
             </button>
-            <button class="btn-primary" @click="saveContact">
+            <button
+              class="btn-primary"
+              :disabled="savingContact"
+              @click="saveContact"
+            >
               <Check :size="15" />{{ t("common.save") }}
             </button>
           </div>
@@ -1104,7 +1148,7 @@ watch([search, statusFilter], () => {
 
 /* Sidebar */
 .sidebar {
-  width: 240px;
+  width: 300px;
   flex-shrink: 0;
   background: rgb(0 0 0 / 7%);
   backdrop-filter: blur(12px);
