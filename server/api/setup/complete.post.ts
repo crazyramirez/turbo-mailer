@@ -1,9 +1,10 @@
 import bcrypt from 'bcryptjs'
 import { randomBytes } from 'node:crypto'
-import { writeFileSync, existsSync } from 'node:fs'
+import { writeFileSync, existsSync, mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { encryptField } from '~/server/utils/encryption'
 import { hashApiKey } from '~/server/utils/auth'
+import { markInstalled } from '~/server/middleware/setup-guard'
 
 export default defineEventHandler(async (event) => {
   const sentinelPath = resolve(process.cwd(), 'data/.installed')
@@ -18,6 +19,28 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Campos requeridos faltantes' })
   }
 
+  // The wizard validates these in the browser, but this endpoint is reachable
+  // directly and runs exactly once — a weak password or a bogus tracking URL
+  // baked in here would need a reinstall to correct.
+  if (String(password).length < 8) {
+    throw createError({ statusCode: 400, message: 'La contraseña debe tener al menos 8 caracteres' })
+  }
+
+  let parsedBaseUrl: URL
+  try {
+    parsedBaseUrl = new URL(String(app.trackingBaseUrl))
+  } catch {
+    throw createError({ statusCode: 400, message: 'La URL de tracking no es válida' })
+  }
+  if (parsedBaseUrl.protocol !== 'http:' && parsedBaseUrl.protocol !== 'https:') {
+    throw createError({ statusCode: 400, message: 'La URL de tracking debe empezar por http:// o https://' })
+  }
+
+  const smtpPort = Number(smtp.port || 465)
+  if (!Number.isInteger(smtpPort) || smtpPort < 1 || smtpPort > 65535) {
+    throw createError({ statusCode: 400, message: 'El puerto SMTP no es válido' })
+  }
+
   const hashedPassword = await bcrypt.hash(String(password), 12)
   const unsubscribeSecret = app.unsubscribeSecret?.trim() || randomBytes(32).toString('hex')
   const rawApiSecret = app.apiSecret?.trim() || randomBytes(32).toString('hex')
@@ -26,7 +49,7 @@ export default defineEventHandler(async (event) => {
   const config: Record<string, any> = {
     appPassword: hashedPassword,
     smtpHost: String(smtp.host),
-    smtpPort: String(smtp.port || '465'),
+    smtpPort: String(smtpPort),
     smtpUser: String(smtp.user),
     smtpPass: encryptField(String(smtp.pass)),
     smtpSecure: smtp.secure !== false,
@@ -61,6 +84,10 @@ export default defineEventHandler(async (event) => {
     config.imapPass = encryptField(String(smtp.imapPass || smtp.pass).trim())
     config.imapTls  = true
   }
+
+  // A fresh clone has no data/ directory; without this the whole install
+  // fails on the very first write.
+  mkdirSync(resolve(process.cwd(), 'data'), { recursive: true })
 
   writeFileSync(
     resolve(process.cwd(), 'data/config.json'),
@@ -110,10 +137,18 @@ export default defineEventHandler(async (event) => {
     config.imapHost ? `IMAP_USER=${config.imapUser}` : `# IMAP_USER=`,
     config.imapHost ? `IMAP_PASS=${config.imapPass}` : `# IMAP_PASS=`,
   ]
-  writeFileSync(resolve(process.cwd(), '.env'), envLines.join('\n'), 'utf-8')
+  // Trailing newline: POSIX tools and `cat >>` append cleanly to the last line
+  // otherwise, silently corrupting IMAP_PASS.
+  writeFileSync(resolve(process.cwd(), '.env'), envLines.join('\n') + '\n', 'utf-8')
 
+  // Sentinel last: if any write above throws, setup stays reachable instead of
+  // locking the user out of a half-configured install.
   writeFileSync(sentinelPath, new Date().toISOString(), 'utf-8')
+
+  // Both caches must be dropped in-process. config.json is re-read lazily and
+  // the guard flips to installed, so the app is usable immediately — no restart.
   invalidateServerConfig()
+  markInstalled()
 
   return { ok: true }
 })

@@ -801,7 +801,8 @@
     "done_ready": "Server is up! Redirecting to login...",
     "done_still_down": "Server not responding yet. Restart and try again.",
     "next": "Next",
-    "prev": "Back"
+    "prev": "Back",
+    "done_login_btn": "Go to login"
   },
   "ghost": {
     "title": "Ghost Mode Activated",

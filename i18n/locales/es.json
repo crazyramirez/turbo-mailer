@@ -801,7 +801,8 @@
     "done_ready": "¡Servidor activo! Redirigiendo al login...",
     "done_still_down": "El servidor no responde aún. Reinicia e inténtalo de nuevo.",
     "next": "Siguiente",
-    "prev": "Anterior"
+    "prev": "Anterior",
+    "done_login_btn": "Ir al login"
   },
   "ghost": {
     "title": "Ghost Mode Activado",

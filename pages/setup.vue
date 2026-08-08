@@ -10,10 +10,8 @@ import {
   ChevronRight,
   ChevronLeft,
   Zap,
-  RefreshCw,
   AlertTriangle,
   Settings2,
-  RotateCcw,
   Brain,
   Key,
 } from "lucide-vue-next";
@@ -112,8 +110,15 @@ const autoSecrets = ref(true);
 const unsubscribeSecret = ref("");
 const apiSecret = ref("");
 
+// Mirrors the server check: startsWith("http") alone would accept
+// "httpfoo" or "javascript:..." wrapped in a string that merely begins with it.
 function validateApp(): boolean {
-  return trackingBaseUrl.value.startsWith("http");
+  try {
+    const u = new URL(trackingBaseUrl.value.trim());
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 // ── Step 4 — Advanced (optional) ─────────────────────────────────────
@@ -197,44 +202,12 @@ async function install() {
   }
 }
 
-// ── Restart detection ─────────────────────────────────────────────────
-let originalStartedAt = 0;
-const pollStatus = ref<
-  "idle" | "checking" | "ready" | "not_restarted" | "down"
->("idle");
-let pollTimer: ReturnType<typeof setInterval> | null = null;
-
-async function checkRestart() {
-  if (pollStatus.value === "checking") return;
-  pollStatus.value = "checking";
-  if (pollTimer) clearInterval(pollTimer);
-
-  let tries = 0;
-  const MAX_TRIES = 12;
-
-  pollTimer = setInterval(async () => {
-    tries++;
-    try {
-      const { startedAt } = await $fetch<{ ok: boolean; startedAt: number }>(
-        "/api/health",
-      );
-      if (startedAt > originalStartedAt) {
-        clearInterval(pollTimer!);
-        pollStatus.value = "ready";
-        const isInstalled = useState<boolean | null>("isInstalled");
-        isInstalled.value = null;
-        setTimeout(() => navigateTo("/login"), 2000);
-      } else if (tries >= MAX_TRIES) {
-        clearInterval(pollTimer!);
-        pollStatus.value = "not_restarted";
-      }
-    } catch {
-      if (tries >= MAX_TRIES) {
-        clearInterval(pollTimer!);
-        pollStatus.value = "down";
-      }
-    }
-  }, 3000);
+// The server clears its config and setup-guard caches as part of the install,
+// so no restart is required — go straight to login.
+async function goToLogin() {
+  const isInstalled = useState<boolean | null>("isInstalled");
+  isInstalled.value = true;
+  await navigateTo("/login");
 }
 
 onMounted(async () => {
@@ -242,21 +215,11 @@ onMounted(async () => {
     trackingBaseUrl.value = window.location.origin;
   }
   try {
-    const { startedAt } = await $fetch<{ ok: boolean; startedAt: number }>(
-      "/api/health",
-    );
-    originalStartedAt = startedAt;
-  } catch {}
-  try {
     const { installed } = await $fetch<{ installed: boolean }>(
       "/api/setup/status",
     );
     if (installed) await navigateTo("/dashboard");
   } catch {}
-});
-
-onUnmounted(() => {
-  if (pollTimer) clearInterval(pollTimer);
 });
 </script>
 
@@ -288,41 +251,12 @@ onUnmounted(() => {
           <span>data/.installed</span>
         </div>
 
-        <div class="done-restart-box">
-          <div class="done-restart-header">
-            <RotateCcw :size="16" />
-            <span>{{ t("setup.done_restart_title") }}</span>
-          </div>
-          <p class="done-restart-desc">{{ t("setup.done_restart_desc") }}</p>
-          <ol class="done-steps">
-            <li>{{ t("setup.done_restart_step1") }}</li>
-            <li>{{ t("setup.done_restart_step2") }}</li>
-            <li>{{ t("setup.done_restart_step3") }}</li>
-          </ol>
-        </div>
-
-        <Transition name="sw-fade" mode="out-in">
-          <div v-if="pollStatus === 'ready'" class="poll-ready">
-            <CheckCircle2 :size="16" />
-            {{ t("setup.done_ready") }}
-          </div>
-          <div v-else-if="pollStatus === 'checking'" class="poll-checking">
-            <span class="sw-spinner"></span>
-            {{ t("setup.done_checking") }}
-          </div>
-          <div v-else-if="pollStatus === 'not_restarted'" class="poll-warn">
-            <AlertTriangle :size="14" />
-            {{ t("setup.done_not_restarted") }}
-          </div>
-          <div v-else-if="pollStatus === 'down'" class="poll-warn">
-            <AlertTriangle :size="14" />
-            {{ t("setup.done_still_down") }}
-          </div>
-          <button v-else class="sw-btn-primary" @click="checkRestart">
-            <RefreshCw :size="15" />
-            {{ t("setup.done_check_btn") }}
-          </button>
-        </Transition>
+        <!-- No restart needed: complete.post.ts drops the config and
+             setup-guard caches in-process, so the app is live immediately. -->
+        <button class="sw-btn-primary" @click="goToLogin">
+          <ChevronRight :size="15" />
+          {{ t("setup.done_login_btn") }}
+        </button>
 
         <p class="sw-footer">TurboMailer {{ APP_VERSION }}</p>
       </div>

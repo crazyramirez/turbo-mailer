@@ -11,14 +11,22 @@ const ALLOWED_PREFIXES = [
   '/api/preferences',
 ]
 
-let _installed: boolean | null = null
+// Cached only once installed. A `false` result must never be cached: the setup
+// wizard creates the sentinel in the same process, and a sticky `false` would
+// 503 every API call — including login — until the server was restarted.
+let _installed = false
+
+/** Called by the setup wizard the moment the sentinel is written. */
+export function markInstalled(): void {
+  _installed = true
+}
 
 export default defineEventHandler((event) => {
   const path = getRequestURL(event).pathname
   if (!path.startsWith('/api/')) return
   if (ALLOWED_PREFIXES.some(p => path.startsWith(p))) return
 
-  if (_installed === null) {
+  if (!_installed) {
     _installed = existsSync(resolve(process.cwd(), 'data/.installed'))
   }
 

@@ -11,6 +11,9 @@ docs/
 docs/*
 
 data/config.json
+# Backups written by scripts/encrypt-secrets.js — contain plaintext secrets
+data/config.json.*.bak
+.env.*.bak
 data/.installed
 data/templates/*
 !data/templates/.gitkeep

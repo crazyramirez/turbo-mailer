@@ -1,11 +1,16 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'node:crypto'
+import { hostname } from 'node:os'
 
 const ALGO = 'aes-256-gcm'
 const SALT = 'turbomailer-config-v1'
 const ENC_PREFIX = 'enc:'
 
 function getDerivedKey(): Buffer {
-  const base = process.env.ENCRYPTION_KEY || require('node:os').hostname()
+  // Static import, never require(): the Nitro build is pure ESM, where a
+  // bare require() throws ReferenceError at runtime. This path only runs when
+  // ENCRYPTION_KEY is unset, so it stayed invisible in dev and broke the
+  // production setup wizard.
+  const base = process.env.ENCRYPTION_KEY || hostname()
   return scryptSync(base, SALT, 32)
 }
 
