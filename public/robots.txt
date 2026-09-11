@@ -1,2 +1,4 @@
 User-agent: *
-Disallow: /
+# Crawlers must reach the public app shell to read noindex.
+# Private data is protected by server authentication, not robots.txt.
+Allow: /

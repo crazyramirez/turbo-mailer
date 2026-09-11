@@ -61,8 +61,8 @@ export default defineNuxtConfig({
         { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
         { name: "format-detection", content: "telephone=no" },
         { name: "description", content: "Premium Email Marketing Dashboard" },
-        { name: "robots", content: "noindex, nofollow, noarchive" },
-        { name: "googlebot", content: "noindex, nofollow, noarchive" },
+        { name: "robots", content: "noindex, nofollow" },
+        { name: "googlebot", content: "noindex, nofollow" },
         // Open Graph / Facebook
         { property: "og:type", content: "website" },
         { property: "og:title", content: "TurboMailer" },
@@ -89,7 +89,10 @@ export default defineNuxtConfig({
     registerType: "autoUpdate",
     workbox: {
       navigateFallback: "/",
-      globPatterns: ["**/*.{js,css,html,png,svg,ico}"]
+      globPatterns: ["**/*.{js,css,html,png,svg,ico}"],
+      // Cache the static SPA shell only. Never persist authenticated API responses.
+      runtimeCaching: [],
+      cleanupOutdatedCaches: true
     },
     client: {
       installPrompt: true
