@@ -35,6 +35,7 @@ export default defineNuxtConfig({
   css: [
     '@/assets/css/main.css',
     '@/assets/css/bg-orbs.css',
+    '@/assets/css/pages.css',
   ],
 
   modules: ["@vite-pwa/nuxt", "@nuxtjs/i18n"],
@@ -115,7 +116,7 @@ export default defineNuxtConfig({
     server: {
       allowedHosts: true,
       watch: {
-        ignored: ['**/data/templates/**', '**/data/*.db', '**/data/*.db-wal', '**/data/*.db-shm']
+        ignored: ['**/data/**', '**/.output/**']
       }
     }
   },
@@ -144,6 +145,12 @@ export default defineNuxtConfig({
   },
 
   nitro: {
+    // Request-scoped context (useEvent) outside handlers: audit entries are
+    // attributed to the logged-in user without passing the event around.
+    experimental: {
+      asyncContext: true,
+    },
+
     // Baked in at build time so the server bundle can tell dev from prod.
     // import.meta.dev is NOT substituted inside Nitro chunks, and NODE_ENV is
     // not set by the node-server output — so neither is reliable there.

@@ -1,6 +1,6 @@
 import { db } from '~/server/db/index'
 import { campaigns, lists } from '~/server/db/schema'
-import { eq, desc } from 'drizzle-orm'
+import { eq, desc, and } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
@@ -25,12 +25,24 @@ export default defineEventHandler(async (event) => {
       openCount: campaigns.openCount,
       clickCount: campaigns.clickCount,
       failCount: campaigns.failCount,
+      confirmedOpenCount: campaigns.confirmedOpenCount,
+      bounceCount: campaigns.bounceCount,
+      unsubscribeCount: campaigns.unsubscribeCount,
+      complaintCount: campaigns.complaintCount,
+      kind: campaigns.kind,
+      pauseReason: campaigns.pauseReason,
     })
     .from(campaigns)
     .leftJoin(lists, eq(lists.id, campaigns.listId))
     .orderBy(desc(campaigns.createdAt))
 
-  if (status) q = q.where(eq(campaigns.status, status as any)) as any
+  // Automation/transactional carriers are internal — hidden unless asked for
+  const kind = query.kind === 'all' ? null : String(query.kind || 'regular')
+  const conds = [
+    ...(status ? [eq(campaigns.status, status as any)] : []),
+    ...(kind ? [eq(campaigns.kind, kind as any)] : []),
+  ]
+  if (conds.length) q = q.where(and(...conds)) as any
 
   return await q
 })

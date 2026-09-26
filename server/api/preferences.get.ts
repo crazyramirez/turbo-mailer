@@ -1,7 +1,6 @@
-import { db } from '~/server/db/index'
-import { sends, contacts } from '~/server/db/schema'
-import { eq } from 'drizzle-orm'
-import { verifyUnsubscribeToken } from '~/server/utils/auth'
+import { sqlite } from '~/server/db/index'
+import { verifyUnsubscribeTokenForOptOut } from '~/server/utils/auth'
+import { loadSendContext } from '~/server/utils/subscription'
 
 export default defineEventHandler(async (event) => {
   const config = useServerConfig()
@@ -14,29 +13,25 @@ export default defineEventHandler(async (event) => {
   const token = String(query.t || '')
 
   if (!sendId || !token) throw createError({ statusCode: 400, statusMessage: 'Missing params' })
-
-  if (!verifyUnsubscribeToken(sendId, token, config.unsubscribeSecret as string)) {
+  if (!verifyUnsubscribeTokenForOptOut(sendId, token, String(config.unsubscribeSecret))) {
     throw createError({ statusCode: 403, statusMessage: 'Invalid token' })
   }
 
-  const [send] = await db.select().from(sends).where(eq(sends.id, sendId))
-  if (!send) throw createError({ statusCode: 404, statusMessage: 'Not found' })
+  const ctx = loadSendContext(sendId)
+  if (!ctx?.contact) throw createError({ statusCode: 404, statusMessage: 'Contact not found' })
 
-  const [contact] = await db.select({
-    email: contacts.email,
-    name: contacts.name,
-    status: contacts.status,
-    preferences: contacts.preferences,
-  }).from(contacts).where(eq(contacts.email, send.email))
-  if (!contact) throw createError({ statusCode: 404, statusMessage: 'Contact not found' })
+  const row = sqlite.prepare('SELECT preferences, topic_opt_outs AS topicOptOuts FROM contacts WHERE id = ?')
+    .get(ctx.contact.id) as { preferences: string | null; topicOptOuts: string | null }
+  const parse = <T>(v: string | null, fb: T): T => { try { return v ? JSON.parse(v) : fb } catch { return fb } }
 
-  // Mask email: j***@domain.com
-  const [local, domain] = contact.email.split('@')
-  const maskedEmail = `${local[0]}***@${domain}`
+  const topics = sqlite.prepare('SELECT id, name, description FROM topics WHERE is_public = 1 ORDER BY sort_order, id').all()
 
+  const [local, domain] = ctx.contact.email.split('@')
   return {
-    maskedEmail,
-    status: contact.status,
-    preferences: contact.preferences ?? { frequency: 'all' },
+    maskedEmail: `${local?.[0] ?? ''}***@${domain ?? ''}`,
+    status: ctx.contact.status,
+    preferences: parse(row.preferences, { frequency: 'all' }),
+    topics,
+    topicOptOuts: parse<number[]>(row.topicOptOuts, []),
   }
 })

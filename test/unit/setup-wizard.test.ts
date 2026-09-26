@@ -74,9 +74,11 @@ describe('setup complete endpoint', () => {
   })
 
   it('creates the data directory before writing into it', () => {
-    expect(src).toMatch(/mkdirSync\(resolve\(process\.cwd\(\), 'data'\), \{ recursive: true \}\)/)
+    // DATA_DIR-aware: the data directory comes from server/utils/data-dir
+    expect(src).toMatch(/mkdirSync\(dataDir, \{ recursive: true \}\)/)
     // mkdir must come before the first write, otherwise a fresh clone fails.
-    expect(src.indexOf('mkdirSync')).toBeLessThan(src.indexOf("writeFileSync(\n    resolve(process.cwd(), 'data/config.json')"))
+    expect(src.indexOf('mkdirSync(dataDir')).toBeLessThan(src.indexOf("writeFileSync(\n    dataPath('config.json')"))
+    expect(src.indexOf("writeFileSync(\n    dataPath('config.json')")).toBeGreaterThan(0)
   })
 
   it('clears both caches so no restart is needed', () => {

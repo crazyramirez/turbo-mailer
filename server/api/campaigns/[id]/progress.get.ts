@@ -1,48 +1,54 @@
-import { db } from '~/server/db/index'
-import { campaigns, sends } from '~/server/db/schema'
-import { eq, sql } from 'drizzle-orm'
+import { sqlite } from '~/server/db/index'
+import { getRunInfo } from '~/server/utils/send-engine'
 
 export default defineEventHandler(async (event) => {
   const campaignId = Number(getRouterParam(event, 'id'))
 
-  const [c] = await db
-    .select({
-      name: campaigns.name,
-      status: campaigns.status,
-      total: campaigns.totalRecipients,
-      startedAt: campaigns.startedAt,
-      abPhase: campaigns.abPhase,
-    })
-    .from(campaigns)
-    .where(eq(campaigns.id, campaignId))
+  const c = sqlite.prepare(
+    `SELECT name, status, total_recipients AS total, started_at AS startedAt, ab_phase AS abPhase, pause_reason AS pauseReason
+     FROM campaigns WHERE id = ?`,
+  ).get(campaignId) as { name: string; status: string; total: number | null; startedAt: number | null; abPhase: string | null; pauseReason: string | null } | undefined
 
   if (!c) throw createError({ statusCode: 404, statusMessage: 'Campaign not found' })
 
-  // Count live from sends table for real-time accuracy (not batched campaign counters)
-  const [live] = await db
-    .select({
-      sent: sql<number>`COUNT(*) FILTER (WHERE ${sends.status} IN ('sent', 'opened'))`,
-      fail: sql<number>`COUNT(*) FILTER (WHERE ${sends.status} IN ('failed', 'bounced'))`,
-      held: sql<number>`COUNT(*) FILTER (WHERE ${sends.status} = 'held')`,
-    })
-    .from(sends)
-    .where(eq(sends.campaignId, campaignId))
+  // Live counts from the sends table (campaign counters can lag a flush)
+  const live = sqlite.prepare(
+    `SELECT
+       COUNT(*) FILTER (WHERE status IN ('sent', 'opened')) AS sent,
+       COUNT(*) FILTER (WHERE status IN ('failed', 'bounced')) AS fail,
+       COUNT(*) FILTER (WHERE status = 'held') AS held,
+       COUNT(*) FILTER (WHERE status = 'skipped') AS skipped,
+       COUNT(*) FILTER (WHERE status IN ('pending', 'sending')) AS pending,
+       COUNT(*) FILTER (WHERE status = 'pending' AND scheduled_for > strftime('%s', 'now')) AS scheduled
+     FROM sends WHERE campaign_id = ?`,
+  ).get(campaignId) as { sent: number; fail: number; held: number; skipped: number; pending: number; scheduled: number }
 
-  const sent = live?.sent ?? 0
-  const fail = live?.fail ?? 0
-  const held = live?.held ?? 0
+  const engine = getRunInfo(campaignId)
 
   let etaMs: number | null = null
-  if (c.status === 'sending' && c.startedAt && c.total && c.total > 0) {
-    const processed = sent + fail
-    const elapsedMs = Date.now() - new Date(c.startedAt).getTime()
+  if (c.status === 'sending' && c.startedAt && c.total && c.total > 0 && !engine.throttle) {
+    const processed = live.sent + live.fail + live.skipped
+    const elapsedMs = Date.now() - c.startedAt * 1000
     if (processed > 0 && elapsedMs > 0) {
-      const ratePerMs = processed / elapsedMs
-      // A/B holdout isn't being sent right now — exclude it from the ETA
-      const remaining = c.total - processed - held
-      etaMs = remaining > 0 ? Math.round(remaining / ratePerMs) : 0
+      // A/B holdout and future (send-time optimized) sends aren't in flight
+      const remaining = Math.max(0, live.pending - live.scheduled)
+      etaMs = remaining > 0 ? Math.round(remaining / (processed / elapsedMs)) : 0
     }
   }
 
-  return { name: c.name, status: c.status, total: c.total ?? 0, sent, fail, held, abPhase: c.abPhase, etaMs }
+  return {
+    name: c.name,
+    status: c.status,
+    total: c.total ?? 0,
+    sent: live.sent,
+    fail: live.fail,
+    held: live.held,
+    skipped: live.skipped,
+    pending: live.pending,
+    scheduled: live.scheduled,
+    abPhase: c.abPhase,
+    pauseReason: c.pauseReason,
+    throttle: engine.throttle,
+    etaMs,
+  }
 })

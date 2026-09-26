@@ -1,9 +1,11 @@
 ﻿import { db } from '~/server/db/index'
-import { sends, campaigns, trackingEvents } from '~/server/db/schema'
+import { sends, campaigns, trackingEvents, contacts } from '~/server/db/schema'
 import { and, eq, ne, sql, gt } from 'drizzle-orm'
 import { verifyOpenToken } from '~/server/utils/auth'
 import { emitWebhook } from '~/server/utils/webhook'
 import { classifyOpen } from '~/server/utils/bot-detect'
+import { emitContactEvent } from '~/server/utils/contact-events'
+import { getClientIp } from '~/server/utils/auth'
 
 const PIXEL_GIF = Buffer.from(
   'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
@@ -44,7 +46,7 @@ export default defineEventHandler(async (event) => {
       // the mail is never opened: recorded, but never counted as confirmed.
       const isProxy = kind === 'proxy'
 
-      const ip = String(getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown').split(',')[0].trim()
+      const ip = getClientIp(event)
       
       // 1. Memory debounce
       const lockKey = `${sendId}:${ip}`
@@ -126,11 +128,23 @@ export default defineEventHandler(async (event) => {
             .run()
         }
 
+        // Human engagement drives the sunset policy, scoring and send-time
+        // optimization — proxy prefetches prove nothing about a person
+        if (!isProxy && send.contactId) {
+          tx.update(contacts)
+            .set({ lastEngagedAt: new Date(), sentSinceEngaged: 0 })
+            .where(eq(contacts.id, send.contactId))
+            .run()
+        }
+
         return { campaignId, contactId: send.contactId, email: send.email, isProxy }
       })
 
       if (recorded) {
         emitWebhook('email.opened', { sendId, ...recorded })
+        if (!recorded.isProxy && recorded.contactId) {
+          emitContactEvent({ type: 'email_opened', contactId: recorded.contactId, campaignId: recorded.campaignId })
+        }
       }
     } catch {
       // Silently fail for pixel

@@ -1,9 +1,11 @@
 ﻿import { db } from '~/server/db/index'
-import { sends, campaigns, trackingEvents } from '~/server/db/schema'
+import { sends, campaigns, trackingEvents, contacts } from '~/server/db/schema'
 import { eq, sql, and, gt } from 'drizzle-orm'
 import { verifyClickTokenDetailed } from '~/server/utils/auth'
 import { emitWebhook } from '~/server/utils/webhook'
 import { classifyClick } from '~/server/utils/bot-detect'
+import { emitContactEvent } from '~/server/utils/contact-events'
+import { getClientIp } from '~/server/utils/auth'
 
 // In-memory lock to prevent race conditions from rapid-fire mobile clicks
 const clickLock = new Set<string>()
@@ -45,7 +47,7 @@ export default defineEventHandler(async (event) => {
         return await sendRedirect(event, targetUrl, 302)
       }
 
-      const ip = String(getHeader(event, 'x-forwarded-for') || getHeader(event, 'x-real-ip') || 'unknown').split(',')[0].trim()
+      const ip = getClientIp(event)
       
       // 1. Memory debounce (handles race conditions better than DB check alone)
       const lockKey = `${sendId}:${targetUrl}:${ip}`
@@ -138,11 +140,21 @@ export default defineEventHandler(async (event) => {
             .run()
         }
 
+        if (send.contactId) {
+          tx.update(contacts)
+            .set({ lastEngagedAt: new Date(), sentSinceEngaged: 0 })
+            .where(eq(contacts.id, send.contactId))
+            .run()
+        }
+
         return { campaignId: send.campaignId, contactId: send.contactId, email: send.email }
       })
 
       if (recorded) {
         emitWebhook('email.clicked', { sendId, url: targetUrl, ...recorded })
+        if (recorded.contactId) {
+          emitContactEvent({ type: 'link_clicked', contactId: recorded.contactId, campaignId: recorded.campaignId, url: targetUrl })
+        }
       }
     } catch (err) {
       console.error('[track/click] error:', err)

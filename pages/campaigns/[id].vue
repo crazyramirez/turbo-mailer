@@ -20,11 +20,14 @@ import {
   Clock,
   Calendar,
   FlaskConical,
+  SlidersHorizontal,
 } from "lucide-vue-next";
 import CampaignPreview from "~/components/campaigns/CampaignPreview.vue";
 import CampaignLibraryModal from "~/components/campaigns/CampaignLibraryModal.vue";
 import PreSendChecklist from "~/components/campaigns/PreSendChecklist.vue";
 import TestSendModal from "~/components/campaigns/TestSendModal.vue";
+import SubjectLab from "~/components/campaigns/SubjectLab.vue";
+import CampaignInsights from "~/components/campaigns/CampaignInsights.vue";
 
 definePageMeta({ layout: "app" });
 
@@ -42,6 +45,12 @@ const id = Number(route.params.id);
 // ─── State ───────────────────────────────────────────────────
 const campaign = ref<any>(null);
 const sendsList = ref<any[]>([]);
+const sendsTotal = ref(0);
+const sendsStats = ref<{ byStatus: Record<string, number>; byVariant: Record<string, { sent: number; opens: number; clicks: number }>; unopened: number }>({ byStatus: {}, byVariant: {}, unopened: 0 });
+const sendsFilter = ref<string>("");
+const sendsSearch = ref("");
+const SENDS_PAGE = 100;
+const sendsLimit = ref(SENDS_PAGE);
 const lists = ref<any[]>([]);
 const loading = ref(true);
 const saving = ref(false);
@@ -80,13 +89,11 @@ const minDateTime = computed(() => {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 });
 
-const pendingCount = computed(
-  () => sendsList.value.filter((s) => s.status === "pending").length,
-);
+const pendingCount = computed(() => sendsStats.value.byStatus.pending ?? 0);
 const canSend = computed(
   () =>
     isDraft.value &&
-    campaign.value?.listId &&
+    (campaign.value?.listId || campaign.value?.segmentId) &&
     campaign.value?.templateHtml &&
     subjectInput.value.trim().length > 0,
 );
@@ -115,10 +122,76 @@ async function fetchCampaign() {
   }
 }
 async function fetchSends() {
-  sendsList.value = await $fetch<any[]>(`/api/campaigns/${id}/sends`);
+  const res = await $fetch<any>(`/api/campaigns/${id}/sends`, {
+    query: {
+      limit: sendsLimit.value,
+      status: sendsFilter.value || undefined,
+      q: sendsSearch.value.trim() || undefined,
+    },
+  });
+  sendsList.value = res.rows;
+  sendsTotal.value = res.total;
+  sendsStats.value = res.stats;
+}
+
+let sendsSearchTimer: ReturnType<typeof setTimeout> | null = null;
+watch([sendsFilter, sendsSearch], () => {
+  sendsLimit.value = SENDS_PAGE;
+  if (sendsSearchTimer) clearTimeout(sendsSearchTimer);
+  sendsSearchTimer = setTimeout(fetchSends, 250);
+});
+function loadMoreSends() {
+  sendsLimit.value += SENDS_PAGE;
+  fetchSends();
 }
 async function fetchLists() {
   lists.value = await $fetch<any[]>("/api/lists");
+}
+
+// Audience & delivery options (segments, sender identities, topics)
+const segmentsList = ref<{ id: number; name: string; count: number | null }[]>([]);
+const senders = ref<{ id: string; name: string; fromEmail: string | null; fromName: string | null; dkim: boolean }[]>([]);
+const topicsList = ref<{ id: number; name: string }[]>([]);
+const showAdvanced = ref(false);
+const showLab = ref(false);
+async function fetchAudienceOptions() {
+  const [sg, sd, tp] = await Promise.all([
+    $fetch<any[]>("/api/segments").catch(() => []),
+    $fetch<any[]>("/api/senders").catch(() => []),
+    $fetch<any[]>("/api/topics").catch(() => []),
+  ]);
+  segmentsList.value = sg;
+  senders.value = sd;
+  topicsList.value = tp;
+}
+async function changeSegment(e: Event) {
+  campaign.value.segmentId = Number((e.target as HTMLSelectElement).value) || null;
+  await commitSave();
+}
+function utmValue(key: "source" | "medium" | "campaign") {
+  return campaign.value?.utmParams?.[key] ?? "";
+}
+function setUtm(key: "source" | "medium" | "campaign", value: string) {
+  campaign.value.utmParams = { ...(campaign.value.utmParams ?? {}), [key]: value };
+  scheduleSave();
+}
+function onUtmInput(key: "source" | "medium" | "campaign", e: Event) {
+  setUtm(key, (e.target as HTMLInputElement).value);
+}
+function senderLabel(sd: { name: string; fromEmail: string | null; fromName: string | null; dkim: boolean }) {
+  const base = sd.fromName ? `${sd.fromName} <${sd.fromEmail ?? ""}>` : sd.fromEmail || sd.name;
+  return sd.dkim ? `${base} · DKIM` : base;
+}
+function applyLab(p: { subject: string; preheader: string; as: "A" | "B" }) {
+  if (p.as === "A") {
+    subjectInput.value = p.subject;
+    campaign.value.preheader = p.preheader;
+  } else {
+    campaign.value.subjectB = p.subject;
+  }
+  showLab.value = false;
+  commitSave();
+  showToast(t("lab.applied"), "success");
 }
 
 // ─── Scheduled Actions ───────────────────────────────────────
@@ -428,7 +501,7 @@ async function retryCampaign() {
   const ok = await showDialog({
     type: "confirm",
     title: "Reintentar fallidos",
-    message: `¿Intentar enviar de nuevo los ${campaign.value.failCount} emails que fallaron?`,
+    message: `¿Reintentar los envíos fallidos? Los rebotes duros (direcciones inexistentes) no se reintentan para proteger tu reputación.`,
   });
   if (!ok) return;
   sending.value = true;
@@ -468,19 +541,30 @@ const abPhaseLabel = computed(() => {
 });
 
 const abStats = computed(() => {
-  const stats = {
-    A: { sent: 0, opens: 0 },
-    B: { sent: 0, opens: 0 },
-    held: 0,
+  const v = sendsStats.value.byVariant;
+  return {
+    A: { sent: v.A?.sent ?? 0, opens: v.A?.opens ?? 0, clicks: v.A?.clicks ?? 0 },
+    B: { sent: v.B?.sent ?? 0, opens: v.B?.opens ?? 0, clicks: v.B?.clicks ?? 0 },
+    held: sendsStats.value.byStatus.held ?? 0,
   };
-  for (const s of sendsList.value) {
-    if (s.status === "held") stats.held++;
-    if (s.variant !== "A" && s.variant !== "B") continue;
-    const v = stats[s.variant as "A" | "B"];
-    if (s.status === "sent" || s.status === "opened") v.sent++;
-    if (s.status === "opened") v.opens++;
-  }
-  return stats;
+});
+
+// Why the pipeline paused this campaign by itself
+const PAUSE_REASON_TEXT: Record<string, string> = {
+  bounce_rate: "Pausada automáticamente: la tasa de rebotes duros es anormalmente alta. Revisa la calidad de la lista antes de reanudar.",
+  blocked_by_provider: "Pausada automáticamente: muchos envíos están siendo rechazados por política o reputación. Revisa SPF/DKIM/DMARC, el contenido y las listas negras.",
+  smtp_unavailable: "Pausada automáticamente: el servidor SMTP no responde o rechaza las credenciales. Al reanudar continuará donde se quedó.",
+  provider_throttling: "Pausada automáticamente: el proveedor limita la velocidad de forma continuada. Reduce la velocidad de envío en Ajustes.",
+  complaint_rate: "Pausada automáticamente: demasiadas quejas de spam (> 0,3%).",
+  smtp_not_configured: "No hay ningún servidor SMTP configurado.",
+  no_template: "La campaña no tiene plantilla.",
+  no_recipients: "No quedaban destinatarios válidos al lanzar el envío programado.",
+};
+const pauseReasonText = computed(() => {
+  const r = campaign.value?.pauseReason as string | null;
+  if (!r) return "";
+  if (r.startsWith("engine_error")) return `Pausada por un error interno: ${r.replace(/^engine_error:\s*/, "")}`;
+  return PAUSE_REASON_TEXT[r] ?? r;
 });
 
 // ─── Manual status override ──────────────────────────────────
@@ -622,9 +706,7 @@ watch(
 
 // ─── Follow-up: re-send to non-openers ───────────────────────
 const creatingFollowUp = ref(false);
-const unopenedCount = computed(
-  () => sendsList.value.filter((s) => s.status === "sent").length,
-);
+const unopenedCount = computed(() => sendsStats.value.unopened ?? 0);
 async function createFollowUp() {
   const ok = await showDialog({
     type: "confirm",
@@ -723,8 +805,11 @@ let finishedPollingAt: number | null = null;
 function startPolling() {
   if (pollTimer) return;
   finishedPollingAt = null;
+  let tick = 0;
   pollTimer = setInterval(async () => {
-    // Actualizamos tanto la campaña (stats) como la lista de envíos en paralelo
+    tick++;
+    // Campaign row + first page of sends every 2s — never the whole list
+    if (tick % 2 !== 0) return;
     await Promise.all([fetchCampaign(), fetchSends()]);
 
     if (campaign.value?.status !== "sending") {
@@ -798,6 +883,8 @@ const SEND_BADGE: Record<string, string> = {
   opened: "bd-opened",
   bounced: "bd-bounced",
   held: "bd-pending",
+  sending: "bd-pending",
+  skipped: "bd-skipped",
 };
 const SEND_LABEL: Record<string, string> = {
   sent: "Enviado",
@@ -806,11 +893,14 @@ const SEND_LABEL: Record<string, string> = {
   opened: "Abierto",
   bounced: "Rebotado",
   held: "En espera (A/B)",
+  sending: "Enviando…",
+  skipped: "Omitido",
 };
 
 onMounted(async () => {
   document.addEventListener("click", closeStatusMenu);
   await Promise.all([fetchCampaign(), fetchSends(), fetchLists()]);
+  fetchAudienceOptions();
   fetchPreviewContacts();
   fetchLinkStats();
 
@@ -818,7 +908,7 @@ onMounted(async () => {
   if (
     campaign.value &&
     campaign.value.templateName &&
-    campaign.value.status !== "sent"
+    (campaign.value.status === "draft" || campaign.value.status === "scheduled")
   ) {
     try {
       const data = await $fetch<any>("/api/templates", {
@@ -1110,7 +1200,12 @@ onUnmounted(() => {
 
             <!-- Subject -->
             <div class="config-card">
-              <div class="cc-label">Asunto del email</div>
+              <div class="cc-label ab-label-row">
+                <span>{{ t("camp.subject") }}</span>
+                <button v-if="!isScheduled" class="lab-btn" type="button" @click="showLab = true">
+                  <FlaskConical :size="12" /> {{ t("lab.open") }}
+                </button>
+              </div>
               <div class="input-wrap">
                 <input
                   ref="subjectRef"
@@ -1144,6 +1239,18 @@ onUnmounted(() => {
                   {{ v.replaceAll("{", "").replaceAll("}", "") }}
                 </button>
               </div>
+              <div class="cc-sublabel" style="margin-top: 12px">{{ t("camp.preheader") }}</div>
+              <input
+                v-model="campaign.preheader"
+                @input="scheduleSave"
+                @blur="commitSave"
+                type="text"
+                class="field-input"
+                maxlength="255"
+                :placeholder="t('camp.preheader_ph')"
+                :disabled="isScheduled"
+              />
+              <p class="field-hint">{{ t("camp.preheader_hint") }}</p>
               <p v-if="isScheduled" class="field-hint" style="color: #f59e0b; display: flex; align-items: center; gap: 4px; margin-top: 8px;">
                 <AlertCircle :size="12" /> Campaña programada · Desprograma para modificar
               </p>
@@ -1198,7 +1305,7 @@ onUnmounted(() => {
                   </label>
                 </div>
                 <p v-if="campaign.subjectB" class="field-hint" style="margin-top: 8px">
-                  Se envía la muestra 50/50 entre A y B; el asunto con más aperturas va al resto automáticamente.
+                  Se envía la muestra 50/50 entre A y B. Gana el asunto con más clics (o aperturas confirmadas) solo si la diferencia es estadísticamente significativa; si no, se usa A. El resto recibe el ganador automáticamente.
                 </p>
               </template>
 
@@ -1206,13 +1313,13 @@ onUnmounted(() => {
                 <div class="ab-variant-row">
                   <span class="ab-variant-tag">A</span>
                   <span class="ab-variant-subject">{{ campaign.subject }}</span>
-                  <span class="ab-variant-stats">{{ abStats.A.opens }}/{{ abStats.A.sent }} aperturas</span>
+                  <span class="ab-variant-stats">{{ abStats.A.clicks }} clics · {{ abStats.A.opens }}/{{ abStats.A.sent }} aperturas</span>
                   <Check v-if="campaign.abWinner === 'A'" :size="14" class="ab-winner-icon" />
                 </div>
                 <div class="ab-variant-row">
                   <span class="ab-variant-tag b">B</span>
                   <span class="ab-variant-subject">{{ campaign.subjectB }}</span>
-                  <span class="ab-variant-stats">{{ abStats.B.opens }}/{{ abStats.B.sent }} aperturas</span>
+                  <span class="ab-variant-stats">{{ abStats.B.clicks }} clics · {{ abStats.B.opens }}/{{ abStats.B.sent }} aperturas</span>
                   <Check v-if="campaign.abWinner === 'B'" :size="14" class="ab-winner-icon" />
                 </div>
                 <p v-if="campaign.abPhase === 'waiting'" class="field-hint" style="margin-top: 8px">
@@ -1331,8 +1438,21 @@ onUnmounted(() => {
                 </select>
                 <ChevronDown :size="14" class="select-icon" />
               </div>
-              <p v-if="!campaign.listId" class="field-hint">
-                <AlertCircle :size="12" /> Necesitas una lista para enviar
+              <div class="cc-sublabel" style="margin-top: 12px">{{ t("camp.segment") }}</div>
+              <div class="select-wrap">
+                <select class="field-input" :value="campaign.segmentId ?? ''" :disabled="isScheduled" @change="changeSegment">
+                  <option value="">{{ t("camp.no_segment") }}</option>
+                  <option v-for="sg in segmentsList" :key="sg.id" :value="sg.id">
+                    {{ sg.name }}{{ sg.count != null ? ` — ${sg.count}` : "" }}
+                  </option>
+                </select>
+                <ChevronDown :size="14" class="select-icon" />
+              </div>
+              <p v-if="campaign.segmentId" class="field-hint">
+                {{ campaign.listId ? t("camp.segment_in_list") : t("camp.segment_all") }}
+              </p>
+              <p v-if="!campaign.listId && !campaign.segmentId" class="field-hint">
+                <AlertCircle :size="12" /> {{ t("camp.need_audience") }}
               </p>
               <p v-if="isScheduled" class="field-hint" style="color: #f59e0b; display: flex; align-items: center; gap: 4px; margin-top: 8px;">
                 <AlertCircle :size="12" /> Campaña programada · Desprograma para modificar
@@ -1392,6 +1512,56 @@ onUnmounted(() => {
               <p v-if="isScheduled" class="field-hint" style="color: #f59e0b; display: flex; align-items: center; gap: 4px; margin-top: 8px;">
                 <AlertCircle :size="12" /> Campaña programada · Desprograma para modificar
               </p>
+            </div>
+
+            <!-- Advanced delivery options -->
+            <div class="config-card">
+              <button class="cc-toggle" @click="showAdvanced = !showAdvanced">
+                <span class="cc-label" style="margin: 0; display: inline-flex; align-items: center; gap: 6px"><SlidersHorizontal :size="13" /> {{ t("camp.advanced") }}</span>
+                <span class="cc-toggle-hint">{{ showAdvanced ? "▲" : "▼" }} {{ t("camp.advanced_hint") }}</span>
+              </button>
+              <template v-if="showAdvanced">
+                <div class="adv-grid">
+                  <div>
+                    <div class="cc-sublabel">{{ t("camp.sender") }}</div>
+                    <div class="select-wrap">
+                      <select v-model="campaign.senderProfileId" class="field-input" :disabled="isScheduled" @change="commitSave">
+                        <option :value="null">{{ t("camp.default_sender") }}</option>
+                        <option v-for="sd in senders" :key="sd.id" :value="sd.id">{{ senderLabel(sd) }}</option>
+                      </select>
+                      <ChevronDown :size="14" class="select-icon" />
+                    </div>
+                  </div>
+                  <div>
+                    <div class="cc-sublabel">{{ t("camp.topic") }}</div>
+                    <div class="select-wrap">
+                      <select v-model="campaign.topicId" class="field-input" :disabled="isScheduled" @change="commitSave">
+                        <option :value="null">{{ t("camp.no_topic") }}</option>
+                        <option v-for="tp in topicsList" :key="tp.id" :value="tp.id">{{ tp.name }}</option>
+                      </select>
+                      <ChevronDown :size="14" class="select-icon" />
+                    </div>
+                  </div>
+                </div>
+                <p class="field-hint">{{ t("camp.topic_hint") }}</p>
+
+                <div class="cc-sublabel" style="margin-top: 12px">{{ t("camp.utm") }}</div>
+                <div class="adv-grid three">
+                  <input class="field-input" :value="utmValue('source')" placeholder="utm_source" :disabled="isScheduled" @input="onUtmInput('source', $event)" />
+                  <input class="field-input" :value="utmValue('medium')" placeholder="utm_medium (email)" :disabled="isScheduled" @input="onUtmInput('medium', $event)" />
+                  <input class="field-input" :value="utmValue('campaign')" placeholder="utm_campaign" :disabled="isScheduled" @input="onUtmInput('campaign', $event)" />
+                </div>
+                <p class="field-hint">{{ t("camp.utm_hint") }}</p>
+
+                <label class="adv-check">
+                  <input v-model="campaign.stoEnabled" type="checkbox" :disabled="isScheduled" @change="commitSave" />
+                  <span><strong>{{ t("camp.sto") }}</strong> — {{ t("camp.sto_hint") }}</span>
+                </label>
+                <label class="adv-check">
+                  <input v-model="campaign.ignoreSunset" type="checkbox" :disabled="isScheduled" @change="commitSave" />
+                  <span><strong>{{ t("camp.ignore_sunset") }}</strong> — {{ t("camp.ignore_sunset_hint") }}</span>
+                </label>
+              </template>
             </div>
 
             <!-- Subscription emails (optional) -->
@@ -1584,6 +1754,7 @@ onUnmounted(() => {
                 <span class="paused-text">
                   Pausado · <strong>{{ campaign.sentCount }}</strong> enviados,
                   <strong>{{ pendingCount }}</strong> pendientes
+                  <span v-if="pauseReasonText" class="paused-reason">{{ pauseReasonText }}</span>
                 </span>
               </div>
               <button
@@ -1596,6 +1767,15 @@ onUnmounted(() => {
                 Reanudar envío
               </button>
             </div>
+
+            <!-- AI analysis + inbox placement -->
+            <CampaignInsights
+              v-if="campaign.status !== 'sending' && (campaign.sentCount ?? 0) > 0"
+              :campaign-id="id"
+              :status="campaign.status"
+              :sent-count="campaign.sentCount ?? 0"
+              :initial-insights="campaign.aiInsights"
+            />
 
             <!-- Top clicked links -->
             <template v-if="linkStats.length > 0">
@@ -1626,7 +1806,26 @@ onUnmounted(() => {
               </div>
             </template>
 
-            <div class="section-hdr">Destinatarios</div>
+            <div class="section-hdr sends-hdr">
+              <span>Destinatarios <span class="sends-count">{{ sendsTotal }}</span></span>
+              <div class="sends-tools">
+                <input
+                  v-model="sendsSearch"
+                  type="search"
+                  class="sends-search"
+                  placeholder="Buscar email, nombre o empresa…"
+                />
+                <select v-model="sendsFilter" class="sends-filter">
+                  <option value="">Todos</option>
+                  <option value="sent">Enviados</option>
+                  <option value="opened">Abiertos</option>
+                  <option value="failed">Fallidos / rebotes</option>
+                  <option value="skipped">Omitidos</option>
+                  <option value="pending">Pendientes</option>
+                  <option value="held">En espera (A/B)</option>
+                </select>
+              </div>
+            </div>
             <div class="table-wrap">
               <div v-if="sendsList.length === 0" class="table-empty">
                 Sin registros de envío
@@ -1687,6 +1886,13 @@ onUnmounted(() => {
                   </tr>
                 </tbody>
               </table>
+              <button
+                v-if="sendsList.length < sendsTotal"
+                class="btn-load-more"
+                @click="loadMoreSends"
+              >
+                Mostrar más ({{ sendsList.length }} de {{ sendsTotal }})
+              </button>
             </div>
           </template>
         </div>
@@ -1736,6 +1942,18 @@ onUnmounted(() => {
           :campaign-id="id"
           :list-id="campaign.listId"
           @close="showTestModal = false"
+        />
+      </Transition>
+
+      <!-- Subject lab -->
+      <Transition name="fade-scale">
+        <SubjectLab
+          v-if="showLab"
+          :campaign-id="id"
+          :subject="subjectInput"
+          :can-use-b="isDraft"
+          @apply="applyLab"
+          @close="showLab = false"
         />
       </Transition>
 
@@ -3824,5 +4042,114 @@ select.field-input option {
 .seg-count {
   opacity: 0.65;
   font-size: 0.68rem;
+}
+
+.paused-reason {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #fbbf24;
+  font-weight: 500;
+}
+.sends-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.sends-count {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-left: 6px;
+}
+.sends-tools {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sends-search,
+.sends-filter {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 12px;
+  min-width: 0;
+}
+.sends-search {
+  width: 220px;
+  max-width: 100%;
+}
+.btn-load-more {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--border);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-load-more:hover {
+  background: rgba(99, 102, 241, 0.06);
+}
+.bd-skipped {
+  background: rgba(148, 163, 184, 0.12);
+  color: #94a3b8;
+}
+
+/* Subject lab / advanced options */
+.lab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(129, 140, 248, 0.4);
+  background: rgba(99, 102, 241, 0.12);
+  color: #c7d2fe;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.lab-btn:hover {
+  background: rgba(99, 102, 241, 0.25);
+}
+.adv-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+.adv-grid.three {
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 6px;
+}
+.adv-check {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-top: 12px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+}
+.adv-check input {
+  margin-top: 3px;
+  accent-color: #818cf8;
+}
+@media (max-width: 640px) {
+  .adv-grid,
+  .adv-grid.three {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

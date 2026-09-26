@@ -3,6 +3,7 @@ import { sqlite } from '~/server/db/index'
 import { db } from '~/server/db/index'
 import { sessions, refreshTokens } from '~/server/db/schema'
 import { eq, lt } from 'drizzle-orm'
+import { resolveSession } from '~/server/utils/users'
 
 const MAX_ATTEMPTS = 10
 const BLOCK_DURATION = 15 * 60 // seconds
@@ -104,47 +105,40 @@ export function clearAttempts(ip: string): void {
 
 // ─── Sessions (SQLite-backed, survives restarts) ───────────────────────────────
 
-export async function createSession(ip: string): Promise<string> {
+export async function createSession(ip: string, userId: number | null = null): Promise<string> {
   const token = randomBytes(32).toString('hex')
   const now = new Date()
   const expiresAt = new Date(now.getTime() + SESSION_TTL)
-  await db.insert(sessions).values({ token, ip, createdAt: now, expiresAt })
+  await db.insert(sessions).values({ token, ip, userId, createdAt: now, expiresAt })
   await db.delete(sessions).where(lt(sessions.expiresAt, now)).catch(() => {})
   return token
 }
 
+/** True when the session exists, is fresh and its user (if any) may still log in. */
 export async function validateSession(token: string): Promise<boolean> {
-  const [session] = await db.select().from(sessions).where(eq(sessions.token, token))
-  if (!session) return false
-  if (session.expiresAt < new Date()) {
-    await db.delete(sessions).where(eq(sessions.token, token)).catch(() => {})
-    return false
-  }
-  return true
+  return resolveSession(token) !== null
 }
 
 export async function destroySession(token: string): Promise<void> {
   await db.delete(sessions).where(eq(sessions.token, token))
 }
 
-export async function createRefreshToken(ip: string): Promise<string> {
+export async function createRefreshToken(ip: string, userId: number | null = null): Promise<string> {
   const token = randomBytes(40).toString('hex')
   const now = new Date()
   const expiresAt = new Date(now.getTime() + REFRESH_TOKEN_TTL)
-  await db.insert(refreshTokens).values({ token, ip, createdAt: now, expiresAt })
+  await db.insert(refreshTokens).values({ token, ip, userId, createdAt: now, expiresAt })
   await db.delete(refreshTokens).where(lt(refreshTokens.expiresAt, now)).catch(() => {})
   return token
 }
 
-export async function validateAndRotateRefreshToken(token: string, ip: string): Promise<string | null> {
+/** One-shot: the presented token is consumed and a new one issued for the same user. */
+export async function validateAndRotateRefreshToken(token: string, ip: string): Promise<{ token: string; userId: number | null } | null> {
   const [row] = await db.select().from(refreshTokens).where(eq(refreshTokens.token, token))
   if (!row) return null
-  if (row.expiresAt < new Date()) {
-    await db.delete(refreshTokens).where(eq(refreshTokens.token, token)).catch(() => {})
-    return null
-  }
   await db.delete(refreshTokens).where(eq(refreshTokens.token, token))
-  return createRefreshToken(ip)
+  if (row.expiresAt < new Date()) return null
+  return { token: await createRefreshToken(ip, row.userId ?? null), userId: row.userId ?? null }
 }
 
 export async function destroyRefreshToken(token: string): Promise<void> {
@@ -252,6 +246,14 @@ export function signUnsubscribeToken(sendId: number, secret: string): string {
 
 export function verifyUnsubscribeToken(sendId: number, token: string, secret: string): boolean {
   return verifyTimestamped(`unsub:${sendId}`, token, deriveSecret(secret, 'unsub'), DEFAULT_TOKEN_TTL_DAYS)
+}
+
+// An opt-out must keep working for as long as the email sits in an inbox:
+// an authentic-but-old token is honoured for unsubscribing (never for
+// anything that grants access or re-subscribes).
+export function verifyUnsubscribeTokenForOptOut(sendId: number, token: string, secret: string): boolean {
+  const status = verifyTimestampedDetailed(`unsub:${sendId}`, token, deriveSecret(secret, 'unsub'), DEFAULT_TOKEN_TTL_DAYS)
+  return status === 'valid' || status === 'expired'
 }
 
 export function signClickToken(sendId: number, url: string, secret: string): string {

@@ -12,6 +12,13 @@ const BYPASS_PREFIXES = [
   '/api/subscribe',
   '/api/subscribers',
   '/api/preferences',
+  '/api/confirm',
+  // Public form submissions (own anti-abuse: honeypot, timing, rate limit)
+  '/api/forms/',
+  // Public API authenticates with API keys, not cookies
+  '/api/v1/',
+  // Provider webhooks (bounces/complaints) authenticate with their own secret
+  '/api/webhooks/',
   '/api/health',
   '/api/ghost-status',
   // The setup wizard runs before any session exists and issues no CSRF token.

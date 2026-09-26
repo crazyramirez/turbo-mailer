@@ -5,6 +5,7 @@ import path from 'node:path'
 import { createBackup } from '~/server/utils/backup'
 import { getClientIp } from '~/server/utils/auth'
 import { logAudit } from '~/server/utils/audit'
+import { dataPath } from '~/server/utils/data-dir'
 
 const VALID_SCOPES = ['all', 'db', 'contacts', 'campaigns', 'analytics', 'security', 'setup'] as const
 type Scope = typeof VALID_SCOPES[number]
@@ -41,8 +42,8 @@ export default defineEventHandler(async (event) => {
 
   // Setup reconfiguration: only delete config files, no DB backup needed
   if (scope === 'setup') {
-    await fs.unlink(path.resolve(process.cwd(), 'data/.installed')).catch(() => {})
-    await fs.unlink(path.resolve(process.cwd(), 'data/config.json')).catch(() => {})
+    await fs.unlink(dataPath('.installed')).catch(() => {})
+    await fs.unlink(dataPath('config.json')).catch(() => {})
     return { ok: true, backupPath: null }
   }
 
@@ -89,7 +90,7 @@ export default defineEventHandler(async (event) => {
     await safeDelete(loginAttempts)
 
     if (scope === 'all') {
-      const templatesDir = path.resolve(process.cwd(), 'data/templates')
+      const templatesDir = dataPath('templates')
       const files = await fs.readdir(templatesDir).catch(() => [] as string[])
       await Promise.all(
         files

@@ -1,59 +1,51 @@
-import { db } from '~/server/db/index'
-import { campaigns, sends } from '~/server/db/schema'
-import { eq, and } from 'drizzle-orm'
-import { processCampaign, type SendConfig } from '~/server/utils/campaign-processor'
+import { sqlite } from '~/server/db/index'
+import { clearSignal } from '~/server/utils/campaign-state'
+import { startCampaign } from '~/server/utils/send-engine'
+import { getSuppression, unsuppress } from '~/server/utils/suppression'
+import { logAudit } from '~/server/utils/audit'
+import { getClientIp } from '~/server/utils/auth'
 
+// Re-queues ONE send of a campaign (failed, bounced or still pending).
+// Re-sending a bounced address is an explicit human decision here (e.g. the
+// mailbox was fixed), so its bounce suppression is lifted for this address —
+// an unsubscribe or complaint is never overridden.
 export default defineEventHandler(async (event) => {
   const campaignId = Number(getRouterParam(event, 'id'))
   const sendId = Number(getRouterParam(event, 'sendId'))
-  const config = useServerConfig()
 
-  const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, campaignId))
+  const campaign = sqlite.prepare('SELECT id, status FROM campaigns WHERE id = ?').get(campaignId) as { id: number; status: string } | undefined
   if (!campaign) throw createError({ statusCode: 404, statusMessage: 'Campaign not found' })
   if (campaign.status === 'sending') throw createError({ statusCode: 409, statusMessage: 'Campaign already sending' })
 
-  const [send] = await db.select().from(sends)
-    .where(and(eq(sends.id, sendId), eq(sends.campaignId, campaignId)))
+  const send = sqlite.prepare('SELECT id, email, status, contact_id AS contactId FROM sends WHERE id = ? AND campaign_id = ?')
+    .get(sendId, campaignId) as { id: number; email: string; status: string; contactId: number | null } | undefined
   if (!send) throw createError({ statusCode: 404, statusMessage: 'Send not found' })
-  if (send.status === 'sent' || send.status === 'opened') {
+  if (send.status === 'sent' || send.status === 'opened' || send.status === 'sending') {
     throw createError({ statusCode: 409, statusMessage: 'Already sent' })
   }
 
-  await db.update(sends)
-    .set({ status: 'pending', errorMsg: null })
-    .where(eq(sends.id, sendId))
-
-  await db.update(campaigns)
-    .set({ status: 'sending' })
-    .where(eq(campaigns.id, campaignId))
-
-  const cfg: SendConfig = {
-    smtpHost: String(config.smtpHost),
-    smtpPort: Number(config.smtpPort),
-    smtpUser: String(config.smtpUser),
-    smtpPass: String(config.smtpPass),
-    smtpSecure: Boolean(config.smtpSecure),
-    smtpFromName: String(config.smtpFromName || 'TurboMailer'),
-    smtpFromEmail: String(config.smtpFromEmail || config.smtpUser),
-    baseUrl: String(config.trackingBaseUrl || 'http://localhost:3000'),
-    secret: String(config.unsubscribeSecret),
-    delayMs: Number(config.smtpSendDelayMs),
-    jitterMs: Number(config.smtpSendJitterMs),
-    maxRetries: Number(config.smtpMaxRetries || 3),
-    retryDelayMs: Number(config.smtpRetryDelayMs || 5000),
-    maxEmailsPerSecond: Number(config.smtpMaxEmailsPerSecond || 0),
-    dkimDomain: config.dkimDomain as string,
-    dkimSelector: config.dkimSelector as string,
-    dkimPrivateKey: config.dkimPrivateKey as string,
+  const sup = getSuppression(send.email)
+  if (sup && sup.reason !== 'bounced') {
+    throw createError({ statusCode: 409, statusMessage: `El contacto está en la lista de supresión (${sup.reason}) y no puede recibir envíos` })
   }
 
-  processCampaign(campaignId, cfg).catch(async (err) => {
-    console.error(`[send-resend] campaign=${campaignId} send=${sendId} error:`, err)
-    await db.update(campaigns)
-      .set({ status: 'paused' })
-      .where(eq(campaigns.id, campaignId))
-      .catch(() => {})
-  })
+  sqlite.transaction(() => {
+    if (sup?.reason === 'bounced') {
+      unsuppress(send.email)
+      if (send.contactId) {
+        sqlite.prepare(`UPDATE contacts SET status = 'active', fail_count = 0, updated_at = ? WHERE id = ? AND status = 'bounced'`)
+          .run(Math.floor(Date.now() / 1000), send.contactId)
+      }
+    }
+    const wasFailure = send.status === 'failed' || send.status === 'bounced'
+    sqlite.prepare(`UPDATE sends SET status = 'pending', error_msg = NULL, bounce_class = NULL, scheduled_for = NULL, attempts = 0 WHERE id = ?`).run(sendId)
+    sqlite.prepare(`UPDATE campaigns SET status = 'sending', pause_reason = NULL, fail_count = MAX(COALESCE(fail_count, 0) - ?, 0) WHERE id = ?`)
+      .run(wasFailure ? 1 : 0, campaignId)
+  })()
+
+  clearSignal(campaignId)
+  logAudit('campaign.resend_one', { campaignId, sendId, email: send.email }, getClientIp(event))
+  startCampaign(campaignId)
 
   return { queued: true, sendId }
 })

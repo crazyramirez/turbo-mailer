@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { dataPath } from '~/server/utils/data-dir'
 
 const ALLOWED_PREFIXES = [
   '/api/setup',
@@ -9,6 +9,7 @@ const ALLOWED_PREFIXES = [
   '/api/resubscribe',
   '/api/subscribe',
   '/api/preferences',
+  '/api/confirm',
 ]
 
 // Cached only once installed. A `false` result must never be cached: the setup
@@ -27,7 +28,7 @@ export default defineEventHandler((event) => {
   if (ALLOWED_PREFIXES.some(p => path.startsWith(p))) return
 
   if (!_installed) {
-    _installed = existsSync(resolve(process.cwd(), 'data/.installed'))
+    _installed = existsSync(dataPath('.installed'))
   }
 
   if (!_installed) {

@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3'
 import { resolve } from 'node:path'
 import { existsSync, mkdirSync, copyFileSync } from 'node:fs'
+import { dataPath } from '~/server/utils/data-dir'
 
 const TABLES_DELETE_ORDER = [
   'tracking_events',
@@ -25,7 +26,7 @@ const TABLES_INSERT_ORDER = [
 export default defineEventHandler(async () => {
   const cwd = process.cwd()
   const demoPath = resolve(cwd, 'data', 'turbomailer_demo.db')
-  const mainPath = resolve(cwd, 'data', 'turbomailer.db')
+  const mainPath = dataPath('turbomailer.db')
 
   if (!existsSync(demoPath)) {
     throw createError({ statusCode: 404, message: 'Demo database not found at data/turbomailer_demo.db' })
@@ -84,7 +85,7 @@ export default defineEventHandler(async () => {
 
   // Copy demo template to templates folder
   const sourceTemplate = resolve(cwd, 'data', 'demo', 'email_demo.html')
-  const targetDir = resolve(cwd, 'data', 'templates')
+  const targetDir = dataPath('templates')
   const targetTemplate = resolve(targetDir, 'email_demo.html')
 
   try {

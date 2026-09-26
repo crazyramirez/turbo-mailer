@@ -1,4 +1,4 @@
-import { db } from '~/server/db/index'
+import { db, sqlite } from '~/server/db/index'
 import { campaigns, contacts, sends } from '~/server/db/schema'
 import { eq, and, or } from 'drizzle-orm'
 
@@ -35,11 +35,17 @@ export async function createFollowUpCampaign(
 ): Promise<Campaign> {
   const [created] = await db.insert(campaigns).values({
     name: opts.name?.trim().slice(0, 255) || `${source.name} — follow-up`,
-    subject: opts.subject?.trim().slice(0, 255) || source.subject,
+    // Default to the subject that actually won the A/B test
+    subject: opts.subject?.trim().slice(0, 255)
+      || (source.abWinner === 'B' && source.subjectB ? source.subjectB : source.subject),
+    preheader: source.preheader,
     templateName: source.templateName,
     templateHtml: source.templateHtml,
     listId: source.listId,
     tagFilter: Array.isArray(source.tagFilter) ? source.tagFilter : [],
+    topicId: source.topicId,
+    senderProfileId: source.senderProfileId,
+    utmParams: source.utmParams,
     resendOfId: source.id,
     status: 'draft',
     unsubEmailSubject: source.unsubEmailSubject,
@@ -77,45 +83,53 @@ export function planAbSplit<T>(
   }))
 }
 
+/**
+ * Send-time optimization: the next occurrence of the contact's best UTC hour
+ * within 24h of `from`, spread randomly inside that hour so thousands of
+ * contacts sharing it don't all land on the same second. null = send now.
+ */
+export function stoScheduledFor(bestUtcHour: number | null | undefined, from: Date, rand = Math.random): Date | null {
+  if (bestUtcHour === null || bestUtcHour === undefined || !Number.isInteger(bestUtcHour) || bestUtcHour < 0 || bestUtcHour > 23) return null
+  const at = new Date(from)
+  at.setUTCHours(bestUtcHour, Math.floor(rand() * 60), 0, 0)
+  if (at.getTime() <= from.getTime()) at.setUTCDate(at.getUTCDate() + 1)
+  // Already inside the best hour and it's still early in it: go now
+  if (at.getTime() - from.getTime() > 23 * 3600_000 && from.getUTCHours() === bestUtcHour) return null
+  return at
+}
+
 export async function setupCampaignSends(campaign: Campaign, recipientRows: Contact[]): Promise<void> {
-  await db.delete(sends).where(eq(sends.campaignId, campaign.id))
-
   const abEnabled = Boolean(campaign.subjectB?.trim()) && recipientRows.length >= 10
+  // STO and an A/B sample don't mix: the sample must finish before the wait
+  const stoEnabled = Boolean(campaign.stoEnabled) && !abEnabled
+  const now = new Date()
 
-  if (abEnabled) {
-    const plan = planAbSplit(recipientRows, Number(campaign.abSamplePct) || 20)
-    await db.insert(sends).values(
-      plan.map(p => ({
-        campaignId: campaign.id,
-        contactId: p.item.id,
-        email: p.item.email,
-        personalizedSubject: null,
-        status: p.status,
-        variant: p.variant,
+  type Row = { contactId: number; email: string; status: 'pending' | 'held'; variant: 'A' | 'B' | null; scheduledFor: number | null }
+  const rows: Row[] = abEnabled
+    ? planAbSplit(recipientRows, Number(campaign.abSamplePct) || 20).map(p => ({
+        contactId: p.item.id, email: p.item.email, status: p.status, variant: p.variant, scheduledFor: null,
       }))
-    )
-  } else {
-    await db.insert(sends).values(
-      recipientRows.map(c => ({
-        campaignId: campaign.id,
-        contactId: c.id,
-        email: c.email,
-        personalizedSubject: null,
-        status: 'pending' as const,
-      }))
-    )
-  }
+    : recipientRows.map(c => {
+        const at = stoEnabled ? stoScheduledFor(c.bestSendHour, now) : null
+        return { contactId: c.id, email: c.email, status: 'pending' as const, variant: null, scheduledFor: at ? Math.floor(at.getTime() / 1000) : null }
+      })
 
-  await db.update(campaigns).set({
-    status: 'sending',
-    startedAt: new Date(),
-    totalRecipients: recipientRows.length,
-    sentCount: 0,
-    failCount: 0,
-    openCount: 0,
-    clickCount: 0,
-    abPhase: abEnabled ? 'sample' : null,
-    abDecideAt: null,
-    abWinner: null,
-  }).where(eq(campaigns.id, campaign.id))
+  // One prepared statement inside one transaction: fast for 100k rows and
+  // immune to SQLite's bound-variable cap, which a single multi-row INSERT
+  // hit at ~5.4k recipients ("too many SQL variables").
+  const insert = sqlite.prepare(
+    `INSERT INTO sends (campaign_id, contact_id, email, status, variant, scheduled_for, attempts, opened_by_proxy)
+     VALUES (?, ?, ?, ?, ?, ?, 0, 0)`,
+  )
+  sqlite.transaction(() => {
+    sqlite.prepare('DELETE FROM sends WHERE campaign_id = ?').run(campaign.id)
+    for (const r of rows) insert.run(campaign.id, r.contactId, r.email, r.status, r.variant, r.scheduledFor)
+    sqlite.prepare(
+      `UPDATE campaigns SET status = 'sending', started_at = ?, finished_at = NULL, total_recipients = ?,
+         sent_count = 0, fail_count = 0, open_count = 0, confirmed_open_count = 0, click_count = 0,
+         bounce_count = 0, complaint_count = 0, unsubscribe_count = 0, pause_reason = NULL,
+         ab_phase = ?, ab_decide_at = NULL, ab_winner = NULL
+       WHERE id = ?`,
+    ).run(Math.floor(now.getTime() / 1000), rows.length, abEnabled ? 'sample' : null, campaign.id)
+  })()
 }

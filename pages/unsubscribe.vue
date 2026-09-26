@@ -1,42 +1,64 @@
 <script setup lang="ts">
-import { CheckCircle, AlertCircle } from "lucide-vue-next";
+import { CheckCircle, AlertCircle, MailX, Loader2 } from "lucide-vue-next";
 
 const { t } = useI18n();
 const route = useRoute();
 
-const status = ref<"loading" | "ok" | "already" | "rate_limited" | "error">(
-  "loading",
-);
+// The page never unsubscribes on load: mail security scanners open every link
+// they find, and would opt real subscribers out. The visitor confirms with a
+// button (a POST), which scanners don't press.
+const status = ref<"loading" | "confirm" | "ok" | "already" | "error">("loading");
 const resubUrl = ref<string | null>(null);
-const rateLimitHours = ref(24);
 const customMessage = ref<string | null>(null);
+const maskedEmail = ref("");
+const submitting = ref(false);
+
+const sendId = computed(() => String(route.query.s ?? ""));
+const token = computed(() => String(route.query.t ?? ""));
+
+function setResub(resubToken?: string | null) {
+  if (resubToken) resubUrl.value = `/resubscribe?s=${sendId.value}&t=${resubToken}`;
+}
 
 onMounted(async () => {
-  const sendId = route.query.s;
-  const token = route.query.t;
-  if (!sendId || !token) {
+  if (!sendId.value || !token.value) {
     status.value = "error";
     return;
   }
   try {
-    const res = await $fetch<any>(`/api/unsubscribe?s=${sendId}&t=${token}`);
-    if (res.resubToken) {
-      resubUrl.value = `/resubscribe?s=${sendId}&t=${res.resubToken}`;
+    const res = await $fetch<any>("/api/unsubscribe", { query: { s: sendId.value, t: token.value } });
+    maskedEmail.value = res.maskedEmail || "";
+    if (res.status === "already") {
+      customMessage.value = res.customMessage || null;
+      setResub(res.resubToken);
+      status.value = "already";
+    } else if (res.status === "pending") {
+      status.value = "confirm";
+    } else {
+      status.value = "error";
     }
-    if (res.resetInHours) rateLimitHours.value = res.resetInHours;
-    if (res.customMessage) customMessage.value = res.customMessage;
-    status.value =
-      res.status === "ok"
-        ? "ok"
-        : res.status === "already"
-          ? "already"
-          : res.status === "rate_limited"
-            ? "rate_limited"
-            : "error";
   } catch {
     status.value = "error";
   }
 });
+
+async function confirmUnsubscribe() {
+  if (submitting.value) return;
+  submitting.value = true;
+  try {
+    const res = await $fetch<any>("/api/unsubscribe/one-click", {
+      method: "POST",
+      body: { s: sendId.value, t: token.value, source: "page" },
+    });
+    customMessage.value = res.customMessage || null;
+    setResub(res.resubToken);
+    status.value = res.status === "already" ? "already" : res.status === "ok" ? "ok" : "error";
+  } catch {
+    status.value = "error";
+  } finally {
+    submitting.value = false;
+  }
+}
 </script>
 
 <template>
@@ -46,6 +68,22 @@ onMounted(async () => {
       <div v-if="status === 'loading'" class="state">
         <div class="spinner" />
         <p>{{ t("common.loading") }}</p>
+      </div>
+      <div v-else-if="status === 'confirm'" class="state">
+        <MailX :size="48" class="state-icon confirm-icon" />
+        <h1>{{ t("unsubscribe_page.confirm_title") }}</h1>
+        <p>
+          {{ t("unsubscribe_page.confirm_message") }}
+          <strong v-if="maskedEmail" class="masked">{{ maskedEmail }}</strong>
+        </p>
+        <button class="btn-confirm" :disabled="submitting" @click="confirmUnsubscribe">
+          <Loader2 v-if="submitting" :size="15" class="spin" />
+          {{ t("unsubscribe_page.confirm_button") }}
+        </button>
+        <NuxtLink
+          :to="`/preferences?s=${sendId}&t=${token}`"
+          class="link-prefs"
+        >{{ t("unsubscribe_page.manage_preferences") }}</NuxtLink>
       </div>
       <div v-else-if="status === 'ok'" class="state success">
         <CheckCircle :size="48" class="state-icon" />
@@ -62,17 +100,6 @@ onMounted(async () => {
         <NuxtLink v-if="resubUrl" :to="resubUrl" class="btn-resub">{{
           t("unsubscribe_page.resubscribe_link")
         }}</NuxtLink>
-      </div>
-      <div v-else-if="status === 'rate_limited'" class="state error">
-        <AlertCircle :size="48" class="state-icon" />
-        <h1>{{ t("common.error") }}</h1>
-        <p>
-          {{
-            t("unsubscribe_page.rate_limited", {
-              hours: String(rateLimitHours),
-            })
-          }}
-        </p>
       </div>
       <div v-else class="state error">
         <AlertCircle :size="48" class="state-icon" />
@@ -162,5 +189,40 @@ onMounted(async () => {
   to {
     transform: rotate(360deg);
   }
+}
+.confirm-icon {
+  color: var(--accent);
+}
+.masked {
+  display: block;
+  margin-top: 6px;
+  color: var(--text);
+}
+.btn-confirm {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.btn-confirm:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.link-prefs {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: underline;
+}
+.spin {
+  animation: spin 0.8s linear infinite;
 }
 </style>

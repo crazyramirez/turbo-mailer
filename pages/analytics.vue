@@ -36,6 +36,8 @@ Chart.register(
   Filler,
 );
 
+import AskData from "~/components/analytics/AskData.vue";
+
 definePageMeta({ layout: "app" });
 
 const { t } = useI18n();
@@ -504,6 +506,8 @@ onUnmounted(() => {
           </button>
         </div>
       </div>
+
+      <AskData />
 
       <div v-if="loading && !data" class="sk-page">
         <div class="kpi-grid">

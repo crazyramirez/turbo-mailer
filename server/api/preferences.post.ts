@@ -1,9 +1,8 @@
-import { db } from '~/server/db/index'
-import { sends, contacts } from '~/server/db/schema'
-import { eq } from 'drizzle-orm'
-import { verifyUnsubscribeToken } from '~/server/utils/auth'
-import { checkAndIncrementSubLimit } from '~/server/utils/sub-rate-limit'
+import { sqlite } from '~/server/db/index'
+import { verifyUnsubscribeTokenForOptOut, getClientIp } from '~/server/utils/auth'
+import { loadSendContext, performUnsubscribe, sendUnsubscribeConfirmation } from '~/server/utils/subscription'
 
+// Preference center: email frequency, topic opt-outs, or a full unsubscribe.
 export default defineEventHandler(async (event) => {
   const config = useServerConfig()
   if (!config.unsubscribeSecret) {
@@ -11,44 +10,43 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readBody(event)
-  const { s, t, frequency, unsubscribeAll } = body ?? {}
-
+  const { s, t, frequency, unsubscribeAll, topicOptOuts } = body ?? {}
   const sendId = Number(s)
   const token = String(t || '')
 
   if (!sendId || !token) throw createError({ statusCode: 400, statusMessage: 'Missing params' })
-
-  if (!verifyUnsubscribeToken(sendId, token, config.unsubscribeSecret as string)) {
+  if (!verifyUnsubscribeTokenForOptOut(sendId, token, String(config.unsubscribeSecret))) {
     throw createError({ statusCode: 403, statusMessage: 'Invalid token' })
   }
 
-  const [send] = await db.select().from(sends).where(eq(sends.id, sendId))
-  if (!send) throw createError({ statusCode: 404, statusMessage: 'Not found' })
+  const ctx = loadSendContext(sendId)
+  if (!ctx?.contact) throw createError({ statusCode: 404, statusMessage: 'Contact not found' })
 
-  const [contact] = await db.select().from(contacts).where(eq(contacts.email, send.email))
-  if (!contact) throw createError({ statusCode: 404, statusMessage: 'Contact not found' })
-
-  const prefs = contact.preferences ?? {}
+  const row = sqlite.prepare('SELECT preferences, topic_opt_outs AS topicOptOuts, status FROM contacts WHERE id = ?')
+    .get(ctx.contact.id) as { preferences: string | null; topicOptOuts: string | null; status: string }
+  const prefs = (() => { try { return JSON.parse(row.preferences || '{}') || {} } catch { return {} } })()
 
   if (frequency && ['all', 'weekly', 'monthly'].includes(frequency)) {
     prefs.frequency = frequency
   }
 
-  const updates: Record<string, any> = {
-    preferences: prefs,
-    updatedAt: new Date(),
+  let outs: number[] | undefined
+  if (Array.isArray(topicOptOuts)) {
+    const valid = new Set((sqlite.prepare('SELECT id FROM topics').all() as { id: number }[]).map(r => r.id))
+    outs = [...new Set(topicOptOuts.map(Number).filter(n => valid.has(n)))]
   }
 
-  if (unsubscribeAll === true && contact.status !== 'unsubscribed') {
-    const limit = await checkAndIncrementSubLimit(contact.id)
-    if (!limit.allowed) {
-      const resetInHours = limit.resetAt ? Math.ceil((limit.resetAt.getTime() - Date.now()) / 3_600_000) : 1
-      throw createError({ statusCode: 429, statusMessage: `Rate limited. Retry in ${resetInHours}h.` })
-    }
-    updates.status = 'unsubscribed'
+  sqlite.prepare(`UPDATE contacts SET preferences = ?, topic_opt_outs = COALESCE(?, topic_opt_outs), updated_at = ? WHERE id = ?`)
+    .run(JSON.stringify(prefs), outs ? JSON.stringify(outs) : null, Math.floor(Date.now() / 1000), ctx.contact.id)
+
+  let status = row.status
+  if (unsubscribeAll === true && row.status !== 'unsubscribed') {
+    // Opt-outs are never rate limited
+    performUnsubscribe(ctx, { source: 'preferences', ip: getClientIp(event), userAgent: getHeader(event, 'user-agent') ?? null })
+    sendUnsubscribeConfirmation(ctx, config).catch(err =>
+      console.warn('[preferences] confirmation email failed:', err?.message))
+    status = 'unsubscribed'
   }
 
-  await db.update(contacts).set(updates).where(eq(contacts.id, contact.id))
-
-  return { ok: true, status: updates.status ?? contact.status, preferences: prefs }
+  return { ok: true, status, preferences: prefs, topicOptOuts: outs ?? null }
 })

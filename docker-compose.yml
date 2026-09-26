@@ -1,0 +1,41 @@
+# TurboMailer — docker compose up -d
+#
+# 1. Create a .env next to this file with at least:
+#      ENCRYPTION_KEY=<openssl rand -hex 32>   (keep a copy: it decrypts your secrets)
+# 2. docker compose up -d   →  open http://localhost:3000/setup
+# 3. Optional spam analysis with rspamd:
+#      docker compose --profile spam up -d
+#    then Settings → Deliverability → Spam analyser: http://rspamd:11333
+#
+# Put a TLS reverse proxy (Caddy, Traefik, nginx) in front and use its https
+# URL as the public app URL: tracking and unsubscribe links depend on it.
+
+services:
+  turbomailer:
+    build: .
+    image: turbomailer:latest
+    restart: unless-stopped
+    # Fixed hostname: never rely on it for encryption, but it keeps logs stable
+    hostname: turbomailer
+    ports:
+      - "${TM_PORT:-3000}:3000"
+    environment:
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Set ENCRYPTION_KEY in .env (openssl rand -hex 32)}
+      TZ: ${TZ:-Europe/Madrid}
+      # Optional: pre-seed instead of using the setup wizard
+      TRACKING_BASE_URL: ${TRACKING_BASE_URL:-}
+    volumes:
+      - turbomailer-data:/data
+    # Sends run inside this process: give it time to finish the in-flight
+    # email on shutdown (the engine resumes the rest on the next start)
+    stop_grace_period: 30s
+
+  rspamd:
+    image: rspamd/rspamd:latest
+    restart: unless-stopped
+    profiles: ["spam"]
+    expose:
+      - "11333"
+
+volumes:
+  turbomailer-data:

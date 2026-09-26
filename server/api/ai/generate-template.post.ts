@@ -1,101 +1,92 @@
-﻿import { defineEventHandler, readBody, createError } from 'h3'
+import { aiJson, aiHttpError } from '~/server/utils/ai/provider'
+import { brandBrief } from '~/server/utils/ai/brand-kit'
+import { STYLE_IDS } from '~/server/utils/ai/campaign-gen'
+
+// Editor chat: asks a clarifying question or returns a block layout that the
+// editor assembles (same contract as before, now provider-agnostic and
+// schema-validated).
+
+const BLOCK_IDS = ['header-pro', 'hero', 'text', 'button', 'image', 'card', 'grid-2', 'grid-3', 'grid-4', 'note', 'presence', 'testimonials', 'faq', 'metrics', 'product', 'coupon', 'unsubscribe', 'signature']
+const strings = { type: 'array', items: { type: 'string' } }
+
+const SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['type', 'text', 'styleId', 'blocks'],
+  properties: {
+    type: { type: 'string', enum: ['question', 'template'] },
+    text: { type: 'string' },
+    styleId: { type: 'string', enum: STYLE_IDS },
+    blocks: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['id', 'replacements'],
+        properties: {
+          id: { type: 'string', enum: BLOCK_IDS },
+          replacements: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['title', 'subtitle', 'badge', 'button', 'image', 'logo', 'contact', 'ps'],
+            properties: {
+              title: strings, subtitle: strings, badge: strings, button: strings,
+              image: strings, logo: strings, contact: strings, ps: strings,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+
+const SYSTEM = `Eres un asistente experto en diseño y copywriting de campañas de email marketing de ALTA GAMA.
+El usuario quiere generar una plantilla de email completa y profesional.
+
+1. Si la petición es vaga, devuelve type="question" con UNA pregunta clave en "text" (blocks vacío).
+2. Si tienes contexto suficiente, devuelve type="template" con una estructura de bloques persuasiva.
+
+ESTILOS (styleId): default (limpio), viseni (artístico, moda/diseño), corporate (B2B serio), tech-noir (oscuro con neones, SaaS), dark-gold (lujo), midnight-gold (exclusividad máxima).
+
+BLOQUES: header-pro, hero, text, button, image, card, grid-2, grid-3, grid-4, note, presence, testimonials, faq, metrics, product, coupon, signature, unsubscribe (siempre el último).
+
+CAMPOS (replacements, arrays de strings — un elemento por hueco del bloque, [] si no aplica):
+- title/subtitle/badge/button/ps: copy real y largo, nada de placeholders. En "text" el title es el cuerpo y admite <br> y <b>.
+- image/logo: URLs https://image.pollinations.ai/prompt/{prompt_en_ingles_con_%20}?width=1200&height=800&nologo=true (fotografía profesional, iluminación cinematográfica).
+- contact (firma): 2 strings, cada uno UN dato (un email, una web o un teléfono).
+Personaliza con {{name | "fallback"}} solo donde suene natural. Sin MAYÚSCULAS gritadas ni "!!!".`
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
-  const { messages } = body
-
-  if (!messages || !Array.isArray(messages)) {
+  const { messages } = body ?? {}
+  if (!Array.isArray(messages) || !messages.length) {
     throw createError({ statusCode: 400, statusMessage: 'Messages array is required' })
   }
+  // The chat UI opens with an assistant greeting; the model's history must start with the user
+  const history = messages
+    .filter((m: any) => (m?.role === 'user' || m?.role === 'assistant') && typeof m.content === 'string')
+    .map((m: any) => ({ role: m.role as 'user' | 'assistant', content: String(m.content).slice(0, 8000) }))
+  while (history.length && history[0].role === 'assistant') history.shift()
+  if (!history.length) throw createError({ statusCode: 400, statusMessage: 'Messages array is required' })
 
-  const config = useServerConfig()
-  const apiKey = config.openaiApiKey || process.env.OPENAI_API_KEY
-  const model = config.openaiModel || process.env.OPENAI_MODEL || 'gpt-4o-mini'
-
-  if (!apiKey) {
-    throw createError({ statusCode: 500, statusMessage: 'OpenAI API Key not configured' })
-  }
-
-  const systemPrompt = `Eres un asistente experto en diseño y copywriting de campañas de email marketing de ALTA GAMA (Premium).
-El usuario quiere generar una plantilla de email completa y profesional.
-
-TU MISIÓN:
-1. Analizar la petición del usuario.
-2. Si la petición es vaga, haz una o dos preguntas clave para entender el sector, público y objetivo.
-3. Si tienes contexto, genera una estructura de bloques JSON persuasiva y visualmente impactante.
-
-ESTILOS DISPONIBLES (Elige el más adecuado según el tono):
-- "default": Limpio, minimalista, mucho espacio en blanco. Ideal para newsletters generales.
-- "viseni": Vanguardista, artístico, tipografía elegante. Ideal para moda, diseño o marcas de autor.
-- "corporate": Azul profundo y gris, serio, robusto. Ideal para B2B, banca o consultoría.
-- "tech-noir": Oscuro con neones (índigo/cian), futurista. Ideal para software, SaaS o gaming.
-- "dark-gold": Fondo oscuro (slate-900) con acentos dorados. Lujo y exclusividad.
-- "midnight-gold": Negro puro con degradados dorados y tipografía "Outfit". El nivel máximo de exclusividad.
-
-BLOQUES DISPONIBLES (ids):
-header-pro, text, button, image, card, grid-2, grid-3, grid-4, note, presence, unsubscribe, signature.
-
-REGLAS DE GENERACIÓN DE CONTENIDO:
-- "replacements": Claves permitidas: title, subtitle, badge, button, image, logo, contact, ps.
-- IMÁGENES: Usa SIEMPRE https://image.pollinations.ai/prompt/{prompt_descriptivo_en_ingles}?width=1200&height=800&nologo=true
-- El prompt de la imagen debe ser en INGLÉS, detallado y evocar "High-end photography, cinematic lighting, professional". 
-- REEMPLAZA ESPACIOS POR %20. NUNCA uses espacios.
-- TEXTOS: Escribe copy real y largo. Usa <br> para saltos de línea y <b> para resaltar palabras clave. NADA de placeholders.
-- GRIDS (grid-2, grid-3, grid-4): Los replacements pueden ser ARRAYS si hay varios elementos (ej. "title": ["Opción A", "Opción B"]). Si pasas un solo string, se repetirá en todos.
-- FIRMA (signature): Genera obligatoriamente "title" (Nombre), "subtitle" (Empresa/Cargo), y "contact" (como un ARRAY de exactamente 2 strings: ["correo@ejemplo.com", "www.ejemplo.com"]). Cada string de "contact" debe ser UN SOLO dato (un email, una web O un teléfono). NUNCA combines web y teléfono en el mismo string.
-
-DEBES RESPONDER SIEMPRE EN FORMATO JSON VÁLIDO. 
-
-Formato Pregunta:
-{ "type": "question", "text": "Tu pregunta aquí..." }
-
-Formato Plantilla:
-{
-  "type": "template",
-  "styleId": "estilo_elegido",
-  "blocks": [
-    { "id": "header-pro", "replacements": { "title": "...", "subtitle": "...", "badge": "...", "image": "..." } },
-    { "id": "text", "replacements": { "title": "Texto largo con <b>negritas</b>..." } },
-    ...
-  ]
-}
-
-Responde SOLO con el JSON.`
-
+  const brand = brandBrief()
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...messages
-        ],
-        temperature: 0.7,
-        response_format: { type: "json_object" }
-      })
+    const result = await aiJson<{ type: 'question' | 'template'; text: string; styleId: string; blocks: { id: string; replacements: Record<string, string[]> }[] }>({
+      feature: 'editor_template',
+      system: brand ? `${SYSTEM}\n\nIDENTIDAD DE MARCA (respétala):\n${brand}` : SYSTEM,
+      messages: history,
+      schema: SCHEMA,
+      effort: 'medium',
+      maxTokens: 16000,
     })
-
-    const data = await response.json()
-    if (data.error) {
-      throw createError({ statusCode: 500, statusMessage: data.error.message })
+    // Drop empty replacement keys so the editor keeps block defaults
+    for (const b of result.blocks) {
+      for (const [k, v] of Object.entries(b.replacements)) {
+        if (!v.length || v.every(x => !x.trim())) delete b.replacements[k]
+      }
     }
-
-    const content = data.choices[0].message.content
-    try {
-      const result = JSON.parse(content)
-      return result
-    } catch (e) {
-      return { type: 'question', text: 'Lo siento, no pude procesar la solicitud. ¿Podrías darme más detalles?' }
-    }
-  } catch (error: any) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: error.message || 'Error calling OpenAI'
-    })
+    return result
+  } catch (err) {
+    aiHttpError(err)
   }
 })

@@ -12,8 +12,13 @@ import { assertPublicHttpUrl } from '~/server/utils/ssrf-guard'
 export type WebhookEvent =
   | 'email.opened'
   | 'email.clicked'
+  | 'email.bounced'
+  | 'email.complained'
   | 'contact.unsubscribed'
   | 'contact.subscribe_confirmed'
+  | 'contact.subscribed'
+  | 'campaign.finished'
+  | 'campaign.paused'
 
 const TIMEOUT_MS = 5000
 

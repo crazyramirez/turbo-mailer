@@ -1,65 +1,39 @@
-import { db } from '~/server/db/index'
-import { campaigns, sends } from '~/server/db/schema'
-import { eq, and, inArray } from 'drizzle-orm'
-import { processCampaign, type SendConfig } from '~/server/utils/campaign-processor'
+import { sqlite } from '~/server/db/index'
+import { clearSignal } from '~/server/utils/campaign-state'
+import { startCampaign } from '~/server/utils/send-engine'
+import { logAudit } from '~/server/utils/audit'
+import { getClientIp } from '~/server/utils/auth'
 
+// Retries sends that FAILED (temporary errors, provider blocks, interrupted
+// transactions). Hard bounces are deliberately not retried: re-mailing an
+// address that doesn't exist only damages sender reputation — the address is
+// on the suppression list and the engine would skip it anyway.
 export default defineEventHandler(async (event) => {
   const campaignId = Number(getRouterParam(event, 'id'))
-  const config = useServerConfig()
 
-  const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, campaignId))
+  const campaign = sqlite.prepare('SELECT id, name, status FROM campaigns WHERE id = ?').get(campaignId) as { id: number; name: string; status: string } | undefined
   if (!campaign) throw createError({ statusCode: 404, statusMessage: 'Campaign not found' })
   if (campaign.status === 'sending') throw createError({ statusCode: 409, statusMessage: 'Already sending' })
 
-  // Reset failed and bounced sends to pending
-  await db.update(sends)
-    .set({ status: 'pending', errorMsg: null })
-    .where(and(
-      eq(sends.campaignId, campaignId), 
-      inArray(sends.status, ['failed', 'bounced'])
-    ))
+  const reset = sqlite.transaction(() => {
+    const n = sqlite.prepare(
+      `UPDATE sends SET status = 'pending', error_msg = NULL, bounce_class = NULL, scheduled_for = NULL, attempts = 0
+       WHERE campaign_id = ? AND status = 'failed'`,
+    ).run(campaignId).changes
+    if (n > 0) {
+      sqlite.prepare(`UPDATE campaigns SET status = 'sending', pause_reason = NULL, fail_count = MAX(COALESCE(fail_count, 0) - ?, 0) WHERE id = ?`)
+        .run(n, campaignId)
+    }
+    return n
+  })()
 
-  // Set campaign to sending and reset failCount (it will be recalculated by the processor)
-  await db.update(campaigns)
-    .set({ 
-      status: 'sending',
-      failCount: 0 
-    })
-    .where(eq(campaigns.id, campaignId))
-
-  const {
-    smtpHost, smtpPort, smtpUser, smtpPass, smtpSecure,
-    smtpFromName, smtpFromEmail,
-  } = config
-
-  const cfg: SendConfig = {
-    smtpHost: String(smtpHost),
-    smtpPort: Number(smtpPort),
-    smtpUser: String(smtpUser),
-    smtpPass: String(smtpPass),
-    smtpSecure: Boolean(smtpSecure),
-    smtpFromName: String(smtpFromName || 'TurboMailer'),
-    smtpFromEmail: String(smtpFromEmail || smtpUser),
-    baseUrl: String(config.trackingBaseUrl || 'http://localhost:3000'),
-    secret: String(config.unsubscribeSecret),
-    delayMs: Number(config.smtpSendDelayMs),
-    jitterMs: Number(config.smtpSendJitterMs),
-    maxRetries: Number(config.smtpMaxRetries || 3),
-    retryDelayMs: Number(config.smtpRetryDelayMs || 5000),
-    maxEmailsPerSecond: Number(config.smtpMaxEmailsPerSecond || 0),
-    dkimDomain: config.dkimDomain as string,
-    dkimSelector: config.dkimSelector as string,
-    dkimPrivateKey: config.dkimPrivateKey as string,
+  if (reset === 0) {
+    throw createError({ statusCode: 400, statusMessage: 'No failed sends to retry' })
   }
 
-  // Process in background
-  processCampaign(campaignId, cfg).catch(async (err) => {
-    console.error(`[campaign-retry] campaignId=${campaignId} fatal error:`, err)
-    await db.update(campaigns)
-      .set({ status: 'paused' })
-      .where(eq(campaigns.id, campaignId))
-      .catch(() => {})
-  })
+  clearSignal(campaignId)
+  logAudit('campaign.retry', { campaignId, name: campaign.name, sends: reset }, getClientIp(event))
+  startCampaign(campaignId)
 
-  return { queued: true, campaignId }
+  return { queued: true, campaignId, retried: reset }
 })

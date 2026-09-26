@@ -2,12 +2,13 @@ import bcrypt from 'bcryptjs'
 import { randomBytes } from 'node:crypto'
 import { writeFileSync, existsSync, mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { dataDir, dataPath } from '~/server/utils/data-dir'
 import { encryptField } from '~/server/utils/encryption'
 import { hashApiKey } from '~/server/utils/auth'
 import { markInstalled } from '~/server/middleware/setup-guard'
 
 export default defineEventHandler(async (event) => {
-  const sentinelPath = resolve(process.cwd(), 'data/.installed')
+  const sentinelPath = dataPath('.installed')
   if (existsSync(sentinelPath)) {
     throw createError({ statusCode: 403, message: 'Already installed' })
   }
@@ -87,10 +88,10 @@ export default defineEventHandler(async (event) => {
 
   // A fresh clone has no data/ directory; without this the whole install
   // fails on the very first write.
-  mkdirSync(resolve(process.cwd(), 'data'), { recursive: true })
+  mkdirSync(dataDir, { recursive: true })
 
   writeFileSync(
-    resolve(process.cwd(), 'data/config.json'),
+    dataPath('config.json'),
     JSON.stringify(config, null, 2),
     'utf-8',
   )
@@ -139,7 +140,13 @@ export default defineEventHandler(async (event) => {
   ]
   // Trailing newline: POSIX tools and `cat >>` append cleanly to the last line
   // otherwise, silently corrupting IMAP_PASS.
-  writeFileSync(resolve(process.cwd(), '.env'), envLines.join('\n') + '\n', 'utf-8')
+  // Convenience mirror of config.json; the app never reads it back, so a
+  // read-only app directory (e.g. Docker) just skips it
+  try {
+    writeFileSync(resolve(process.cwd(), '.env'), envLines.join('\n') + '\n', 'utf-8')
+  } catch (err: any) {
+    console.warn('[setup] .env not written:', err?.message)
+  }
 
   // Sentinel last: if any write above throws, setup stays reachable instead of
   // locking the user out of a half-configured install.

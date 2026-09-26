@@ -25,6 +25,11 @@ import {
   ChevronRight,
   Tag,
   UserMinus,
+  MailCheck,
+  FileDown,
+  Eraser,
+  Loader2,
+  Ban,
 } from "lucide-vue-next";
 import * as XLSX from "xlsx";
 import ContactTimeline from "~/components/ContactTimeline.vue";
@@ -71,7 +76,14 @@ const form = ref({
   tags: [] as string[],
   listIds: [] as number[],
   status: "active" as "active" | "unsubscribed" | "bounced",
+  custom: {} as Record<string, any>,
 });
+
+// Custom fields (Audience → Fields) shown in the contact form and mapped on import
+const customFields = ref<{ key: string; label: string; type: string; options: string[] | null }[]>([]);
+async function fetchCustomFields() {
+  customFields.value = await $fetch<any[]>("/api/custom-fields").catch(() => []);
+}
 
 // ── Data Fetching ──────────────────────────────────────────────────────────
 async function fetchLists() {
@@ -196,6 +208,7 @@ function openNewContact() {
     tags: [],
     status: "active",
     listIds: selectedListId.value ? [selectedListId.value] : [],
+    custom: {},
   };
   showContactModal.value = true;
   nextTick(() => emailInputRef.value?.focus());
@@ -208,6 +221,7 @@ async function openEditContact(c: any) {
     ...full,
     tags: Array.isArray(full.tags) ? [...full.tags] : [],
     listIds: full.listIds ?? [],
+    custom: full.custom && typeof full.custom === "object" ? { ...full.custom } : {},
   };
   showContactModal.value = true;
 }
@@ -224,26 +238,39 @@ function removeTag(tag: string) {
 
 const savingContact = ref(false);
 
-async function saveContact() {
+async function saveContact(liftSuppression = false) {
   if (!form.value.email || savingContact.value) return;
   savingContact.value = true;
   try {
+    const body = { ...form.value, ...(liftSuppression ? { liftSuppression: true } : {}) };
     if (editContact.value) {
-      await $fetch(`/api/contacts/${editContact.value.id}`, {
-        method: "PUT",
-        body: form.value,
-      });
+      await $fetch(`/api/contacts/${editContact.value.id}`, { method: "PUT", body });
     } else {
-      await $fetch("/api/contacts", { method: "POST", body: form.value });
+      await $fetch("/api/contacts", { method: "POST", body });
     }
     showContactModal.value = false;
     fetchContacts();
   } catch (e: any) {
+    // The address is on the suppression list: only re-add it on explicit confirmation
+    const sm = String(e?.data?.statusMessage || "");
+    if (sm.startsWith("suppressed:") && !liftSuppression) {
+      savingContact.value = false;
+      const reason = sm.slice("suppressed:".length);
+      const ok = await showDialog({
+        type: "confirm",
+        title: t("contacts_page.suppressed_title"),
+        message: t("contacts_page.suppressed_msg", { reason: t(`contacts_page.sup_reason.${reason}`) }),
+      });
+      if (ok) return saveContact(true);
+      return;
+    }
     // Keep the modal open so the entered data is not lost, and say what failed.
     // 409 is the common one: the email already belongs to another contact.
     const status = e?.statusCode ?? e?.response?.status;
     const message =
-      status === 409
+      status === 409 && !sm
+        ? t("contacts_page.error_email_exists")
+        : status === 409 && sm === "Email already exists"
         ? t("contacts_page.error_email_exists")
         : e?.data?.message || e?.statusMessage || t("contacts_page.error_save");
     showToast(message, "error");
@@ -367,6 +394,7 @@ async function deleteList(list: any) {
 
 // ── Import / Export ───────────────────────────────────────────────────────
 const xlsxInputRef = ref<HTMLInputElement | null>(null);
+const importing = ref<{ done: number; total: number } | null>(null);
 const importMode = ref<'upsert' | 'skipExisting' | 'updateOnly'>('upsert');
 const listNameInputRef = ref<HTMLInputElement | null>(null);
 const emailInputRef = ref<HTMLInputElement | null>(null);
@@ -403,33 +431,110 @@ async function doImport(e: Event) {
   const ytCol = find(["youtube", "video", "canal"]);
   const igCol = find(["instagram", "ig", "insta"]);
 
+  const phoneCol = find(["telefono", "teléfono", "phone", "movil", "móvil", "mobile"]);
+  const tagsCol = find(["tags", "etiquetas", "etiqueta"]);
+  // Custom fields: a column whose header matches the field's label or key
+  const norm = (x: string) => x.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  const customCols = customFields.value
+    .map((f) => ({ key: f.key, col: cols.find((c) => norm(c) === f.key || norm(c) === norm(f.label)) }))
+    .filter((x): x is { key: string; col: string } => !!x.col);
+
   const rows = json
     .map((r) => ({
       email: String(r[emailCol] || "").trim(),
       name: String(r[nameCol] || "").trim(),
       company: String(r[compCol] || r[agencyCol] || "").trim(),
       role: String(r[roleCol] || "").trim(),
+      phone: String(r[phoneCol] || "").trim(),
       linkedin: String(r[linkedCol] || "").trim(),
       url: String(r[urlCol] || "").trim(),
       youtube: String(r[ytCol] || "").trim(),
       instagram: String(r[igCol] || "").trim(),
+      tags: tagsCol ? String(r[tagsCol] || "") : "",
+      custom: Object.fromEntries(customCols.map(({ key, col }) => [key, r[col]])),
     }))
     .filter((r) => r.email && r.email.includes("@"));
-
-  const res = await $fetch<any>("/api/contacts/import", {
-    method: "POST",
-    body: { rows, listId: selectedListId.value, importMode: importMode.value },
-  });
   (e.target as HTMLInputElement).value = "";
-  const parts = [`Insertados: ${res.inserted}`];
-  if (res.updated > 0) parts.push(`Actualizados: ${res.updated}`);
-  if (res.duplicates > 0) parts.push(`Duplicados: ${res.duplicates}`);
-  if (res.skipped > 0) parts.push(`Omitidos: ${res.skipped}`);
-  if (res.invalidCount > 0) parts.push(`Inválidos: ${res.invalidCount}`);
-  showToast(parts.join(' | '), 'success');
+
+  // Any size: sent in chunks the server accepts (≤5000 rows per request)
+  const CHUNK = 2000;
+  const totals = { inserted: 0, updated: 0, duplicates: 0, skipped: 0, invalidCount: 0, suppressed: 0 };
+  importing.value = { done: 0, total: rows.length };
+  try {
+    for (let i = 0; i < rows.length; i += CHUNK) {
+      const res = await $fetch<any>("/api/contacts/import", {
+        method: "POST",
+        body: { rows: rows.slice(i, i + CHUNK), listId: selectedListId.value, importMode: importMode.value, source: file.name },
+      });
+      for (const k of Object.keys(totals) as (keyof typeof totals)[]) totals[k] += res[k] ?? 0;
+      importing.value = { done: Math.min(rows.length, i + CHUNK), total: rows.length };
+    }
+    const parts = [t("contacts_page.imp_inserted", { n: totals.inserted })];
+    if (totals.updated > 0) parts.push(t("contacts_page.imp_updated", { n: totals.updated }));
+    if (totals.duplicates > 0) parts.push(t("contacts_page.imp_duplicates", { n: totals.duplicates }));
+    if (totals.skipped > 0) parts.push(t("contacts_page.imp_skipped", { n: totals.skipped }));
+    if (totals.invalidCount > 0) parts.push(t("contacts_page.imp_invalid", { n: totals.invalidCount }));
+    if (totals.suppressed > 0) parts.push(t("contacts_page.imp_suppressed", { n: totals.suppressed }));
+    if (customCols.length) parts.push(t("contacts_page.imp_custom", { n: customCols.length }));
+    showToast(parts.join(" | "), "success");
+  } catch (err: any) {
+    showToast(err?.data?.statusMessage || err.message, "error");
+  } finally {
+    importing.value = null;
+  }
   fetchContacts();
   fetchLists();
 }
+
+// ── GDPR ─────────────────────────────────────────────────────────────
+function gdprExport(c: any) {
+  window.location.href = `/api/contacts/${c.id}/export`;
+}
+async function gdprErase(c: any) {
+  const ok = await showDialog({ type: "confirm", title: t("contacts_page.gdpr_erase_title"), message: t("contacts_page.gdpr_erase_msg", { email: c.email }) });
+  if (!ok) return;
+  try {
+    await $fetch(`/api/contacts/${c.id}/gdpr`, { method: "DELETE" });
+    showContactModal.value = false;
+    showToast(t("contacts_page.gdpr_erased"), "success");
+    fetchContacts();
+    fetchLists();
+  } catch (e: any) {
+    showToast(e?.data?.statusMessage || e.message, "error");
+  }
+}
+
+// ── Email verification (syntax, typos, MX, disposable, role) ─────────
+const verifyJob = ref<{ running: boolean; total: number; done: number; counts: { valid: number; risky: number; invalid: number }; error: string | null } | null>(null);
+let verifyTimer: ReturnType<typeof setInterval> | null = null;
+async function startVerify() {
+  const ok = await showDialog({
+    type: "confirm",
+    title: t("contacts_page.verify_title"),
+    message: selectedListId.value ? t("contacts_page.verify_msg_list") : t("contacts_page.verify_msg_all"),
+  });
+  if (!ok) return;
+  try {
+    verifyJob.value = await $fetch<any>("/api/contacts/verify", { method: "POST", body: { listId: selectedListId.value, onlyUnverified: true } });
+    if (verifyTimer) clearInterval(verifyTimer);
+    verifyTimer = setInterval(pollVerify, 2000);
+  } catch (e: any) {
+    showToast(e?.data?.statusMessage || e.message, "error");
+  }
+}
+async function pollVerify() {
+  const st = await $fetch<any>("/api/contacts/verify").catch(() => null);
+  if (!st) return;
+  verifyJob.value = st;
+  if (!st.running) {
+    if (verifyTimer) clearInterval(verifyTimer);
+    verifyTimer = null;
+    if (st.error) showToast(st.error, "error");
+    else showToast(t("contacts_page.verify_done", { valid: st.counts?.valid ?? 0, risky: st.counts?.risky ?? 0, invalid: st.counts?.invalid ?? 0 }), "success");
+    fetchContacts();
+  }
+}
+onUnmounted(() => verifyTimer && clearInterval(verifyTimer));
 
 async function doExport() {
   const params = selectedListId.value ? `?list_id=${selectedListId.value}` : "";
@@ -531,6 +636,7 @@ function statusClass(s: string) {
 
 // ── Init ──────────────────────────────────────────────────────────────────
 onMounted(() => {
+  fetchCustomFields();
   fetchLists();
   fetchContacts();
   document.addEventListener("click", onDocClick);
@@ -618,11 +724,23 @@ watch([search, statusFilter], () => {
           </select>
           <button
             class="btn-secondary"
+            :disabled="!!importing"
             @click="xlsxInputRef?.click()"
             :title="t('contacts_page.import')"
           >
-            <Upload :size="15" stroke-width="2.5" />
-            <span>{{ t("contacts_page.import") }}</span>
+            <Loader2 v-if="importing" :size="15" class="spin-icon" />
+            <Upload v-else :size="15" stroke-width="2.5" />
+            <span>{{ importing ? `${importing.done}/${importing.total}` : t("contacts_page.import") }}</span>
+          </button>
+          <button
+            class="btn-secondary"
+            :disabled="verifyJob?.running"
+            :title="t('contacts_page.verify_hint')"
+            @click="startVerify"
+          >
+            <Loader2 v-if="verifyJob?.running" :size="15" class="spin-icon" />
+            <MailCheck v-else :size="15" stroke-width="2.5" />
+            <span>{{ verifyJob?.running ? `${verifyJob.done}/${verifyJob.total}` : t("contacts_page.verify") }}</span>
           </button>
           <button
             class="btn-secondary"
@@ -797,6 +915,11 @@ watch([search, statusFilter], () => {
                 <span class="badge" :class="statusClass(c.status)">{{
                   statusLabel(c.status)
                 }}</span>
+                <span
+                  v-if="c.suppressed"
+                  class="badge badge-suppressed"
+                  :title="t('contacts_page.suppressed_badge_hint', { reason: t(`contacts_page.sup_reason.${c.suppressed.reason ?? c.suppressed}`) })"
+                ><Ban :size="10" /> {{ t("contacts_page.suppressed_badge") }}</span>
               </td>
               <td>
                 <div class="row-actions">
@@ -1036,6 +1159,31 @@ watch([search, statusFilter], () => {
                 </div>
               </div>
 
+              <!-- Custom fields -->
+              <div v-if="customFields.length" class="form-section">
+                <div class="section-title">
+                  <span class="section-icon"><Pipette :size="14" /></span>
+                  {{ t("contacts_page.custom_fields") }}
+                </div>
+                <div class="form-grid">
+                  <label v-for="f in customFields" :key="f.key">
+                    <div class="label-text">{{ f.label }}</div>
+                    <select v-if="f.type === 'select'" v-model="form.custom[f.key]" class="form-input">
+                      <option :value="null">—</option>
+                      <option v-for="o in f.options ?? []" :key="o" :value="o">{{ o }}</option>
+                    </select>
+                    <select v-else-if="f.type === 'boolean'" v-model="form.custom[f.key]" class="form-input">
+                      <option :value="null">—</option>
+                      <option :value="true">{{ t("common.yes") }}</option>
+                      <option :value="false">{{ t("common.no") }}</option>
+                    </select>
+                    <input v-else-if="f.type === 'date'" v-model="form.custom[f.key]" type="date" class="form-input" />
+                    <input v-else-if="f.type === 'number'" v-model.number="form.custom[f.key]" type="number" class="form-input" />
+                    <input v-else v-model="form.custom[f.key]" type="text" class="form-input" maxlength="1000" />
+                  </label>
+                </div>
+              </div>
+
               <!-- Activity timeline (existing contacts only) -->
               <ContactTimeline
                 v-if="editContact"
@@ -1045,13 +1193,21 @@ watch([search, statusFilter], () => {
             </div>
           </div>
           <div class="modal-footer">
+            <div v-if="editContact" class="gdpr-actions">
+              <button class="btn-ghost-sm" :title="t('contacts_page.gdpr_export_hint')" @click="gdprExport(editContact)">
+                <FileDown :size="13" /> {{ t("contacts_page.gdpr_export") }}
+              </button>
+              <button class="btn-ghost-sm danger" :title="t('contacts_page.gdpr_erase_hint')" @click="gdprErase(editContact)">
+                <Eraser :size="13" /> {{ t("contacts_page.gdpr_erase") }}
+              </button>
+            </div>
             <button class="btn-secondary" @click="showContactModal = false">
               {{ t("common.cancel") }}
             </button>
             <button
               class="btn-primary"
               :disabled="savingContact"
-              @click="saveContact"
+              @click="saveContact()"
             >
               <Check :size="15" />{{ t("common.save") }}
             </button>
@@ -2336,6 +2492,50 @@ watch([search, statusFilter], () => {
   }
   .full-width {
     grid-column: 1;
+  }
+}
+
+.badge-suppressed {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 4px;
+  background: rgba(244, 63, 94, 0.12);
+  color: #fb7185;
+  border: 1px solid rgba(244, 63, 94, 0.25);
+}
+.gdpr-actions {
+  display: flex;
+  gap: 6px;
+  margin-right: auto;
+}
+.btn-ghost-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-ghost-sm:hover {
+  color: var(--text);
+  border-color: var(--border-hi);
+}
+.btn-ghost-sm.danger:hover {
+  color: #fb7185;
+  border-color: rgba(244, 63, 94, 0.4);
+}
+.spin-icon {
+  animation: tm-spin-kf 0.9s linear infinite;
+}
+@keyframes tm-spin-kf {
+  to {
+    transform: rotate(360deg);
   }
 }
 </style>

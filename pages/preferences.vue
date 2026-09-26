@@ -9,6 +9,8 @@ interface PrefData {
   maskedEmail: string
   status: string
   preferences: { frequency?: 'all' | 'weekly' | 'monthly' }
+  topics?: { id: number; name: string; description: string | null }[]
+  topicOptOuts?: number[]
 }
 
 const data = ref<PrefData | null>(null)
@@ -18,6 +20,14 @@ const saved = ref(false)
 const unsubDone = ref(false)
 const error = ref('')
 const frequency = ref<'all' | 'weekly' | 'monthly'>('all')
+// Topics the contact still receives (unchecked = opted out of that topic only)
+const subscribedTopics = ref<Set<number>>(new Set())
+function toggleTopic(id: number) {
+  const next = new Set(subscribedTopics.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  subscribedTopics.value = next
+}
 
 onMounted(async () => {
   try {
@@ -26,6 +36,8 @@ onMounted(async () => {
     })
     data.value = res
     frequency.value = res.preferences?.frequency ?? 'all'
+    const outs = new Set(res.topicOptOuts ?? [])
+    subscribedTopics.value = new Set((res.topics ?? []).map(t => t.id).filter(id => !outs.has(id)))
   } catch (e: any) {
     error.value = e?.data?.statusMessage || 'Enlace inválido o expirado.'
   } finally {
@@ -39,7 +51,14 @@ async function savePreferences() {
   try {
     await $fetch('/api/preferences', {
       method: 'POST',
-      body: { s: sendId, t: token, frequency: frequency.value },
+      body: {
+        s: sendId,
+        t: token,
+        frequency: frequency.value,
+        ...(data.value.topics?.length
+          ? { topicOptOuts: data.value.topics.map(t => t.id).filter(id => !subscribedTopics.value.has(id)) }
+          : {}),
+      },
     })
     saved.value = true
     setTimeout(() => (saved.value = false), 3000)
@@ -124,6 +143,28 @@ async function unsubscribeAll() {
                   <span class="freq-desc">Máximo un email al mes</span>
                 </div>
               </label>
+            </div>
+          </div>
+
+          <div v-if="data.topics?.length" class="pref-section">
+            <label class="pref-label">Qué quieres recibir</label>
+            <div class="topic-list">
+              <button
+                v-for="tp in data.topics"
+                :key="tp.id"
+                type="button"
+                class="topic-opt"
+                :class="{ on: subscribedTopics.has(tp.id) }"
+                role="switch"
+                :aria-checked="subscribedTopics.has(tp.id)"
+                @click="toggleTopic(tp.id)"
+              >
+                <div class="freq-content">
+                  <span class="freq-title">{{ tp.name }}</span>
+                  <span v-if="tp.description" class="freq-desc">{{ tp.description }}</span>
+                </div>
+                <span class="switch" aria-hidden="true"><span /></span>
+              </button>
             </div>
           </div>
 
@@ -362,4 +403,43 @@ async function unsubscribeAll() {
   text-align: center;
 }
 .pref-footer strong { color: #475569; }
+
+.topic-list { display: flex; flex-direction: column; gap: 8px; }
+.topic-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  transition: border-color 0.15s;
+}
+.topic-opt.on { border-color: #6366f1; background: #f5f5ff; }
+.switch {
+  flex-shrink: 0;
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  position: relative;
+  transition: background 0.15s;
+}
+.switch span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s;
+}
+.topic-opt.on .switch { background: #6366f1; }
+.topic-opt.on .switch span { transform: translateX(16px); }
 </style>

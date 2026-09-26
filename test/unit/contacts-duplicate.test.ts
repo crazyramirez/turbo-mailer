@@ -50,10 +50,10 @@ describe('duplicate email endpoints', () => {
 
   it('PUT checks for a collision before writing', () => {
     const src = read('server/api/contacts/[id].put.ts')
-    expect(src).toMatch(/ne\(contacts\.id, id\)/)
-    expect(src).toMatch(/statusCode: 409/)
+    expect(src).toMatch(/email = \? COLLATE NOCASE AND id != \?/)
+    expect(src).toMatch(/statusCode: 409, statusMessage: 'Email already exists'/)
     // The guard must run before the UPDATE, not after.
-    expect(src.indexOf('statusCode: 409')).toBeLessThan(src.indexOf('db.update(contacts)'))
+    expect(src.indexOf("'Email already exists'")).toBeLessThan(src.indexOf('UPDATE contacts SET email'))
   })
 })
 

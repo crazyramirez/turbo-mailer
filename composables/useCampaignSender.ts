@@ -1,75 +1,10 @@
-import { nextTick } from 'vue'
 import { useDashboardState } from '~/composables/useDashboardState'
 
-const {
-  emailSubject,
-  htmlBody,
-  isSending,
-  sendResults,
-  showResetConfirm,
-  showSendConfirm,
-  lastSentCount,
-  contactRows,
-  selectedEmails,
-  empresaColumn,
-  nombreColumn,
-  agencyColumn,
-  puestoColumn,
-  linkedinColumn,
-  urlColumn,
-  youtubeColumn,
-  instagramColumn,
-  resetFormFields,
-  resetDashboardState,
-  showToast,
-} = useDashboardState()
+// Session-level actions of the app header. Sending lives in the campaign
+// pipeline (/api/campaigns/:id/send) — the old ad-hoc /api/send-emails path
+// (no tracking, no unsubscribe header, no suppression) was removed.
 
-async function sendEmails() {
-  if (isSending.value) return
-  isSending.value = true
-  sendResults.value = []
-
-  const recipients = contactRows.value
-    .filter((r) => selectedEmails.value.includes(r.email))
-    .map((r) => {
-      // Create a vars object with all original columns + global shortcuts
-      const vars: Record<string, any> = { ...r }
-      // Ensure Empresa, Nombre and Email are also available even if the columns are named differently
-      vars.Empresa = r.empresa
-      vars.Nombre = r.nombre
-      vars.Email = r.email
-      vars.Agencia = r.agency
-      vars.Puesto = r.puesto
-      vars.Linkedin = r[linkedinColumn.value] || ''
-      vars.URL = r[urlColumn.value] || ''
-      vars.Youtube = r[youtubeColumn.value] || ''
-      vars.Instagram = r[instagramColumn.value] || ''
-      
-      return {
-        email: r.email,
-        vars
-      }
-    })
-
-  try {
-    const res = await $fetch<any>('/api/send-emails', {
-      method: 'POST',
-      body: { subject: emailSubject.value, htmlBody: htmlBody.value, recipients },
-    })
-    sendResults.value = res.results
-    lastSentCount.value = res.results.filter((r: any) => r.status === 'sent').length
-    resetFormFields()
-    showToast('Campaña finalizada', 'success')
-  } catch {
-    showToast('Error en el envío', 'error')
-  } finally {
-    isSending.value = false
-  }
-}
-
-function confirmSend() {
-  showSendConfirm.value = true
-}
+const { showResetConfirm, resetDashboardState, showToast } = useDashboardState()
 
 function resetAll() {
   showResetConfirm.value = true
@@ -91,11 +26,6 @@ async function logout() {
   window.location.href = `/login?portal=${config.public.portalKey}`
 }
 
-function insertVar(token: string) {
-  emailSubject.value += token + ' '
-  nextTick(() => subjectInputRef.value?.focus())
-}
-
 export function useCampaignSender() {
-  return { sendEmails, confirmSend, resetAll, performFullReset, logout, insertVar }
+  return { resetAll, performFullReset, logout }
 }

@@ -1,4 +1,5 @@
-import { db } from '~/server/db/index'
+import { db, sqlite } from '~/server/db/index'
+import { emailHash } from '~/server/utils/suppression'
 import { contacts, listContacts, lists } from '~/server/db/schema'
 import { eq, and, sql, desc, inArray } from 'drizzle-orm'
 
@@ -91,10 +92,17 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // Suppression reason per row (global list survives re-imports)
+  const suppressedRows = rows.length
+    ? new Map((sqlite.prepare(`SELECT email_hash AS h, reason FROM suppressions WHERE email_hash IN (${rows.map(() => '?').join(',')})`)
+        .all(...rows.map((c: any) => emailHash(c.email))) as { h: string; reason: string }[]).map(r => [r.h, r.reason]))
+    : new Map<string, string>()
+
   return {
-    data: rows.map((c: any) => ({ 
-      ...c, 
-      lists: contactListMap[c.id] ?? [] 
+    data: rows.map((c: any) => ({
+      ...c,
+      lists: contactListMap[c.id] ?? [],
+      suppressed: suppressedRows.get(emailHash(c.email)) ?? null,
     })),
     total,
     page,

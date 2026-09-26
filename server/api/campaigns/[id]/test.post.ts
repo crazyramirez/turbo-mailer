@@ -1,39 +1,31 @@
-import nodemailer from 'nodemailer'
-import { db } from '~/server/db/index'
-import { campaigns, contacts } from '~/server/db/schema'
-import { eq, inArray } from 'drizzle-orm'
-import { compileTemplate } from '~/server/utils/template'
-import { sendWithRetry } from '~/server/utils/campaign-processor'
-import { htmlToText } from '~/server/utils/html-to-text'
+import { sqlite } from '~/server/db/index'
+import { compileCampaign, renderEmail } from '~/server/utils/email-render'
+import { profilesForSend, getTransport, senderIdentity, formatAddress, newMessageId } from '~/server/utils/mailer'
+import { classifySmtpError, describeFailure } from '~/server/utils/smtp-classify'
 import { logAudit } from '~/server/utils/audit'
 import { getClientIp } from '~/server/utils/auth'
+import { isValidEmail } from '~/server/utils/validate'
 
 const MAX_TEST_RECIPIENTS = 10
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 /**
- * Test send: delivers the campaign to a small list of chosen emails
- * WITHOUT touching campaign status, sends records or stats.
- * No tracking pixel / click-wrapping — unsubscribe placeholders are neutralized.
+ * Test send: delivers the campaign to a few chosen addresses WITHOUT touching
+ * campaign status, send records or stats. Rendered by the same pipeline as a
+ * real send (preheader, UTM, email-client fixes, DKIM) minus tracking; the
+ * unsubscribe placeholders point at the app since no send record exists.
  */
 export default defineEventHandler(async (event) => {
   const campaignId = Number(getRouterParam(event, 'id'))
   const config = useServerConfig()
 
-  const {
-    smtpHost, smtpPort, smtpUser, smtpPass, smtpSecure,
-    smtpFromName, smtpFromEmail,
-  } = config
-
-  if (!smtpHost || !smtpUser || !smtpPass) {
+  const profiles = profilesForSend(config)
+  if (!profiles.length) {
     throw createError({ statusCode: 500, statusMessage: 'SMTP credentials not configured' })
   }
 
-  const body = await readBody<{ emails?: string[] }>(event)
+  const body = await readBody<{ emails?: string[]; variant?: 'A' | 'B' }>(event)
   const emails = Array.from(new Set(
-    (body?.emails ?? [])
-      .map(e => String(e).trim().toLowerCase())
-      .filter(Boolean)
+    (body?.emails ?? []).map(e => String(e).trim().toLowerCase()).filter(Boolean),
   ))
 
   if (emails.length === 0) {
@@ -42,62 +34,53 @@ export default defineEventHandler(async (event) => {
   if (emails.length > MAX_TEST_RECIPIENTS) {
     throw createError({ statusCode: 400, statusMessage: `Max ${MAX_TEST_RECIPIENTS} test recipients` })
   }
-  const invalid = emails.find(e => !EMAIL_RE.test(e) || e.length > 254)
+  const invalid = emails.find(e => !isValidEmail(e))
   if (invalid) {
     throw createError({ statusCode: 400, statusMessage: `Invalid email: ${invalid}` })
   }
 
-  const [campaign] = await db.select().from(campaigns).where(eq(campaigns.id, campaignId))
+  const campaign = sqlite.prepare(
+    `SELECT id, name, subject, subject_b AS subjectB, template_html AS templateHtml, preheader, sender_profile_id AS senderProfileId, utm_params AS utmParams
+     FROM campaigns WHERE id = ?`,
+  ).get(campaignId) as any
   if (!campaign) throw createError({ statusCode: 404, statusMessage: 'Campaign not found' })
   if (!campaign.templateHtml) throw createError({ statusCode: 400, statusMessage: 'No template HTML set' })
 
-  // If a test email matches an existing contact, use its data for variables
-  const contactRows = await db.select().from(contacts).where(inArray(contacts.email, emails))
-  const contactMap = new Map(contactRows.map(c => [c.email.toLowerCase(), c]))
-
-  const dkim = (config.dkimDomain && config.dkimSelector && config.dkimPrivateKey) ? {
-    domainName: String(config.dkimDomain),
-    keySelector: String(config.dkimSelector),
-    privateKey: String(config.dkimPrivateKey).replace(/\\n/g, '\n'),
-  } : undefined
-
-  const transporter = nodemailer.createTransport({
-    host: String(smtpHost),
-    port: Number(smtpPort),
-    secure: Boolean(smtpSecure),
-    auth: { user: String(smtpUser), pass: String(smtpPass) },
-    dkim,
-  } as any)
-
-  const compiledHtml = compileTemplate(campaign.templateHtml)
-  const compiledSubject = compileTemplate(campaign.subject || '')
-  const senderEmail = String(smtpFromEmail || smtpUser)
-  const baseUrl = String(config.trackingBaseUrl || 'http://localhost:3000')
+  const compiled = compileCampaign(campaign)
+  const baseUrl = String(config.trackingBaseUrl || 'http://localhost:3000').replace(/\/$/, '')
+  const profile = profilesForSend(config, campaign.senderProfileId)[0]
+  const identity = senderIdentity(profile, config)
+  const variant = body?.variant === 'B' && campaign.subjectB ? 'B' : 'A'
+  let utm = null
+  try { utm = campaign.utmParams ? JSON.parse(campaign.utmParams) : null } catch {}
 
   const results: { email: string; ok: boolean; error?: string }[] = []
 
   for (const email of emails) {
-    const contact = contactMap.get(email)
-    const vars = contact ?? { email }
+    // If a test address matches a contact, use its data for variables
+    const contact = sqlite.prepare('SELECT * FROM contacts WHERE email = ? COLLATE NOCASE').get(email) as Record<string, any> | undefined
+    let custom = {}
+    try { custom = contact?.custom ? JSON.parse(contact.custom) : {} } catch {}
+    const vars = contact ? { ...custom, ...contact } : { email }
 
-    const subject = `[TEST] ${compiledSubject.applyTo(vars) || campaign.name}`
-    // Neutralize unsubscribe/preferences placeholders — no real send record exists
-    const html = compiledHtml.applyTo(vars)
-      .replace(/\{\{\s*UNSUBSCRIBE_URL\s*\}\}/gi, baseUrl)
-      .replace(/\{\{\s*PREFERENCES_URL\s*\}\}/gi, baseUrl)
-    const text = htmlToText(html)
+    const rendered = renderEmail({
+      compiled, variant, vars, sendId: 0, baseUrl, secret: String(config.unsubscribeSecret || 'test'),
+      utm, companyAddress: String(config.companyAddress || ''), track: false,
+    })
 
     try {
-      await sendWithRetry(transporter, {
-        from: `"${String(smtpFromName || 'TurboMailer')}" <${senderEmail}>`,
+      await getTransport(profile, config).sendMail({
+        from: formatAddress(identity.name, identity.email),
         to: email,
-        subject,
-        html,
-        text,
-      }, 1, 0)
+        replyTo: identity.replyTo,
+        subject: `[TEST] ${rendered.subject || campaign.name}`,
+        html: rendered.html,
+        text: rendered.text,
+        messageId: newMessageId(identity.domain),
+      })
       results.push({ email, ok: true })
     } catch (err: any) {
-      results.push({ email, ok: false, error: err?.message || 'Send failed' })
+      results.push({ email, ok: false, error: describeFailure(classifySmtpError(err)) })
     }
   }
 

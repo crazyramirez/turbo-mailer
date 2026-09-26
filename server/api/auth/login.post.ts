@@ -1,22 +1,24 @@
-﻿import bcrypt from 'bcryptjs'
-import { timingSafeEqual } from 'crypto'
 import { checkRateLimit, recordFailedAttempt, clearAttempts, createSession, createRefreshToken, getClientIp } from '~/server/utils/auth'
 import { logAudit } from '~/server/utils/audit'
+import { multiUserEnabled, getUserByEmail, checkPassword, checkLegacyPassword, verifySecondFactor } from '~/server/utils/users'
+import { sqlite } from '~/server/db/index'
 
-function safePasswordCompare(input: string, expected: string): boolean {
-  if (expected.startsWith('$2a$') || expected.startsWith('$2b$') || expected.startsWith('$2y$')) {
-    try {
-      return bcrypt.compareSync(input, expected)
-    } catch {
-      return false
-    }
+function failed(ip: string, detail: Record<string, unknown>, message: string, extra: Record<string, unknown> = {}): never {
+  const result = recordFailedAttempt(ip)
+  if (result.blocked) {
+    logAudit('login.blocked', { ip, ...detail }, ip)
+    throw createError({
+      statusCode: 429,
+      message: `IP bloqueada 15 min tras ${10} intentos fallidos.`,
+      data: { remaining: 0, blocked: true },
+    })
   }
-
-  const a = Buffer.alloc(256)
-  const b = Buffer.alloc(256)
-  Buffer.from(input).copy(a, 0, 0, Math.min(input.length, 256))
-  Buffer.from(expected).copy(b, 0, 0, Math.min(expected.length, 256))
-  return timingSafeEqual(a, b) && input.length === expected.length
+  logAudit('login.failed', { ip, remaining: result.remaining, ...detail }, ip)
+  throw createError({
+    statusCode: 401,
+    message: `${message} ${result.remaining} intentos restantes.`,
+    data: { remaining: result.remaining, blocked: false, ...extra },
+  })
 }
 
 export default defineEventHandler(async (event) => {
@@ -25,43 +27,53 @@ export default defineEventHandler(async (event) => {
   const limit = checkRateLimit(ip)
   if (limit.blocked) {
     const mins = Math.ceil(limit.retryAfterSec! / 60)
-    throw createError({ statusCode: 429, message: `IP bloqueada. Espera ${mins} min.` })
+    throw createError({ statusCode: 429, message: `IP bloqueada. Espera ${mins} min.`, data: { retryAfterSec: limit.retryAfterSec } })
   }
 
   const body = await readBody(event).catch(() => ({}))
-  const { password } = body ?? {}
+  const { password, email, code } = body ?? {}
 
   if (!password || typeof password !== 'string') {
     throw createError({ statusCode: 400, message: 'Contraseña requerida' })
   }
 
-  const config = useServerConfig()
-  const correctPassword = config.appPassword
-  if (!correctPassword) {
-    throw createError({ statusCode: 500, message: 'APP_PASSWORD no configurado' })
-  }
+  let userId: number | null = null
 
-  if (!safePasswordCompare(password, correctPassword)) {
-    const result = recordFailedAttempt(ip)
-    if (result.blocked) {
-      logAudit('login.blocked', { ip }, ip)
-      throw createError({
-        statusCode: 429,
-        message: `IP bloqueada 15 min tras ${10} intentos fallidos.`,
-        data: { remaining: 0, blocked: true }
-      })
+  if (multiUserEnabled()) {
+    // Team mode: email + password (+ second factor when enabled)
+    if (!email || typeof email !== 'string') {
+      throw createError({ statusCode: 400, message: 'Email requerido', data: { emailRequired: true } })
     }
-    logAudit('login.failed', { ip, remaining: result.remaining }, ip)
-    throw createError({
-      statusCode: 401,
-      message: `Contraseña incorrecta. ${result.remaining} intentos restantes.`,
-      data: { remaining: result.remaining, blocked: false }
-    })
+    const user = getUserByEmail(email)
+    const passwordOk = checkPassword(password, user?.password_hash)
+    if (!user || !passwordOk || user.disabled) {
+      failed(ip, { email: String(email).slice(0, 254) }, 'Email o contraseña incorrectos.')
+    }
+    if (user.totp_enabled) {
+      if (!code) {
+        // Correct password: ask for the second factor without burning an attempt
+        throw createError({ statusCode: 401, message: 'Introduce el código de verificación', data: { totpRequired: true } })
+      }
+      if (!verifySecondFactor(user, String(code))) {
+        failed(ip, { email: user.email, reason: 'totp' }, 'Código de verificación incorrecto.', { totpRequired: true })
+      }
+    }
+    userId = user.id
+    sqlite.prepare('UPDATE users SET last_login_at = ? WHERE id = ?').run(Math.floor(Date.now() / 1000), user.id)
+  } else {
+    const config = useServerConfig()
+    const correctPassword = config.appPassword
+    if (!correctPassword) {
+      throw createError({ statusCode: 500, message: 'APP_PASSWORD no configurado' })
+    }
+    if (!checkLegacyPassword(password, correctPassword)) {
+      failed(ip, {}, 'Contraseña incorrecta.')
+    }
   }
 
   clearAttempts(ip)
-  logAudit('login.success', { ip }, ip)
-  const [token, refreshToken] = await Promise.all([createSession(ip), createRefreshToken(ip)])
+  logAudit('login.success', { ip, userId }, ip)
+  const [token, refreshToken] = await Promise.all([createSession(ip, userId), createRefreshToken(ip, userId)])
 
   setCookie(event, 'tm_session', token, {
     httpOnly: true,

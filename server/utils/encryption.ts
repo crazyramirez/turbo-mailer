@@ -5,13 +5,21 @@ const ALGO = 'aes-256-gcm'
 const SALT = 'turbomailer-config-v1'
 const ENC_PREFIX = 'enc:'
 
+// scrypt is deliberately slow (~50ms); config reloads and per-row secrets
+// would pay it on every call. Memoized per base so a changed ENCRYPTION_KEY
+// still takes effect.
+let _keyCache: { base: string; key: Buffer } | null = null
+
 function getDerivedKey(): Buffer {
   // Static import, never require(): the Nitro build is pure ESM, where a
   // bare require() throws ReferenceError at runtime. This path only runs when
   // ENCRYPTION_KEY is unset, so it stayed invisible in dev and broke the
   // production setup wizard.
   const base = process.env.ENCRYPTION_KEY || hostname()
-  return scryptSync(base, SALT, 32)
+  if (_keyCache?.base === base) return _keyCache.key
+  const key = scryptSync(base, SALT, 32)
+  _keyCache = { base, key }
+  return key
 }
 
 /**

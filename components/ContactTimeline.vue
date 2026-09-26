@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { Send, Eye, MousePointerClick, AlertTriangle, XCircle, Loader2, History } from "lucide-vue-next";
+import { Send, Eye, MousePointerClick, AlertTriangle, XCircle, Loader2, History, SkipForward, UserMinus, ShieldAlert } from "lucide-vue-next";
 const { t, locale } = useI18n();
 
 const props = defineProps<{ contactId: number }>();
 
 interface Entry {
-  type: "sent" | "failed" | "bounced" | "open" | "click";
+  type: "sent" | "failed" | "bounced" | "skipped" | "open" | "click" | "unsubscribe" | "complaint";
   at: string | null;
   campaignName: string;
   detail?: string | null;
@@ -29,7 +29,7 @@ onMounted(async () => {
   }
 });
 
-const ICONS = { sent: Send, open: Eye, click: MousePointerClick, failed: AlertTriangle, bounced: XCircle };
+const ICONS = { sent: Send, open: Eye, click: MousePointerClick, failed: AlertTriangle, bounced: XCircle, skipped: SkipForward, unsubscribe: UserMinus, complaint: ShieldAlert };
 
 function fmtDate(at: string | null): string {
   if (!at) return "—";
@@ -139,6 +139,9 @@ function fmtDate(at: string | null): string {
 .ct-click .ct-ico { color: #a78bfa; }
 .ct-failed .ct-ico { color: #fbbf24; }
 .ct-bounced .ct-ico, .ct-item.ct-bounced .ct-ico { color: #f87171; }
+.ct-skipped .ct-ico { color: #94a3b8; }
+.ct-unsubscribe .ct-ico { color: #fb923c; }
+.ct-complaint .ct-ico { color: #ef4444; }
 .ct-body {
   display: flex;
   flex-direction: column;

@@ -1,7 +1,5 @@
-import { promises as fs } from 'node:fs'
-import path from 'node:path'
-import sharp from 'sharp'
 import { assertPublicHttpUrl } from '~/server/utils/ssrf-guard'
+import { saveImage } from '~/server/utils/uploads'
 
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024 // 15MB
 
@@ -15,9 +13,6 @@ export default defineEventHandler(async (event) => {
 
   // SSRF guard: only public http(s) hosts, no private/metadata ranges
   const safeUrl = await assertPublicHttpUrl(imageUrl)
-
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads')
-  await fs.mkdir(uploadDir, { recursive: true })
 
   try {
     // Follow redirects manually so every hop is re-validated against private ranges
@@ -64,24 +59,10 @@ export default defineEventHandler(async (event) => {
     if (buffer.length > MAX_IMAGE_BYTES) {
       throw new Error('Image too large (max 15MB)')
     }
-    
-    // Verificamos y optimizamos con Sharp
-    const image = sharp(buffer)
-    const metadata = await image.metadata()
 
-    const filename = `ai_img_${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`
-    const filepath = path.join(uploadDir, filename)
-
-    let finalBuffer: Buffer
-    if (metadata.width && metadata.width > 1200) {
-      finalBuffer = await image.resize(1200).jpeg({ quality: 85 }).toBuffer()
-    } else {
-      finalBuffer = await image.jpeg({ quality: 85 }).toBuffer()
-    }
-
-    await fs.writeFile(filepath, finalBuffer)
-
-    return { url: `/uploads/${filename}` }
+    // Decoded, validated and re-encoded like any upload
+    const saved = await saveImage(buffer, 'ai-image.jpg', 'ai_')
+    return { url: saved.url }
   } catch (error: any) {
     console.error('Error downloading external image:', error.message)
     throw createError({

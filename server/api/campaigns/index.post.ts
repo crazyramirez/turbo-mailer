@@ -1,6 +1,7 @@
 import { db } from '~/server/db/index'
 import { campaigns } from '~/server/db/schema'
 import { sanitizeEmailHtml } from '~/server/utils/html-sanitize'
+import { sqlite } from '~/server/db/index'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
@@ -10,6 +11,10 @@ export default defineEventHandler(async (event) => {
 
   if (!name?.trim()) throw createError({ statusCode: 400, statusMessage: 'name required' })
   if (!subject?.trim()) throw createError({ statusCode: 400, statusMessage: 'subject required' })
+  const segmentId = body.segmentId ? Number(body.segmentId) : null
+  if (segmentId && !sqlite.prepare('SELECT 1 FROM segments WHERE id = ?').get(segmentId)) {
+    throw createError({ statusCode: 400, statusMessage: 'Segment not found' })
+  }
 
   const [row] = await db.insert(campaigns).values({
     name: name.trim(),
@@ -17,6 +22,8 @@ export default defineEventHandler(async (event) => {
     templateName: templateName || null,
     templateHtml: templateHtml || null,
     listId: listId ? Number(listId) : null,
+    segmentId,
+    preheader: typeof body.preheader === 'string' ? body.preheader.trim().slice(0, 255) || null : null,
     status: status === 'scheduled' ? 'scheduled' : 'draft',
     createdAt: new Date(),
     unsubEmailSubject: unsubEmailSubject?.trim() || null,

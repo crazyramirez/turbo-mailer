@@ -1,34 +1,30 @@
-import nodemailer from 'nodemailer'
 import { signConfirmToken } from '~/server/utils/auth'
+import { sendSystemEmail } from '~/server/utils/mailer'
+import { escapeHtml } from '~/server/utils/template'
 
-// Sends the double opt-in confirmation email to a newly subscribed contact.
-// Fire-and-forget from the subscribe endpoint — a failed confirmation email
-// must not fail the API call; the contact simply stays unconfirmed.
+// Sends the double opt-in confirmation email. Fire-and-forget from the
+// subscribe paths — a failed confirmation email must not fail the API call;
+// the contact simply stays unconfirmed. Goes through the shared mailer, so it
+// is DKIM-signed like every other message.
 export async function sendConfirmationEmail(
   contactId: number,
   email: string,
   name: string | null,
   config: Record<string, any>,
 ): Promise<void> {
-  const baseUrl = String(config.trackingBaseUrl || 'http://localhost:3000')
+  const baseUrl = String(config.trackingBaseUrl || 'http://localhost:3000').replace(/\/$/, '')
   const secret = String(config.unsubscribeSecret)
   const token = signConfirmToken(contactId, secret)
   const confirmUrl = `${baseUrl}/api/confirm?c=${contactId}&t=${token}`
-  const fromName = String(config.smtpFromName || 'TurboMailer')
-  const greeting = name ? `Hola ${name},` : 'Hola,'
+  const fromName = escapeHtml(String(config.smtpFromName || 'TurboMailer'))
+  const greeting = name ? `Hola ${escapeHtml(name)},` : 'Hola,'
 
-  const transporter = nodemailer.createTransport({
-    host: String(config.smtpHost),
-    port: Number(config.smtpPort || 465),
-    secure: Boolean(config.smtpSecure),
-    auth: { user: String(config.smtpUser), pass: String(config.smtpPass) },
-  })
-
-  await transporter.sendMail({
-    from: `"${fromName}" <${String(config.smtpFromEmail || config.smtpUser)}>`,
+  await sendSystemEmail(config, {
     to: email,
-    subject: `Confirma tu suscripción a ${fromName}`,
-    html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;">
+    subject: `Confirma tu suscripción a ${String(config.smtpFromName || 'TurboMailer')}`,
+    html: `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f8fafc;">
+<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;">
       <h2 style="color:#0f172a;font-size:22px;margin-bottom:16px;">Confirma tu suscripción</h2>
       <p style="color:#475569;font-size:15px;line-height:1.6;">${greeting}</p>
       <p style="color:#475569;font-size:15px;line-height:1.6;">
@@ -42,7 +38,7 @@ export async function sendConfirmationEmail(
         Si no has solicitado esta suscripción, ignora este email — no recibirás nada más.
         El enlace caduca en 7 días.
       </p>
-    </div>`,
-    text: `${greeting}\n\nConfirma tu suscripción a ${fromName} abriendo este enlace:\n${confirmUrl}\n\nSi no has solicitado esta suscripción, ignora este email. El enlace caduca en 7 días.`,
+</div></body></html>`,
+    text: `${name ? `Hola ${name},` : 'Hola,'}\n\nConfirma tu suscripción a ${String(config.smtpFromName || 'TurboMailer')} abriendo este enlace:\n${confirmUrl}\n\nSi no has solicitado esta suscripción, ignora este email. El enlace caduca en 7 días.`,
   })
 }

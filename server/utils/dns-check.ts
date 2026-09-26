@@ -22,7 +22,7 @@ const NO_RECORD_CODES = new Set(['ENOTFOUND', 'ENODATA', 'NXDOMAIN'])
 // link-local IPv6 DNS → ECONNREFUSED) even when the OS resolves fine.
 // Fall back to DNS-over-HTTPS so the check reflects reality instead of
 // reporting every record as missing.
-async function resolveTxtViaDoH(name: string): Promise<string[]> {
+export async function resolveTxtViaDoH(name: string): Promise<string[]> {
   const res = await fetch(
     `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(name)}&type=TXT`,
     {
@@ -38,7 +38,7 @@ async function resolveTxtViaDoH(name: string): Promise<string[]> {
     .map(a => a.data.replace(/"\s+"/g, '').replace(/^"|"$/g, ''))
 }
 
-async function resolveTxtJoined(name: string): Promise<string[]> {
+export async function resolveTxtJoined(name: string): Promise<string[]> {
   try {
     const records = await dns.resolveTxt(name)
     // TXT answers arrive split into 255-byte chunks — join each record back

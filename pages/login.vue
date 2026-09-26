@@ -46,6 +46,23 @@
 
         <!-- Form -->
         <form @submit.prevent="submit" class="login-form" novalidate>
+          <div v-if="multiUser" class="field-group">
+            <label for="email" class="field-label">Email</label>
+            <div class="field-input-wrap">
+              <Mail :size="16" stroke-width="2" class="field-icon" aria-hidden="true" />
+              <input
+                id="email"
+                ref="emailRef"
+                v-model="email"
+                type="email"
+                class="field-input"
+                placeholder="tu@empresa.com"
+                autocomplete="username"
+                :disabled="loading || blocked || needTotp"
+              />
+            </div>
+          </div>
+
           <div class="field-group" :class="{ 'field-error': errorMsg }">
             <label for="password" class="field-label">Contraseña</label>
             <div class="field-input-wrap">
@@ -96,6 +113,28 @@
               </div>
             </Transition>
           </div>
+
+          <!-- Second factor -->
+          <Transition name="err-fade">
+            <div v-if="needTotp" class="field-group">
+              <label for="totp" class="field-label">Código de verificación</label>
+              <div class="field-input-wrap">
+                <ShieldCheck :size="16" stroke-width="2" class="field-icon" aria-hidden="true" />
+                <input
+                  id="totp"
+                  ref="codeRef"
+                  v-model="code"
+                  class="field-input"
+                  inputmode="numeric"
+                  autocomplete="one-time-code"
+                  placeholder="123456"
+                  maxlength="11"
+                  :disabled="loading || blocked"
+                />
+              </div>
+              <p class="totp-hint">Código de 6 dígitos de tu app de autenticación, o un código de recuperación.</p>
+            </div>
+          </Transition>
 
           <!-- Attempts bar -->
           <Transition name="err-fade">
@@ -175,6 +214,8 @@ import {
   AlertTriangle,
   ShieldOff,
   LogIn,
+  Mail,
+  ShieldCheck,
 } from "lucide-vue-next";
 import { APP_VERSION } from "@/utils/version";
 import "@/assets/css/main.css";
@@ -192,6 +233,12 @@ const blocked = ref(false);
 const countdownSec = ref(0);
 const countdownLabel = ref("");
 const inputRef = ref<HTMLInputElement>();
+const emailRef = ref<HTMLInputElement>();
+const codeRef = ref<HTMLInputElement>();
+const email = ref("");
+const code = ref("");
+const multiUser = ref(false);
+const needTotp = ref(false);
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
 
 const route = useRoute();
@@ -214,6 +261,17 @@ if (process.client && route.query.portal === ACCESS_KEY) {
 }
 
 onMounted(async () => {
+  // Team installs log in with email + password; single-user only with the password
+  $fetch<{ multiUser: boolean }>("/api/auth/mode")
+    .then(async (r) => {
+      multiUser.value = r.multiUser;
+      if (r.multiUser) {
+        await nextTick();
+        emailRef.value?.focus();
+      }
+    })
+    .catch(() => {});
+
   if (process.client && route.query.portal === ACCESS_KEY) {
     // Clear query param from the URL immediately so it's not visible
     const newUrl = window.location.pathname;
@@ -276,13 +334,18 @@ function updateLabel() {
 
 async function submit() {
   if (loading.value || blocked.value || !password.value) return;
+  if (multiUser.value && !email.value) return emailRef.value?.focus();
   loading.value = true;
   errorMsg.value = "";
 
   try {
     const { refreshToken } = await $fetch<{ refreshToken: string }>("/api/auth/login", {
       method: "POST",
-      body: { password: password.value },
+      body: {
+        password: password.value,
+        ...(multiUser.value ? { email: email.value } : {}),
+        ...(needTotp.value ? { code: code.value } : {}),
+      },
     });
     if (refreshToken) localStorage.setItem("tm_refresh_token", refreshToken);
     isAuthed.value = true;
@@ -299,6 +362,21 @@ async function submit() {
       const sec = data?.retryAfterSec ?? 900;
       startCountdown(sec);
       errorMsg.value = msg;
+    } else if (data?.emailRequired) {
+      multiUser.value = true;
+      errorMsg.value = msg;
+      await nextTick();
+      emailRef.value?.focus();
+    } else if (data?.totpRequired) {
+      // Password was right: ask for (or retry) the second factor
+      const firstAsk = !needTotp.value;
+      needTotp.value = true;
+      remaining.value = data?.remaining ?? remaining.value;
+      errorMsg.value = firstAsk ? "" : msg;
+      if (!firstAsk) triggerShake();
+      code.value = "";
+      await nextTick();
+      codeRef.value?.focus();
     } else {
       remaining.value = data?.remaining ?? null;
       errorMsg.value = msg;
@@ -318,6 +396,11 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.totp-hint {
+  margin: 6px 0 0;
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.45);
+}
 /* ── Layout ── */
 .login-wrapper {
   min-height: 100dvh;

@@ -51,3 +51,41 @@ describe('compileTemplate', () => {
     expect(compileTemplate('').applyTo({ name: 'x' })).toBe('')
   })
 })
+
+describe('conditionals & fallbacks', () => {
+  const c = { name: 'Ana', company: '', city: 'Madrid', vip: true, points: 0 }
+
+  it('if / else on presence', () => {
+    expect(applyVars('{{#if company}}De {{company}}{{else}}Particular{{/if}}', c)).toBe('Particular')
+    expect(applyVars('{{#if name}}Hola {{name}}{{/if}}', c)).toBe('Hola Ana')
+  })
+
+  it('unless and nested blocks', () => {
+    expect(applyVars('{{#unless company}}sin empresa{{/unless}}', c)).toBe('sin empresa')
+    expect(applyVars('{{#if name}}A{{#if vip}}B{{else}}C{{/if}}D{{/if}}', c)).toBe('ABD')
+  })
+
+  it('equality comparisons are case-insensitive', () => {
+    expect(applyVars('{{#if Ciudad == "madrid"}}MAD{{else}}OTRA{{/if}}', c)).toBe('MAD')
+    expect(applyVars('{{#if city != "Madrid"}}x{{else}}y{{/if}}', c)).toBe('y')
+  })
+
+  it('falsy values: 0, false, empty', () => {
+    expect(applyVars('{{#if points}}p{{else}}np{{/if}}', c)).toBe('np')
+    expect(applyVars('{{#if vip}}v{{/if}}', { vip: false })).toBe('')
+  })
+
+  it('fallback values, escaped', () => {
+    expect(applyVars('Hola {{name | "amigo"}}', {})).toBe('Hola amigo')
+    expect(applyVars('Hola {{ Nombre | default: "amiga" }}', { name: 'Eva' })).toBe('Hola Eva')
+    expect(applyVars('{{x | "<b>"}}', {})).toBe('&lt;b&gt;')
+  })
+
+  it('unknown tags render empty, system placeholders survive', () => {
+    expect(applyVars('A{{desconocido}}B {{UNSUBSCRIBE_URL}} {{ COMPANY_ADDRESS }}', {})).toBe('AB {{UNSUBSCRIBE_URL}} {{ COMPANY_ADDRESS }}')
+  })
+
+  it('custom fields and accents', () => {
+    expect(applyVars('{{puntos_fidelidad}} · {{Población}}', { puntos_fidelidad: 120, city: 'Sevilla' })).toBe('120 · Sevilla')
+  })
+})

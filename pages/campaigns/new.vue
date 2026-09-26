@@ -8,16 +8,29 @@ import {
   Upload,
   Send,
   Calendar,
+  Sparkles,
 } from "lucide-vue-next";
 import CampaignLibraryModal from "~/components/campaigns/CampaignLibraryModal.vue";
+import AiCampaignWizard from "~/components/campaigns/AiCampaignWizard.vue";
 import CampaignPreview from "~/components/campaigns/CampaignPreview.vue";
 
 definePageMeta({ layout: "app" });
 
 const { t } = useI18n();
 const router = useRouter();
+const route = useRoute();
+// Two-click AI campaign (also reachable with ?ai=1 from the command palette)
+const showAiWizard = ref(route.query.ai === "1");
 
 const { step, form, resetWizard } = useCampaignWizardState();
+// Coming from Audience → segment "Campaign": the segment is the audience
+const segment = ref<{ id: number; name: string; count: number | null } | null>(null);
+async function loadSegment() {
+  const sid = Number(route.query.segment);
+  if (!sid) return;
+  const all = await $fetch<any[]>("/api/segments").catch(() => []);
+  segment.value = all.find((s) => s.id === sid) ?? null;
+}
 const lists = ref<any[]>([]);
 const showLibrary = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -118,6 +131,7 @@ async function save() {
   try {
     const payload = {
       ...form.value,
+      segmentId: segment.value?.id ?? null,
       status: isScheduled.value ? "scheduled" : "draft",
       scheduledAt: isScheduled.value && scheduleDate.value ? new Date(scheduleDate.value).toISOString() : null,
     };
@@ -150,6 +164,7 @@ const isResuming = computed(() => {
 
 onMounted(() => {
   fetchLists();
+  loadSegment();
 });
 </script>
 
@@ -164,6 +179,14 @@ onMounted(() => {
           <X :size="20" />
         </button>
         <div class="wizard-wrap">
+          <button v-if="step === 1" type="button" class="ai-banner" @click="showAiWizard = true">
+            <span class="ai-banner-icon"><Sparkles :size="18" /></span>
+            <span class="ai-banner-text">
+              <strong>{{ t("aiwiz.banner_title") }}</strong>
+              <small>{{ t("aiwiz.banner_sub") }}</small>
+            </span>
+            <span class="ai-banner-cta">{{ t("aiwiz.banner_cta") }} →</span>
+          </button>
           <!-- Steps indicator -->
           <div class="steps-nav">
             <div
@@ -238,6 +261,10 @@ onMounted(() => {
           <!-- Step 2: List -->
           <div v-if="step === 2" class="step-panel">
             <h2>{{ t("campaigns_page.step2_title") }}</h2>
+            <div v-if="segment" class="segment-banner">
+              <strong>{{ t("camp.segment_banner", { name: segment.name, count: segment.count ?? "?" }) }}</strong>
+              <span>{{ t("camp.segment_banner_hint") }}</span>
+            </div>
             <div class="list-options">
               <div
                 class="list-option"
@@ -246,8 +273,8 @@ onMounted(() => {
               >
                 <div class="opt-dot" style="background: #4b5563" />
                 <div>
-                  <strong>{{ t("campaigns_page.no_list") }}</strong>
-                  <p>Usa el Excel desde el dashboard</p>
+                  <strong>{{ segment ? t("camp.whole_segment") : t("campaigns_page.no_list") }}</strong>
+                  <p>{{ segment ? t("camp.whole_segment_hint") : t("camp.no_list_hint") }}</p>
                 </div>
               </div>
               <div
@@ -454,6 +481,8 @@ onMounted(() => {
         </div>
       </div>
     </main>
+
+    <AiCampaignWizard v-if="showAiWizard" @close="showAiWizard = false" />
 
     <!-- Library modal -->
     <Transition name="fade-scale">
@@ -1431,5 +1460,68 @@ label {
   color: #10b981;
   font-weight: 600;
   margin-top: 2px;
+}
+
+.ai-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  padding: 14px 16px;
+  margin-bottom: 22px;
+  border-radius: 16px;
+  border: 1px solid rgba(129, 140, 248, 0.35);
+  background: linear-gradient(120deg, rgba(99, 102, 241, 0.16), rgba(168, 85, 247, 0.1));
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+}
+.ai-banner:hover {
+  transform: translateY(-1px);
+  border-color: rgba(129, 140, 248, 0.7);
+}
+.ai-banner-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: rgba(99, 102, 241, 0.3);
+  color: #c7d2fe;
+  flex-shrink: 0;
+}
+.ai-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.ai-banner-text small {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.ai-banner-cta {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #c7d2fe;
+  white-space: nowrap;
+}
+
+.segment-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(129, 140, 248, 0.35);
+  background: rgba(99, 102, 241, 0.1);
+  font-size: 13px;
+}
+.segment-banner span {
+  font-size: 12px;
+  opacity: 0.75;
 }
 </style>

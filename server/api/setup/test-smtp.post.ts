@@ -1,9 +1,9 @@
 import { existsSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { dataPath } from '~/server/utils/data-dir'
 import nodemailer from 'nodemailer'
 
 export default defineEventHandler(async (event) => {
-  if (existsSync(resolve(process.cwd(), 'data/.installed'))) {
+  if (existsSync(dataPath('.installed'))) {
     throw createError({ statusCode: 403, message: 'Already installed' })
   }
 

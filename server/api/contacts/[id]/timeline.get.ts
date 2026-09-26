@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
     .limit(200)
 
   type TimelineEntry = {
-    type: 'sent' | 'failed' | 'bounced' | 'open' | 'click'
+    type: 'sent' | 'failed' | 'bounced' | 'skipped' | 'open' | 'click' | 'unsubscribe' | 'complaint'
     at: Date | null
     campaignId: number | null
     campaignName: string
@@ -49,9 +49,9 @@ export default defineEventHandler(async (event) => {
   const entries: TimelineEntry[] = []
 
   for (const s of sendRows) {
-    if (s.status === 'pending') continue
+    if (s.status === 'pending' || s.status === 'held' || s.status === 'sending') continue
     entries.push({
-      type: s.status === 'failed' ? 'failed' : s.status === 'bounced' ? 'bounced' : 'sent',
+      type: s.status === 'failed' ? 'failed' : s.status === 'bounced' ? 'bounced' : s.status === 'skipped' ? 'skipped' : 'sent',
       at: s.sentAt,
       campaignId: s.campaignId,
       campaignName: s.campaignName,
@@ -59,6 +59,8 @@ export default defineEventHandler(async (event) => {
     })
   }
   for (const e of eventRows) {
+    // Bounces are already represented by the send's own status
+    if (e.eventType === 'bounce') continue
     entries.push({
       type: e.eventType,
       at: e.createdAt,

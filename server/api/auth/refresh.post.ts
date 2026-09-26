@@ -1,4 +1,6 @@
 import { createSession, validateAndRotateRefreshToken, getClientIp } from '~/server/utils/auth'
+import { multiUserEnabled, getUser } from '~/server/utils/users'
+import { sqlite } from '~/server/db/index'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event).catch(() => ({}))
@@ -9,13 +11,21 @@ export default defineEventHandler(async (event) => {
   }
 
   const ip = getClientIp(event)
-  const newRefreshToken = await validateAndRotateRefreshToken(refreshToken, ip)
+  const rotated = await validateAndRotateRefreshToken(refreshToken, ip)
 
-  if (!newRefreshToken) {
+  if (!rotated) {
     throw createError({ statusCode: 401, message: 'Refresh token inválido o expirado' })
   }
 
-  const sessionToken = await createSession(ip)
+  // The user behind the token must still be allowed in; legacy tokens die
+  // once team accounts are enabled
+  const user = rotated.userId !== null ? getUser(rotated.userId) : null
+  if ((rotated.userId === null && multiUserEnabled()) || (rotated.userId !== null && (!user || user.disabled))) {
+    sqlite.prepare('DELETE FROM refresh_tokens WHERE token = ?').run(rotated.token)
+    throw createError({ statusCode: 401, message: 'Refresh token inválido o expirado' })
+  }
+
+  const sessionToken = await createSession(ip, rotated.userId)
 
   setCookie(event, 'tm_session', sessionToken, {
     httpOnly: true,
@@ -25,5 +35,5 @@ export default defineEventHandler(async (event) => {
     secure: process.env.NODE_ENV === 'production'
   })
 
-  return { success: true, refreshToken: newRefreshToken }
+  return { success: true, refreshToken: rotated.token }
 })

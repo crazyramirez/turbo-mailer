@@ -1,9 +1,9 @@
-import { validateSession } from '~/server/utils/auth'
+import { resolveSession, multiUserEnabled } from '~/server/utils/users'
 
-export default defineEventHandler(async (event) => {
-  const token = getCookie(event, 'tm_session')
-  if (!token || !(await validateSession(token))) {
+export default defineEventHandler((event) => {
+  const auth = resolveSession(getCookie(event, 'tm_session'))
+  if (!auth) {
     throw createError({ statusCode: 401, message: 'No autenticado' })
   }
-  return { authenticated: true }
+  return { authenticated: true, user: auth, multiUser: multiUserEnabled() }
 })

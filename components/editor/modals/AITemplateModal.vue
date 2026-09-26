@@ -4,9 +4,9 @@ import { X, Sparkles, Send, Loader2 } from 'lucide-vue-next'
 import { useEditorState } from '~/composables/useEditorState'
 import { useTemplateManager } from '~/composables/useTemplateManager'
 import { useToast } from '~/composables/useToast'
-import { editorBlocks } from '~/utils/editorBlocks'
+import { assembleEmail, type PlannedBlock } from '~/utils/emailAssembler'
 
-const { showAITemplateModal, currentTemplate, htmlContent, currentStyle } = useEditorState()
+const { showAITemplateModal, currentTemplate, htmlContent } = useEditorState()
 const { saveTemplate, loadTemplates } = useTemplateManager()
 const { showToast } = useToast()
 
@@ -84,144 +84,52 @@ const sendMessage = async () => {
 }
 
 const applyGeneratedTemplate = async (data: any) => {
-  // Configurar estilo base
-  currentStyle.value = data.styleId || 'default'
-  
-  let newBlocksHtml = ''
-  
-  if (data.blocks && Array.isArray(data.blocks)) {
-    // Necesitamos usar un for clásico para poder usar await secuencialmente en el mapeo
-    for (const b of data.blocks) {
-      const blockDef = editorBlocks.find(eb => eb.id === b.id)
-      if (blockDef) {
-        let content = blockDef.content
-        
-        // Reemplazar textos e imágenes usando DOMParser
-        if (b.replacements && typeof b.replacements === 'object') {
-          const parser = new DOMParser()
-          const doc = parser.parseFromString(content, 'text/html')
-          
-          for (const [key, val] of Object.entries(b.replacements)) {
-            const els = Array.from(doc.querySelectorAll(`[data-toggle="${key}"]`))
-            for (let index = 0; index < els.length; index++) {
-              const el = els[index]
-              const value = Array.isArray(val) ? (val[index] || val[0]) : val
-              if (!value) continue
-              
-              if (key === 'image' || key === 'logo') {
-                let imgUrl = value as string
-                
-                // Si la imagen viene de pollinations o es externa, la descargamos y subimos al servidor
-                if (imgUrl.includes('pollinations.ai')) {
-                  // Mostrar mensaje en el chat para avisar del progreso
-                  messages.value.push({ role: 'assistant', content: '🖼️ Pintando imagen con IA y forzando recurso local...' })
-                  await scrollToBottom()
-                  
-                  try {
-                    const uploadRes = await $fetch<any>('/api/ai/download-image', {
-                      method: 'POST',
-                      body: { url: imgUrl }
-                    })
-                    
-                    if (uploadRes && uploadRes.url) {
-                      imgUrl = uploadRes.url
-                    }
-                  } catch (e) {
-                    console.error('Error descargando la imagen de IA', e)
-                  }
-                }
-                
-                const img = el.querySelector('img')
-                if (img) img.src = imgUrl
-                else if (el.tagName.toLowerCase() === 'img') (el as HTMLImageElement).src = imgUrl
-                
-              } else if (key === 'button') {
-                const span = el.querySelector('.btn-text')
-                if (span) span.innerHTML = value as string
-                else el.innerHTML = value as string
-              } else if (key === 'contact') {
-                const a = el.querySelector('a')
-                if (a) {
-                  a.innerHTML = value as string
-                  // La IA puede devolver "web / teléfono" combinados: usar solo el
-                  // primer tramo sin espacios para no generar hrefs inválidos
-                  const valStr = (value as string).trim().split(/[\s/]+/)[0] || ''
-                  if (valStr.includes('@')) {
-                    a.href = `mailto:${valStr}`
-                  } else if (/^\+?[\d][\d\s().-]*$/.test((value as string).trim())) {
-                    a.href = `tel:${(value as string).replace(/[^+\d]/g, '')}`
-                  } else if (valStr) {
-                    a.href = valStr.startsWith('http') ? valStr : `https://${valStr}`
-                  }
-                } else {
-                  el.innerHTML = value as string
-                }
-              } else {
-                el.innerHTML = value as string
-              }
-            }
-          }
-          content = doc.body.innerHTML
-        }
-        
-        newBlocksHtml += content
-      }
+  // Shared assembler: same markup as the two-click generator, brand kit
+  // colours applied, unsubscribe link always preserved
+  const brand = await $fetch<any>('/api/brand-kit').catch(() => null)
+  const blocks: PlannedBlock[] = (Array.isArray(data.blocks) ? data.blocks : []).map((b: any) => {
+    const r = b.replacements || {}
+    return {
+      id: b.id,
+      fields: {
+        title: r.title, subtitle: r.subtitle, badge: r.badge, button: r.button,
+        contact: r.contact, ps: r.ps, images: r.image, logo: r.logo,
+      },
     }
-  }
+  })
 
-  // Generar un HTML completo mínimo para inyectar en el iframe
-  const finalHtml = `<!DOCTYPE html>
-<html lang="es">
-<head>
-  <style>
-    body { 
-      margin: 0; padding: 0; font-family: Arial, sans-serif; 
-      width: 100% !important;
-      -webkit-text-size-adjust: 100%;
-      -ms-text-size-adjust: 100%;
-    }
-    .main-card {
-      width: 100%;
-      max-width: 820px;
-      margin: 0 auto;
-      border-radius: 0px;
-      box-shadow: 0 10px 40px rgba(15, 23, 42, 0.08);
-      overflow: hidden;
-    }
-    @media only screen and (max-width: 600px) {
-      .main-card { border-radius: 0px !important; }
-      .header-block, .body-block, .methodology-block, .presence-block, .card-block, .cta-block, .signature-block {
-        padding-left: 20px !important;
-        padding-right: 20px !important;
+  let announced = false
+  const finalHtml = await assembleEmail({
+    blocks,
+    styleId: data.styleId || 'default',
+    brand: brand && (brand.name || brand.logoUrl) ? brand : null,
+    language: brand?.language || 'es',
+    resolveImage: async (ref: string) => {
+      if (!/^https?:\/\//i.test(ref)) return null
+      if (!ref.includes('pollinations.ai')) return ref
+      if (!announced) {
+        announced = true
+        messages.value.push({ role: 'assistant', content: '🖼️ Pintando imágenes con IA y guardándolas en tu biblioteca...' })
+        await scrollToBottom()
       }
-      .grid-quad-td {
-        display: inline-block !important;
-        width: 50% !important;
-        box-sizing: border-box !important;
-        padding: 4px !important;
+      try {
+        const uploadRes = await $fetch<any>('/api/ai/download-image', { method: 'POST', body: { url: ref } })
+        return uploadRes?.url ?? null
+      } catch (e) {
+        console.error('Error descargando la imagen de IA', e)
+        return null
       }
-    }
-  </style>
-</head>
-<body style="margin:0;padding:0;" data-style-id="${data.styleId || 'default'}">
-  <div style="margin:0;padding:0;width:100%;">
-    <div style="margin:0 auto;padding: 0px;">
-      <div class="main-card" style="width:100%;max-width:820px;margin:0 auto;border: 1px solid #e9e9e9;border-radius:0px;box-shadow:0 10px 40px rgba(15, 23, 42, 0.08);overflow:hidden;">
-        ${newBlocksHtml}
-      </div>
-    </div>
-  </div>
-</body>
-</html>`
+    },
+  })
 
   htmlContent.value = finalHtml
-  
+
   // Siempre guardar como una nueva plantilla para no sobrescribir la actual
   currentTemplate.value = 'Plantilla_IA_' + Date.now().toString().slice(-5)
-  
+
   // Inyectar el HTML directamente en el lienzo para que se vea la imagen de inmediato
   import('~/composables/useIframeEngine').then(m => m.useIframeEngine().injectIframeContent())
-  
+
   // Guardar con un delay de 2 segundos para asegurar que el DOM ha cargado
   setTimeout(async () => {
     await saveTemplate(true)

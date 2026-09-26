@@ -21,7 +21,17 @@ export const VAR_MAP: Record<string, string[]> = {
   email: ['Email', 'Correo', 'Mail']
 }
 
-function escapeHtml(str: string): string {
+// Placeholders filled later by the send pipeline — never blanked here
+const SYSTEM_PLACEHOLDERS = new Set(['UNSUBSCRIBE_URL', 'PREFERENCES_URL', 'COMPANY_ADDRESS', 'WEB_VERSION_URL'])
+
+// Alias (lowercased) → canonical field
+const ALIAS_TO_FIELD = new Map<string, string>()
+for (const [field, aliases] of Object.entries(VAR_MAP)) {
+  ALIAS_TO_FIELD.set(field.toLowerCase(), field)
+  for (const a of aliases) ALIAS_TO_FIELD.set(a.toLowerCase(), field)
+}
+
+export function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -30,101 +40,107 @@ function escapeHtml(str: string): string {
     .replace(/'/g, '&#039;')
 }
 
-function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
-
 export interface CompiledTemplate {
   applyTo(contact: Record<string, any>): string
 }
 
-/**
- * Compiles a template string once, returning a reusable apply function.
- * Eliminates repeated regex compilation per email — critical at 50k+ scale.
- * Use this in bulk-send loops; use applyVars for one-off substitutions.
- */
-export function compileTemplate(tpl: string): CompiledTemplate {
-  if (!tpl) return { applyTo: () => '' }
-
-  // Build one combined regex per VAR_MAP field, compiled once for all emails
-  const compiled: Array<{ re: RegExp; field: string; aliases: string[] }> = []
-  for (const [field, aliases] of Object.entries(VAR_MAP)) {
-    const allNames = [field, ...aliases]
-    const pattern = allNames.map(n => `\\{\\{\\s*${escapeRegex(n)}\\s*\\}\\}`).join('|')
-    compiled.push({ re: new RegExp(pattern, 'gi'), field, aliases })
-  }
-
-  return {
-    applyTo(contact: Record<string, any>): string {
-      let result = tpl
-
-      // 1. VAR_MAP fields using pre-compiled regex
-      for (const { re, field, aliases } of compiled) {
-        let value = contact[field]
-        if (value === undefined) {
-          for (const alias of aliases) {
-            if (contact[alias] !== undefined) { value = contact[alias]; break }
-            const ciKey = Object.keys(contact).find(k => k.toLowerCase() === alias.toLowerCase())
-            if (ciKey) { value = contact[ciKey]; break }
-          }
-        }
-        const escaped = escapeHtml(value === null || value === undefined ? '' : String(value))
-        re.lastIndex = 0
-        result = result.replace(re, escaped)
-      }
-
-      // 2. Dynamic keys not covered by VAR_MAP
-      for (const [key, value] of Object.entries(contact)) {
-        if (key in VAR_MAP) continue
-        const escaped = escapeHtml(value === null || value === undefined ? '' : String(value))
-        result = result.replace(new RegExp(`\\{\\{\\s*${escapeRegex(key)}\\s*\\}\\}`, 'gi'), escaped)
-      }
-
-      return result
+/** Case-insensitive lookup honouring the alias table (Nombre → name...). */
+export function lookupVar(contact: Record<string, any>, rawName: string): unknown {
+  const name = rawName.trim()
+  if (name in contact) return contact[name]
+  const lower = name.toLowerCase()
+  const field = ALIAS_TO_FIELD.get(lower)
+  if (field) {
+    if (contact[field] !== undefined) return contact[field]
+    // The contact object may carry an alias key itself (e.g. CSV column "Empresa")
+    for (const alias of [field, ...VAR_MAP[field]]) {
+      const key = Object.keys(contact).find(k => k.toLowerCase() === alias.toLowerCase())
+      if (key !== undefined && contact[key] !== undefined) return contact[key]
     }
+    return undefined
   }
+  const key = Object.keys(contact).find(k => k.toLowerCase() === lower)
+  return key !== undefined ? contact[key] : undefined
+}
+
+function isTruthy(v: unknown): boolean {
+  if (v === null || v === undefined || v === false) return false
+  if (typeof v === 'number') return v !== 0
+  const s = String(v).trim().toLowerCase()
+  return s !== '' && s !== 'false' && s !== '0'
+}
+
+// {{#if field}}…{{else}}…{{/if}}, {{#if field == "x"}}, {{#unless field}}…{{/unless}}
+// Innermost blocks first, so nesting works.
+const IF_RE = /\{\{\s*#(if|unless)\s+([^}]+?)\s*\}\}((?:(?!\{\{\s*#(?:if|unless)\b)[\s\S])*?)\{\{\s*\/\1\s*\}\}/i
+const COND_RE = /^([\p{L}\w .-]+?)\s*(==|!=)\s*"([^"]*)"$/u
+
+function evalCondition(expr: string, contact: Record<string, any>): boolean {
+  const m = expr.trim().match(COND_RE)
+  if (m) {
+    const actual = String(lookupVar(contact, m[1]) ?? '').trim().toLowerCase()
+    const expected = m[3].trim().toLowerCase()
+    return m[2] === '==' ? actual === expected : actual !== expected
+  }
+  return isTruthy(lookupVar(contact, expr))
+}
+
+function resolveConditionals(tpl: string, contact: Record<string, any>): string {
+  let out = tpl
+  for (let guard = 0; guard < 200; guard++) {
+    const m = IF_RE.exec(out)
+    if (!m) break
+    const [whole, kind, expr, body] = m
+    const [whenTrue, whenFalse = ''] = body.split(/\{\{\s*else\s*\}\}/i)
+    let cond = evalCondition(expr, contact)
+    if (kind.toLowerCase() === 'unless') cond = !cond
+    out = out.slice(0, m.index) + (cond ? whenTrue : whenFalse) + out.slice(m.index + whole.length)
+  }
+  return out
+}
+
+// {{ name }}, {{ name | "amigo" }}, {{ name | default: "amigo" }}
+const VAR_RE = /\{\{\s*([\p{L}_][\p{L}\w .-]{0,60}?)\s*(?:\|\s*(?:default\s*:\s*)?"([^"]*)"\s*)?\}\}/gu
+
+function substitute(tpl: string, contact: Record<string, any>): string {
+  return tpl.replace(VAR_RE, (whole, rawName: string, fallback: string | undefined) => {
+    const name = rawName.trim()
+    if (SYSTEM_PLACEHOLDERS.has(name.toUpperCase())) return whole
+    const value = lookupVar(contact, name)
+    const str = value === null || value === undefined ? '' : String(value)
+    if (!str.trim() && fallback !== undefined) return escapeHtml(fallback)
+    return escapeHtml(str)
+  })
 }
 
 /**
- * One-off variable substitution. For bulk sends, prefer compileTemplate().
- * All contact values are HTML-escaped before insertion.
+ * Compiles a template once for reuse across many contacts. Supports aliases,
+ * conditionals and fallbacks; every contact value is HTML-escaped. Unknown
+ * merge tags render empty (never a raw "{{tag}}" in someone's inbox);
+ * system placeholders (UNSUBSCRIBE_URL...) are left for the pipeline.
  */
+export function compileTemplate(tpl: string): CompiledTemplate {
+  if (!tpl) return { applyTo: () => '' }
+  const hasBlocks = /\{\{\s*#(if|unless)\b/i.test(tpl)
+  return {
+    applyTo(contact: Record<string, any>): string {
+      const safe = contact ?? {}
+      return substitute(hasBlocks ? resolveConditionals(tpl, safe) : tpl, safe)
+    },
+  }
+}
+
+/** One-off variable substitution. All contact values are HTML-escaped. */
 export function applyVars(tpl: string, contact: Record<string, any>): string {
-  if (!tpl) return ''
-  let result = tpl
+  return compileTemplate(tpl).applyTo(contact)
+}
 
-  for (const [field, aliases] of Object.entries(VAR_MAP)) {
-    let value = contact[field]
-    if (value === undefined) {
-      for (const alias of aliases) {
-        if (contact[alias] !== undefined) {
-          value = contact[alias]
-          break
-        }
-        const ciKey = Object.keys(contact).find(k => k.toLowerCase() === alias.toLowerCase())
-        if (ciKey) {
-          value = contact[ciKey]
-          break
-        }
-      }
-    }
-
-    const finalValue = escapeHtml(value === null || value === undefined ? '' : String(value))
-
-    for (const alias of aliases) {
-      const reg = new RegExp(`\\{\\{\\s*${alias}\\s*\\}\\}`, 'gi')
-      result = result.replace(reg, finalValue)
-    }
-
-    const fieldReg = new RegExp(`\\{\\{\\s*${field}\\s*\\}\\}`, 'gi')
-    result = result.replace(fieldReg, finalValue)
+/** Merge tags used by a template (for the editor's variable picker / lint). */
+export function listMergeTags(tpl: string): string[] {
+  const out = new Set<string>()
+  for (const m of tpl.matchAll(VAR_RE)) {
+    const name = m[1].trim()
+    if (!SYSTEM_PLACEHOLDERS.has(name.toUpperCase())) out.add(name)
   }
-
-  for (const [key, value] of Object.entries(contact)) {
-    const finalValue = escapeHtml(value === null || value === undefined ? '' : String(value))
-    const reg = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'gi')
-    result = result.replace(reg, finalValue)
-  }
-
-  return result
+  return [...out]
 }

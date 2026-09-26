@@ -11,6 +11,10 @@ import {
   X,
   LayoutDashboard,
   ShieldCheck,
+  Workflow,
+  Gauge,
+  Settings,
+  UsersRound,
 } from "lucide-vue-next";
 import { APP_VERSION } from "~/utils/version";
 import { useRoute } from "vue-router";
@@ -176,6 +180,15 @@ watch([() => route.path, () => locale.value], () => {
           <span>{{ t("nav.contacts") }}</span>
         </NuxtLink>
         <NuxtLink
+          to="/audience"
+          class="nav-link"
+          active-class="router-link-active"
+          :title="t('nav.audience')"
+        >
+          <UsersRound :size="15" stroke-width="2.5" />
+          <span>{{ t("nav.audience") }}</span>
+        </NuxtLink>
+        <NuxtLink
           to="/campaigns"
           class="nav-link"
           active-class="router-link-active"
@@ -183,6 +196,15 @@ watch([() => route.path, () => locale.value], () => {
         >
           <Mail :size="15" stroke-width="2.5" />
           <span>{{ t("nav.campaigns") }}</span>
+        </NuxtLink>
+        <NuxtLink
+          to="/automations"
+          class="nav-link"
+          active-class="router-link-active"
+          :title="t('nav.automations')"
+        >
+          <Workflow :size="15" stroke-width="2.5" />
+          <span>{{ t("nav.automations") }}</span>
         </NuxtLink>
         <NuxtLink
           to="/analytics"
@@ -194,13 +216,13 @@ watch([() => route.path, () => locale.value], () => {
           <span>{{ t("nav.analytics") }}</span>
         </NuxtLink>
         <NuxtLink
-          to="/audit"
+          to="/deliverability"
           class="nav-link"
           active-class="router-link-active"
-          :title="t('nav.audit')"
+          :title="t('nav.deliverability')"
         >
-          <ShieldCheck :size="15" stroke-width="2.5" />
-          <span>{{ t("nav.audit") }}</span>
+          <Gauge :size="15" stroke-width="2.5" />
+          <span>{{ t("nav.deliverability") }}</span>
         </NuxtLink>
       </nav>
 
@@ -217,6 +239,14 @@ watch([() => route.path, () => locale.value], () => {
         <NuxtLink to="/editor" class="btn-editor-link hide-mobile">
           <Layout :size="18" stroke-width="2.5" />
           <span>{{ t("nav.editor") }}</span>
+        </NuxtLink>
+        <NuxtLink
+          to="/settings"
+          class="btn-lang hide-mobile"
+          :title="t('nav.settings')"
+          :aria-label="t('nav.settings')"
+        >
+          <Settings :size="18" stroke-width="2.5" />
         </NuxtLink>
         <button
           class="btn-logout hide-mobile"
@@ -317,6 +347,12 @@ watch([() => route.path, () => locale.value], () => {
             </span>
             <span>{{ t("nav.contacts") }}</span>
           </NuxtLink>
+          <NuxtLink to="/audience" class="drawer-link" @click="closeMenu">
+            <span class="drawer-link-icon">
+              <UsersRound :size="17" stroke-width="2" />
+            </span>
+            <span>{{ t("nav.audience") }}</span>
+          </NuxtLink>
           <NuxtLink
             to="/campaigns"
             class="drawer-link"
@@ -330,11 +366,29 @@ watch([() => route.path, () => locale.value], () => {
             </span>
             <span>{{ t("nav.campaigns") }}</span>
           </NuxtLink>
+          <NuxtLink to="/automations" class="drawer-link" @click="closeMenu">
+            <span class="drawer-link-icon">
+              <Workflow :size="17" stroke-width="2" />
+            </span>
+            <span>{{ t("nav.automations") }}</span>
+          </NuxtLink>
           <NuxtLink to="/analytics" class="drawer-link" @click="closeMenu">
             <span class="drawer-link-icon">
               <BarChart2 :size="17" stroke-width="2" />
             </span>
             <span>{{ t("nav.analytics") }}</span>
+          </NuxtLink>
+          <NuxtLink to="/deliverability" class="drawer-link" @click="closeMenu">
+            <span class="drawer-link-icon">
+              <Gauge :size="17" stroke-width="2" />
+            </span>
+            <span>{{ t("nav.deliverability") }}</span>
+          </NuxtLink>
+          <NuxtLink to="/settings" class="drawer-link" @click="closeMenu">
+            <span class="drawer-link-icon">
+              <Settings :size="17" stroke-width="2" />
+            </span>
+            <span>{{ t("nav.settings") }}</span>
           </NuxtLink>
           <NuxtLink to="/audit" class="drawer-link" @click="closeMenu">
             <span class="drawer-link-icon">
@@ -576,6 +630,18 @@ watch([() => route.path, () => locale.value], () => {
 @media (max-width: 1200px) {
   .btn-hamburger {
     display: flex;
+  }
+}
+
+/* Seven sections: tighten, then go icon-only (titles keep them discoverable) */
+@media (max-width: 1520px) {
+  .nav-link {
+    padding: 10px 13px;
+  }
+}
+@media (max-width: 1380px) {
+  .nav-link span {
+    display: none;
   }
 }
 

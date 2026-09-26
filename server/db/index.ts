@@ -2,18 +2,40 @@ import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import { resolve, join, dirname } from 'node:path'
-import { mkdirSync, existsSync } from 'node:fs'
+import { mkdirSync, existsSync, renameSync, copyFileSync, unlinkSync } from 'node:fs'
 import * as schema from './schema'
+import { dataDir } from '../utils/data-dir'
 
-const dataDir = resolve(process.cwd(), 'data')
-const dbPath = join(dataDir, 'turbomailer.db')
+const dbPath = process.env.TM_DB_PATH || join(dataDir, 'turbomailer.db')
 
 // Ensure data directory exists
 try {
-  mkdirSync(dataDir, { recursive: true })
+  mkdirSync(dirname(dbPath), { recursive: true })
 } catch (err) {
   console.error('Failed to create data directory:', err)
 }
+
+// Staged restore: the settings screen uploads a backup to restore-pending.db;
+// it is swapped in here, before the connection opens, on the next start.
+// The current DB is kept as pre-restore-<ts>.db so a bad restore is undoable.
+function applyPendingRestore() {
+  const pending = join(dirname(dbPath), 'restore-pending.db')
+  if (!existsSync(pending)) return
+  try {
+    if (existsSync(dbPath)) {
+      const ts = new Date().toISOString().replace(/[:.]/g, '-')
+      copyFileSync(dbPath, join(dirname(dbPath), `pre-restore-${ts}.db`))
+      for (const suffix of ['-wal', '-shm']) {
+        if (existsSync(dbPath + suffix)) unlinkSync(dbPath + suffix)
+      }
+    }
+    renameSync(pending, dbPath)
+    console.log('[DB] Restored database from restore-pending.db')
+  } catch (err) {
+    console.error('[DB] Pending restore failed — keeping current database:', err)
+  }
+}
+applyPendingRestore()
 
 console.log(`[DB] Opening database at: ${dbPath}`)
 const sqlite = new Database(dbPath)
@@ -30,7 +52,7 @@ sqlite.pragma('wal_autocheckpoint = 1000')
 
 export const db = drizzle(sqlite, { schema })
 
-export { sqlite }
+export { sqlite, dbPath }
 
 // Stamp migrations whose objects already exist in the DB (created out-of-band,
 // e.g. via drizzle-kit push or a copied DB file) so the migrator skips them
@@ -65,24 +87,25 @@ function baselineOutOfBandMigrations() {
   }
 }
 
+function resolveMigrationsPath(): string {
+  // Tests and tooling point here explicitly — never at a stale .output build
+  if (process.env.TM_MIGRATIONS_DIR) return resolve(process.env.TM_MIGRATIONS_DIR)
+  if (import.meta.dev) return resolve(process.cwd(), 'server/db/migrations')
+  // dirname(process.argv[1]) = .output/server regardless of cwd
+  const entryDir = process.argv[1] ? dirname(process.argv[1]) : null
+  const prodPaths = [
+    ...(entryDir ? [join(entryDir, 'assets/migrations')] : []),
+    resolve(process.cwd(), '.output/server/assets/migrations'),
+    resolve(process.cwd(), 'server/assets/migrations'),
+    resolve(process.cwd(), 'server/db/migrations'),
+  ]
+  return prodPaths.find(p => existsSync(p)) ?? prodPaths[0]
+}
+
 // Auto-run migrations on startup
 function runMigrations() {
   try {
-    let migrationsPath = resolve(process.cwd(), 'server/db/migrations')
-    
-    if (!import.meta.dev) {
-      // dirname(process.argv[1]) = .output/server regardless of cwd
-      const entryDir = process.argv[1] ? dirname(process.argv[1]) : null
-      const prodPaths = [
-        ...(entryDir ? [join(entryDir, 'assets/migrations')] : []),
-        resolve(process.cwd(), '.output/server/assets/migrations'),
-        resolve(process.cwd(), 'server/assets/migrations'),
-        resolve(process.cwd(), 'server/db/migrations'),
-      ]
-
-      migrationsPath = prodPaths.find(p => existsSync(p)) ?? prodPaths[0]
-    }
-
+    const migrationsPath = resolveMigrationsPath()
     console.log(`[DB] Checking migrations in: ${migrationsPath}`)
 
     if (!existsSync(migrationsPath)) {
@@ -104,17 +127,26 @@ function runMigrations() {
 // Run migrations synchronously on startup
 runMigrations()
 
-// Recover campaigns stuck in 'sending' after a crash/restart.
-// A/B campaigns in the 'waiting' phase are NOT stuck — they idle in 'sending'
-// on purpose until the scheduler decides the winning variant.
+// Crash recovery.
+//
+// 1. A send left in 'sending' was mid-SMTP-transaction when the process died:
+//    the server may or may not have accepted it. Re-sending risks a duplicate
+//    in the recipient's inbox, so it is closed as failed (at-most-once) with
+//    an explicit reason — "Reintentar fallidos" can still resend it by hand.
+// 2. Campaigns left in 'sending' are resumed automatically by the scheduler
+//    right after boot (see server/plugins/scheduler.ts) instead of being
+//    parked as 'paused' — a deploy or reboot no longer strands a campaign.
 try {
-  sqlite.prepare(
-    `UPDATE campaigns SET status = 'paused', finished_at = ?
-     WHERE status = 'sending' AND (ab_phase IS NULL OR ab_phase != 'waiting')`
-  ).run(Math.floor(Date.now() / 1000))
-  console.log('[DB] Recovered any stuck campaigns.')
+  const interrupted = sqlite.prepare(
+    `UPDATE sends SET status = 'failed', bounce_class = 'soft',
+       error_msg = 'Interrumpido por un reinicio del servidor durante el envío — no se reenvía automáticamente para evitar duplicados'
+     WHERE status = 'sending'`,
+  ).run()
+  if (interrupted.changes > 0) {
+    console.log(`[DB] Closed ${interrupted.changes} send(s) interrupted mid-transaction.`)
+  }
 } catch {
-  // Non-fatal — campaigns table may not exist yet on first run
+  // Non-fatal — sends table may not exist yet on first run
 }
 
 export default db

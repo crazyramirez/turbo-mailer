@@ -1,0 +1,1 @@
+ALTER TABLE `suppressions` ADD `email_hint` text;

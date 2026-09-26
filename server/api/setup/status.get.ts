@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { dataPath } from '~/server/utils/data-dir'
 
 export default defineEventHandler(() => ({
-  installed: existsSync(resolve(process.cwd(), 'data/.installed')),
+  installed: existsSync(dataPath('.installed')),
 }))

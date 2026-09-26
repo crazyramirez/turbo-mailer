@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
 import {
   Search, LayoutDashboard, Megaphone, Users, PenSquare, BarChart3,
-  ScrollText, Plus, CornerDownLeft,
+  ScrollText, Plus, CornerDownLeft, Sparkles, Workflow, Filter, Gauge, Settings,
 } from "lucide-vue-next";
 const { t } = useI18n();
 const router = useRouter();
@@ -28,6 +28,11 @@ const commands: Cmd[] = [
   { id: "editor", icon: PenSquare, labelKey: "palette.go_editor", keywords: "editor plantilla template html diseño design", action: () => router.push("/editor") },
   { id: "analytics", icon: BarChart3, labelKey: "palette.go_analytics", keywords: "analytics analiticas estadisticas stats metrics", action: () => router.push("/analytics") },
   { id: "audit", icon: ScrollText, labelKey: "palette.go_audit", keywords: "audit auditoria log registro actividad", action: () => router.push("/audit") },
+  { id: "ai_campaign", icon: Sparkles, labelKey: "palette.ai_campaign", keywords: "ia ai inteligencia artificial generar generate campaña campaign dos clicks", action: () => router.push("/campaigns/new?ai=1") },
+  { id: "automations", icon: Workflow, labelKey: "palette.go_automations", keywords: "automations automatizaciones flujos flows drip bienvenida welcome", action: () => router.push("/automations") },
+  { id: "audience", icon: Filter, labelKey: "palette.go_audience", keywords: "segmentos segments formularios forms campos fields temas topics audiencia audience", action: () => router.push("/audience") },
+  { id: "deliverability", icon: Gauge, labelKey: "palette.go_deliverability", keywords: "entregabilidad deliverability spam rebotes bounces dmarc spf dkim listas negras blocklist reputacion", action: () => router.push("/deliverability") },
+  { id: "settings", icon: Settings, labelKey: "palette.go_settings", keywords: "ajustes settings configuracion smtp ia ai marca brand usuarios users backup api", action: () => router.push("/settings") },
 ];
 
 const filtered = computed(() => {
