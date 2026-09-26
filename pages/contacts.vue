@@ -75,7 +75,7 @@ const form = ref({
   instagram: "",
   tags: [] as string[],
   listIds: [] as number[],
-  status: "active" as "active" | "unsubscribed" | "bounced",
+  status: "active" as "active" | "unsubscribed" | "bounced" | "inactive",
   custom: {} as Record<string, any>,
 });
 
@@ -626,12 +626,15 @@ onBeforeUnmount(() => {
 function statusLabel(s: string) {
   if (s === "active") return t("contacts_page.status_active");
   if (s === "unsubscribed") return t("contacts_page.status_unsubscribed");
-  return t("contacts_page.status_bounced");
+  if (s === "bounced") return t("contacts_page.status_bounced");
+  if (s === "inactive") return t("contacts_page.status_inactive");
+  return s;
 }
 function statusClass(s: string) {
   if (s === "active") return "badge-active";
   if (s === "unsubscribed") return "badge-unsub";
-  return "badge-bounced";
+  if (s === "bounced") return "badge-bounced";
+  return "badge-inactive";
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────
@@ -770,7 +773,7 @@ watch([search, statusFilter], () => {
         </div>
         <div class="filter-tabs">
           <button
-            v-for="f in ['all', 'active', 'unsubscribed', 'bounced']"
+            v-for="f in ['all', 'active', 'inactive', 'unsubscribed', 'bounced']"
             :key="f"
             class="filter-tab"
             :class="{ active: statusFilter === f }"
@@ -912,7 +915,11 @@ watch([search, statusFilter], () => {
               <td>{{ c.name || "—" }}</td>
               <td>{{ c.role || "—" }}</td>
               <td>
-                <span class="badge" :class="statusClass(c.status)">{{
+                <span
+                  class="badge"
+                  :class="statusClass(c.status)"
+                  :title="c.status === 'inactive' ? t('contacts_page.status_inactive_hint') : undefined"
+                >{{
                   statusLabel(c.status)
                 }}</span>
                 <span
@@ -1047,6 +1054,7 @@ watch([search, statusFilter], () => {
                     <div class="label-text">Estado</div>
                     <select v-model="form.status" class="form-input">
                       <option value="active">{{ t("contacts_page.status_active") }}</option>
+                      <option value="inactive">{{ t("contacts_page.status_inactive") }}</option>
                       <option value="unsubscribed">{{ t("contacts_page.status_unsubscribed") }}</option>
                       <option value="bounced">{{ t("contacts_page.status_bounced") }}</option>
                     </select>
@@ -1806,6 +1814,10 @@ watch([search, statusFilter], () => {
 .badge-bounced {
   background: rgba(239, 68, 68, 0.12);
   color: #ef4444;
+}
+.badge-inactive {
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text-dim);
 }
 
 .row-actions {
