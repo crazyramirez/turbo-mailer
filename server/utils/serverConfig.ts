@@ -3,7 +3,6 @@ import { resolve } from 'node:path'
 import { decryptField, encryptField } from '~/server/utils/encryption'
 import { dataDir } from './data-dir'
 
-export { dataDir }
 
 let _cache: Record<string, any> | null = null
 

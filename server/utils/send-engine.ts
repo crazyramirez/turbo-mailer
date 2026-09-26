@@ -134,7 +134,6 @@ export function startCampaign(campaignId: number): void {
   })()
 }
 
-export { pauseCampaign }
 
 // ── Prepared statements (lazily, the tables exist after migrations) ──────────
 

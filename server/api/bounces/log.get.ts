@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { dataDir } from '~/server/utils/serverConfig'
+import { dataDir } from '~/server/utils/data-dir'
 
 export default defineEventHandler(() => {
   const logPath = resolve(dataDir, 'bounce.log')
