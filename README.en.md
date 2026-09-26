@@ -44,6 +44,46 @@ As a self-hosted application on your own server:
 
 ---
 
+## 💎 Premium edition — what's new
+
+### 🤖 Real AI, in two clicks
+- **A complete campaign from an idea** (or your product URL): subject, preheader, on-brand design, self-hosted images and recommended send time — streamed live
+- **Brand kit** extracted from your website: logo, colours, fonts, tone and value props the AI always uses
+- **Subject line lab**: variants with different angles scored with spam analysis and your audience's real history; apply them as A or B
+- **Pre-send editorial review**, **post-campaign insights** with recommendations and **"Ask your data"** (with charts; it only sees aggregated numbers)
+- **Segments described in plain language** and automation emails generated on-brand
+- Claude (Opus 5 by default, with automatic fallback), OpenAI or **local models** (Ollama, LM Studio, vLLM)
+
+### 📬 A send engine that doesn't break
+- No duplicates even if the server dies mid-campaign; **automatic resume** on start
+- Multiple SMTP senders with **failover**, per-sender DKIM, per-provider limits (Gmail/Outlook/Yahoo), **IP warm-up** and **per-contact best send time**
+- **Circuit breaker** pauses the campaign when bounces, blocks or complaints spike
+- Precise SMTP error classification: a policy block never marks the contact as bounced
+- A/B testing with **statistical significance** (clicks → human opens), automatic follow-ups to non-openers
+
+### ✅ Professional deliverability
+- **RFC 8058 one-click unsubscribe** (required by Gmail/Yahoo), pages safe from link scanners
+- **Global suppression list** (unsubscribes, bounces, complaints) that survives deletes and re-imports
+- VERP + IMAP bounce processing, ARF complaints, email unsubscribes and **DMARC reports**
+- Pre-send checks: SPF (10-lookup limit), DKIM, DMARC, BIMI, MTA-STS, blocklists, spam score (built-in, rspamd or SpamAssassin), email-client compatibility
+- **Inbox placement tests** with seed mailboxes (Primary / Promotions / Spam) and blocklist monitoring
+- Apple Mail Privacy and Gmail proxy opens separated from human ones; automatic **sunset** of inactive contacts
+
+### 👥 Audience & automation
+- **Dynamic segments** with a visual builder (behaviour, dates, fields, tags, lists)
+- **Custom fields**, **subscription topics** in the preference center, **hosted/embeddable forms** with bot protection
+- **Visual automations**: welcome, abandoned cart, post-purchase, win-back, anniversaries… with waits, conditions, tags, webhooks
+- Templates with `{{#if}}…{{else}}…{{/if}}`, fallbacks `{{name | "friend"}}` and custom variables
+- Email verification (typos, domains without mail, disposable) and **GDPR**: export and right to be forgotten
+
+### 🏢 Platform
+- **Team with roles** (owner, admin, editor, viewer) and **two-step verification** (TOTP + recovery codes)
+- **Public REST API** with scoped keys and idempotency: transactional email, contacts, events
+- **Settings in the UI** with encrypted secrets, **automatic backups** locally and encrypted to S3, guided restore
+- **Prometheus metrics**, Slack/Telegram/email alerts, per-user audit log, **Docker** ready
+
+---
+
 ## ✨ Key Features
 
 ### 👥 CRM Contacts
@@ -199,6 +239,16 @@ It then shows clear instructions to **restart the application** (in Plesk or you
 From **Dashboard → Reset → Reconfigure**, the wizard runs again from scratch to update any setting (SMTP, secrets, AI, DKIM).
 
 ---
+
+## 🐳 Docker installation
+
+```bash
+echo "ENCRYPTION_KEY=$(openssl rand -hex 32)" > .env   # keep a copy: it decrypts your secrets
+docker compose up -d                                   # http://localhost:3000/setup
+docker compose --profile spam up -d                    # optional: rspamd for spam analysis
+```
+
+Data lives in the `turbomailer-data` volume (`/data`). Put an HTTPS reverse proxy (Caddy, Traefik, nginx) in front and use its URL as the public app URL.
 
 ## 🚀 Quick Installation
 

@@ -1362,7 +1362,7 @@
       "webhook_secret": "Secreto de firma",
       "captcha": "Anti-bots en formularios (Cloudflare Turnstile)",
       "metrics_token": "Token de métricas (Prometheus)",
-      "metrics_hint": "Expone {base}/api/metrics con Authorization: Bearer <token>.",
+      "metrics_hint": "Expone {base}/api/metrics con Authorization: Bearer TU_TOKEN.",
       "alerts": "Alertas",
       "alerts_hint": "Aviso inmediato si una campaña se pausa por rebotes, bloqueos o quejas, si caes en una lista negra o falla una copia."
     },

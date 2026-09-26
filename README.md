@@ -44,6 +44,46 @@ Al ser una aplicación auto-alojada en tu propio servidor:
 
 ---
 
+## 💎 Edición Premium — lo nuevo
+
+### 🤖 IA de verdad, en dos clics
+- **Campaña completa desde una idea** (o desde la URL de tu producto): asunto, preheader, diseño con tu marca, imágenes propias y hora recomendada — en streaming
+- **Kit de marca** extraído de tu web: logo, colores, tipografías, tono y propuestas de valor que la IA usa siempre
+- **Laboratorio de asuntos**: variantes con ángulos distintos puntuadas con análisis anti-spam y el historial real de tu audiencia; aplícalas como A o B
+- **Revisión editorial previa al envío**, **análisis post-campaña** con recomendaciones y **"Pregunta a tus datos"** (con gráficas; solo ve cifras agregadas)
+- **Segmentos descritos en lenguaje natural** y emails de automatización generados con tu marca
+- Claude (Opus 5 por defecto, con fallback automático), OpenAI o **modelos locales** (Ollama, LM Studio, vLLM)
+
+### 📬 Motor de envío a prueba de fallos
+- Sin duplicados ni aunque el servidor se caiga a mitad de campaña; **reanudación automática** al arrancar
+- Varios remitentes SMTP con **failover**, DKIM por remitente, límites por proveedor (Gmail/Outlook/Yahoo), **calentamiento de IP** y **hora óptima por contacto**
+- **Freno de emergencia**: pausa sola la campaña si suben rebotes, bloqueos o quejas
+- Clasificación precisa de errores SMTP: un bloqueo de política no marca al contacto como rebotado
+- Test A/B con **significancia estadística** (clics → aperturas humanas), follow-ups automáticos a no-abridores
+
+### ✅ Entregabilidad profesional
+- **Baja en un clic RFC 8058** (exigida por Gmail/Yahoo), páginas seguras frente a escáneres de enlaces
+- **Lista de supresión global** (bajas, rebotes, quejas) que sobrevive a borrados y reimportaciones
+- VERP + procesado IMAP de rebotes, quejas ARF, bajas por email e **informes DMARC**
+- Chequeo previo: SPF (límite de 10 lookups), DKIM, DMARC, BIMI, MTA-STS, listas negras, puntuación de spam (interna, rspamd o SpamAssassin), compatibilidad con clientes de correo
+- **Prueba de bandeja de entrada** con buzones semilla (Principal / Promociones / Spam) y monitor de listas negras
+- Aperturas de Apple Mail Privacy y proxies de Gmail separadas de las humanas; **sunset** automático de inactivos
+
+### 👥 Audiencia y automatización
+- **Segmentos dinámicos** con constructor visual (comportamiento, fechas, campos, etiquetas, listas)
+- **Campos personalizados**, **temas de suscripción** en el centro de preferencias, **formularios alojados/incrustables** con anti-bots
+- **Automatizaciones visuales**: bienvenida, carrito abandonado, post-compra, reactivación, aniversarios… con esperas, condiciones, etiquetas, webhooks
+- Plantillas con `{{#if}}…{{else}}…{{/if}}`, valores por defecto `{{nombre | "amigo"}}` y variables personalizadas
+- Verificación de emails (erratas, dominios sin correo, desechables) y **RGPD**: exportación y derecho al olvido
+
+### 🏢 Plataforma
+- **Equipo con roles** (propietario, admin, editor, lector) y **verificación en dos pasos** (TOTP + códigos de recuperación)
+- **API REST pública** con claves por permisos e idempotencia: emails transaccionales, contactos, eventos
+- **Ajustes desde la interfaz** con secretos cifrados, **copias automáticas** locales y en S3 cifradas, restauración guiada
+- **Métricas Prometheus**, alertas por Slack/Telegram/email, registro de auditoría por usuario, **Docker** listo
+
+---
+
 ## ✨ Características Principales
 
 ### 👥 CRM de Contactos
@@ -199,6 +239,16 @@ Después muestra instrucciones claras para **reiniciar la aplicación** en Plesk
 Desde **Dashboard → Reset → Reconfiguración**, el wizard vuelve a ejecutarse desde cero para actualizar cualquier configuración (SMTP, secretos, IA, DKIM).
 
 ---
+
+## 🐳 Instalación con Docker
+
+```bash
+echo "ENCRYPTION_KEY=$(openssl rand -hex 32)" > .env   # guarda una copia: descifra tus secretos
+docker compose up -d                                   # http://localhost:3000/setup
+docker compose --profile spam up -d                    # opcional: rspamd para el análisis de spam
+```
+
+Los datos viven en el volumen `turbomailer-data` (`/data`). Pon delante un proxy con HTTPS (Caddy, Traefik, nginx) y usa su URL como URL pública de la app.
 
 ## 🚀 Instalación Rápida
 

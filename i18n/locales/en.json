@@ -1362,7 +1362,7 @@
       "webhook_secret": "Signing secret",
       "captcha": "Form bot protection (Cloudflare Turnstile)",
       "metrics_token": "Metrics token (Prometheus)",
-      "metrics_hint": "Exposes {base}/api/metrics with Authorization: Bearer <token>.",
+      "metrics_hint": "Exposes {base}/api/metrics with Authorization: Bearer YOUR_TOKEN.",
       "alerts": "Alerts",
       "alerts_hint": "Instant notice when a campaign pauses on bounces, blocks or complaints, when you get blocklisted, or a backup fails."
     },
