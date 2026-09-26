@@ -1,5 +1,5 @@
 import net from 'node:net'
-import MailComposer from 'nodemailer/lib/mail-composer'
+import MailComposer from 'nodemailer/lib/mail-composer/index.js'
 
 // Real spam scoring of the exact message, when a filter is available:
 //
