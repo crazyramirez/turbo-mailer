@@ -24,7 +24,10 @@ const iframeRef = shallowRef<HTMLIFrameElement | null>(null)
 const viewMode = ref<'desktop' | 'mobile'>(
   (localStorage.getItem('editor_view_mode') as 'desktop' | 'mobile') ?? 'desktop'
 )
-const activePanel = ref<'layers' | 'edit' | 'fonts' | 'styles'>('layers')
+const desktopPreviewWidth = ref(820)
+const mobilePreviewWidth = ref(375)
+const previewZoom = ref<'fit' | 100>('fit')
+const activePanel = ref<'layers' | 'edit' | 'fonts' | 'styles' | 'quality'>('layers')
 const selectedElement = shallowRef<HTMLElement | null>(null)
 const selectedSubElement = shallowRef<HTMLElement | null>(null)
 const layerList = shallowRef<LayerItem[]>([])
@@ -146,6 +149,8 @@ const promptData = reactive({
 const imageModal = shallowReactive({
   visible: false,
   src: '',
+  alt: '',
+  decorative: false,
   link: '',
   target: '_blank',
   targetEl: null as HTMLImageElement | null,
@@ -185,6 +190,9 @@ export function useEditorState() {
   return {
     iframeRef,
     viewMode,
+    desktopPreviewWidth,
+    mobilePreviewWidth,
+    previewZoom,
     activePanel,
     selectedElement,
     selectedSubElement,

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { editorBlocks } from '~/utils/editorBlocks'
 import { EDITOR_AI_CATALOG } from '~/utils/editorAiBlocks'
+import { AI_GRID_LAYOUT_RULE } from '~/utils/aiGridLayout'
 import { emptyAssistantBrief, emptyAssistantSignature } from '~/utils/editorAssistant'
 import type { EditorAssistantBrief } from '~/utils/editorAssistant'
 
@@ -104,10 +105,11 @@ describe('native editor assistant generation', () => {
   it('uses the real editor module catalogue in the schema and prompt, preserving the chosen style', async () => {
     mock.aiJson.mockResolvedValue({ ...plan(), styleId: 'tech-noir' })
     const output = await generateEditorAssistant({ brief: brief({ styleId: 'corporate', useBrandKit: false }) })
-    expect(EDITOR_ASSISTANT_SCHEMA.properties.blocks.items.properties.id.enum).toEqual(editorBlocks.map(item => item.id))
+    expect(EDITOR_ASSISTANT_SCHEMA.properties.blocks.items.properties.id.enum).toEqual(editorBlocks.map(item => item.id).filter(id => !['grid-3', 'grid-4'].includes(id)))
     const request = mock.aiJson.mock.calls[0][0]
     expect(request.schema).toBe(EDITOR_ASSISTANT_SCHEMA)
-    expect(request.system).toContain(JSON.stringify(EDITOR_AI_CATALOG))
+    expect(request.system).toContain(JSON.stringify(EDITOR_AI_CATALOG.filter(item => !['grid-3', 'grid-4'].includes(item.id))))
+    expect(request.system).toContain(AI_GRID_LAYOUT_RULE)
     expect(request.system).toContain('Estilo seleccionado: corporate')
     expect(request).toMatchObject({ feature: 'editor_assistant', effort: 'high' })
     expect(output).toMatchObject({ type: 'template', styleId: 'corporate', subject: 'Diseño que transforma tu espacio' })
@@ -134,6 +136,56 @@ describe('native editor assistant generation', () => {
     mock.aiJson.mockImplementation(async () => plan([block('hero'), block('grid-3', { title: ['Una sola tarjeta'] }), block('unsubscribe')]))
     await expect(generateEditorAssistant({ brief: brief() })).rejects.toMatchObject({ code: 'invalid_output' })
     expect(mock.aiJson).toHaveBeenCalledTimes(2)
+  })
+
+  it.each([
+    ['grid-3', 3, ['grid-2', 'card']],
+    ['grid-4', 4, ['grid-2', 'grid-2']],
+  ] as const)('pairs every item of a complete %s returned outside the requested schema', async (id, count, expectedIds) => {
+    const images = Array.from({ length: count }, (_, i) => `https://marca.es/pieza-${i}.jpg`)
+    mock.gatherPageContext.mockResolvedValue({ title: 'Colección', text: 'Piezas reales.', images })
+    const fields = {
+      title: Array.from({ length: count }, (_, i) => `Pieza ${i + 1}`),
+      subtitle: Array.from({ length: count }, (_, i) => `Diseño para el espacio ${i + 1}.`), images,
+    }
+    mock.aiJson.mockResolvedValue(plan([block('hero'), block(id, fields), block('button'), block('unsubscribe')]))
+    const output = await generateEditorAssistant({ brief: brief({
+      includeSignature: true, signature: { ...emptyAssistantSignature(), name: 'Ana García', email: 'ana@marca.es' },
+    }) })
+    expect(output.blocks.map(item => item.id)).toEqual(['hero', ...expectedIds, 'button', 'signature', 'unsubscribe'])
+    for (const key of ['title', 'subtitle', 'images'] as const) {
+      expect(output.blocks.slice(1, 3).flatMap(item => item.fields[key] ?? [])).toEqual(fields[key])
+    }
+    expect(output.blocks.find(item => item.id === 'button')?.fields.buttonUrl).toBe(primaryUrl)
+    expect(output.blocks.at(-2)?.fields.title).toBe('Ana García')
+    expect(mock.aiJson).toHaveBeenCalledTimes(1)
+  })
+
+  it('passes all paired items to a refinement even when splitting produced more than 16 modules', async () => {
+    const priorGrids = Array.from({ length: 8 }, (_, i) => block('grid-4', {
+      title: Array.from({ length: 4 }, (_, j) => `Pieza ${i * 4 + j + 1}`),
+    }))
+    mock.aiJson.mockResolvedValueOnce(plan([block('hero'), ...priorGrids, block('unsubscribe')]))
+    const previous = await generateEditorAssistant({ brief: brief() })
+    expect(previous.blocks).toHaveLength(18)
+    mock.aiJson.mockResolvedValueOnce(plan(previous.blocks.map(item => block(item.id, Object.fromEntries(
+      Object.entries(item.fields).map(([key, value]) => [key, Array.isArray(value) ? value : [value]]),
+    )))))
+    const revised = await generateEditorAssistant({ brief: brief(), previous, instruction: 'Haz los textos más breves.' })
+    expect(mock.aiJson).toHaveBeenCalledTimes(2)
+    expect(revised.blocks).toEqual(previous.blocks)
+    const sent = JSON.parse(mock.aiJson.mock.calls[1][0].messages[0].content).previous.blocks
+    expect(sent).toEqual(previous.blocks)
+    expect(sent.flatMap((item: any) => item.fields.title ?? [])).toContain('Pieza 32')
+  })
+
+  it('pairs wide grids in a prior draft before requesting a revision', async () => {
+    await generateEditorAssistant({ brief: brief(), instruction: 'Simplifica los textos.', previous: plan([
+      block('hero'), block('grid-3', { title: ['Uno', 'Dos', 'Tres'] }), block('unsubscribe'),
+    ]) })
+    const previous = JSON.parse(mock.aiJson.mock.calls[0][0].messages[0].content).previous.blocks
+    expect(previous.map((item: any) => item.id)).toEqual(['hero', 'grid-2', 'card', 'unsubscribe'])
+    expect(previous.slice(1, 3).flatMap((item: any) => item.fields.title)).toEqual(['Uno', 'Dos', 'Tres'])
   })
 
   it('repairs a proposal whose only content module disappears when unverified video assets are filtered', async () => {
@@ -196,7 +248,7 @@ describe('native editor assistant generation', () => {
   it('pins CTAs, permitted images and the brand logo while preserving positional image slots', async () => {
     const secondaryUrl = 'https://marca.es/contacto'
     mock.aiJson.mockResolvedValue(plan([
-      block('header-pro', { logo: ['https://invented.es/logo.png'] }),
+      block('header-pro', { title: ['Diseño que acompaña tu día'], logo: ['https://invented.es/logo.png'] }),
       block('hero', { buttonUrl: ['https://invented.es/buy'], button: ['Model wording'] }),
       block('image', { images: [approvedImage] }),
       block('grid-2', { images: ['https://invented.es/photo.jpg', approvedImage] }),
@@ -249,7 +301,7 @@ describe('native editor assistant generation', () => {
     const output = await generateEditorAssistant({
       brief: brief(), instruction: `Hazlo más directo. ${'r'.repeat(3000)}`,
       previous: { name: 'n'.repeat(500), subject: 's'.repeat(500), preheader: 'p'.repeat(500), secretMetadata: 'not-forwarded',
-        blocks: Array.from({ length: 60 }, () => ({ id: 'text', fields: { title: ['t'.repeat(15000)], unexpected: ['not-forwarded'] } })),
+        blocks: Array.from({ length: 32 }, () => ({ id: 'text', fields: { title: ['t'.repeat(12000)], unexpected: ['not-forwarded'] } })),
       },
     })
     const request = JSON.parse(mock.aiJson.mock.calls[0][0].messages[0].content)
@@ -257,11 +309,130 @@ describe('native editor assistant generation', () => {
     expect(request.previous.name).toHaveLength(100)
     expect(request.previous.subject).toHaveLength(150)
     expect(request.previous.preheader).toHaveLength(250)
-    expect(request.previous.blocks.length).toBeLessThanOrEqual(17)
-    expect(request.previous.blocks.filter((item: any) => item.id === 'text')).toHaveLength(16)
+    expect(request.previous.blocks.length).toBeLessThanOrEqual(33)
+    expect(request.previous.blocks.filter((item: any) => item.id === 'text')).toHaveLength(32)
     expect(request.previous.blocks[0].fields.title).toHaveLength(12000)
     expect(JSON.stringify(request)).not.toContain('not-forwarded')
     expect(output.text).toMatch(/revisión/i)
+  })
+
+  it.each([
+    { blocks: Array.from({ length: 41 }, () => block('text')) },
+    { blocks: [block('hero'), ...Array.from({ length: 20 }, () => block('grid-4')), block('unsubscribe')] },
+  ])('rejects prior drafts too large to preserve instead of silently slicing their modules', async ({ blocks }) => {
+    await expect(generateEditorAssistant({ brief: brief(), previous: plan(blocks), instruction: 'Cambia solo el asunto.' }))
+      .rejects.toMatchObject({ statusCode: 400, statusMessage: expect.stringMatching(/40 módulos/) })
+    expect(mock.aiJson).not.toHaveBeenCalled()
+    expect(mock.gatherPageContext).not.toHaveBeenCalled()
+  })
+
+  it('preserves the 33-module boundary created by 15 paired grids plus the approved signature', async () => {
+    const approvedBrief = brief({ includeSignature: true, signature: { ...emptyAssistantSignature(), name: 'Ana García', email: 'ana@marca.es' } })
+    mock.aiJson.mockResolvedValueOnce(plan([block('hero'), ...Array.from({ length: 15 }, (_, i) => block('grid-4', {
+      title: Array.from({ length: 4 }, (_, j) => `Pieza ${i * 4 + j + 1}`),
+    }))]))
+    const previous = await generateEditorAssistant({ brief: approvedBrief })
+    expect(previous.blocks).toHaveLength(33)
+    mock.aiJson.mockResolvedValueOnce(plan(previous.blocks.map(item => block(item.id, Object.fromEntries(
+      Object.entries(item.fields).map(([key, value]) => [key, Array.isArray(value) ? value : [value]]),
+    )))))
+    const output = await generateEditorAssistant({ brief: approvedBrief, previous, instruction: 'Cambia solo el asunto.' })
+    expect(output.blocks.slice(0, -1)).toEqual(previous.blocks.slice(0, -1))
+    expect(output.blocks.at(-1)?.id).toBe('unsubscribe')
+    expect(JSON.parse(mock.aiJson.mock.calls[1][0].messages[0].content).previous.blocks).toEqual(previous.blocks)
+  })
+
+  it.each([
+    block('text', { title: ['t'.repeat(12001)] }),
+    block('grid-2', { title: ['Uno', 'Dos', 'Tercero que no debe desaparecer'] }),
+  ])('rejects previous content that normalization would truncate instead of forwarding a partial draft', async overflow => {
+    await expect(generateEditorAssistant({ brief: brief(), previous: plan([block('hero'), overflow, block('unsubscribe')]), instruction: 'Cambia solo el asunto.' }))
+      .rejects.toMatchObject({ statusCode: 400, statusMessage: expect.stringMatching(/evitar recortes/) })
+    expect(mock.aiJson).not.toHaveBeenCalled()
+  })
+
+  it('repairs a final design exceeding the assembler capacity after pairing, without returning a truncated draft', async () => {
+    const previous = plan([block('hero'), ...Array.from({ length: 28 }, () => block('text')), block('unsubscribe')])
+    const overflow = plan([block('hero'), ...Array.from({ length: 25 }, () => block('grid-4')), block('unsubscribe')])
+    mock.aiJson.mockResolvedValueOnce(overflow).mockResolvedValueOnce(plan())
+    const output = await generateEditorAssistant({ brief: brief(), previous, instruction: 'Organiza mejor la lectura.' })
+    expect(mock.aiJson).toHaveBeenCalledTimes(2)
+    expect(mock.aiJson.mock.calls[1][0].messages.at(-1).content).toMatch(/40 módulos/)
+    expect(output.blocks.map(item => item.id)).toEqual(['hero', 'text', 'button', 'unsubscribe'])
+  })
+
+  it.each([null, 5, [], { fields: {} }, { id: 'text', fields: [] }])('repairs malformed model modules without a runtime TypeError (%j)', async malformed => {
+    mock.aiJson.mockResolvedValueOnce(plan([block('hero'), malformed as any, block('unsubscribe')])).mockResolvedValueOnce(plan())
+    const output = await generateEditorAssistant({ brief: brief() })
+    expect(mock.aiJson).toHaveBeenCalledTimes(2)
+    expect(output.blocks.some(item => item.id === 'text')).toBe(true)
+  })
+
+  it('ignores incomplete model signature objects and inserts only approved identity', async () => {
+    mock.aiJson.mockResolvedValue(plan([block('hero'), block('text'), { id: 'signature' } as any, block('unsubscribe')]))
+    const output = await generateEditorAssistant({ brief: brief({ includeSignature: true, signature: { ...emptyAssistantSignature(), name: 'Ana García' } }) })
+    expect(output.blocks.at(-2)?.fields.title).toBe('Ana García')
+  })
+
+  it('repairs overflowing field arrays rather than silently dropping an extra product', async () => {
+    mock.aiJson.mockResolvedValueOnce(plan([block('hero'), block('grid-2', { title: ['Uno', 'Dos', 'Tres'], subtitle: ['Primero', 'Segundo', 'Tercero'] }), block('unsubscribe')]))
+      .mockResolvedValueOnce(plan([block('hero'), block('grid-2', { title: ['Uno', 'Dos'], subtitle: ['Primero', 'Segundo'] }), block('card', { title: ['Tres'], subtitle: ['Tercero'] }), block('unsubscribe')]))
+    const output = await generateEditorAssistant({ brief: brief() })
+    expect(mock.aiJson).toHaveBeenCalledTimes(2)
+    expect(mock.aiJson.mock.calls[1][0].messages.at(-1).content).toMatch(/sobran elementos.*no los descartes/)
+    expect(output.blocks.slice(1, 3).flatMap(item => item.fields.title ?? [])).toEqual(['Uno', 'Dos', 'Tres'])
+  })
+
+  it('repairs oversized card copy by moving detail to text modules without cutting it', async () => {
+    const detail = 'Una descripción detallada de las piezas y sus acabados. '.repeat(14)
+    mock.aiJson.mockResolvedValueOnce(plan([block('hero'), block('grid-2', { subtitle: [detail, 'Para todos los días.'] }), block('unsubscribe')]))
+      .mockResolvedValueOnce(plan([block('hero'), block('grid-2', { subtitle: ['Piezas con acabados cuidados.', 'Para todos los días.'] }), block('text', { title: [detail] }), block('unsubscribe')]))
+    const output = await generateEditorAssistant({ brief: brief() })
+    expect(mock.aiJson).toHaveBeenCalledTimes(2)
+    expect(mock.aiJson.mock.calls[1][0].messages.at(-1).content).toMatch(/650 caracteres.*sin perder información/)
+    expect(output.blocks.find(item => item.id === 'text')?.fields.title).toBe(detail.trim())
+  })
+
+  it('keeps a secondary CTA label aligned with its destination while applying the approved primary action', async () => {
+    const contactUrl = 'https://marca.es/contacto'
+    mock.aiJson.mockResolvedValue(plan([block('hero'), block('text'), block('button', { button: ['Consultar dudas'], buttonUrl: [contactUrl] }), block('unsubscribe')]))
+    const output = await generateEditorAssistant({ brief: brief({ offer: `Consultas en ${contactUrl}` }) })
+    expect(output.blocks.find(item => item.id === 'hero')?.fields).toMatchObject({ button: 'Ver la colección', buttonUrl: primaryUrl })
+    expect(output.blocks.find(item => item.id === 'button')?.fields).toMatchObject({ button: 'Consultar dudas', buttonUrl: contactUrl })
+  })
+
+  it('accepts the full supported length of an operator-approved CTA', async () => {
+    const ctaText = 'a'.repeat(100)
+    const output = await generateEditorAssistant({ brief: brief({ ctaText }) })
+    expect(output.blocks.find(item => item.id === 'hero')?.fields.button).toBe(ctaText)
+    expect(mock.aiJson).toHaveBeenCalledTimes(1)
+  })
+
+  it('repairs HTML-rich copy before the field storage cap would cut its closing text', async () => {
+    const copy = '<b>Valor</b>'.repeat(1100) + 'No pierdas el cierre.'
+    mock.aiJson.mockResolvedValueOnce(plan([block('hero'), block('text', { title: [copy] }), block('unsubscribe')]))
+      .mockResolvedValueOnce(plan([block('hero'), block('text', { title: ['<b>Valor</b>'.repeat(550)] }), block('text', { title: ['<b>Valor</b>'.repeat(550) + 'No pierdas el cierre.'] }), block('unsubscribe')]))
+    const output = await generateEditorAssistant({ brief: brief() })
+    expect(mock.aiJson).toHaveBeenCalledTimes(2)
+    expect(output.blocks.filter(item => item.id === 'text').map(item => item.fields.title).join('')).toBe(copy)
+  })
+
+  it('grounds composition guidance in the selected theme, objective and available imagery', async () => {
+    await generateEditorAssistant({ brief: brief({ styleId: 'dark-gold', objective: 'Conseguir inscripciones al webinar', ctaUrl: '', useBrandKit: false }) })
+    const context = JSON.parse(mock.aiJson.mock.calls[0][0].messages[0].content)
+    expect(context.composition.sequence).toMatch(/evento.*inscripción/)
+    expect(context.composition.visualSystem).toMatchObject({ fontFamily: 'Georgia, serif' })
+    expect(context.composition.rhythm).toMatch(/tipográfica/)
+    expect(context.composition.copyBudgets.gridItem).toEqual({ title: 110, subtitle: 650 })
+  })
+
+  it('repairs repeated opening headlines while allowing distinct branded headers and hero messages', async () => {
+    mock.aiJson.mockResolvedValueOnce(plan([block('header-pro'), block('hero'), block('text'), block('unsubscribe')]))
+      .mockResolvedValueOnce(plan([block('header-pro', { title: ['La nueva colección de Marca'] }), block('hero'), block('text'), block('unsubscribe')]))
+    const output = await generateEditorAssistant({ brief: brief() })
+    expect(mock.aiJson).toHaveBeenCalledTimes(2)
+    expect(mock.aiJson.mock.calls[1][0].messages.at(-1).content).toMatch(/repiten el mismo titular/)
+    expect(output.blocks.filter(item => ['header-pro', 'hero'].includes(item.id)).map(item => item.fields.title)).toEqual(['La nueva colección de Marca', 'Diseño para disfrutar 1'])
   })
 })
 
@@ -271,6 +442,20 @@ describe('complete campaign assistant generation', () => {
     sendTime: { weekday: 'tuesday', hour: 10, reason: 'Una pausa por la mañana para explorar la colección.' },
   }
   const options = { listId: 7, url: 'https://marca.es/referencia', aiImages: false }
+
+  it('uses paired grids in complete campaigns while preserving campaign metadata', async () => {
+    mock.aiJson.mockResolvedValue({ ...plan([
+      block('hero'), block('grid-3', { title: ['Uno', 'Dos', 'Tres'] }), block('unsubscribe'),
+    ]), campaign })
+    const output = await generateEditorAssistant({ brief: brief(), campaignOptions: options })
+    expect(output.blocks.map(item => item.id)).toEqual(['hero', 'grid-2', 'card', 'unsubscribe'])
+    expect(output.blocks.slice(1, 3).flatMap(item => item.fields.title ?? [])).toEqual(['Uno', 'Dos', 'Tres'])
+    expect(output.campaign).toEqual(campaign)
+    const ids = mock.aiJson.mock.calls[0][0].schema.properties.blocks.items.properties.id.enum
+    expect(ids).toContain('grid-2')
+    expect(ids).not.toContain('grid-3')
+    expect(ids).not.toContain('grid-4')
+  })
 
   it('produces the native plan and campaign metadata together using the selected list and historical performance', async () => {
     mock.aiJson.mockResolvedValue({ ...plan(), campaign })

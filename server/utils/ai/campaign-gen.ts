@@ -3,6 +3,7 @@ import { safeFetch } from '~/server/utils/safe-fetch'
 import { htmlToText } from '~/server/utils/html-to-text'
 import { getBrandKit, brandBrief } from '~/server/utils/ai/brand-kit'
 import { aiJson } from '~/server/utils/ai/provider'
+import { AI_GRID_LAYOUT_RULE, splitWideAiGrid } from '~/utils/aiGridLayout'
 
 // "Two-click campaign": brief (+ optional landing URL) → complete campaign:
 // subject A/B, preheader, block layout with copy, CTA links, image plan,
@@ -17,8 +18,6 @@ export const BLOCK_CATALOG: Record<string, string> = {
   image: 'Imagen a ancho completo.',
   card: 'Tarjeta: imagen + badge + título + texto.',
   'grid-2': '2 columnas (imagen, título, texto) — beneficios, productos.',
-  'grid-3': '3 columnas (imagen, título, texto).',
-  'grid-4': '4 columnas (imagen, título, texto) — solo para listas cortas.',
   note: 'Nota destacada: badge + título + texto (aviso, garantía, P.D.).',
   testimonials: 'Testimonio: cita (subtitle), autor (title), badge.',
   pricing: '3 planes: badge, nombre (title), precio/descr. (subtitle), botón.',
@@ -186,7 +185,8 @@ export async function generateCampaign(input: CampaignBrief, onProgress?: (chars
     'Reglas de entregabilidad: nada de MAYÚSCULAS gritadas, ni "!!!", ni promesas exageradas, ni frases típicas de spam ("gana dinero", "100% gratis", "haz clic aquí"). Asunto ≤ 60 caracteres, preheader 40-90 que complemente (no repita) el asunto. Personaliza con {{name | "fallback"}} solo donde suene natural.',
     `Escribe TODO el contenido en el idioma: ${lang}.`,
     'Estructura: 4-8 bloques. Empieza por header-pro o hero, termina SIEMPRE con unsubscribe (subtitle: texto legal breve que incluya {{COMPANY_ADDRESS}}). Usa firma (signature) solo en emails personales/B2B.',
-    'Campos por bloque: rellena solo los que el bloque usa (arrays vacíos para el resto); los arrays llevan un elemento por cada hueco del bloque (grid-3 → 3 títulos). En "text" el title es el cuerpo y admite <b>, <i> y <br>.',
+    'Campos por bloque: rellena solo los que el bloque usa (arrays vacíos para el resto); los arrays llevan un elemento por cada hueco del bloque (grid-2 → 2 títulos). En "text" el title es el cuerpo y admite <b>, <i> y <br>.',
+    AI_GRID_LAYOUT_RULE,
     `buttonUrl: usa SOLO estas URLs: ${links.length ? links.join(', ') : '(ninguna disponible: usa "{{URL}}")'}.`,
     assets.length
       ? `images: puedes usar imágenes reales de la página con "asset:N" (N = índice de esta lista): ${assets.map((a, i) => `${i}=${a}`).join(' ')}`
@@ -230,7 +230,12 @@ export async function generateCampaign(input: CampaignBrief, onProgress?: (chars
       return input.aiImages ? img : ''
     })
   }
-  campaign.blocks = campaign.blocks.filter(b => b.id !== 'unsubscribe')
+  campaign.blocks = campaign.blocks.filter(b => b.id !== 'unsubscribe').flatMap(b => {
+    const paired = splitWideAiGrid(b.id, b)
+    return paired ? paired.map(({ id, fields }) => ({
+      id, ...fields, badge: [], button: [], buttonUrl: [], price: [], code: [], contact: [], ps: [],
+    })) : [b]
+  })
   campaign.blocks.push({
     id: 'unsubscribe', badge: [], title: [], button: [], buttonUrl: [], images: [], price: [], code: [], contact: [], ps: [],
     subtitle: [lang.startsWith('en')

@@ -3,6 +3,7 @@ import { usePrompt } from '~/composables/usePrompt'
 import { useToast } from '~/composables/useToast'
 import { rgbToHex } from '~/utils/editorColors'
 import { sanitizeLinkUrl } from '~/utils/editorLinks'
+import { useIframeEngine } from '~/composables/useIframeEngine'
 
 const {
   iframeRef,
@@ -156,6 +157,29 @@ function switchToEditPanel() {
 }
 
 // ─── Block Operations ────────────────────────────────────────────────────────
+
+/** The module library supports click and keyboard insertion as well as dragging. */
+function insertBlock(content: string) {
+  const doc = iframeRef.value?.contentDocument
+  if (!doc) return
+  const template = doc.createElement('template')
+  template.innerHTML = content
+  const block = template.content.firstElementChild as HTMLElement | null
+  if (!block) return
+  const engine = useIframeEngine()
+  engine.pushToHistory()
+  const container = engine.ensureMainCard(doc)
+  const selected = selectedElement.value
+  const footer = Array.from(container.children).find(child => child.matches('.unsubscribe-block') || child.querySelector('.unsubscribe-block')) || null
+  if (selected?.isConnected && selected.parentElement === container && selected !== footer) selected.after(block)
+  else container.insertBefore(block, footer)
+  engine.initBlock(block, doc)
+  engine.applyStyleBase(currentStyle.value, false, block)
+  selectElement(block)
+  engine.refreshLayers()
+  engine.triggerAutosave(true)
+  void import('~/composables/useTemplateManager').then(({ useTemplateManager }) => useTemplateManager().autoCreateTemplate())
+}
 
 function deleteSelectedBlock() {
   if (!selectedElement.value) return
@@ -525,7 +549,7 @@ function updateImageHeight(val?: number | string) {
   const img = selectedElement.value.querySelector("[data-toggle='image'] img") as HTMLImageElement
   if (img) {
     img.classList.add('main-img-responsive')
-    img.style.height = '' // Remove inline height so CSS wins
+    img.style.height = newHeight + 'px'
     img.style.objectFit = 'cover'
     img.setAttribute('height', newHeight.toString())
   }
@@ -611,6 +635,7 @@ function updateThisButtonTextColor() {
   openPrompt(i18n.t('editor.color_text_title'), i18n.t('editor.color_text_label'), current, 'color', (color) => {
     if (!/^#([0-9A-F]{3}){1,2}$/i.test(color)) return
     btn.style.color = color
+    btn.dataset.customTextColor = 'true'
     btn.querySelectorAll<HTMLElement>(SCALABLE_TEXT_SELECTOR).forEach(child => { child.style.color = color })
     import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
   })
@@ -1319,6 +1344,8 @@ function openImageModal(el: HTMLImageElement) {
   // getAttribute keeps relative paths intact; el.src would resolve them to
   // the editor origin and break images in the sent email.
   imageModal.src = el.getAttribute('src') || ''
+  imageModal.alt = el.getAttribute('alt') || ''
+  imageModal.decorative = el.getAttribute('role') === 'presentation'
   const link = el.closest('a')
   if (link) {
     imageModal.linkEl = link
@@ -1340,6 +1367,9 @@ function applyImageSettings() {
   }
 
   imageModal.targetEl.setAttribute('src', imageModal.src)
+  imageModal.targetEl.setAttribute('alt', imageModal.decorative ? '' : imageModal.alt.trim())
+  if (imageModal.decorative) imageModal.targetEl.setAttribute('role', 'presentation')
+  else imageModal.targetEl.removeAttribute('role')
 
   if (imageModal.link && !sanitizeLinkUrl(imageModal.link)) {
     showToast((useNuxtApp().$i18n as any).t('editor.invalid_link'), 'error')
@@ -1412,6 +1442,7 @@ function handleLayerDrop(index: number, e: DragEvent) {
 
 export function useBlockEditor() {
   return {
+    insertBlock,
     selectElement,
     deselect,
     switchToEditPanel,

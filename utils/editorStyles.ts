@@ -27,13 +27,29 @@ export interface EditorStyleBase {
   }
 }
 
+/** Use the stronger of light/dark text on solid theme and brand button colors. */
+export function getReadableTextColor(background: string): '#ffffff' | '#0f172a' {
+  const hex = background.trim().match(/^#([\da-f]{3}|[\da-f]{6})$/i)?.[1]
+  const rgb = background.match(/^rgba?\(\s*(\d+(?:\.\d+)?)\s*[, ]\s*(\d+(?:\.\d+)?)\s*[, ]\s*(\d+(?:\.\d+)?)/i)
+  const channels = hex ? (hex.length === 3 ? [...hex].map(value => value + value) : hex.match(/../g)!).map(value => parseInt(value, 16))
+    : rgb ? rgb.slice(1, 4).map(Number) : null
+  if (!channels) return '#ffffff'
+  const luminance = (values: number[]) => values.map(value => {
+    const channel = Math.min(255, Math.max(0, value)) / 255
+    return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4
+  }).reduce((sum, value, i) => sum + value * [0.2126, 0.7152, 0.0722][i], 0)
+  const lightContrast = 1.05 / (luminance(channels) + 0.05)
+  const darkContrast = (luminance(channels) + 0.05) / (luminance([15, 23, 42]) + 0.05)
+  return darkContrast > lightContrast ? '#0f172a' : '#ffffff'
+}
+
 export const editorStyleBases: EditorStyleBase[] = [
   {
     id: 'default',
     name: 'editor.style_default_name',
     description: 'editor.style_default_desc',
     icon: Layout,
-    previewColor: '#6366f1',
+    previewColor: '#4f46e5',
     config: {
       bodyBg: '#f8fafc',
       cardBg: '#ffffff',
@@ -46,7 +62,7 @@ export const editorStyleBases: EditorStyleBase[] = [
       headerText: '#0f172a',
       titleColor: '#0f172a',
       subtitleColor: '#475569',
-      accentColor: '#6366f1',
+      accentColor: '#4f46e5',
       buttonRadius: '8px',
       fontFamily: 'Inter, system-ui, sans-serif',
       titleLetterSpacing: '0px'
@@ -57,7 +73,7 @@ export const editorStyleBases: EditorStyleBase[] = [
     name: 'editor.style_viseni_name',
     description: 'editor.style_viseni_desc',
     icon: Zap,
-    previewColor: '#628097',
+    previewColor: '#56748b',
     config: {
       bodyBg: '#ffffff',
       cardBg: '#ffffff',
@@ -66,11 +82,11 @@ export const editorStyleBases: EditorStyleBase[] = [
       cardShadow: '0 10px 40px rgba(15, 23, 42, 0.08)',
       cardBorder: '1px solid #e9e9e9',
       borderColor: '#e2e8f0',
-      headerBg: '#628097',
+      headerBg: '#56748b',
       headerText: '#ffffff',
       titleColor: '#0f172a',
       subtitleColor: '#475569',
-      accentColor: '#008db4',
+      accentColor: '#007394',
       buttonRadius: '14px',
       fontFamily: 'Arial, sans-serif',
       titleLetterSpacing: '-0.2px'

@@ -9,6 +9,9 @@
 //  4. Grids with 3+ percentage columns stack on phones (media query + class).
 //  5. Editor-only attributes are stripped; layout tables marked presentational.
 
+import { Parser } from 'htmlparser2'
+import { EDITOR_RESPONSIVE_CSS } from '~/utils/emailLayout'
+
 const EDITOR_ATTRS = /\s(?:data-(?:id|toggle|type|layout|block|editable|selected|placeholder-img|custom-bg|custom-font|custom-radius|style-[a-z-]+)|spellcheck|contenteditable|draggable)(?:=(?:"[^"]*"|'[^']*'|[^\s>]+))?/gi
 
 const HEAD_META = [
@@ -25,6 +28,46 @@ const HEAD_META = [
 const MSO_HEAD = '<!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:AllowPNG/><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->'
 
 const STACK_CSS = '<style data-tm="stack">@media only screen and (max-width:600px){table.tm-stack>tbody>tr>td,table.tm-stack>tr>td{display:block!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;padding-bottom:12px!important}}</style>'
+
+/** Mirror the browser's durable layout hooks before editor metadata is removed.
+ * Parsing only locates opening tags; untouched markup and MSO comments retain
+ * their exact bytes, which keeps repeat compilation stable.
+ */
+function preserveLayoutHooks(html: string): string {
+  const edits: { start: number; end: number; tag: string }[] = []
+  const layouts: (string | undefined)[] = []
+  const escape = (value: string) => value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const parser = new Parser({
+    onopentag(name, attrs) {
+      const classes = new Set((attrs.class || '').split(/\s+/).filter(Boolean))
+      const original = [...classes].join(' ')
+      const layout = ['grid', 'pricing', 'product', 'signature', 'metrics'].find(kind => classes.has(`${kind}-block`)) ?? layouts.at(-1)
+      layouts.push(layout)
+      if (Object.hasOwn(attrs, 'data-type') || classes.has('editable-block')) classes.add('email-block')
+      const field = attrs['data-toggle']
+      if (['title', 'subtitle', 'button', 'code'].includes(field)) classes.add(`email-${field}`)
+      if (name === 'table' && layout && !Object.hasOwn(attrs, 'data-tm-btn')) {
+        classes.add('email-layout-table')
+        classes.add(`email-${layout}-table`)
+        if (layout !== 'signature') classes.add('email-stack-table')
+      }
+      if ([...classes].join(' ') === original) return
+      attrs.class = [...classes].join(' ')
+      const attributes = Object.entries(attrs).map(([key, value]) => ` ${key}="${escape(value)}"`).join('')
+      edits.push({ start: parser.startIndex, end: parser.endIndex + 1, tag: `<${name}${attributes}>` })
+    },
+    onclosetag() { layouts.pop() },
+  }, { decodeEntities: true })
+  parser.end(html)
+  const pieces: string[] = []
+  let cursor = 0
+  for (const edit of edits) {
+    pieces.push(html.slice(cursor, edit.start), edit.tag)
+    cursor = edit.end
+  }
+  pieces.push(html.slice(cursor))
+  return pieces.join('')
+}
 
 function ensureDocument(html: string): string {
   let out = html.trim()
@@ -124,7 +167,7 @@ function bulletproofButtons(html: string): string {
     // Only real buttons: colored background + padding + block-ish display
     if (!bg || !padding || !/block|inline-block/i.test(display) || /url\(/i.test(bgRaw ?? '')) return match
     const radius = styleProp(style, 'border-radius') ?? '0'
-    const full = /width\s*:\s*100%/i.test(style)
+    const full = /^100%\s*(?:!important)?$/i.test(styleProp(style, 'width') || '')
     const align = (styleProp(style, 'text-align') ?? 'center').replace(/[^a-z]/gi, '') || 'center'
     // The link keeps typography/colour; box styling moves to the cell
     const linkStyle = style
@@ -142,6 +185,9 @@ function bulletproofButtons(html: string): string {
 function stackableGrids(html: string): string {
   let changed = false
   const out = html.replace(/<table\b([^>]*)>((?:(?!<table\b)[\s\S])*?<tr\b[^>]*>(?:\s*<td\b[^>]*width=["']?\d{1,2}%[^>]*>[\s\S]*?<\/td>){3,})/gi, (m, attrs, rest) => {
+    // Native/editor-generated grids already own their responsive rules. In
+    // particular Quad keeps pairs on mobile before stacking below 360px.
+    if (/\bemail-stack-table\b/.test(attrs) || /\b(?:grid-quad-td|ai-layout-half)\b/.test(rest)) return m
     if (/\btm-stack\b/.test(attrs)) return m
     changed = true
     const withClass = /\bclass=["']/.test(attrs)
@@ -156,10 +202,13 @@ function stackableGrids(html: string): string {
 
 export function finalizeEmailHtml(html: string): string {
   if (!html) return html
-  let out = bulletproofButtons(html)
+  let out = bulletproofButtons(preserveLayoutHooks(html))
   out = out.replace(EDITOR_ATTRS, '')
   out = ensureDocument(out)
   out = ensureHeadMeta(out)
+  if (/\bemail-block\b/.test(out) && !out.includes('.email-stack-table') && !/data-tm="responsive"/.test(out)) {
+    out = out.replace(/<\/head>/i, `<style data-tm="responsive">${EDITOR_RESPONSIVE_CSS}</style></head>`)
+  }
   out = outlookContainer(out)
   out = stackableGrids(out)
   out = presentationalTables(out)

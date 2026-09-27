@@ -23,15 +23,17 @@ const { selectElement, moveLayer, handleLayerDragStart, handleLayerDragEnd, hand
         @click="selectElement(layer.el)"
       >
         <GripVertical :size="14" class="grip" />
-        <div class="stack-info">
+        <button class="stack-info" @click.stop="selectElement(layer.el)" :aria-label="$t('editor.studio_select_layer', { name: layer.text || layer.type })" :aria-pressed="selectedElement === layer.el">
           <span class="s-type">{{ layer.type }}</span>
           <span class="s-text">{{ layer.text }}</span>
-        </div>
+        </button>
         <div class="stack-nav">
           <button
             @click.stop="moveLayer(index, 'up')"
             :disabled="index === 0"
             class="btn-nav-up"
+            :aria-label="$t('editor.studio_move_up')"
+            :title="$t('editor.studio_move_up')"
           >
             <ChevronUp :size="14" />
           </button>
@@ -39,6 +41,8 @@ const { selectElement, moveLayer, handleLayerDragStart, handleLayerDragEnd, hand
             @click.stop="moveLayer(index, 'down')"
             :disabled="index === layerList.length - 1"
             class="btn-nav-down"
+            :aria-label="$t('editor.studio_move_down')"
+            :title="$t('editor.studio_move_down')"
           >
             <ChevronDown :size="14" />
           </button>

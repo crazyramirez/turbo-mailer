@@ -31,13 +31,13 @@ function selectFromManager(url: string) {
         @select="selectFromManager"
       />
 
-      <div class="modal-window wide-modal">
+      <div class="modal-window wide-modal" role="dialog" aria-modal="true" aria-labelledby="image-settings-title">
         <div class="modal-header">
           <div class="header-info">
-            <h2>{{ $t("editor.image_modal_title") }}</h2>
+            <h2 id="image-settings-title">{{ $t("editor.image_modal_title") }}</h2>
             <p>{{ $t("editor.image_modal_subtitle") }}</p>
           </div>
-          <button @click="imageModal.visible = false" class="btn-close-minimal">
+          <button @click="imageModal.visible = false" class="btn-close-minimal" :aria-label="$t('common.close')">
             <X :size="20" />
           </button>
         </div>
@@ -59,11 +59,12 @@ function selectFromManager(url: string) {
             </div>
             <div class="settings-form-side">
               <div class="premium-field-group">
-                <label>{{ $t("editor.image_modal_url") }}</label>
+                <label for="image-settings-url">{{ $t("editor.image_modal_url") }}</label>
                 <div class="premium-input-box">
                   <ImageIcon :size="18" class="field-icon" />
                   <input
                     v-model="imageModal.src"
+                    id="image-settings-url"
                     type="text"
                     placeholder="https://..."
                   />
@@ -71,17 +72,27 @@ function selectFromManager(url: string) {
                     @click="showResourceManager = true"
                     class="btn-input-action"
                     :title="$t('editor.resource_manager_btn')"
+                    :aria-label="$t('editor.resource_manager_btn')"
                   >
                     <FolderOpen :size="18" />
                   </button>
                 </div>
               </div>
               <div class="premium-field-group">
-                <label>{{ $t("editor.image_modal_link") }}</label>
+                <label for="image-settings-alt">{{ $t('editor.studio_alt') }}</label>
+                <div class="premium-input-box">
+                  <input id="image-settings-alt" v-model="imageModal.alt" :disabled="imageModal.decorative" :placeholder="$t('editor.studio_alt_placeholder')" aria-describedby="image-alt-help" type="text" maxlength="500" />
+                </div>
+                <p id="image-alt-help" class="image-alt-help">{{ $t('editor.studio_alt_help') }}</p>
+                <label class="image-decorative-option"><input v-model="imageModal.decorative" type="checkbox" />{{ $t('editor.studio_decorative') }}</label>
+              </div>
+              <div class="premium-field-group">
+                <label for="image-settings-link">{{ $t("editor.image_modal_link") }}</label>
                 <div class="premium-input-box">
                   <MousePointer2 :size="18" class="field-icon" />
                   <input
                     v-model="imageModal.link"
+                    id="image-settings-link"
                     type="text"
                     placeholder="https://..."
                   />
@@ -102,6 +113,8 @@ function selectFromManager(url: string) {
                       imageModal.target === '_blank' ? '_self' : '_blank'
                   "
                   :class="{ active: imageModal.target === '_blank' }"
+                  :aria-pressed="imageModal.target === '_blank'"
+                  :aria-label="$t('editor.image_modal_new_tab')"
                   class="premium-switch"
                 >
                   {{
@@ -135,6 +148,10 @@ function selectFromManager(url: string) {
 </template>
 
 <style scoped>
+.image-alt-help { color: #94a3b8; font-size: 12px; line-height: 1.5; margin-top: 8px; }
+.image-decorative-option { display: flex; align-items: flex-start; gap: 8px; color: #cbd5e1; font-size: 12px; line-height: 1.5; margin-top: 10px; cursor: pointer; }
+.image-decorative-option input { margin-top: 3px; accent-color: #6366f1; }
+.premium-input-box input:disabled { opacity: .45; }
 .premium-img-preview {
   background-color: #0f172a;
   background-image:

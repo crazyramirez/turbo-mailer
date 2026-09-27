@@ -5,6 +5,8 @@ import LayersPanel from "~/components/editor/panels/LayersPanel.vue";
 import EditPanel from "~/components/editor/panels/EditPanel.vue";
 import FontsPanel from "~/components/editor/panels/FontsPanel.vue";
 import StylesPanel from "~/components/editor/StylesPanel.vue";
+import QualityPanel from "~/components/editor/panels/QualityPanel.vue";
+import { ShieldCheck } from "lucide-vue-next";
 
 const { activePanel, selectedElement, isTemplateLoading } = useEditorState();
 const { switchToEditPanel } = useBlockEditor();
@@ -16,20 +18,26 @@ const { switchToEditPanel } = useBlockEditor();
       <button
         @click="activePanel = 'layers'"
         :class="{ active: activePanel === 'layers' }"
+        :aria-pressed="activePanel === 'layers'"
       >
         {{ $t("editor.panel_layers") }}
       </button>
       <button
         @click="switchToEditPanel"
         :class="{ active: activePanel === 'edit' || activePanel === 'fonts' }"
+        :aria-pressed="activePanel === 'edit' || activePanel === 'fonts'"
       >
         {{ $t("editor.panel_edit") }}
       </button>
       <button
         @click="activePanel = 'styles'"
         :class="{ active: activePanel === 'styles' }"
+        :aria-pressed="activePanel === 'styles'"
       >
         {{ $t("editor.panel_style") || "Estilo" }}
+      </button>
+      <button @click="activePanel = 'quality'" :class="{ active: activePanel === 'quality' }" :aria-pressed="activePanel === 'quality'" class="quality-tab">
+        <ShieldCheck :size="14" />{{ $t('editor.studio_quality') }}
       </button>
     </div>
 
@@ -45,6 +53,7 @@ const { switchToEditPanel } = useBlockEditor();
         <FontsPanel v-else-if="activePanel === 'fonts'" key="fonts" />
 
         <StylesPanel v-else-if="activePanel === 'styles'" key="styles" />
+        <QualityPanel v-else-if="activePanel === 'quality'" key="quality" />
       </Transition>
     </div>
   </aside>

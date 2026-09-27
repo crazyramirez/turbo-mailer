@@ -5,8 +5,10 @@
 // produce identical markup that the editor can keep editing.
 
 import { editorBlocks } from '~/utils/editorBlocks'
-import { editorStyleBases } from '~/utils/editorStyles'
+import { editorStyleBases, getReadableTextColor } from '~/utils/editorStyles'
 import { normalizeEditorAiBlocks, normalizeEditorAiHref } from '~/utils/editorAiBlocks'
+import { annotateEmailLayout, EDITOR_RESPONSIVE_CSS } from '~/utils/emailLayout'
+export { EDITOR_RESPONSIVE_CSS } from '~/utils/emailLayout'
 
 export type BlockFields = Partial<Record<'badge' | 'title' | 'subtitle' | 'button' | 'buttonUrl' | 'images' | 'image' | 'logo' | 'price' | 'code' | 'contact' | 'ps' | 'features' | 'socialUrls' | 'videoUrl', string | string[]>>
 
@@ -35,21 +37,6 @@ export interface AssembleOptions {
   resolveImage?: (ref: string) => Promise<string | null>
   onProgress?: (message: string) => void
 }
-
-// Reused when the live editor rebuilds the theme stylesheet after loading a draft.
-export const EDITOR_RESPONSIVE_CSS = `
-    @media only screen and (max-width: 600px) {
-      .header-block, .body-block, .methodology-block, .presence-block, .card-block, .cta-block, .signature-block, .hero-block, .product-block {
-        padding-left: 20px !important;
-        padding-right: 20px !important;
-      }
-      .grid-quad-td { display: inline-block !important; width: 50% !important; box-sizing: border-box !important; padding: 4px !important; }
-      .main-card .ai-layout-row { display: block !important; width: 100% !important; }
-      .main-card .ai-layout-pairs { font-size: 0 !important; }
-      .main-card .ai-layout-stack { display: block !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; padding-bottom: 12px !important; }
-      .main-card .ai-layout-half { display: inline-block !important; width: 50% !important; box-sizing: border-box !important; vertical-align: top !important; padding: 4px !important; }
-      .main-card .ai-layout-spacer { display: none !important; }
-    }`
 
 const SHELL_CSS = `
     body { margin: 0; padding: 0; width: 100% !important; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
@@ -122,6 +109,7 @@ function fillFooter(el: Element, lang: string, address: string, custom?: string)
 
 /** Applies a style base (+ brand overrides) to a whole document. */
 export function applyStyleToDocument(doc: Document, styleId: string, brand?: BrandLite | null) {
+  annotateEmailLayout(doc)
   const base = editorStyleBases.find(s => s.id === styleId) ?? editorStyleBases[0]
   const cfg = { ...base.config }
   if (brand?.colors?.primary) cfg.accentColor = brand.colors.primary
@@ -146,14 +134,18 @@ export function applyStyleToDocument(doc: Document, styleId: string, brand?: Bra
 
   doc.querySelectorAll<HTMLElement>('.editable-block').forEach((block) => {
     const isHeader = block.classList.contains('header-block')
+    const isHero = block.classList.contains('hero-block')
+    const heroHasImage = isHero && /url\(/i.test(block.style.backgroundImage)
+    const headingColor = heroHasImage ? '#ffffff' : isHeader || isHero ? cfg.headerText : cfg.titleColor
+    const bodyColor = heroHasImage ? '#e2e8f0' : isHeader || isHero ? cfg.headerText : cfg.subtitleColor
     block.style.fontFamily = cfg.fontFamily
     block.querySelectorAll<HTMLElement>('*').forEach((el) => {
       if (el.style.fontFamily && el.getAttribute('data-toggle') !== 'badge') el.style.fontFamily = cfg.fontFamily
     })
-    if (isHeader) {
-      block.style.background = cfg.headerBg
+    if (isHeader || isHero) {
+      if (!heroHasImage) block.style.background = cfg.headerBg
       block.style.backgroundColor = cfg.headerBg
-    } else if (!block.classList.contains('unsubscribe-block')) {
+    } else {
       block.style.background = cfg.contentBg
       block.style.backgroundColor = cfg.contentBg
       block.querySelectorAll<HTMLElement>('div, table, td').forEach((el) => {
@@ -165,17 +157,17 @@ export function applyStyleToDocument(doc: Document, styleId: string, brand?: Bra
       })
     }
     block.querySelectorAll<HTMLElement>('[data-toggle="title"], [data-toggle="price"]').forEach((el) => {
-      el.style.color = isHeader ? cfg.headerText : cfg.titleColor
+      el.style.color = headingColor
       el.style.fontFamily = headingFont
       if (cfg.titleLetterSpacing) el.style.letterSpacing = cfg.titleLetterSpacing
     })
     block.querySelectorAll<HTMLElement>('[data-toggle="badge"]').forEach((el) => {
-      el.style.color = isHeader ? cfg.headerText : cfg.accentColor
+      el.style.color = isHeader || isHero ? headingColor : cfg.accentColor
       if (cfg.labelFontFamily) el.style.fontFamily = cfg.labelFontFamily
     })
     block.querySelectorAll<HTMLElement>('[data-toggle="code"]').forEach(el => { el.style.color = cfg.accentColor })
     block.querySelectorAll<HTMLElement>('[data-toggle="subtitle"], [data-toggle="ps"], [data-toggle="contact"], [data-toggle="pricing-feature"]').forEach((el) => {
-      el.style.color = isHeader ? cfg.headerText : cfg.subtitleColor
+      el.style.color = bodyColor
       el.querySelectorAll<HTMLElement>('a').forEach((a) => {
         if (!a.getAttribute('data-toggle')) a.style.color = cfg.accentColor
       })
@@ -184,8 +176,17 @@ export function applyStyleToDocument(doc: Document, styleId: string, brand?: Bra
       btn.style.borderRadius = cfg.buttonRadius
       btn.style.background = cfg.accentColor
       btn.style.backgroundColor = cfg.accentColor
+      btn.style.color = getReadableTextColor(cfg.accentColor)
       // Brand colour is intentional: the editor's theme engine must keep it
       if (brand?.colors?.primary) btn.setAttribute('data-custom-bg', '1')
+    })
+    block.querySelectorAll<HTMLElement>('.pricing-item').forEach(item => {
+      const badge = Array.from(item.children).find(el => (el as HTMLElement).style.position === 'absolute') as HTMLElement | undefined
+      if (badge) {
+        badge.style.backgroundColor = cfg.accentColor
+        badge.style.color = getReadableTextColor(cfg.accentColor)
+        item.style.borderColor = cfg.accentColor
+      }
     })
     if (brand?.fonts?.body) block.setAttribute('data-custom-font', '1')
   })
@@ -360,6 +361,8 @@ export async function assembleEmail(opts: AssembleOptions): Promise<string> {
   const html = `<!DOCTYPE html>
 <html lang="${lang}">
 <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>${SHELL_CSS}
   </style>
 </head>

@@ -6,13 +6,13 @@ import {
   Undo,
   Redo,
   Clock,
-  Lock,
   Save,
   Moon,
   Sun,
   Download,
   Sparkles,
 } from "lucide-vue-next";
+import { computed } from "vue";
 import { APP_VERSION } from "~/utils/version";
 
 const { t } = useI18n();
@@ -25,7 +25,17 @@ const {
   isSaving,
   darkModePreview,
   showAITemplateModal,
+  desktopPreviewWidth,
+  mobilePreviewWidth,
 } = useEditorState();
+const previewWidth = computed({
+  get: () => viewMode.value === 'mobile' ? mobilePreviewWidth.value : desktopPreviewWidth.value,
+  set: (width: number) => {
+    if (viewMode.value === 'mobile') mobilePreviewWidth.value = width;
+    else desktopPreviewWidth.value = width;
+  },
+});
+const previewWidths = computed(() => viewMode.value === 'mobile' ? [320, 375, 414] : [600, 700, 820]);
 const { undo, redo } = useIframeEngine();
 const { handleSave, saveTemplate, downloadHtml } = useTemplateManager();
 
@@ -52,7 +62,7 @@ async function handleBack() {
       <div class="editor-brand">
         <div class="brand-icon-wrapper">
           <img
-            src="/images/icons/web-app-manifest-192x192.png"
+            :src="'/images/icons/web-app-manifest-192x192.png'"
             class="brand-img"
             alt="Logo"
           />
@@ -66,27 +76,35 @@ async function handleBack() {
     </div>
 
     <div class="header-section center">
-      <div class="viewport-capsule">
+      <div class="viewport-capsule" role="group" :aria-label="t('editor.studio_preview')">
         <button
           @click="viewMode = 'desktop'"
           :class="{ active: viewMode === 'desktop' }"
+          :aria-pressed="viewMode === 'desktop'"
+          :title="t('editor.studio_desktop')"
           class="v-pill"
         >
-          <Monitor :size="14" /> <span>Desktop</span>
+          <Monitor :size="14" /> <span>{{ t('editor.studio_desktop') }}</span>
         </button>
         <button
           @click="viewMode = 'mobile'"
           :class="{ active: viewMode === 'mobile' }"
+          :aria-pressed="viewMode === 'mobile'"
+          :title="t('editor.studio_mobile')"
           class="v-pill"
         >
-          <Smartphone :size="14" /> <span>Mobile</span>
+          <Smartphone :size="14" /> <span>{{ t('editor.studio_mobile') }}</span>
         </button>
       </div>
-      <div class="h-divider" style="margin: 0 12px"></div>
+      <select v-model="previewWidth" class="preview-width-select" :aria-label="t('editor.studio_preview_width')" :title="t('editor.studio_preview_width')">
+        <option v-for="width in previewWidths" :key="width" :value="width">{{ width }} px</option>
+      </select>
       <button
         @click="darkModePreview = !darkModePreview"
         class="btn-dark-mode"
         :class="{ active: darkModePreview }"
+        :aria-pressed="darkModePreview"
+        :aria-label="darkModePreview ? t('editor.dark_mode_off') : t('editor.dark_mode_on')"
         :title="
           darkModePreview ? t('editor.dark_mode_off') : t('editor.dark_mode_on')
         "
@@ -96,13 +114,14 @@ async function handleBack() {
           darkModePreview ? t("editor.light") : t("editor.dark")
         }}</span>
       </button>
-      <div class="h-divider" style="margin: 0 12px"></div>
+      <div class="h-divider"></div>
       <div class="history-controls">
         <button
           @click="undo"
           :disabled="undoStack.length <= 1"
           class="btn-history"
           :title="t('editor.undo')"
+          :aria-label="t('editor.undo')"
         >
           <Undo :size="16" />
         </button>
@@ -111,6 +130,7 @@ async function handleBack() {
           :disabled="redoStack.length === 0"
           class="btn-history"
           :title="t('editor.redo')"
+          :aria-label="t('editor.redo')"
         >
           <Redo :size="16" />
         </button>
@@ -121,7 +141,7 @@ async function handleBack() {
       <div v-if="lastSavedTime" class="save-indicator">
         <Clock :size="12" /> <span>{{ lastSavedTime }}</span>
       </div>
-      <div v-if="currentTemplate" class="active-template-tag">
+      <div v-if="currentTemplate" class="active-template-tag" :title="currentTemplate + '.html'">
         <span>{{ currentTemplate + ".html" }}</span>
       </div>
 
@@ -129,6 +149,7 @@ async function handleBack() {
         @click="downloadHtml"
         class="btn-secondary-download"
         :title="t('editor.download')"
+        :aria-label="t('editor.download')"
       >
         <Download :size="16" />
       </button>
@@ -136,8 +157,8 @@ async function handleBack() {
       <button
         @click="showAITemplateModal = true"
         class="btn-secondary-download"
-        title="Asistente IA de campañas"
-        aria-label="Abrir asistente IA de campañas"
+        :title="t('editor.studio_start_ai')"
+        :aria-label="t('editor.studio_start_ai')"
         style="color: #6366f1; border-color: rgba(99, 102, 241, 0.3);"
       >
         <Sparkles :size="16" />

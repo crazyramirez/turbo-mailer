@@ -18,7 +18,7 @@ const { showToast } = useToast()
 
 // A template switch must be able to drain autosaves before persisting its own
 // snapshot. Capture the destination when each save starts, never on completion.
-const pendingSaves = new Set<Promise<void>>()
+const pendingSaves = new Set<Promise<boolean>>()
 
 async function awaitPendingSaves() {
   while (pendingSaves.size) await Promise.allSettled([...pendingSaves])
@@ -39,7 +39,24 @@ let loadSeq = 0
 
 async function loadTemplate(name: string, animate = true) {
   const seq = ++loadSeq
+  const previousTemplate = currentTemplate.value
+  let previousHtml = htmlContent.value
   try {
+    if (currentTemplate.value && currentTemplate.value !== name) {
+      const engine = useIframeEngine()
+      engine.updateHtml()
+      previousHtml = htmlContent.value
+      engine.teardownEditor()
+      await awaitPendingSaves()
+      if (seq !== loadSeq) return
+      if (!await saveTemplate(true)) {
+        const doc = useEditorState().iframeRef.value?.contentDocument
+        if (doc) engine.setupIframeEvents(doc)
+        showToast((useNuxtApp().$i18n as any).t('editor.template_save_error'), 'error')
+        return
+      }
+      if (seq !== loadSeq) return
+    }
     if (animate) {
       isTemplateLoading.value = true
       layerList.value = []
@@ -56,7 +73,7 @@ async function loadTemplate(name: string, animate = true) {
         if (seq !== loadSeq) return
         injectIframeContent()
         lastSavedTime.value = ''
-        setTimeout(() => (isTemplateLoading.value = false), 150)
+        setTimeout(() => { if (seq === loadSeq) isTemplateLoading.value = false }, 150)
       }, 150)
     } else {
       injectIframeContent()
@@ -65,8 +82,10 @@ async function loadTemplate(name: string, animate = true) {
   } catch {
     if (seq !== loadSeq) return
     isTemplateLoading.value = false
-    currentTemplate.value = ''
-    localStorage.removeItem('last_edited_template')
+    currentTemplate.value = previousTemplate
+    htmlContent.value = previousHtml
+    if (previousTemplate) localStorage.setItem('last_edited_template', previousTemplate)
+    else localStorage.removeItem('last_edited_template')
     useIframeEngine().injectIframeContent()
     showToast((useNuxtApp().$i18n as any).t('editor.template_load_error'), 'error')
   }
@@ -138,7 +157,7 @@ async function renameTemplate(oldName: string) {
   })
 }
 
-function saveTemplate(silent = false): Promise<void> {
+function saveTemplate(silent = false): Promise<boolean> {
   const pending = performSaveTemplate(silent)
   pendingSaves.add(pending)
   void pending.finally(() => pendingSaves.delete(pending))
@@ -148,14 +167,14 @@ function saveTemplate(silent = false): Promise<void> {
 async function performSaveTemplate(silent = false) {
   // Without a template name the server rejects the POST: autosave must not
   // fire blind 400s (the localStorage draft already covers unnamed work).
-  if (!currentTemplate.value) return
+  if (!currentTemplate.value) return true
   const templateName = currentTemplate.value
   if (!silent) isSaving.value = true
   try {
     // Fallback to the serialized state when the iframe is already gone
     // (e.g. debounced save firing right after leaving the editor).
     const finalHtml = useIframeEngine().getSurgicalCleanHtml() || htmlContent.value
-    if (!finalHtml) return
+    if (!finalHtml) return false
 
     await $fetch('/api/templates', {
       method: 'POST',
@@ -177,8 +196,10 @@ async function performSaveTemplate(silent = false) {
 
     const now = new Date()
     if (currentTemplate.value === templateName) lastSavedTime.value = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0')
+    return true
   } catch {
     if (!silent) showToast((useNuxtApp().$i18n as any).t('editor.template_save_error'), 'error')
+    return false
   } finally {
     if (!silent) isSaving.value = false
   }
@@ -194,6 +215,15 @@ async function handleSave() {
 
 async function createNewTemplate() {
   if (!newTemplateName.value) return
+  useIframeEngine().updateHtml()
+  useIframeEngine().teardownEditor()
+  await awaitPendingSaves()
+  if (!await saveTemplate(true)) {
+    const doc = useEditorState().iframeRef.value?.contentDocument
+    if (doc) useIframeEngine().setupIframeEvents(doc)
+    showToast((useNuxtApp().$i18n as any).t('editor.template_save_error'), 'error')
+    return
+  }
   
   // Siempre que se crea manualmente, empezamos con un lienzo vacío (petición del usuario)
   htmlContent.value = `<!DOCTYPE html>

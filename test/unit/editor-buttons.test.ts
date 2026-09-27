@@ -95,6 +95,7 @@ describe('individual buttons inside campaign modules', () => {
     const [button] = buttons(block)
     button!.setAttribute('contenteditable', 'false')
     button!.href = 'https://example.com/original'
+    const originalBackground = button!.style.background
     const title = block.querySelector('[data-toggle="title"]')!.outerHTML
     editor.selectElement(block, button, true)
     editor.updateThisButtonText()
@@ -117,7 +118,7 @@ describe('individual buttons inside campaign modules', () => {
     expect(savedButton.style.fontSize).toBe('24px')
     expect(savedButton.style.padding).toBe('16px 48px')
     expect(savedButton.style.borderRadius).toBe('0px')
-    expect(savedButton.style.background).toBe('#6366f1')
+    expect(savedButton.style.background).toBe(originalBackground)
     expect(savedButton.hasAttribute('contenteditable')).toBe(false)
     expect(savedButton.hasAttribute('data-org-size')).toBe(false)
     expect(block.querySelector('[data-toggle="button"]')).toBe(button)

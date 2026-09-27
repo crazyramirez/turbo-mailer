@@ -33,24 +33,25 @@ const { loadTemplates, loadTemplate, handleSave, saveTemplate } =
 const { openPrompt } = usePrompt();
 
 function handleGlobalKeydown(e: KeyboardEvent) {
+  const isEditing =
+    (e.target as HTMLElement)?.isContentEditable ||
+    ["INPUT", "TEXTAREA", "SELECT"].includes((e.target as HTMLElement)?.tagName);
+  const key = e.key.toLowerCase();
   if ((e.ctrlKey || e.metaKey) && e.key === "s") {
     e.preventDefault();
     handleSave();
   }
-  if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+  if (!isEditing && (e.ctrlKey || e.metaKey) && key === "z" && !e.shiftKey) {
     e.preventDefault();
     useIframeEngine().undo();
   }
   if (
-    (e.ctrlKey || e.metaKey) &&
-    (e.key === "y" || (e.shiftKey && e.key === "Z"))
+    !isEditing && (e.ctrlKey || e.metaKey) &&
+    (key === "y" || (e.shiftKey && key === "z"))
   ) {
     e.preventDefault();
     useIframeEngine().redo();
   }
-  const isEditing =
-    (e.target as HTMLElement)?.isContentEditable ||
-    ["INPUT", "TEXTAREA"].includes((e.target as HTMLElement)?.tagName);
   const { selectedElement } = useEditorState();
 
   if (e.key === "Delete" && !isEditing && selectedElement.value) {
@@ -62,7 +63,7 @@ function handleGlobalKeydown(e: KeyboardEvent) {
 
   // Mirrors the in-iframe shortcuts so they work regardless of where focus is.
   if (
-    (e.ctrlKey || e.metaKey) &&
+    !isEditing && (e.ctrlKey || e.metaKey) &&
     (e.key === "d" || e.key === "D") &&
     selectedElement.value
   ) {
@@ -73,7 +74,7 @@ function handleGlobalKeydown(e: KeyboardEvent) {
   }
 
   if (
-    e.altKey &&
+    !isEditing && e.altKey &&
     (e.key === "ArrowUp" || e.key === "ArrowDown") &&
     selectedElement.value
   ) {
@@ -159,6 +160,7 @@ onUnmounted(() => {
   delete (window as any).openColorPrompt;
   delete (window as any).triggerAutosave;
   resetEditorState();
+  useTemplateQuality().resetReview();
 });
 </script>
 

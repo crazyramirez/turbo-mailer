@@ -1,7 +1,7 @@
 export const iframeEditorStyles = `
   html, body { overflow-x: hidden !important; margin: 0; min-height: 100vh; box-sizing: border-box; }
   ::selection { background: rgba(99, 102, 241, 0.2); }
-  .main-card { max-width: 820px !important; margin: 0 auto !important; box-sizing: border-box !important; }
+  .main-card { margin: 0 auto !important; box-sizing: border-box !important; }
   .editable-block { position: relative; }
   .editable-block:hover { outline: 2px solid #6366f1 !important; cursor: pointer; outline-offset: -2px; }
   .editable-block.selected {
@@ -224,35 +224,6 @@ export const iframeEditorStyles = `
     animation: blockGlowAnimation 2.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
   }
   
-  @media only screen and (max-width: 600px) {
-    .grid-quad-td {
-      display: inline-block !important;
-      width: 50% !important;
-      box-sizing: border-box !important;
-      padding: 4px !important;
-    }
-  }
-
-  /* Responsive Grid Images via CSS Variables */
-  img.grid-img {
-    height: var(--grid-img-h, 150px) !important;
-    object-fit: cover !important;
-  }
-  @media only screen and (max-width: 600px) {
-    img.grid-img {
-      height: calc(var(--grid-img-h, 150px) * 0.5) !important;
-    }
-  }
-
-  /* Responsive Main Images (Cards and Image Modules) */
-  .main-img-responsive {
-    height: var(--main-img-h, auto) !important;
-    object-fit: cover !important;
-    width: 100% !important;
-  }
-  @media only screen and (max-width: 600px) {
-    .main-img-responsive {
-      height: calc(var(--main-img-h, 300px) * 0.5) !important;
-    }
-  }
+  /* Email layout and image dimensions belong to emailLayout.ts so the canvas,
+     saved template, campaign preview and exported HTML render the same way. */
 `

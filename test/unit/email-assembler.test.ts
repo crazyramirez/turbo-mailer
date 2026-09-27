@@ -1,8 +1,9 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from 'vitest'
 import { Window } from 'happy-dom'
-import { assembleEmail, imageRefToUrl, type PlannedBlock } from '~/utils/emailAssembler'
+import { assembleEmail, EDITOR_RESPONSIVE_CSS, imageRefToUrl, type PlannedBlock } from '~/utils/emailAssembler'
 import { EDITOR_AI_CATALOG, normalizeEditorAiBlocks } from '~/utils/editorAiBlocks'
+import { editorBlocks } from '~/utils/editorBlocks'
 
 const parse = (html: string) => new DOMParser().parseFromString(html, 'text/html')
 const assemble = (blocks: PlannedBlock[]) => assembleEmail({ blocks, styleId: 'default' }).then(parse)
@@ -133,6 +134,44 @@ describe('editable AI email assembly', () => {
     expect(desktopCell.getAttribute('width')).toBe('31%')
     await desktop.happyDOM.close()
     await mobile.happyDOM.close()
+  })
+
+  it('keeps a manually inserted Grid Trío contained and stacks all three editable cards on mobile', async () => {
+    const grid = editorBlocks.find(block => block.id === 'grid-3')!
+    const html = `<html><head><style>${EDITOR_RESPONSIVE_CSS}</style></head><body>${grid.content}</body></html>`
+    const desktop = new Window({ width: 820 })
+    const mobile = new Window({ width: 375 })
+    try {
+      for (const browser of [desktop, mobile]) {
+        browser.document.write(html)
+        const table = browser.document.querySelector('table')!
+        expect(browser.getComputedStyle(table).tableLayout).toBe('fixed')
+        expect(browser.document.querySelectorAll('[data-toggle="title"]')).toHaveLength(3)
+        expect(browser.document.querySelectorAll('[data-toggle="subtitle"]')).toHaveLength(3)
+        expect(browser.document.querySelectorAll('[data-toggle="image"]')).toHaveLength(3)
+        // Manual blocks do not pass through the assembler's AI layout tagging.
+        expect(browser.document.querySelector('.ai-layout-stack')).toBeNull()
+      }
+      for (const card of desktop.document.querySelectorAll('td[valign="top"] > div')) {
+        expect(desktop.getComputedStyle(card).overflowWrap).toBe('anywhere')
+      }
+      for (const image of desktop.document.querySelectorAll('.grid-img')) {
+        expect(desktop.getComputedStyle(image).maxWidth).toBe('100%')
+      }
+      for (const cell of desktop.document.querySelectorAll('td[valign="top"]')) {
+        expect(desktop.getComputedStyle(cell).display).not.toBe('block')
+      }
+      for (const cell of mobile.document.querySelectorAll('td[valign="top"]')) {
+        expect(mobile.getComputedStyle(cell).display).toBe('block')
+        expect(mobile.getComputedStyle(cell).width).toBe('100%')
+      }
+      for (const spacer of mobile.document.querySelectorAll('td:not([valign])')) {
+        expect(mobile.getComputedStyle(spacer).display).toBe('none')
+      }
+    } finally {
+      await desktop.happyDOM.close()
+      await mobile.happyDOM.close()
+    }
   })
 
   it('keeps inline emphasis and safe links while stripping model scripts, layout and editor controls', async () => {

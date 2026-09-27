@@ -2,10 +2,11 @@ import { watch } from 'vue'
 import { useEditorState } from '~/composables/useEditorState'
 import { useToast } from '~/composables/useToast'
 import { iframeEditorStyles } from '~/utils/iframeStyles'
-import { editorStyleBases, type EditorStyleBase } from '~/utils/editorStyles'
+import { editorStyleBases, getReadableTextColor, type EditorStyleBase } from '~/utils/editorStyles'
 import { sanitizeLinkUrl } from '~/utils/editorLinks'
 import { sanitizePastedHtml, plainTextToHtml } from '~/utils/editorPaste'
 import { EDITOR_RESPONSIVE_CSS } from '~/utils/emailAssembler'
+import { annotateEmailLayout } from '~/utils/emailLayout'
 
 declare global {
   interface Window {
@@ -42,28 +43,7 @@ let autosaveGeneration = 0
 // ─── Undo / Redo ─────────────────────────────────────────────────────────────
 
 function getHistorySnapshot(): string | null {
-  const doc = iframeRef.value?.contentDocument
-  if (!doc) return null
-  // Snapshot over a clone: never include editor artifacts (toolbars, handles,
-  // placeholders, transient classes) so restores start from clean markup.
-  const clone = doc.body.cloneNode(true) as HTMLElement
-  clone
-    .querySelectorAll('#floating-toolbar, #drop-placeholder, [data-ignore-save], .visor-drag-handle')
-    .forEach((n) => n.remove())
-  clone
-    .querySelectorAll('.selected, .dragging, .drag-over-top, .drag-over-bottom, .module-drop-reveal, .ai-improving, .block-updated-glow')
-    .forEach((n) =>
-      n.classList.remove(
-        'selected',
-        'dragging',
-        'drag-over-top',
-        'drag-over-bottom',
-        'module-drop-reveal',
-        'ai-improving',
-        'block-updated-glow',
-      ),
-    )
-  return clone.innerHTML
+  return getSurgicalCleanHtml() || null
 }
 
 function pushToHistory() {
@@ -84,11 +64,28 @@ function restoreSnapshot(html: string) {
   selectedElement.value = null
   selectedSubElement.value = null
   activePanel.value = 'layers'
-  doc.body.innerHTML = html
-  doc.querySelectorAll('.editable-block').forEach((el: any) => initBlock(el, doc))
+  const snapshot = new DOMParser().parseFromString(html, 'text/html')
+  for (const attribute of Array.from(doc.documentElement.attributes)) doc.documentElement.removeAttribute(attribute.name)
+  for (const attribute of Array.from(snapshot.documentElement.attributes)) doc.documentElement.setAttribute(attribute.name, attribute.value)
+  if (useEditorState().darkModePreview.value) doc.documentElement.classList.add('dark-mode-simulation')
+  doc.head.innerHTML = snapshot.head.innerHTML
+  for (const attribute of Array.from(doc.body.attributes)) doc.body.removeAttribute(attribute.name)
+  for (const attribute of Array.from(snapshot.body.attributes)) doc.body.setAttribute(attribute.name, attribute.value)
+  doc.body.style.cssText = snapshot.body.getAttribute('style') || ''
+  doc.body.innerHTML = snapshot.body.innerHTML
+  restoreStyleMetadata(doc)
+  const editorStyle = doc.createElement('style')
+  editorStyle.id = 'editor-styles'
+  editorStyle.textContent = iframeEditorStyles
+  doc.head.appendChild(editorStyle)
+  doc.querySelectorAll<HTMLElement>('[data-type]').forEach(el => initBlock(el, doc))
   injectFloatingToolbar(doc)
   setupIframeEvents(doc)
   refreshLayers()
+  // Parsing and block initialization can normalize whitespace/attributes. Keep
+  // the current checkpoint canonical so a plain redo isn't mistaken for typing.
+  const restored = getHistorySnapshot()
+  if (restored && undoStack.value.length) undoStack.value[undoStack.value.length - 1] = restored
   // Persist the restored state (without touching the history stacks)
   updateHtml()
   if (autosaveTimeout) clearTimeout(autosaveTimeout)
@@ -102,6 +99,10 @@ function restoreSnapshot(html: string) {
 }
 
 function undo() {
+  // Capture typing that hasn't reached the history debounce yet.
+  if (historyDebounce) { clearTimeout(historyDebounce); historyDebounce = null }
+  const snapshot = getHistorySnapshot()
+  if (snapshot && snapshot !== undoStack.value.at(-1)) pushToHistory()
   if (undoStack.value.length <= 1) return
   const current = undoStack.value.pop()
   if (current) redoStack.value.push(current)
@@ -109,6 +110,9 @@ function undo() {
 }
 
 function redo() {
+  if (historyDebounce) { clearTimeout(historyDebounce); historyDebounce = null }
+  const current = getHistorySnapshot()
+  if (current && current !== undoStack.value.at(-1)) { pushToHistory(); return }
   if (redoStack.value.length === 0) return
   const snapshot = redoStack.value.pop()
   if (snapshot) {
@@ -366,11 +370,11 @@ function setupIframeEvents(doc: Document) {
         useTemplateManager().handleSave()
       })
     }
-    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
       e.preventDefault()
       undo()
     }
-    if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'Z'))) {
+    if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z'))) {
       e.preventDefault()
       redo()
     }
@@ -878,9 +882,9 @@ function setupIframeEvents(doc: Document) {
   doc.addEventListener('dragover', (e: DragEvent) => {
     e.preventDefault()
     isDraggingOverIframe.value = true
-    const rect = iframeRef.value!.getBoundingClientRect()
+    const height = doc.documentElement.clientHeight || iframeRef.value!.clientHeight
     if (e.clientY < 100) iframeRef.value!.contentWindow?.scrollBy(0, -20)
-    else if (e.clientY > rect.height - 100) iframeRef.value!.contentWindow?.scrollBy(0, 20)
+    else if (e.clientY > height - 100) iframeRef.value!.contentWindow?.scrollBy(0, 20)
 
     let placeholder = doc.getElementById('drop-placeholder')
     if (!placeholder) {
@@ -994,30 +998,18 @@ function injectIframeContent() {
   const doc = iframeRef.value.contentDocument || iframeRef.value.contentWindow?.document
   if (!doc) return
 
+  teardownEditor()
+  undoStack.value = []
+  redoStack.value = []
+  selectedElement.value = null
+  selectedSubElement.value = null
+
   suppressNextLoad = true
   doc.open()
   doc.write(htmlContent.value)
   doc.close()
 
-  // Restore style from metadata if present
-  const styleId = doc.body.getAttribute('data-style-id')
-  if (styleId) {
-    const savedStyle = editorStyleBases.find(s => s.id === styleId)
-    if (savedStyle) {
-      const clonedStyle = JSON.parse(JSON.stringify(savedStyle))
-      const customBodyBg = doc.body.getAttribute('data-style-body-bg')
-      const customCardRadius = doc.body.getAttribute('data-style-card-radius')
-      const customCardShadow = doc.body.getAttribute('data-style-card-shadow')
-      const customFontFamily = doc.body.getAttribute('data-style-font-family')
-      
-      if (customBodyBg) clonedStyle.config.bodyBg = customBodyBg
-      if (customCardRadius) clonedStyle.config.cardRadius = customCardRadius
-      if (customCardShadow) clonedStyle.config.cardShadow = customCardShadow
-      if (customFontFamily) clonedStyle.config.fontFamily = customFontFamily
-      
-      useEditorState().currentStyle.value = clonedStyle
-    }
-  }
+  restoreStyleMetadata(doc)
 
   const style = doc.createElement('style')
   style.id = 'editor-styles'
@@ -1036,11 +1028,9 @@ function injectIframeContent() {
   const container = mainCard || doc.body
 
   if (mainCard) {
-    mainCard.style.maxWidth = '820px'
-    mainCard.style.width = '100%'
-    mainCard.style.margin = '0 auto'
-    mainCard.style.borderRadius = '0px'
-    mainCard.style.overflow = 'hidden'
+    if (!mainCard.style.maxWidth) mainCard.style.maxWidth = '820px'
+    if (!mainCard.style.width) mainCard.style.width = '100%'
+    if (!mainCard.style.margin) mainCard.style.margin = '0 auto'
     
     // Ensure parent has lateral margins for mobile responsiveness
     const parent = mainCard.parentElement
@@ -1075,16 +1065,38 @@ function injectIframeContent() {
   refreshLayers()
   
   // Apply current style base
-  applyStyleBase(useEditorState().currentStyle.value, false)
+  // Loading a saved document must not repaint its custom colors or backgrounds.
+  applyStyleBase(useEditorState().currentStyle.value, false, undefined, true)
 
   pushToHistory()
 }
 
 // ─── HTML Serialisation ──────────────────────────────────────────────────────
 
-function applyStyleBase(style: EditorStyleBase, forceTheme = false, target?: HTMLElement) {
+function restoreStyleMetadata(doc: Document) {
+  const saved = editorStyleBases.find(style => style.id === doc.body.dataset.styleId) || editorStyleBases[0]
+  const restored = JSON.parse(JSON.stringify(saved)) as EditorStyleBase
+  for (const [attribute, key] of [['data-style-body-bg', 'bodyBg'], ['data-style-card-radius', 'cardRadius'], ['data-style-card-shadow', 'cardShadow'], ['data-style-font-family', 'fontFamily']] as const) {
+    const value = doc.body.getAttribute(attribute)
+    if (value) restored.config[key] = value
+  }
+  useEditorState().currentStyle.value = restored
+}
+
+function applyStyleBase(style: EditorStyleBase, forceTheme = false, target?: HTMLElement, preserveContent = false) {
   const doc = iframeRef.value?.contentDocument
   if (!doc) return
+  annotateEmailLayout(target || doc)
+  let layoutStyle = doc.getElementById('tm-layout-style')
+  if (!layoutStyle) { layoutStyle = doc.createElement('style'); layoutStyle.id = 'tm-layout-style'; doc.head.appendChild(layoutStyle) }
+  layoutStyle.textContent = EDITOR_RESPONSIVE_CSS
+  if (!doc.querySelector('meta[name="viewport"]')) {
+    const viewport = doc.createElement('meta')
+    viewport.name = 'viewport'
+    viewport.content = 'width=device-width, initial-scale=1'
+    doc.head.appendChild(viewport)
+  }
+  if (preserveContent) return
   
   if (!target) {
     // Apply body style
@@ -1114,6 +1126,8 @@ function applyStyleBase(style: EditorStyleBase, forceTheme = false, target?: HTM
   // Apply to blocks
   const blocks = target ? [target] : doc.querySelectorAll('.editable-block')
   blocks.forEach((block: any) => {
+    const heroHasImage = block.classList.contains('hero-block') && /url\(/i.test(block.style.backgroundImage)
+    const headerLike = block.classList.contains('header-block') || block.classList.contains('hero-block')
     // 0. Global Font Overrides for the block
     if (forceTheme || !block.dataset.customFont) {
       block.style.fontFamily = style.config.fontFamily
@@ -1129,7 +1143,7 @@ function applyStyleBase(style: EditorStyleBase, forceTheme = false, target?: HTM
     }
 
     // 1. Content background & Borders
-    if (!block.classList.contains('header-block')) {
+    if (!headerLike) {
       if (forceTheme || !block.dataset.customBg) {
         block.style.backgroundColor = style.config.contentBg
         block.style.background = style.config.contentBg
@@ -1161,7 +1175,7 @@ function applyStyleBase(style: EditorStyleBase, forceTheme = false, target?: HTM
     } else {
       if (forceTheme || !block.dataset.customBg) {
         block.style.backgroundColor = style.config.headerBg
-        block.style.background = style.config.headerBg
+        if (!heroHasImage) block.style.background = style.config.headerBg
       }
     }
 
@@ -1175,8 +1189,7 @@ function applyStyleBase(style: EditorStyleBase, forceTheme = false, target?: HTM
     
     // Labels / Badges
     block.querySelectorAll('[data-toggle="badge"]').forEach((el: any) => {
-      const isHeader = block.classList.contains('header-block')
-      el.style.color = isHeader ? style.config.headerText : style.config.accentColor
+      el.style.color = heroHasImage ? '#ffffff' : headerLike ? style.config.headerText : style.config.accentColor
       
       if (style.config.labelFontFamily) {
         el.style.fontFamily = style.config.labelFontFamily
@@ -1197,8 +1210,8 @@ function applyStyleBase(style: EditorStyleBase, forceTheme = false, target?: HTM
     })
     
     // Header specific overrides
-    if (block.classList.contains('header-block')) {
-      block.querySelectorAll('[data-toggle="title"], [data-toggle="subtitle"]').forEach((el: any) => el.style.color = style.config.headerText)
+    if (headerLike) {
+      block.querySelectorAll('[data-toggle="title"], [data-toggle="subtitle"]').forEach((el: any) => el.style.color = heroHasImage ? '#ffffff' : style.config.headerText)
     }
 
     // 3. Buttons
@@ -1209,6 +1222,10 @@ function applyStyleBase(style: EditorStyleBase, forceTheme = false, target?: HTM
       if (forceTheme || !btn.dataset.customBg) {
         btn.style.backgroundColor = style.config.accentColor
         btn.style.background = style.config.accentColor
+        if (forceTheme || !btn.dataset.customTextColor) {
+          btn.style.color = getReadableTextColor(style.config.accentColor)
+          btn.querySelectorAll('span, strong, b, em, i').forEach((label: HTMLElement) => { label.style.color = btn.style.color })
+        }
       }
     })
     // 4. Pricing items
@@ -1216,6 +1233,7 @@ function applyStyleBase(style: EditorStyleBase, forceTheme = false, target?: HTM
       const badge = Array.from(item.children).find(c => (c as HTMLElement).style.position === 'absolute' && ((c as HTMLElement).style.top === '-12px' || (c as HTMLElement).innerText.toUpperCase().includes('POPULAR')));
       if (badge) {
         (badge as HTMLElement).style.backgroundColor = style.config.accentColor;
+        (badge as HTMLElement).style.color = getReadableTextColor(style.config.accentColor);
         item.style.borderColor = style.config.accentColor;
       } else {
         item.style.borderColor = style.config.borderColor;
@@ -1224,7 +1242,9 @@ function applyStyleBase(style: EditorStyleBase, forceTheme = false, target?: HTM
   })
 
   // Update the base <style> in head to keep it persistent for exports
-  const headStyle = doc.querySelector('style:not(#editor-styles)')
+  if (target) return
+  let headStyle = doc.getElementById('tm-theme-style')
+  if (!headStyle) { headStyle = doc.createElement('style'); headStyle.id = 'tm-theme-style'; doc.head.appendChild(headStyle) }
   if (headStyle) {
     const cardCss = `.main-card {
       width: 100%;
@@ -1268,6 +1288,14 @@ function getSurgicalCleanHtml(): string {
   if (!doc) return ''
 
   const clone = doc.documentElement.cloneNode(true) as HTMLElement
+  annotateEmailLayout(clone)
+
+  clone.classList.remove('dark-mode-simulation')
+  clone.querySelector('body')?.classList.remove('preview-active')
+  clone.querySelectorAll('[data-ignore-save]').forEach(el => el.remove())
+  clone.querySelectorAll('.drag-over-top, .drag-over-bottom, .ai-improving, .block-updated-glow, .module-remove-reveal').forEach(el => {
+    el.classList.remove('drag-over-top', 'drag-over-bottom', 'ai-improving', 'block-updated-glow', 'module-remove-reveal')
+  })
 
   clone.querySelectorAll('.visor-drag-handle').forEach((h) => h.remove())
   clone.querySelectorAll('#floating-toolbar, #social-inline-toolbar, #metric-inline-toolbar, #pricing-inline-toolbar, #faq-inline-toolbar').forEach((t) => t.remove())
@@ -1396,6 +1424,7 @@ function setupEditorWatches() {
 
 export function useIframeEngine() {
   return {
+    ensureMainCard,
     pushToHistory,
     restoreSnapshot,
     undo,
