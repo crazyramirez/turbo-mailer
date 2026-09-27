@@ -749,6 +749,36 @@ body {
 }
 
 /* ── Components (Inputs & Buttons) ── */
+/* Native controls must use the app's dark palette, including browser menus.
+   Keep defaults weak so each component retains its normal field styling. */
+:where(input, textarea, select) {
+  color-scheme: dark;
+}
+
+:where(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"], [type="button"], [type="submit"], [type="reset"], [type="image"], [type="hidden"]), textarea, select) {
+  background-color: var(--bg2);
+  color: var(--text);
+  caret-color: currentColor;
+}
+
+/* Chromium/WebKit enforce their own autofill background. An opaque inset
+   fill covers it immediately, without disabling autocomplete or delaying it.
+   :is() keeps the standard and prefixed selectors in a forgiving list. */
+:is(input, textarea, select):is(:autofill, :-webkit-autofill) {
+  background-color: var(--bg2) !important;
+  color: var(--text) !important;
+  -webkit-text-fill-color: var(--text) !important;
+  caret-color: var(--text) !important;
+  box-shadow: inset 0 0 0 1000px var(--bg2) !important;
+}
+
+/* Preserve a visible focus indicator when the autofill fill replaces a
+   component's box-shadow ring. Hover/focus cannot restore the pale fill. */
+:is(input, textarea, select):is(:autofill, :-webkit-autofill):focus-visible {
+  outline: 2px solid var(--accent2) !important;
+  outline-offset: 2px;
+}
+
 .input {
   width: 100%;
   background: rgba(0, 0, 0, 0.3);
