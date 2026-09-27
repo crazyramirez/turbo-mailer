@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Plus, Pencil, Trash2, PlugZap, Loader2, X, KeyRound, Copy } from "lucide-vue-next";
+import { Plus, Pencil, Trash2, PlugZap, Send, Loader2, X, KeyRound, Copy } from "lucide-vue-next";
 
 const { t } = useI18n();
 const { data, load, draftOf, save, saving } = useSettings();
@@ -23,6 +23,14 @@ const editing = ref<Record<string, any> | null>(null);
 const busy = ref(false);
 const testing = ref<string | null>(null);
 const testTo = ref("");
+const testSenderId = ref("");
+const sendingTest = ref(false);
+
+watch(() => data.value?.senders, (senders) => {
+  if (!senders?.some((s) => s.id === testSenderId.value)) {
+    testSenderId.value = senders?.find((s) => s.id === "default")?.id || senders?.[0]?.id || "";
+  }
+}, { immediate: true });
 
 function newSender() {
   editing.value = { id: "", name: "", host: "", port: 587, secure: false, user: "", pass: "", fromEmail: "", fromName: "", replyTo: "", dkimDomain: "", dkimSelector: "", dkimPrivateKey: "", maxPerSecond: 0, dailyLimit: 0, backup: true, priority: 10 };
@@ -56,17 +64,26 @@ async function removeSender(s: any) {
   }
 }
 
-async function testSender(s: any) {
-  testing.value = s.id;
+async function testSender(id: string, to?: string) {
+  if (testing.value) return;
+  testing.value = id;
+  sendingTest.value = !!to;
   try {
-    const r = await $fetch<any>("/api/settings/test-smtp", { method: "POST", body: { id: s.id, to: testTo.value || undefined } });
-    if (r.ok) showToast(testTo.value ? t("settings.sending.test_sent", { to: testTo.value }) : t("settings.sending.test_ok", { ms: r.connectMs }), "success");
+    const r = await $fetch<any>("/api/settings/test-smtp", { method: "POST", body: { id, ...(to ? { to } : {}) } });
+    if (r.ok) showToast(to ? t("settings.sending.test_sent", { to }) : t("settings.sending.test_ok", { ms: r.connectMs }), "success");
     else showToast(`${r.stage === "send" ? t("settings.sending.test_send_failed") : t("settings.sending.test_failed")}: ${r.error}`, "error");
   } catch (e: any) {
     showToast(e?.data?.statusMessage || e.message, "error");
   } finally {
     testing.value = null;
+    sendingTest.value = false;
   }
+}
+
+async function sendTestEmail() {
+  const to = testTo.value.trim();
+  if (!to || !testSenderId.value || testing.value) return;
+  await testSender(testSenderId.value, to);
 }
 
 // ── DKIM key generator ────────────────────────────────────────────────
@@ -114,7 +131,7 @@ function copy(text: string) {
               <td><span class="tm-badge" :class="s.dkimConfigured ? 'ok' : 'warn'">{{ s.dkimConfigured ? s.dkimSelector : t("settings.sending.no_dkim") }}</span></td>
               <td><span class="tm-badge" :class="s.id === 'default' ? 'accent' : s.backup ? 'info' : ''">{{ s.id === "default" ? t("settings.sending.primary") : s.backup ? t("settings.sending.backup") : t("settings.sending.alternative") }}</span></td>
               <td class="num" style="white-space: nowrap">
-                <button class="tm-btn tm-btn-sm tm-btn-ghost" :disabled="testing === s.id" :title="t('settings.sending.test')" @click="testSender(s)">
+                <button class="tm-btn tm-btn-sm tm-btn-ghost" :disabled="!!testing" :title="t('settings.sending.test_connection')" :aria-label="t('settings.sending.test_connection')" @click="testSender(s.id)">
                   <Loader2 v-if="testing === s.id" :size="13" class="tm-spin" /><PlugZap v-else :size="13" />
                 </button>
                 <button class="tm-btn tm-btn-sm tm-btn-ghost" :title="t('common.edit')" @click="editSender(s)"><Pencil :size="13" /></button>
@@ -124,12 +141,22 @@ function copy(text: string) {
           </tbody>
         </table>
       </div>
-      <div class="tm-row" style="align-items: flex-end">
+      <form class="tm-row" style="align-items: flex-end" @submit.prevent="sendTestEmail">
         <div class="tm-field">
-          <label>{{ t("settings.sending.test_to") }}</label>
-          <input v-model="testTo" class="tm-input" type="email" :placeholder="t('settings.sending.test_to_ph')" />
+          <label for="smtp-test-to">{{ t("settings.sending.test_to") }}</label>
+          <input id="smtp-test-to" v-model.trim="testTo" class="tm-input" type="email" required maxlength="254" :disabled="!!testing" :placeholder="t('settings.sending.test_to_ph')" />
         </div>
-      </div>
+        <div class="tm-field">
+          <label for="smtp-test-sender">{{ t("settings.sending.test_sender") }}</label>
+          <select id="smtp-test-sender" v-model="testSenderId" class="tm-input" required :disabled="!!testing || !data?.senders.length">
+            <option v-for="s in data?.senders" :key="s.id" :value="s.id">{{ s.name }} — {{ s.fromEmail || s.user }}</option>
+          </select>
+        </div>
+        <button class="tm-btn tm-btn-primary" type="submit" :disabled="!!testing || !testSenderId || !testTo.trim()">
+          <Loader2 v-if="sendingTest" :size="14" class="tm-spin" /><Send v-else :size="14" />
+          {{ t("settings.sending.send_test") }}
+        </button>
+      </form>
     </section>
 
     <div class="tm-grid-2">

@@ -6,7 +6,6 @@ import {
   Users,
   BarChart2,
   Mail,
-  Globe,
   Menu,
   X,
   LayoutDashboard,
@@ -30,13 +29,9 @@ const isInitialLoad = ref(true);
 
 const { emails, emailSubject, htmlBody, lastSentCount } = useDashboardState();
 const { resetAll, logout } = useCampaignSender();
-const { t, locale, setLocale } = useI18n();
+const { t, locale } = useI18n();
 
 const menuOpen = ref(false);
-
-function toggleLocale() {
-  setLocale(locale.value === "es" ? "en" : "es");
-}
 
 function closeMenu() {
   menuOpen.value = false;
@@ -228,21 +223,13 @@ watch([() => route.path, () => locale.value], () => {
 
       <!-- Desktop right actions -->
       <div class="header-right">
-        <button
-          class="btn-lang hide-mobile"
-          :title="locale === 'es' ? 'Switch to English' : 'Cambiar a Español'"
-          @click="toggleLocale"
-        >
-          <Globe :size="18" stroke-width="2.5" />
-          <span>{{ locale.toUpperCase() }}</span>
-        </button>
         <NuxtLink to="/editor" class="btn-editor-link hide-mobile">
           <Layout :size="18" stroke-width="2.5" />
           <span>{{ t("nav.editor") }}</span>
         </NuxtLink>
         <NuxtLink
           to="/settings"
-          class="btn-lang hide-mobile"
+          class="btn-settings hide-mobile"
           :title="t('nav.settings')"
           :aria-label="t('nav.settings')"
         >
@@ -410,24 +397,6 @@ watch([() => route.path, () => locale.value], () => {
           </NuxtLink>
 
           <button
-            class="drawer-action-row"
-            @click="
-              () => {
-                toggleLocale();
-                closeMenu();
-              }
-            "
-          >
-            <span class="drawer-action-icon">
-              <Globe :size="17" stroke-width="2" />
-            </span>
-            <span>{{
-              locale === "es" ? "Switch to English" : "Cambiar a Español"
-            }}</span>
-            <span class="drawer-lang-pill">{{ locale.toUpperCase() }}</span>
-          </button>
-
-          <button
             v-if="emails.length || emailSubject || htmlBody"
             class="drawer-action-row"
             @click="
@@ -582,7 +551,7 @@ watch([() => route.path, () => locale.value], () => {
   color: var(--accent-light);
 }
 
-.btn-lang {
+.btn-settings {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -598,7 +567,7 @@ watch([() => route.path, () => locale.value], () => {
   letter-spacing: 0.05em;
 }
 
-.btn-lang:hover {
+.btn-settings:hover {
   background: rgba(255, 255, 255, 0.07);
   color: var(--text);
   border-color: var(--border-hi);
@@ -865,18 +834,6 @@ watch([() => route.path, () => locale.value], () => {
   background: rgba(245, 158, 11, 0.1);
   border-color: rgba(245, 158, 11, 0.25);
   color: #f59e0b;
-}
-
-.drawer-lang-pill {
-  margin-left: auto;
-  font-size: 10px;
-  font-weight: 800;
-  padding: 2px 8px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border);
-  color: var(--text-dim);
-  letter-spacing: 0.05em;
 }
 
 /* Footer: logout + version */

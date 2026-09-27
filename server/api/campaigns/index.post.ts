@@ -11,6 +11,15 @@ export default defineEventHandler(async (event) => {
 
   if (!name?.trim()) throw createError({ statusCode: 400, statusMessage: 'name required' })
   if (!subject?.trim()) throw createError({ statusCode: 400, statusMessage: 'subject required' })
+  const scheduledDate = scheduledAt ? new Date(scheduledAt) : null
+  if (status === 'scheduled') {
+    if (!scheduledDate || Number.isNaN(scheduledDate.getTime())) {
+      throw createError({ statusCode: 400, statusMessage: 'scheduledAt required to schedule' })
+    }
+    if (scheduledDate.getTime() < Date.now() - 60_000) {
+      throw createError({ statusCode: 400, statusMessage: 'scheduledAt must be in the future' })
+    }
+  }
   const segmentId = body.segmentId ? Number(body.segmentId) : null
   if (segmentId && !sqlite.prepare('SELECT 1 FROM segments WHERE id = ?').get(segmentId)) {
     throw createError({ statusCode: 400, statusMessage: 'Segment not found' })
@@ -19,6 +28,8 @@ export default defineEventHandler(async (event) => {
   const [row] = await db.insert(campaigns).values({
     name: name.trim(),
     subject: subject.trim(),
+    subjectB: body.subjectB == null ? null : String(body.subjectB).trim().slice(0, 255) || null,
+    followUpSubject: body.followUpSubject == null ? null : String(body.followUpSubject).trim().slice(0, 255) || null,
     templateName: templateName || null,
     templateHtml: templateHtml || null,
     listId: listId ? Number(listId) : null,
@@ -38,7 +49,7 @@ export default defineEventHandler(async (event) => {
     failCount: 0,
     startedAt: null,
     finishedAt: null,
-    scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
+    scheduledAt: scheduledDate,
   }).returning()
 
   return row

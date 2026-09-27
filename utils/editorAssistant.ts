@@ -52,12 +52,31 @@ export interface EditorAssistantDraft {
   blocks: PlannedBlock[]
   warnings: string[]
   rationale: string
+  campaign?: AssistantCampaignMetadata
+}
+
+export interface AssistantCampaignOptions {
+  listId: number | null
+  /** Source material, independent of the approved main call to action. */
+  url: string
+  aiImages: boolean
+}
+
+export interface AssistantCampaignMetadata {
+  subjectB: string
+  followUpSubject: string
+  sendTime: {
+    weekday: 'any' | 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
+    hour: number
+    reason: string
+  }
 }
 
 export interface EditorAssistantRequest {
   brief: EditorAssistantBrief
   instruction?: string
   previous?: EditorAssistantDraft
+  campaignOptions?: AssistantCampaignOptions
 }
 
 export function emptyAssistantSignature(): AssistantSignature {

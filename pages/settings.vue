@@ -18,7 +18,7 @@ const { data, load } = useSettings();
 const { can, refresh: refreshMe } = useMe();
 
 const ALL_TABS = [
-  { id: "general", icon: Globe2, comp: SettingsGeneral },
+  { id: "general", icon: Globe2, comp: SettingsGeneral, anyRole: true },
   { id: "sending", icon: Send, comp: SettingsSending },
   { id: "deliverability", icon: ShieldCheck, comp: SettingsDeliverability },
   { id: "ai", icon: Sparkles, comp: SettingsAi },
@@ -28,7 +28,7 @@ const ALL_TABS = [
   { id: "backups", icon: DatabaseBackup, comp: SettingsBackups },
   { id: "system", icon: Cpu, comp: SettingsSystem },
 ];
-// Editors and viewers only manage their own account
+// Editors and viewers manage their interface preferences and their own account.
 const TABS = computed(() => (can("admin") ? ALL_TABS : ALL_TABS.filter((x) => (x as { anyRole?: boolean }).anyRole)));
 
 const tab = computed({

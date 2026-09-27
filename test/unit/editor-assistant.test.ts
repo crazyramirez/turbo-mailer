@@ -4,7 +4,7 @@ import { EDITOR_AI_CATALOG } from '~/utils/editorAiBlocks'
 import { emptyAssistantBrief, emptyAssistantSignature } from '~/utils/editorAssistant'
 import type { EditorAssistantBrief } from '~/utils/editorAssistant'
 
-const mock = vi.hoisted(() => ({ aiJson: vi.fn(), getBrandKit: vi.fn(), brandBrief: vi.fn(), gatherPageContext: vi.fn() }))
+const mock = vi.hoisted(() => ({ aiJson: vi.fn(), getBrandKit: vi.fn(), brandBrief: vi.fn(), gatherPageContext: vi.fn(), audienceContext: vi.fn(), pastPerformance: vi.fn() }))
 vi.mock('~/server/utils/ai/provider', () => ({
   aiJson: mock.aiJson,
   AiError: class AiError extends Error {
@@ -12,9 +12,9 @@ vi.mock('~/server/utils/ai/provider', () => ({
   },
 }))
 vi.mock('~/server/utils/ai/brand-kit', () => ({ getBrandKit: mock.getBrandKit, brandBrief: mock.brandBrief }))
-vi.mock('~/server/utils/ai/campaign-gen', () => ({ gatherPageContext: mock.gatherPageContext }))
+vi.mock('~/server/utils/ai/campaign-gen', () => ({ gatherPageContext: mock.gatherPageContext, audienceContext: mock.audienceContext, pastPerformance: mock.pastPerformance }))
 
-const { EDITOR_ASSISTANT_SCHEMA, parseEditorAssistantBrief, generateEditorAssistant } = await import('~/server/utils/ai/editor-assistant')
+const { EDITOR_ASSISTANT_SCHEMA, CAMPAIGN_ASSISTANT_SCHEMA, parseEditorAssistantBrief, generateEditorAssistant } = await import('~/server/utils/ai/editor-assistant')
 
 const FIELD_KEYS = ['badge', 'title', 'subtitle', 'button', 'buttonUrl', 'images', 'logo', 'price', 'code', 'contact', 'ps', 'features', 'socialUrls', 'videoUrl']
 const primaryUrl = 'https://marca.es/coleccion'
@@ -52,6 +52,8 @@ beforeEach(() => {
   mock.getBrandKit.mockReturnValue({ name: 'Marca real', website: 'https://marca.es/', logoUrl: '/uploads/marca.png' })
   mock.brandBrief.mockReturnValue('MARCA: Marca real')
   mock.gatherPageContext.mockReset().mockResolvedValue({ title: 'Colección real', text: 'Piezas de diseño para tu hogar.', images: [approvedImage] })
+  mock.audienceContext.mockReturnValue('LISTA: Clientes de diseño — 200 contactos activos.')
+  mock.pastPerformance.mockReturnValue('HISTÓRICO: Colección anterior — 4% clics.')
 })
 
 describe('editor assistant brief validation', () => {
@@ -110,6 +112,9 @@ describe('native editor assistant generation', () => {
     expect(request).toMatchObject({ feature: 'editor_assistant', effort: 'high' })
     expect(output).toMatchObject({ type: 'template', styleId: 'corporate', subject: 'Diseño que transforma tu espacio' })
     expect(mock.getBrandKit).not.toHaveBeenCalled()
+    expect(mock.audienceContext).not.toHaveBeenCalled()
+    expect(mock.pastPerformance).not.toHaveBeenCalled()
+    expect(output.campaign).toBeUndefined()
     expect(output.blocks.at(-1)?.id).toBe('unsubscribe')
   })
 
@@ -257,5 +262,90 @@ describe('native editor assistant generation', () => {
     expect(request.previous.blocks[0].fields.title).toHaveLength(12000)
     expect(JSON.stringify(request)).not.toContain('not-forwarded')
     expect(output.text).toMatch(/revisión/i)
+  })
+})
+
+describe('complete campaign assistant generation', () => {
+  const campaign = {
+    subjectB: 'Tu hogar, con un nuevo diseño', followUpSubject: 'Las piezas que te esperan este otoño',
+    sendTime: { weekday: 'tuesday', hour: 10, reason: 'Una pausa por la mañana para explorar la colección.' },
+  }
+  const options = { listId: 7, url: 'https://marca.es/referencia', aiImages: false }
+
+  it('produces the native plan and campaign metadata together using the selected list and historical performance', async () => {
+    mock.aiJson.mockResolvedValue({ ...plan(), campaign })
+    const output = await generateEditorAssistant({ brief: brief(), campaignOptions: options })
+    expect(mock.aiJson).toHaveBeenCalledTimes(1)
+    const request = mock.aiJson.mock.calls[0][0]
+    expect(request).toMatchObject({ feature: 'campaign_generate', schema: CAMPAIGN_ASSISTANT_SCHEMA })
+    const input = JSON.parse(request.messages[0].content)
+    expect(input).toMatchObject({ reference: { url: options.url }, audienceContext: mock.audienceContext(), pastPerformance: mock.pastPerformance() })
+    expect(mock.audienceContext).toHaveBeenCalledWith(7)
+    expect(mock.gatherPageContext).toHaveBeenCalledExactlyOnceWith(options.url)
+    expect(output.campaign).toEqual(campaign)
+    expect(output.blocks.find(item => item.id === 'hero')?.fields.buttonUrl).toBe(primaryUrl)
+    expect(output.blocks.at(-1)?.id).toBe('unsubscribe')
+  })
+
+  it('never substitutes the reference URL for an omitted main call to action or invents a signature', async () => {
+    mock.aiJson.mockResolvedValue({ ...plan([block('hero', { buttonUrl: [options.url] }), block('text'), block('signature', { title: ['Invented Person'] }), block('unsubscribe')]), campaign })
+    const output = await generateEditorAssistant({ brief: brief({ ctaUrl: '', useBrandKit: false, includeSignature: true }), campaignOptions: options })
+    expect(output.blocks.find(item => item.id === 'hero')?.fields.buttonUrl).toBe('')
+    expect(output.blocks.some(item => item.id === 'signature')).toBe(false)
+    expect(output.warnings.join(' ')).toMatch(/firma/)
+  })
+
+  it.each([
+    null, [], { listId: 0 }, { listId: -1 }, { listId: 1.5 }, { listId: '7' },
+    { url: 'javascript:alert(1)' }, { url: 'https://user:secret@marca.es/' }, { url: 123 }, { aiImages: 'true' },
+  ])('rejects invalid campaign options before fetching references or calling AI (%j)', async (campaignOptions) => {
+    await expect(generateEditorAssistant({ brief: brief(), campaignOptions })).rejects.toMatchObject({ statusCode: 400 })
+    expect(mock.gatherPageContext).not.toHaveBeenCalled()
+    expect(mock.aiJson).not.toHaveBeenCalled()
+    expect(mock.audienceContext).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    undefined, { ...campaign, subjectB: '' }, { ...campaign, followUpSubject: '' },
+    { ...campaign, sendTime: { ...campaign.sendTime, weekday: 'tomorrow' } },
+    ...[-1, 24, 12.5, NaN, Infinity, '10'].map(hour => ({ ...campaign, sendTime: { ...campaign.sendTime, hour } })),
+  ])('rejects invalid campaign metadata after one repair attempt (%j)', async (metadata) => {
+    mock.aiJson.mockImplementation(async () => ({ ...plan(), campaign: metadata }))
+    await expect(generateEditorAssistant({ brief: brief(), campaignOptions: options })).rejects.toMatchObject({ code: 'invalid_output' })
+    expect(mock.aiJson).toHaveBeenCalledTimes(2)
+  })
+
+  it('repairs invalid send-time metadata while bounding subjects and explanations', async () => {
+    mock.aiJson.mockResolvedValueOnce({ ...plan(), campaign: { ...campaign, sendTime: { ...campaign.sendTime, hour: 99 } } })
+      .mockResolvedValueOnce({ ...plan(), campaign: { ...campaign, subjectB: ` ${'b'.repeat(400)} `, followUpSubject: 'f'.repeat(400), sendTime: { ...campaign.sendTime, reason: 'r'.repeat(900) } } })
+    const output = await generateEditorAssistant({ brief: brief(), campaignOptions: options })
+    expect(mock.aiJson).toHaveBeenCalledTimes(2)
+    expect(output.campaign?.subjectB).toHaveLength(150)
+    expect(output.campaign?.followUpSubject).toHaveLength(150)
+    expect(output.campaign?.sendTime.reason).toHaveLength(600)
+    expect(output.campaign?.sendTime.hour).toBe(10)
+  })
+
+  it.each([false, true])('permits descriptive image prompts only when AI images are enabled (%s)', async (aiImages) => {
+    const prompt = 'Professional interior photograph of a cozy living room with soft natural light'
+    mock.aiJson.mockImplementation(async () => ({ ...plan([
+      block('hero'), block('text'), block('image', { images: [prompt] }),
+      block('grid-2', { images: ['https://invented.es/photo.jpg', approvedImage] }), block('unsubscribe'),
+    ]), campaign }))
+    const output = await generateEditorAssistant({ brief: brief(), campaignOptions: { ...options, aiImages } })
+    expect(output.blocks.find(item => item.id === 'image')?.fields.images).toBe(aiImages ? prompt : undefined)
+    expect(output.blocks.find(item => item.id === 'grid-2')?.fields.images).toEqual(['', approvedImage])
+    expect(JSON.stringify(output.blocks)).not.toContain('invented.es')
+  })
+
+  it('preserves valid prior campaign metadata during a refinement without forwarding extra fields', async () => {
+    mock.aiJson.mockResolvedValue({ ...plan(), campaign })
+    await generateEditorAssistant({
+      brief: brief(), campaignOptions: options, instruction: 'Haz el mensaje más breve.',
+      previous: { ...plan(), campaign: { ...campaign, hidden: 'not-forwarded', sendTime: { ...campaign.sendTime, recipient: 'not-forwarded' } } },
+    })
+    const input = JSON.parse(mock.aiJson.mock.calls[0][0].messages[0].content)
+    expect(input.previous.campaign).toEqual(campaign)
+    expect(JSON.stringify(input)).not.toContain('not-forwarded')
   })
 })

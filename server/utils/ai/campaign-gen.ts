@@ -128,7 +128,7 @@ const GOALS: Record<string, string> = {
   announce: 'anunciar una novedad, lanzamiento o cambio',
 }
 
-function pastPerformance(): string {
+export function pastPerformance(): string {
   // Best and worst subjects by human clicks — the model learns YOUR audience
   const rows = sqlite.prepare(
     `SELECT subject, sent_count AS sent, click_count AS clicks, confirmed_open_count AS opens
@@ -141,7 +141,7 @@ function pastPerformance(): string {
   return `HISTÓRICO DE ESTA AUDIENCIA (aprende de lo que funciona):\nMejores:\n${scored.slice(0, 4).map(fmt).join('\n')}\nPeores:\n${scored.slice(-3).map(fmt).join('\n')}`
 }
 
-function audienceContext(listId?: number | null): string {
+export function audienceContext(listId?: number | null): string {
   if (!listId) return ''
   const list = sqlite.prepare('SELECT name, description FROM lists WHERE id = ?').get(listId) as { name: string; description: string | null } | undefined
   if (!list) return ''
