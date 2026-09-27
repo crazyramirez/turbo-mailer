@@ -13,11 +13,6 @@ import {
   CaseSensitive,
   Palette,
   Image as ImageIcon,
-  MousePointer2,
-  Code,
-  Trash2,
-  Zap,
-  Plus,
   Copy,
   ArrowUp,
   ArrowDown,
@@ -28,15 +23,14 @@ import {
 } from "lucide-vue-next";
 import { useEditorState } from "~/composables/useEditorState";
 import { useBlockEditor } from "~/composables/useBlockEditor";
+import ButtonControls from "~/components/editor/panels/ButtonControls.vue";
 
 const {
   selectedElement,
-  selectedSubElement,
   fontSizeRef,
   logoWidthRef,
   gridImageHeightRef,
   imageHeightRef,
-  buttonRadiusRef,
   borderWidthRef,
   borderColorRef,
 } = useEditorState();
@@ -63,12 +57,6 @@ const {
   updateBgColor,
   updateTextColor,
   updateImage,
-  updateButtonColor,
-  updateThisButtonColor,
-  updateButtonLink,
-  updateThisButtonRadius,
-  removeThisButton,
-  addButton,
   addFaqItem,
   removeFaqItem,
   addSocialIcon,
@@ -105,6 +93,7 @@ const editableTypes = [
 
 <template>
   <div v-if="selectedElement" class="edit-controls">
+    <ButtonControls />
     <!-- Module Settings -->
     <div
       class="edit-section"
@@ -483,68 +472,6 @@ const editableTypes = [
             class="premium-slider"
           />
         </div>
-
-
-
-
-
-
-
-
-
-        <template v-if="selectedElement.dataset.type === 'Botón'">
-          <div
-            v-if="selectedSubElement?.closest('[data-toggle=\'button\']')"
-            class="sub-edit-grid"
-          >
-            <div class="sub-edit-header">
-              <MousePointer2 :size="12" />
-              <span>
-                {{ $t('editor.edit_btn_prefix') }} "<strong
-                  >{{ (selectedSubElement?.innerText || "").substring(0, 30)
-                  }}{{
-                    (selectedSubElement?.innerText || "").length > 30
-                      ? "..."
-                      : ""
-                  }}</strong
-                >"
-              </span>
-            </div>
-            <button @click="updateThisButtonColor" class="c-btn highlight-btn">
-              <Palette :size="14" /> {{ $t('editor.edit_color') }}
-            </button>
-            <button @click="updateButtonLink" class="c-btn highlight-btn">
-              <Code :size="14" /> {{ $t('editor.edit_link') }}
-            </button>
-
-            <!-- Button Radius Slider -->
-            <div class="slider-row sub-grid-full" style="margin-top: 4px">
-              <div class="slider-header">
-                <span class="s-label">{{ $t('editor.edit_btn_radius') }}</span>
-                <span class="s-value">{{ buttonRadiusRef }}px</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                v-model="buttonRadiusRef"
-                @input="updateThisButtonRadius"
-                class="premium-slider"
-              />
-            </div>
-
-            <button @click="removeThisButton" class="c-btn btn-danger-soft sub-grid-full">
-              <Trash2 :size="14" /> {{ $t('editor.edit_delete_btn') }}
-            </button>
-          </div>
-          <div v-else class="info-badge-premium">
-            <Zap :size="14" />
-            <span>{{ $t('editor.edit_btn_hint') }}</span>
-          </div>
-          <button @click="addButton" class="c-btn full-width mt-10">
-            <Plus :size="14" /> {{ $t('editor.edit_add_btn') }}
-          </button>
-        </template>
       </div>
     </div>
 

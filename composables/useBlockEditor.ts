@@ -15,6 +15,9 @@ const {
   gridImageHeightRef,
   imageHeightRef,
   buttonRadiusRef,
+  buttonFontSizeRef,
+  buttonPaddingXRef,
+  buttonPaddingYRef,
   borderWidthRef,
   borderColorRef,
   visibilityTrigger,
@@ -72,9 +75,15 @@ function selectElement(el: HTMLElement, subEl?: HTMLElement, skipScroll = false)
     }
   }
 
-  if (subEl?.closest('[data-toggle="button"]')) {
-    const btn = subEl.closest('[data-toggle="button"]') as HTMLElement
-    buttonRadiusRef.value = parseInt(btn.style.borderRadius) || 8
+  const btn = getSelectedButton()
+  if (btn) {
+    const style = btn.ownerDocument.defaultView?.getComputedStyle(btn)
+    const label = getButtonTextNodes(btn)[0]?.parentElement || btn
+    const labelStyle = btn.ownerDocument.defaultView?.getComputedStyle(label)
+    buttonRadiusRef.value = parseCssNumber(style?.borderTopLeftRadius || btn.style.borderRadius, 8)
+    buttonFontSizeRef.value = parseCssNumber(labelStyle?.fontSize || style?.fontSize || btn.style.fontSize, 17)
+    buttonPaddingXRef.value = parseCssNumber(style?.paddingLeft || btn.style.paddingLeft, 32)
+    buttonPaddingYRef.value = parseCssNumber(style?.paddingTop || btn.style.paddingTop, 18)
   }
 
   activePanel.value = 'edit'
@@ -85,19 +94,19 @@ function selectElement(el: HTMLElement, subEl?: HTMLElement, skipScroll = false)
   const elements = el.querySelectorAll(SCALABLE_TEXT_SELECTOR)
   if (elements.length > 0) {
     const firstEl = elements[0] as HTMLElement
-    const firstSize = parseInt(window.getComputedStyle(firstEl).fontSize) || 16
+    const firstSize = parseFloat(el.ownerDocument.defaultView?.getComputedStyle(firstEl).fontSize || '') || 16
     fontSizeRef.value = firstSize
     selectionBaseRef.value = firstSize
 
     elements.forEach((child: any) => {
-      if (!child.dataset.orgSize) {
-        child.dataset.orgSize = parseInt(window.getComputedStyle(child).fontSize) || 16
-      }
+      // The slider's baseline is the current size on every selection. Rebase
+      // descendants too, including buttons previously resized individually.
+      child.dataset.orgSize = parseFloat(el.ownerDocument.defaultView?.getComputedStyle(child).fontSize || '') || 16
     })
   }
 
   // Border initialization
-  const borderStyle = window.getComputedStyle(el)
+  const borderStyle = el.ownerDocument.defaultView?.getComputedStyle(el) || el.style
   borderWidthRef.value = parseInt(borderStyle.borderWidth) || 0
   borderColorRef.value = rgbToHex(borderStyle.borderColor) || '#e9e9e9'
 }
@@ -440,13 +449,18 @@ function updateFontSize(val: number | string) {
     // Record on first touch: a block can be resized without ever having been
     // through selectElement (e.g. restored from history, dropped from sidebar).
     if (!el.dataset.orgSize) {
-      el.dataset.orgSize = String(parseInt(window.getComputedStyle(el).fontSize) || 16)
+      el.dataset.orgSize = String(parseFloat(el.ownerDocument.defaultView?.getComputedStyle(el).fontSize || '') || 16)
     }
-    const original = parseInt(el.dataset.orgSize) || 16
+    const original = parseFloat(el.dataset.orgSize) || 16
     const finalSize = Math.max(8, Math.min(Math.round(original * ratio), 60))
     el.style.fontSize = finalSize + 'px'
     el.style.lineHeight = Math.round(finalSize * 1.5) + 'px'
   })
+  const btn = getSelectedButton()
+  if (btn) {
+    const label = getButtonTextNodes(btn)[0]?.parentElement || btn
+    buttonFontSizeRef.value = parseCssNumber(btn.ownerDocument.defaultView?.getComputedStyle(label).fontSize || label.style.fontSize, buttonFontSizeRef.value)
+  }
   import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave())
 }
 
@@ -543,6 +557,90 @@ function updateBorderColor() {
 
 // ─── Button Controls ─────────────────────────────────────────────────────────
 
+function parseCssNumber(value: string | undefined, fallback: number): number {
+  const number = parseFloat(value || '')
+  return Number.isFinite(number) ? number : fallback
+}
+
+function getSelectedButton(): HTMLElement | null {
+  const btn = selectedSubElement.value?.closest<HTMLElement>('[data-toggle="button"]')
+  return btn && selectedElement.value?.contains(btn) ? btn : null
+}
+
+function getButtonTextNodes(btn: HTMLElement): Text[] {
+  const nodes: Text[] = []
+  const visit = (node: Node) => {
+    if (node.nodeType === 3) {
+      if (node.textContent?.trim()) nodes.push(node as Text)
+      return
+    }
+    // Icons may have text of their own (SVG titles or icon-font glyphs).
+    if (node.nodeType === 1 && (node as Element).matches('svg, script, style, [aria-hidden="true"], .icon, [data-icon], [data-ignore-save], i[class*="fa-"]')) return
+    node.childNodes.forEach(visit)
+  }
+  btn.childNodes.forEach(visit)
+  return nodes
+}
+
+function updateThisButtonText() {
+  const btn = getSelectedButton()
+  if (!btn) return
+  const current = getButtonTextNodes(btn).map(node => node.textContent).join('').trim()
+  const i18n = (useNuxtApp().$i18n as any)
+  openPrompt(i18n.t('editor.btn_text_title'), i18n.t('editor.btn_text_label'), current, 'text', (text) => {
+    if (!text.trim()) return
+    const nodes = getButtonTextNodes(btn)
+    if (nodes.length) {
+      nodes[0]!.textContent = text
+      nodes.slice(1).forEach(node => { node.textContent = '' })
+    } else {
+      btn.appendChild(btn.ownerDocument.createTextNode(text))
+    }
+    layoutTrigger.value++
+    import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
+  })
+}
+
+function updateThisButtonTextColor() {
+  const btn = getSelectedButton()
+  if (!btn) return
+  const label = getButtonTextNodes(btn)[0]?.parentElement || btn
+  const current = rgbToHex(btn.ownerDocument.defaultView?.getComputedStyle(label).color || btn.style.color || '#ffffff')
+  const i18n = (useNuxtApp().$i18n as any)
+  // Do not use the 'text' preview target: that target colors the entire module.
+  openPrompt(i18n.t('editor.color_text_title'), i18n.t('editor.color_text_label'), current, 'color', (color) => {
+    if (!/^#([0-9A-F]{3}){1,2}$/i.test(color)) return
+    btn.style.color = color
+    btn.querySelectorAll<HTMLElement>(SCALABLE_TEXT_SELECTOR).forEach(child => { child.style.color = color })
+    import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
+  })
+}
+
+function updateThisButtonFontSize(val: number | string = buttonFontSizeRef.value) {
+  const btn = getSelectedButton()
+  const size = Number(val)
+  if (!btn || !Number.isFinite(size) || size <= 0) return
+  buttonFontSizeRef.value = size
+  const ratio = fontSizeRef.value / selectionBaseRef.value || 1
+  const elements = [btn, ...btn.querySelectorAll<HTMLElement>(SCALABLE_TEXT_SELECTOR)]
+  elements.forEach(el => {
+    el.style.fontSize = size + 'px'
+    el.style.lineHeight = Math.round(size * 1.5) + 'px'
+    // Keep the module's relative-size baseline in sync with this local edit.
+    el.dataset.orgSize = String(size / ratio)
+  })
+  import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
+}
+
+function updateThisButtonPadding() {
+  const btn = getSelectedButton()
+  const x = Number(buttonPaddingXRef.value)
+  const y = Number(buttonPaddingYRef.value)
+  if (!btn || !Number.isFinite(x) || !Number.isFinite(y) || x < 0 || y < 0) return
+  btn.style.padding = `${y}px ${x}px`
+  import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
+}
+
 function updateButtonColor() {
   if (!selectedElement.value) return
   const buttons = selectedElement.value.querySelectorAll('[data-toggle="button"]')
@@ -560,7 +658,7 @@ function updateButtonColor() {
 }
 
 function updateThisButtonColor() {
-  const btn = selectedSubElement.value?.closest('[data-toggle="button"]') as HTMLElement
+  const btn = getSelectedButton()
   if (!btn) return
   const current = rgbToHex(btn.style.background || '#6366f1')
   const i18n = (useNuxtApp().$i18n as any)
@@ -572,7 +670,7 @@ function updateThisButtonColor() {
 }
 
 function updateButtonLink() {
-  const btn = selectedSubElement.value?.closest('[data-toggle="button"]') as HTMLElement
+  const btn = getSelectedButton()
   if (!btn) return
   const current = btn.getAttribute('href') || '#'
   const i18n = (useNuxtApp().$i18n as any)
@@ -588,7 +686,7 @@ function updateButtonLink() {
 }
 
 function updateThisButtonRadius() {
-  const btn = selectedSubElement.value?.closest('[data-toggle="button"]') as HTMLElement
+  const btn = getSelectedButton()
   if (!btn) return
   btn.style.borderRadius = buttonRadiusRef.value + 'px'
   btn.dataset.customRadius = 'true'
@@ -596,7 +694,7 @@ function updateThisButtonRadius() {
 }
 
 function removeThisButton() {
-  const btn = selectedSubElement.value?.closest('[data-toggle="button"]') as HTMLElement
+  const btn = getSelectedButton()
   if (!btn) return
   const count = selectedElement.value?.querySelectorAll('[data-toggle="button"]')?.length || 0
   const i18n = (useNuxtApp().$i18n as any)
@@ -612,6 +710,7 @@ function removeThisButton() {
     () => {
       btn.remove()
       selectedSubElement.value = null
+      layoutTrigger.value++
       import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
     },
     'danger',
@@ -629,6 +728,7 @@ function addButton() {
   const span = clone.querySelector('span')
   if (span) span.contentEditable = 'true'
   row.appendChild(clone)
+  layoutTrigger.value++
   import('~/composables/useIframeEngine').then(({ useIframeEngine }) => useIframeEngine().triggerAutosave(true))
 }
 
@@ -1344,6 +1444,10 @@ export function useBlockEditor() {
     updateBorderColor,
     updateButtonColor,
     updateThisButtonColor,
+    updateThisButtonText,
+    updateThisButtonTextColor,
+    updateThisButtonFontSize,
+    updateThisButtonPadding,
     updateButtonLink,
     updateThisButtonRadius,
     removeThisButton,

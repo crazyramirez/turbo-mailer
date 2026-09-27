@@ -190,7 +190,7 @@ function triggerLabel(tr: any) {
 }
 .tpl-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
   gap: 10px;
   width: 100%;
   margin-top: 8px;

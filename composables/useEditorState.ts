@@ -47,6 +47,9 @@ const logoWidthRef = ref(150)
 const gridImageHeightRef = ref(150)
 const imageHeightRef = ref(300)
 const buttonRadiusRef = ref(8)
+const buttonFontSizeRef = ref(17)
+const buttonPaddingXRef = ref(32)
+const buttonPaddingYRef = ref(18)
 const borderWidthRef = ref(0)
 const borderColorRef = ref('#e9e9e9')
 const refreshLayersTrigger = ref(0)
@@ -202,6 +205,9 @@ export function useEditorState() {
     gridImageHeightRef,
     imageHeightRef,
     buttonRadiusRef,
+    buttonFontSizeRef,
+    buttonPaddingXRef,
+    buttonPaddingYRef,
     borderWidthRef,
     borderColorRef,
     refreshLayersTrigger,

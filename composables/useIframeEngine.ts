@@ -633,6 +633,20 @@ function setupIframeEvents(doc: Document) {
   // ─── Main Click Handler ────────────────────────────────────────────────────
   doc.addEventListener('click', (e: MouseEvent) => {
     const target = e.target as HTMLElement
+    // A CTA inside a pricing card (or another compound module) must select the
+    // button itself before the surrounding item's toolbar intercepts the click.
+    const button = target.closest('[data-toggle="button"]') as HTMLElement | null
+    const buttonBlock = button?.closest('.editable-block') as HTMLElement | null
+    if (button && buttonBlock) {
+      e.preventDefault()
+      e.stopPropagation()
+      doc.querySelectorAll<HTMLElement>('#social-inline-toolbar, #metric-inline-toolbar, #pricing-inline-toolbar, #faq-inline-toolbar')
+        .forEach(toolbar => { toolbar.style.display = 'none' })
+      import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
+        useBlockEditor().selectElement(buttonBlock, button)
+      })
+      return
+    }
     const socialItem = target.closest('.social-item') as HTMLElement
     const metricItem = target.closest('.metric-item') as HTMLElement
     const pricingItem = target.closest('.pricing-item') as HTMLElement
