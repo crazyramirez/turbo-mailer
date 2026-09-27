@@ -102,6 +102,104 @@ describe('editor assistant brief validation', () => {
 })
 
 describe('native editor assistant generation', () => {
+  it.each([17, 40])('preserves all %i modules in a fresh design within the editor capacity', async count => {
+    const paragraphs = Array.from({ length: count - 2 }, (_, i) => `Contenido aprobado ${i + 1}`)
+    mock.aiJson.mockResolvedValue(plan([
+      block('hero'), ...paragraphs.map(copy => block('text', { title: [copy] })), block('unsubscribe'),
+    ]))
+    const output = await generateEditorAssistant({ brief: brief() })
+    expect(output.blocks).toHaveLength(count)
+    expect(output.blocks.filter(item => item.id === 'text').map(item => item.fields.title)).toEqual(paragraphs)
+    expect(mock.aiJson).toHaveBeenCalledTimes(1)
+  })
+
+  it('completes a useful two-module design with the automatic footer', async () => {
+    mock.aiJson.mockResolvedValue(plan([block('hero'), block('text')]))
+    const output = await generateEditorAssistant({ brief: brief() })
+    expect(output.blocks.map(item => item.id)).toEqual(['hero', 'text', 'unsubscribe'])
+    expect(mock.aiJson).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps useful content and adds the footer after an unverified image is removed', async () => {
+    mock.aiJson.mockResolvedValue(plan([
+      block('hero'), block('text', { title: ['Contenido que debe conservarse.'] }),
+      block('image', { images: ['https://invented.es/image.jpg'] }),
+    ]))
+    const output = await generateEditorAssistant({ brief: brief() })
+    expect(output.blocks.map(item => item.id)).toEqual(['hero', 'text', 'unsubscribe'])
+    expect(output.blocks[1]?.fields.title).toBe('Contenido que debe conservarse.')
+    expect(output.warnings.join(' ')).toMatch(/omitido/)
+    expect(mock.aiJson).toHaveBeenCalledTimes(1)
+  })
+
+  it('repairs a draft over 40 modules without silently slicing its final content', async () => {
+    const paragraphs = Array.from({ length: 39 }, (_, i) => `Contenido aprobado ${i + 1}`)
+    const rejected = plan([block('hero'), ...paragraphs.map(copy => block('text', { title: [copy] })), block('unsubscribe')])
+    const corrected = plan([
+      block('hero'), ...paragraphs.slice(0, -2).map(copy => block('text', { title: [copy] })),
+      block('text', { title: [paragraphs.slice(-2).join(' ')] }), block('unsubscribe'),
+    ])
+    mock.aiJson.mockResolvedValueOnce(rejected).mockResolvedValueOnce(corrected)
+    const output = await generateEditorAssistant({ brief: brief() })
+    expect(mock.aiJson).toHaveBeenCalledTimes(2)
+    expect(output.blocks).toHaveLength(40)
+    expect(output.blocks.filter(item => item.id === 'text').map(item => item.fields.title).join(' ')).toBe(paragraphs.join(' '))
+    expect(mock.aiJson.mock.calls[1][0].messages.at(-1).content).toMatch(/40 módulos/)
+  })
+
+  it('rejects an unrepaired draft above 40 modules instead of returning a truncated campaign', async () => {
+    mock.aiJson.mockResolvedValue(plan([block('hero'), ...Array.from({ length: 39 }, () => block('text')), block('unsubscribe')]))
+    await expect(generateEditorAssistant({ brief: brief() })).rejects.toMatchObject({ code: 'invalid_output' })
+    expect(mock.aiJson).toHaveBeenCalledTimes(2)
+  })
+
+  it.each([
+    { count: 40, footer: false, signature: false },
+    { count: 40, footer: true, signature: true },
+    { count: 39, footer: false, signature: true },
+  ])('repairs capacity overflow introduced by the controlled footer or signature (%j)', async ({ count, footer, signature }) => {
+    const paragraphs = Array.from({ length: count - 1 - Number(footer) }, (_, i) => `Detalle aprobado ${i + 1}`)
+    const rejected = plan([
+      block('hero'), ...paragraphs.map(copy => block('text', { title: [copy] })), ...(footer ? [block('unsubscribe')] : []),
+    ])
+    const corrected = plan([
+      block('hero'), ...paragraphs.slice(0, -2).map(copy => block('text', { title: [copy] })),
+      block('text', { title: [paragraphs.slice(-2).join(' ')] }), ...(footer ? [block('unsubscribe')] : []),
+    ])
+    mock.aiJson.mockResolvedValueOnce(rejected).mockResolvedValueOnce(corrected)
+    const output = await generateEditorAssistant({ brief: brief({ includeSignature: signature,
+      signature: signature ? { ...emptyAssistantSignature(), name: 'Ana García' } : null,
+    }) })
+    expect(mock.aiJson).toHaveBeenCalledTimes(2)
+    expect(output.blocks).toHaveLength(40)
+    expect(output.blocks.filter(item => item.id === 'text').map(item => item.fields.title).join(' ')).toBe(paragraphs.join(' '))
+    expect(output.blocks.filter(item => item.id === 'signature')).toHaveLength(Number(signature))
+    expect(output.blocks.at(-1)?.id).toBe('unsubscribe')
+    expect(mock.aiJson.mock.calls[1][0].messages.at(-1).content).toMatch(/40 módulos/)
+  })
+
+  it('allows a refinement to add modules beyond the previous draft length', async () => {
+    const paragraphs = Array.from({ length: 18 }, (_, i) => `Apartado aprobado ${i + 1}`)
+    const previous = plan([block('hero'), ...paragraphs.slice(0, 15).map(copy => block('text', { title: [copy] })), block('unsubscribe')])
+    mock.aiJson.mockResolvedValue(plan([block('hero'), ...paragraphs.map(copy => block('text', { title: [copy] })), block('unsubscribe')]))
+    const output = await generateEditorAssistant({ brief: brief(), previous, instruction: 'Añade los otros tres apartados indicados.' })
+    expect(output.blocks).toHaveLength(20)
+    expect(output.blocks.filter(item => item.id === 'text').map(item => item.fields.title)).toEqual(paragraphs)
+    expect(mock.aiJson).toHaveBeenCalledTimes(1)
+  })
+
+  it('includes the rejected JSON draft in the repair conversation', async () => {
+    const rejected = plan([block('hero'), block('grid-2', { title: ['Tarjeta que necesita una compañera'] }), block('unsubscribe')])
+    const snapshot = JSON.parse(JSON.stringify(rejected))
+    mock.aiJson.mockResolvedValueOnce(rejected).mockResolvedValueOnce(plan())
+    await generateEditorAssistant({ brief: brief() })
+    const messages = mock.aiJson.mock.calls[1][0].messages
+    const response = messages.find((message: any) => message.role === 'assistant')
+    expect(response).toBeDefined()
+    expect(JSON.parse(response.content)).toEqual(snapshot)
+    expect(messages.at(-1)).toMatchObject({ role: 'user', content: expect.stringMatching(/grid-2.*2 campos title/) })
+  })
+
   it('uses the real editor module catalogue in the schema and prompt, preserving the chosen style', async () => {
     mock.aiJson.mockResolvedValue({ ...plan(), styleId: 'tech-noir' })
     const output = await generateEditorAssistant({ brief: brief({ styleId: 'corporate', useBrandKit: false }) })
@@ -442,6 +540,18 @@ describe('complete campaign assistant generation', () => {
     sendTime: { weekday: 'tuesday', hour: 10, reason: 'Una pausa por la mañana para explorar la colección.' },
   }
   const options = { listId: 7, url: 'https://marca.es/referencia', aiImages: false }
+
+  it.each([17, 40])('generates a complete %i-module campaign without losing content or campaign metadata', async count => {
+    const paragraphs = Array.from({ length: count - 2 }, (_, i) => `Selección aprobada ${i + 1}`)
+    mock.aiJson.mockResolvedValue({ ...plan([
+      block('hero'), ...paragraphs.map(copy => block('text', { title: [copy] })), block('unsubscribe'),
+    ]), campaign })
+    const output = await generateEditorAssistant({ brief: brief(), campaignOptions: options })
+    expect(output.blocks).toHaveLength(count)
+    expect(output.blocks.filter(item => item.id === 'text').map(item => item.fields.title)).toEqual(paragraphs)
+    expect(output.campaign).toEqual(campaign)
+    expect(mock.aiJson).toHaveBeenCalledTimes(1)
+  })
 
   it('uses paired grids in complete campaigns while preserving campaign metadata', async () => {
     mock.aiJson.mockResolvedValue({ ...plan([

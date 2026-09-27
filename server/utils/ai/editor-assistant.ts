@@ -19,7 +19,7 @@ export const EDITOR_ASSISTANT_SCHEMA = {
   properties: {
     name: { type: 'string' }, subject: { type: 'string' }, preheader: { type: 'string' }, rationale: { type: 'string' },
     blocks: {
-      type: 'array', items: {
+      type: 'array', description: `Módulos nativos de la campaña: normalmente 5-9, con un máximo de ${MAX_EDITOR_MODULES} en el diseño final, incluidos firma y pie. Debe haber una apertura y contenido principal; la aplicación añade el pie si falta.`, items: {
         type: 'object', additionalProperties: false, required: ['id', 'fields'],
         properties: {
           id: { type: 'string', enum: GENERATION_CATALOG.map(block => block.id) },
@@ -166,10 +166,14 @@ const values = (v: unknown): string[] => Array.isArray(v) ? v.map(x => typeof x 
 const visibleCopy = (value: string) => value.replace(/<[^>]*>/g, '').replace(/&nbsp;|&#(?:160|x0*a0);/gi, ' ').trim()
 
 /** Check useful content, not only JSON syntax, before it reaches the editor. */
-export function editorPlanIssues(plan: ModelDraft, maxBlocks = 16, checkComposition = true): string[] {
+export function editorPlanIssues(plan: ModelDraft, maxBlocks = MAX_EDITOR_MODULES, checkComposition = true): string[] {
   const issues: string[] = []
   if (!text(plan?.name, 100) || !text(plan?.subject, 150) || !text(plan?.preheader, 250)) issues.push('Faltan nombre, asunto o preheader.')
-  if (!Array.isArray(plan?.blocks) || plan.blocks.length < 3 || plan.blocks.length > maxBlocks) return [...issues, `La propuesta debe contener entre 3 y ${maxBlocks} módulos.`]
+  if (!Array.isArray(plan?.blocks)) return [...issues, 'Falta la lista de módulos de la propuesta.']
+  // A header and real content are enough here: normalization adds the legal
+  // footer. Check the final capacity again after pairing and approved identity.
+  if (plan.blocks.length < 2) return [...issues, `La propuesta contiene ${plan.blocks.length} módulos; incluye una cabecera o portada y contenido principal antes del pie.`]
+  if (plan.blocks.length > maxBlocks) return [...issues, `La propuesta contiene ${plan.blocks.length} módulos y supera el máximo de ${maxBlocks} módulos. Reorganiza el contenido sin eliminar información.`]
   if (!plan.blocks.some(b => b?.id === 'header-pro' || b?.id === 'hero')) issues.push('Falta una cabecera o portada.')
   if (!plan.blocks.some(b => b?.id && !['signature', 'unsubscribe', 'spacer', 'divider', 'image', 'button', 'header-pro', 'hero'].includes(b.id))) issues.push('Falta contenido principal de la campaña.')
   if (checkComposition) {
@@ -232,7 +236,6 @@ export async function generateEditorAssistant(body: Record<string, unknown>): Pr
   if (previousPlan && previousPlan.blocks.length > MAX_EDITOR_MODULES) {
     throw createError({ statusCode: 400, statusMessage: `El diseño necesita más de ${MAX_EDITOR_MODULES} módulos al distribuir las tarjetas en pares. Divide la campaña antes de revisarla para conservar todo el contenido.` })
   }
-  const maxBlocks = previousPlan ? Math.max(16, previousPlan.blocks.length) : 16
   const kit = brief.useBrandKit ? getBrandKit() : null
   const warnings: string[] = []
   let page: Awaited<ReturnType<typeof gatherPageContext>> | null = null
@@ -251,8 +254,9 @@ export async function generateEditorAssistant(body: Record<string, unknown>): Pr
     'Eres el director creativo y redactor de campañas del Editor Pro. Convierte el brief aprobado en un email editorial excelente y específico para esa audiencia y ese objetivo.',
     'Entrega exclusivamente un plan JSON de módulos nativos, nunca un documento HTML ni módulos inventados. La aplicación construye el diseño; respeta exactamente los huecos de cada módulo.',
     'Composición: una idea central memorable, jerarquía tipográfica clara, ritmo entre portada, argumento, beneficios y acción. Normalmente 5-9 módulos; evita encabezados duplicados, textos de relleno y una sucesión de cajas idénticas. El estilo y la dirección visual aprobados determinan tu selección de módulos.',
+    `El diseño final debe contener entre 3 y ${MAX_EDITOR_MODULES} módulos, incluidos la firma aprobada y el pie. Es obligatorio incluir una apertura (header-pro o hero) y contenido principal. Puedes superar 16 módulos si necesitas más filas de tarjetas o texto; conserva todo el contenido y reserva espacio para la firma y el pie.`,
     AI_GRID_LAYOUT_RULE,
-    ...(previousPlan && instruction ? [`Al revisar conserva los elementos de la propuesta anterior salvo que el usuario pida quitarlos. Puedes usar hasta ${maxBlocks} módulos para mantener sus tarjetas distribuidas de dos en dos.`] : []),
+    ...(previousPlan && instruction ? [`Al revisar conserva los elementos de la propuesta anterior salvo que el usuario pida quitarlos. Puedes usar hasta ${MAX_EDITOR_MODULES} módulos para mantener sus tarjetas distribuidas de dos en dos y añadir lo que solicite el usuario.`] : []),
     'Asunto concreto hasta 65 caracteres; preheader de 40-100 caracteres que lo complemente. Copy completo, natural y útil. Adapta la longitud a los huecos: titulares cortos, beneficios concretos, máximo 2-3 frases por tarjeta. El bloque text usa title para el párrafo.',
     'Únicamente puedes usar <b>, <strong>, <i>, <em> y <br> dentro del copy; ningún enlace, estilo, script ni atributo HTML. No uses markdown. Personalización opcional {{name | "hola"}} solo cuando encaje.',
     'Semántica de módulos: pricing usa badge para el nombre de cada plan, title para su precio, subtitle para su resumen y features para 9 ventajas (3 por plan). testimonials usa subtitle para la cita real, title para su autor y badge para su cargo. presence usa subtitle para las presencias reales. socials usa socialUrls en orden Facebook, Instagram, LinkedIn, Twitter (vacío si no hay URL real). video necesita images (miniatura) y videoUrl (enlace real). No incluyas video si falta el enlace real.',
@@ -283,19 +287,24 @@ export async function generateEditorAssistant(body: Record<string, unknown>): Pr
   let plan: ModelDraft | null = null
   let normalized: ReturnType<typeof normalizeEditorAiBlocks> | null = null
   let issues: string[] = []
+  let rejectedProposal = ''
   for (let attempt = 0; attempt < 2; attempt++) {
     plan = await aiJson<ModelDraft>({
       feature: campaignOptions ? 'campaign_generate' : 'editor_assistant', system,
-      messages: [{ role: 'user', content: user }, ...(attempt ? [{ role: 'user' as const, content: `La propuesta no pasó la revisión de módulos: ${issues.join(' ')} Devuelve una propuesta completa que corrija estos problemas.` }] : [])],
+      messages: [{ role: 'user', content: user }, ...(attempt ? [
+        { role: 'assistant' as const, content: rejectedProposal },
+        { role: 'user' as const, content: `La propuesta no pasó la revisión de módulos: ${issues.join(' ')} Devuelve el JSON completo corregido, conservando el contenido útil de la propuesta anterior y todos los campos requeridos. No devuelvas solo los módulos modificados. El diseño final admite hasta ${MAX_EDITOR_MODULES} módulos, incluidos firma y pie.` },
+      ] : [])],
       schema: campaignOptions ? CAMPAIGN_ASSISTANT_SCHEMA : EDITOR_ASSISTANT_SCHEMA, effort: 'high', maxTokens: 16000,
     })
+    rejectedProposal = JSON.stringify(plan) ?? 'null'
     for (const block of Array.isArray(plan?.blocks) ? plan.blocks : []) {
       if (!block?.fields || typeof block.fields !== 'object') continue
       for (const field of ['badge', 'title', 'subtitle', 'button', 'price', 'code', 'ps', 'features'] as const) {
         block.fields[field] = values(block.fields[field]).map(inlineCopy)
       }
     }
-    issues = editorPlanIssues(plan, maxBlocks, !previousPlan)
+    issues = editorPlanIssues(plan, MAX_EDITOR_MODULES, !previousPlan)
     if (campaignOptions && !campaignMetadata(plan?.campaign)) issues.push('Completa los asuntos A/B y de seguimiento y una sugerencia de día, hora (0-23) y motivo válida.')
     if (issues.length) continue
 
@@ -338,10 +347,14 @@ export async function generateEditorAssistant(body: Record<string, unknown>): Pr
       }
       return true
     })
-    issues = editorPlanIssues(plan, maxBlocks, !previousPlan)
+    issues = editorPlanIssues(plan, MAX_EDITOR_MODULES, !previousPlan)
     if (issues.length) continue
     normalized = normalizeEditorAiBlocks(plan.blocks, { ctaUrl: brief.ctaUrl, signature: brief.signature, includeSignature: brief.includeSignature && !!brief.signature })
     normalized.blocks = pairAiGrids(normalized.blocks)
+    if (normalized.blocks.length < 3) {
+      issues = ['El diseño final necesita una apertura, contenido principal y un pie. Completa el contenido de la campaña.']
+      continue
+    }
     if (normalized.blocks.length > MAX_EDITOR_MODULES) {
       issues = [`El diseño final supera ${MAX_EDITOR_MODULES} módulos con las tarjetas en pares, firma y pie; reorganiza el contenido sin eliminar elementos.`]
       continue
