@@ -136,7 +136,8 @@ async function handleBack() {
       <button
         @click="showAITemplateModal = true"
         class="btn-secondary-download"
-        title="Generar con IA"
+        title="Asistente IA de campañas"
+        aria-label="Abrir asistente IA de campañas"
         style="color: #6366f1; border-color: rgba(99, 102, 241, 0.3);"
       >
         <Sparkles :size="16" />

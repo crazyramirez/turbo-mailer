@@ -119,6 +119,12 @@ describe('editor assistant context', () => {
     expect(result[1]).toMatchObject({ name: 'Inner Person', email: 'inner@marca.es' })
   })
 
+  it('prefers an edited visible bare domain to a stale link target', () => {
+    const html = `<section data-type="Firma"><div data-toggle="title">Diego</div>
+      <div data-toggle="contact"><a href="https://old-company.es">viseni.com</a></div></section>`
+    expect(extractEditorSignatures(html)[0]).toMatchObject({ name: 'Diego', website: 'https://viseni.com/' })
+  })
+
   it('bounds campaign reads and skips oversized HTML and transactional recipient content', async () => {
     campaign('Fuera del límite', signature({ name: 'Old secret' }), 1)
     for (let i = 0; i < 20; i++) campaign(`Campaña ${i}`, '<div>Sin firma</div>', 100 + i)

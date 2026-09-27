@@ -8,8 +8,11 @@ describe('native AI module contract (usable on the server without DOMParser)', (
     expect(EDITOR_AI_BLOCK_IDS).toEqual(editorBlocks.map(block => block.id))
     expect(EDITOR_AI_STYLE_IDS).toEqual(editorStyleBases.map(style => style.id))
     expect(EDITOR_AI_CATALOG.find(block => block.id === 'grid-4')?.slots).toEqual({ images: 4, title: 4, subtitle: 4 })
-    expect(EDITOR_AI_CATALOG.find(block => block.id === 'pricing')?.slots).toEqual({ badge: 3, title: 3, subtitle: 3, button: 3, buttonUrl: 3 })
+    expect(EDITOR_AI_CATALOG.find(block => block.id === 'pricing')?.slots).toEqual({ badge: 3, title: 3, subtitle: 3, features: 9, button: 3, buttonUrl: 3 })
     expect(EDITOR_AI_CATALOG.find(block => block.id === 'signature')?.slots.contact).toBe(3)
+    expect(EDITOR_AI_CATALOG.find(block => block.id === 'presence')?.slots).toEqual({ badge: 1, subtitle: 1 })
+    expect(EDITOR_AI_CATALOG.find(block => block.id === 'socials')?.slots).toEqual({ title: 1, socialUrls: 4 })
+    expect(EDITOR_AI_CATALOG.find(block => block.id === 'video')?.slots).toEqual({ images: 1, subtitle: 1, videoUrl: 1 })
   })
 
   it('rejects unknown fields and modules, trims excess values, and preserves blank positions', () => {
@@ -34,9 +37,18 @@ describe('native AI module contract (usable on the server without DOMParser)', (
   })
 
   it('accepts empty fields from a shared strict schema without generating false warnings', () => {
-    const { blocks, warnings } = normalizeEditorAiBlocks([{ id: 'text', fields: { title: ['Una campaña'], price: [], images: [], contact: ['', ''] } }])
+    const { blocks, warnings } = normalizeEditorAiBlocks([{ id: 'text', fields: { title: ['Una campaña'], price: [], images: [], contact: ['', ''], features: [], videoUrl: [], socialUrls: [] } }])
     expect(blocks[0].fields).toEqual({ title: 'Una campaña' })
     expect(warnings).toEqual([])
+  })
+
+  it('only accepts web destinations for native social and video links', () => {
+    const { blocks } = normalizeEditorAiBlocks([
+      { id: 'socials', fields: { socialUrls: ['mailto:hello@example.com', 'https://instagram.com/real', '', '{{WEB_URL}}'] } },
+      { id: 'video', fields: { videoUrl: 'javascript:bad()' } },
+    ])
+    expect(blocks[0].fields.socialUrls).toEqual(['', 'https://instagram.com/real', '', ''])
+    expect(blocks[1].fields.videoUrl).toBe('')
   })
 
   it('replaces model signatures with exactly the approved values before the single final footer', () => {

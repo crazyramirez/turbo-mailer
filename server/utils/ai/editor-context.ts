@@ -50,7 +50,7 @@ function websiteValue(value: string, allowUploads = false): string {
       return normalized.pathname.startsWith('/uploads/') && !/\\|%2f|%5c/i.test(text) ? normalized.pathname + normalized.search : ''
     } catch { return '' }
   }
-  if (/^www\./i.test(text)) text = `https://${text}`
+  if (/^[a-z0-9](?:[a-z0-9.-]*\.)[a-z]{2,}(?::\d+)?(?:[/?#]|$)/i.test(text)) text = `https://${text}`
   if (!/^https?:\/\//i.test(text)) return ''
   try {
     const url = new URL(text)
@@ -130,7 +130,7 @@ interface TemplateEntry { name: string; modified: number }
 
 /** Only the public sender identity is used; credentials and audience records are never returned. */
 export async function getEditorAssistantContext(): Promise<{
-  brand: BrandKit; signatures: SignatureCandidate[]; recentCampaigns: { id: number; name: string; subject: string }[]
+  brand: BrandKit; brandConfigured: boolean; signatures: SignatureCandidate[]; recentCampaigns: { id: number; name: string; subject: string }[]
 }> {
   const brand = sanitizeBrandKit(getBrandKit())
   const rows = sqlite.prepare(`SELECT id, name, subject, template_name AS templateName,
@@ -225,7 +225,7 @@ export async function getEditorAssistantContext(): Promise<{
     })
   }
   return {
-    brand, signatures,
+    brand, brandConfigured: !!sqlite.prepare('SELECT 1 FROM settings WHERE key = ?').get('brand_kit'), signatures,
     recentCampaigns: rows.map(row => ({ id: row.id, name: cleanText(row.name, 200), subject: cleanText(row.subject, 300) })),
   }
 }

@@ -232,7 +232,7 @@ export const editorBlocks: EditorBlock[] = [
     content: `<div class="presence-block editable-block" data-type="Presencia" style="padding:20px;background:#f6faff;">
     <div data-toggle="badge" style="font-family:Arial;font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:1.2px;text-align:center;margin-bottom:16px;text-transform:uppercase;">RECONOCIMIENTO Y PRESENCIA</div>
     <div style="background:#f6faff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;text-align:center;">
-      <span style="display:inline-block;font-family:Arial;font-size:12px;font-weight:700;color:#475569;padding:4px 8px;">FITUR · MWC · ITB · IMEX · WTM · IBTM</span>
+      <span data-toggle="subtitle" style="display:inline-block;font-family:Arial;font-size:12px;font-weight:700;color:#475569;padding:4px 8px;">FITUR · MWC · ITB · IMEX · WTM · IBTM</span>
     </div>
   </div>`,
   },

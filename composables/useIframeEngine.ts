@@ -5,6 +5,7 @@ import { iframeEditorStyles } from '~/utils/iframeStyles'
 import { editorStyleBases, type EditorStyleBase } from '~/utils/editorStyles'
 import { sanitizeLinkUrl } from '~/utils/editorLinks'
 import { sanitizePastedHtml, plainTextToHtml } from '~/utils/editorPaste'
+import { EDITOR_RESPONSIVE_CSS } from '~/utils/emailAssembler'
 
 declare global {
   interface Window {
@@ -36,6 +37,7 @@ const { showToast } = useToast()
 let iframeEventsController: AbortController | null = null
 let historyDebounce: ReturnType<typeof setTimeout> | null = null
 let autosaveTimeout: ReturnType<typeof setTimeout> | null = null
+let autosaveGeneration = 0
 
 // ─── Undo / Redo ─────────────────────────────────────────────────────────────
 
@@ -92,8 +94,9 @@ function restoreSnapshot(html: string) {
   if (autosaveTimeout) clearTimeout(autosaveTimeout)
   autosaveTimeout = setTimeout(() => {
     autosaveTimeout = null
+    const generation = autosaveGeneration
     import('~/composables/useTemplateManager').then(({ useTemplateManager }) => {
-      useTemplateManager().saveTemplate(true)
+      if (generation === autosaveGeneration) useTemplateManager().saveTemplate(true)
     })
   }, 800)
 }
@@ -1149,7 +1152,7 @@ function applyStyleBase(style: EditorStyleBase, forceTheme = false, target?: HTM
     }
 
     // 2. Colors & Typography
-    block.querySelectorAll('[data-toggle="title"]').forEach((el: any) => {
+    block.querySelectorAll('[data-toggle="title"], [data-toggle="price"]').forEach((el: any) => {
       el.style.color = style.config.titleColor
       if (style.config.titleLetterSpacing) {
         el.style.letterSpacing = style.config.titleLetterSpacing
@@ -1169,7 +1172,9 @@ function applyStyleBase(style: EditorStyleBase, forceTheme = false, target?: HTM
       }
     })
 
-    block.querySelectorAll('[data-toggle="subtitle"], [data-toggle="ps"], [data-toggle="contact"]').forEach((el: any) => {
+    block.querySelectorAll('[data-toggle="code"]').forEach((el: HTMLElement) => { el.style.color = style.config.accentColor })
+
+    block.querySelectorAll('[data-toggle="subtitle"], [data-toggle="ps"], [data-toggle="contact"], [data-toggle="pricing-feature"]').forEach((el: any) => {
       el.style.color = style.config.subtitleColor
       // Update link colors inside subtitles/contacts
       el.querySelectorAll('a').forEach((link: any) => {
@@ -1240,7 +1245,7 @@ function applyStyleBase(style: EditorStyleBase, forceTheme = false, target?: HTM
         }
       }
     `
-    headStyle.textContent = css
+    headStyle.textContent = css + EDITOR_RESPONSIVE_CSS
   }
 }
 
@@ -1295,8 +1300,9 @@ function triggerAutosave(immediate = false) {
     if (autosaveTimeout) clearTimeout(autosaveTimeout)
     autosaveTimeout = setTimeout(() => {
       autosaveTimeout = null
+      const generation = autosaveGeneration
       import('~/composables/useTemplateManager').then(({ useTemplateManager }) => {
-        useTemplateManager().saveTemplate(true)
+        if (generation === autosaveGeneration) useTemplateManager().saveTemplate(true)
       })
     }, 400)
   } else {
@@ -1308,8 +1314,9 @@ function triggerAutosave(immediate = false) {
     if (autosaveTimeout) clearTimeout(autosaveTimeout)
     autosaveTimeout = setTimeout(() => {
       autosaveTimeout = null
+      const generation = autosaveGeneration
       import('~/composables/useTemplateManager').then(({ useTemplateManager }) => {
-        useTemplateManager().saveTemplate(true)
+        if (generation === autosaveGeneration) useTemplateManager().saveTemplate(true)
       })
     }, 2000)
   }
@@ -1327,6 +1334,7 @@ function hasPendingWork(): boolean {
 // null by then, getSurgicalCleanHtml() returns '' and saveTemplate falls back
 // to the last serialized html — writing stale content over a newer template.
 function teardownEditor() {
+  autosaveGeneration++
   if (historyDebounce) {
     clearTimeout(historyDebounce)
     historyDebounce = null

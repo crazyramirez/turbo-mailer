@@ -8,10 +8,13 @@ const TEXT_FIELDS = new Set(['title', 'subtitle', 'badge', 'button', 'logo', 'pr
 export const EDITOR_AI_CATALOG = editorBlocks.map(({ id, name, content }) => {
   const slots: Record<string, number> = {}
   for (const match of content.matchAll(/\bdata-toggle\s*=\s*["']([^"']+)["']/g)) {
-    const field = match[1] === 'image' ? 'images' : match[1]
-    if (field === 'images' || TEXT_FIELDS.has(field)) slots[field] = (slots[field] || 0) + 1
+    const field = match[1] === 'image' ? 'images' : match[1] === 'pricing-feature' ? 'features' : match[1]
+    if (field === 'images' || field === 'features' || TEXT_FIELDS.has(field)) slots[field] = (slots[field] || 0) + 1
   }
   if (slots.button) slots.buttonUrl = slots.button
+  const socialCount = [...content.matchAll(/\bclass\s*=\s*["']([^"']+)["']/g)].filter(match => match[1].split(/\s+/).includes('social-item')).length
+  if (socialCount) slots.socialUrls = socialCount
+  if (id === 'video' && slots.images) slots.videoUrl = 1
   return { id, name, slots }
 })
 
@@ -51,6 +54,10 @@ function values(value: unknown, count: number): string[] {
   return (Array.isArray(value) ? value : [value]).slice(0, count).map(item => typeof item === 'string' ? item.trim().slice(0, 12000) : '')
 }
 
+function signatureText(value: string): string {
+  return (value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\r\n?|\n/g, '<br>')
+}
+
 export function normalizeEditorAiBlocks(
   input: unknown,
   options: { ctaUrl?: string; signature?: EditorAiSignature | null; includeSignature?: boolean } = {},
@@ -80,9 +87,10 @@ export function normalizeEditorAiBlocks(
       }
       if (Array.isArray(value) && value.length > count) warnings.add(`Se han ajustado los campos repetidos del módulo «${catalog.name}» a sus espacios disponibles.`)
       const list = values(value, count)
-      if (key === 'buttonUrl') {
+      if (['buttonUrl', 'socialUrls', 'videoUrl'].includes(key)) {
         list.forEach((item, i) => {
-          const safe = normalizeEditorAiHref(item)
+          const normalized = normalizeEditorAiHref(item)
+          const safe = key === 'buttonUrl' || /^https?:\/\//i.test(normalized || '') ? normalized : null
           if (item && !safe) warnings.add('Se ha descartado un enlace no válido.')
           list[i] = safe || ''
         })
@@ -106,9 +114,9 @@ export function normalizeEditorAiBlocks(
     const signature = options.signature
     if (Object.values(signature).some(value => typeof value === 'string' && value.trim())) {
       blocks.push({ id: 'signature', fields: {
-        title: signature.name || '', subtitle: signature.details || '',
+        title: signatureText(signature.name), subtitle: signatureText(signature.details),
         contact: [signature.email || '', signature.website || '', signature.phone || ''],
-        images: signature.imageUrl || '', ps: signature.ps || '',
+        images: signature.imageUrl || '', ps: signatureText(signature.ps),
       } })
     }
   }

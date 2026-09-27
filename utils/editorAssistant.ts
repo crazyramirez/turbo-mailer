@@ -19,6 +19,7 @@ export interface AssistantSignatureCandidate {
 }
 
 export interface EditorAssistantContext {
+  brandConfigured: boolean
   brand: BrandLite & { audience?: string; voice?: string; language?: string; tagline?: string }
   signatures: AssistantSignatureCandidate[]
   recentCampaigns: { id: number; name: string; subject: string }[]

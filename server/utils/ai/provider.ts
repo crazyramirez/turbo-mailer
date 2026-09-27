@@ -237,8 +237,16 @@ async function openaiCompatibleJson(p: ResolvedProvider, req: AiJsonRequest, onT
   const body: any = {
     model: p.model,
     messages,
-    temperature: 0.7,
-    max_tokens: Math.min(req.maxTokens ?? 8000, 16000),
+  }
+  const maxTokens = Math.min(req.maxTokens ?? 8000, 16000)
+  if (p.name === 'openai') {
+    // Modern OpenAI models require this limit, including reasoning tokens.
+    // Leave temperature at the model default: reasoning models reject 0.7.
+    body.max_completion_tokens = maxTokens
+  } else {
+    // Preserve the request format expected by local/compatible servers.
+    body.max_tokens = maxTokens
+    body.temperature = 0.7
   }
   // Strict schema mode on OpenAI; plain JSON mode for local servers
   body.response_format = p.name === 'openai'

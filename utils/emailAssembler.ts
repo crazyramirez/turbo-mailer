@@ -8,7 +8,7 @@ import { editorBlocks } from '~/utils/editorBlocks'
 import { editorStyleBases } from '~/utils/editorStyles'
 import { normalizeEditorAiBlocks, normalizeEditorAiHref } from '~/utils/editorAiBlocks'
 
-export type BlockFields = Partial<Record<'badge' | 'title' | 'subtitle' | 'button' | 'buttonUrl' | 'images' | 'image' | 'logo' | 'price' | 'code' | 'contact' | 'ps', string | string[]>>
+export type BlockFields = Partial<Record<'badge' | 'title' | 'subtitle' | 'button' | 'buttonUrl' | 'images' | 'image' | 'logo' | 'price' | 'code' | 'contact' | 'ps' | 'features' | 'socialUrls' | 'videoUrl', string | string[]>>
 
 export interface PlannedBlock {
   id: string
@@ -36,16 +36,25 @@ export interface AssembleOptions {
   onProgress?: (message: string) => void
 }
 
-const SHELL_CSS = `
-    body { margin: 0; padding: 0; width: 100% !important; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-    .main-card { width: 100%; max-width: 820px; margin: 0 auto; overflow: hidden; }
+// Reused when the live editor rebuilds the theme stylesheet after loading a draft.
+export const EDITOR_RESPONSIVE_CSS = `
     @media only screen and (max-width: 600px) {
       .header-block, .body-block, .methodology-block, .presence-block, .card-block, .cta-block, .signature-block, .hero-block, .product-block {
         padding-left: 20px !important;
         padding-right: 20px !important;
       }
       .grid-quad-td { display: inline-block !important; width: 50% !important; box-sizing: border-box !important; padding: 4px !important; }
+      .main-card .ai-layout-row { display: block !important; width: 100% !important; }
+      .main-card .ai-layout-pairs { font-size: 0 !important; }
+      .main-card .ai-layout-stack { display: block !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; padding-bottom: 12px !important; }
+      .main-card .ai-layout-half { display: inline-block !important; width: 50% !important; box-sizing: border-box !important; vertical-align: top !important; padding: 4px !important; }
+      .main-card .ai-layout-spacer { display: none !important; }
     }`
+
+const SHELL_CSS = `
+    body { margin: 0; padding: 0; width: 100% !important; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    .main-card { width: 100%; max-width: 820px; margin: 0 auto; overflow: hidden; }
+    ${EDITOR_RESPONSIVE_CSS}`
 
 function asList(v: string | string[] | undefined): string[] {
   if (v === undefined || v === null) return []
@@ -155,7 +164,7 @@ export function applyStyleToDocument(doc: Document, styleId: string, brand?: Bra
         if (el.style.border && /e2e8f0|226, 232, 240/i.test(el.style.border)) el.style.borderColor = cfg.borderColor
       })
     }
-    block.querySelectorAll<HTMLElement>('[data-toggle="title"]').forEach((el) => {
+    block.querySelectorAll<HTMLElement>('[data-toggle="title"], [data-toggle="price"]').forEach((el) => {
       el.style.color = isHeader ? cfg.headerText : cfg.titleColor
       el.style.fontFamily = headingFont
       if (cfg.titleLetterSpacing) el.style.letterSpacing = cfg.titleLetterSpacing
@@ -164,7 +173,8 @@ export function applyStyleToDocument(doc: Document, styleId: string, brand?: Bra
       el.style.color = isHeader ? cfg.headerText : cfg.accentColor
       if (cfg.labelFontFamily) el.style.fontFamily = cfg.labelFontFamily
     })
-    block.querySelectorAll<HTMLElement>('[data-toggle="subtitle"], [data-toggle="ps"], [data-toggle="contact"]').forEach((el) => {
+    block.querySelectorAll<HTMLElement>('[data-toggle="code"]').forEach(el => { el.style.color = cfg.accentColor })
+    block.querySelectorAll<HTMLElement>('[data-toggle="subtitle"], [data-toggle="ps"], [data-toggle="contact"], [data-toggle="pricing-feature"]').forEach((el) => {
       el.style.color = isHeader ? cfg.headerText : cfg.subtitleColor
       el.querySelectorAll<HTMLElement>('a').forEach((a) => {
         if (!a.getAttribute('data-toggle')) a.style.color = cfg.accentColor
@@ -195,6 +205,15 @@ export async function assembleEmail(opts: AssembleOptions): Promise<string> {
     const root = doc.getElementById('root')!
     const f = planned.fields
     root.querySelector('.editable-block')?.setAttribute('data-ai-block-id', planned.id)
+    if (['grid-2', 'grid-3', 'grid-4', 'pricing', 'product'].includes(planned.id)) {
+      root.querySelectorAll('tr').forEach(row => {
+        row.classList.add('ai-layout-row')
+        if (planned.id === 'grid-4') row.classList.add('ai-layout-pairs')
+      })
+      root.querySelectorAll('td').forEach(cell => cell.classList.add(
+        planned.id === 'grid-4' ? 'ai-layout-half' : cell.hasAttribute('valign') ? 'ai-layout-stack' : 'ai-layout-spacer',
+      ))
+    }
 
     if (planned.id === 'unsubscribe') {
       const sub = root.querySelector('[data-toggle="subtitle"]')
@@ -204,9 +223,9 @@ export async function assembleEmail(opts: AssembleOptions): Promise<string> {
       continue
     }
 
-    for (const key of ['badge', 'title', 'subtitle', 'price', 'code', 'ps'] as const) {
+    for (const key of ['badge', 'title', 'subtitle', 'price', 'code', 'ps', 'features'] as const) {
       const values = asList(f[key])
-      root.querySelectorAll(`[data-toggle="${key}"]`).forEach((el, i) => {
+      root.querySelectorAll(`[data-toggle="${key === 'features' ? 'pricing-feature' : key}"]`).forEach((el, i) => {
         const value = values[i]
         if (!value) { el.remove(); return }
         setText(el, value)
@@ -232,9 +251,7 @@ export async function assembleEmail(opts: AssembleOptions): Promise<string> {
     root.querySelectorAll('[data-toggle="contact"]').forEach((el, i) => {
       const value = contacts[i]
       if (!value) { el.remove(); return }
-      const text = doc.createElement('div')
-      setText(text, value)
-      const plain = text.textContent?.trim() || ''
+      const plain = value.trim()
       if (!plain) { el.remove(); return }
       const url = /^[^\s@]+@[^\s@]+$/.test(plain) ? normalizeEditorAiHref(`mailto:${plain}`)
         : /^\+?[\d][\d\s().-]*$/.test(plain) ? normalizeEditorAiHref(`tel:${plain.replace(/[^+\d]/g, '')}`)
@@ -282,16 +299,40 @@ export async function assembleEmail(opts: AssembleOptions): Promise<string> {
       } else el.remove()
     }
 
+    const socialUrls = asList(f.socialUrls)
+    root.querySelectorAll('.social-item').forEach((el, i) => {
+      const url = normalizeEditorAiHref(socialUrls[i] || '')
+      if (!url || !/^https?:\/\//i.test(url)) { el.remove(); return }
+      el.setAttribute('href', url)
+      el.setAttribute('target', '_blank')
+      el.setAttribute('rel', 'noopener noreferrer')
+    })
+    if (planned.id === 'video') {
+      const container = root.querySelector('[data-toggle="image"]')
+      const videoUrl = normalizeEditorAiHref(asList(f.videoUrl)[0] || '')
+      if (container && videoUrl && /^https?:\/\//i.test(videoUrl)) {
+        const link = doc.createElement('a')
+        link.setAttribute('href', videoUrl)
+        link.setAttribute('target', '_blank')
+        link.setAttribute('rel', 'noopener noreferrer')
+        link.setAttribute('style', 'display:block;position:relative;text-decoration:none;')
+        link.append(...Array.from(container.childNodes))
+        container.appendChild(link)
+      } else container?.remove()
+    }
+
     // Some native examples include untargeted sample features, social links and
     // decorative text. They must never become claims in a generated campaign.
-    root.querySelectorAll('[data-toggle="pricing-features"], [data-toggle="pricing-feature"]').forEach(el => el.remove())
+    root.querySelectorAll('[data-toggle="pricing-features"]').forEach(el => {
+      if (!el.querySelector('[data-toggle="pricing-feature"]')) el.remove()
+    })
     root.querySelectorAll('a').forEach(link => {
       if (!normalizeEditorAiHref(link.getAttribute('href') || '')) link.remove()
     })
     root.querySelectorAll<HTMLElement>('[style]').forEach(el => {
       if (/placehold\.co|placeholder\.com/i.test(el.getAttribute('style') || '')) el.style.removeProperty('background')
     })
-    const boundFields = '[data-toggle="badge"],[data-toggle="title"],[data-toggle="subtitle"],[data-toggle="button"],[data-toggle="contact"],[data-toggle="price"],[data-toggle="code"],[data-toggle="ps"]'
+    const boundFields = '[data-toggle="badge"],[data-toggle="title"],[data-toggle="subtitle"],[data-toggle="button"],[data-toggle="contact"],[data-toggle="price"],[data-toggle="code"],[data-toggle="ps"],[data-toggle="pricing-feature"]'
     const removeSampleText = (node: Node) => {
       if (node.nodeType === 3 && node.textContent?.trim() && !node.parentElement?.closest(boundFields)) node.parentNode?.removeChild(node)
       else Array.from(node.childNodes).forEach(removeSampleText)

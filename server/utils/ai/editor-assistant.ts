@@ -86,7 +86,7 @@ export function parseEditorAssistantBrief(raw: unknown): EditorAssistantBrief {
     signature = {
       name: text(s.name, 160), details: text(s.details, 600), email: text(s.email, 254),
       website: httpUrl(s.website) || (/^[\w.-]+\.[a-z]{2,}(?:\/|$)/i.test(text(s.website, 2000)) ? httpUrl(`https://${s.website}`) : ''),
-      phone: text(s.phone, 80), imageUrl: imageUrl(s.imageUrl), ps: text(s.ps, 800),
+      phone: text(s.phone, 80), imageUrl: imageUrl(s.imageUrl), ps: text(s.ps, 1000),
     }
     if (signature.email && !isValidEmail(signature.email)) throw createError({ statusCode: 400, statusMessage: 'Revisa el email de la firma.' })
     if (!signature.name && !signature.email && !signature.details && !signature.website && !signature.phone) signature = null
@@ -102,6 +102,7 @@ export function parseEditorAssistantBrief(raw: unknown): EditorAssistantBrief {
 
 interface ModelDraft { name: string; subject: string; preheader: string; rationale: string; blocks: PlannedBlock[] }
 const values = (v: unknown): string[] => Array.isArray(v) ? v.map(x => typeof x === 'string' ? x : '') : []
+const visibleCopy = (value: string) => value.replace(/<[^>]*>/g, '').replace(/&nbsp;|&#(?:160|x0*a0);/gi, ' ').trim()
 
 /** Check useful content, not only JSON syntax, before it reaches the editor. */
 export function editorPlanIssues(plan: ModelDraft): string[] {
@@ -119,7 +120,7 @@ export function editorPlanIssues(plan: ModelDraft): string[] {
     for (const key of ['title', 'subtitle'] as const) {
       const count = def.slots[key] ?? 0
       const entries = values(fields[key])
-      if (count && (entries.length < count || entries.slice(0, count).some(v => !v.trim()))) issues.push(`${block.id}: completa sus ${count} campos ${key}.`)
+      if (count && (entries.length < count || entries.slice(0, count).some(v => !visibleCopy(v)))) issues.push(`${block.id}: completa sus ${count} campos ${key}.`)
     }
     if (/tu propuesta de valor principal|describe aqu[ií]|lorem ipsum|novasphere|tudominio\.com|alex rivera/i.test(JSON.stringify(fields))) issues.push(`${block.id}: contiene texto de ejemplo.`)
     if (block.id === 'coupon' && !values(fields.code).some(v => v.trim())) issues.push('coupon: falta el código real del cupón.')
@@ -178,44 +179,54 @@ export async function generateEditorAssistant(body: Record<string, unknown>): Pr
       messages: [{ role: 'user', content: user }, ...(attempt ? [{ role: 'user' as const, content: `La propuesta no pasó la revisión de módulos: ${issues.join(' ')} Devuelve una propuesta completa que corrija estos problemas.` }] : [])],
       schema: EDITOR_ASSISTANT_SCHEMA, effort: 'high', maxTokens: 16000,
     })
+    for (const block of Array.isArray(plan?.blocks) ? plan.blocks : []) {
+      if (!block?.fields || typeof block.fields !== 'object') continue
+      for (const field of ['badge', 'title', 'subtitle', 'button', 'price', 'code', 'ps', 'features'] as const) {
+        block.fields[field] = values(block.fields[field]).map(inlineCopy)
+      }
+    }
     issues = editorPlanIssues(plan)
-    if (!issues.length) break
+    if (issues.length) continue
+
+    // Validate the effective design after filtering too: rejected images must
+    // not turn a superficially complete plan into an empty campaign.
+    const proposalWarnings: string[] = []
+    for (const block of plan.blocks) {
+      const f = block.fields
+      const slots = EDITOR_AI_CATALOG.find(c => c.id === block.id)!.slots
+      if (slots.button) {
+        f.buttonUrl = values(f.buttonUrl).map(u => {
+          if (links.includes(httpUrl(u))) return httpUrl(u)
+          if (u) proposalWarnings.push('Se han corregido enlaces propuestos que no estaban entre tus referencias.')
+          return brief.ctaUrl
+        })
+        if (brief.ctaUrl && !values(f.buttonUrl).some(Boolean)) f.buttonUrl = [brief.ctaUrl]
+        if (brief.ctaText) f.button = Array.from({ length: slots.button }, () => brief.ctaText)
+      }
+      if (slots.images) f.images = values(f.images).map(u => {
+        if (assets.includes(u)) return u
+        if (u && block.id !== 'signature') proposalWarnings.push('Se han omitido imágenes que no procedían de tus referencias.')
+        return ''
+      })
+      if (slots.logo) f.logo = logo ? [logo] : []
+      for (const field of ['socialUrls', 'videoUrl'] as const) {
+        if (slots[field]) f[field] = values(f[field]).map(u => links.includes(httpUrl(u)) ? httpUrl(u) : '')
+      }
+    }
+    plan.blocks = plan.blocks.filter(b => {
+      if (['image', 'video'].includes(b.id) && (!values(b.fields.images).some(Boolean) || (b.id === 'video' && !values(b.fields.videoUrl).some(Boolean)))) {
+        proposalWarnings.push('Se ha omitido un módulo visual sin imagen o enlace verificado.')
+        return false
+      }
+      return true
+    })
+    issues = editorPlanIssues(plan)
+    if (issues.length) continue
+    warnings.push(...proposalWarnings)
+    break
   }
   if (!plan || issues.length) throw new AiError(`No se pudo obtener un diseño completo y válido. ${issues.join(' ')}`, 'invalid_output')
 
-  // Factual assets and identity are pinned to the brief, independently of model output.
-  for (const block of plan.blocks) {
-    const f = block.fields
-    const slots = EDITOR_AI_CATALOG.find(c => c.id === block.id)!.slots
-    for (const field of ['badge', 'title', 'subtitle', 'button', 'price', 'code', 'ps', 'features'] as const) {
-      f[field] = values(f[field]).map(inlineCopy)
-    }
-    if (slots.button) {
-      f.buttonUrl = values(f.buttonUrl).map(u => {
-        if (links.includes(httpUrl(u))) return httpUrl(u)
-        if (u) warnings.push('Se han corregido enlaces propuestos que no estaban entre tus referencias.')
-        return brief.ctaUrl
-      })
-      if (brief.ctaUrl && !values(f.buttonUrl).some(Boolean)) f.buttonUrl = [brief.ctaUrl]
-      if (brief.ctaText) f.button = Array.from({ length: slots.button }, () => brief.ctaText)
-    }
-    if (slots.images) f.images = values(f.images).map(u => {
-      if (assets.includes(u)) return u
-      if (u && block.id !== 'signature') warnings.push('Se han omitido imágenes que no procedían de tus referencias.')
-      return ''
-    })
-    if (slots.logo) f.logo = logo ? [logo] : []
-    for (const field of ['socialUrls', 'videoUrl'] as const) {
-      if (slots[field]) f[field] = values(f[field]).map(u => links.includes(httpUrl(u)) ? httpUrl(u) : '')
-    }
-  }
-  plan.blocks = plan.blocks.filter(b => {
-    if (['image', 'video'].includes(b.id) && (!values(b.fields.images).some(Boolean) || (b.id === 'video' && !values(b.fields.videoUrl).some(Boolean)))) {
-      warnings.push('Se ha omitido un módulo visual sin imagen o enlace verificado.')
-      return false
-    }
-    return true
-  })
   const normalized = normalizeEditorAiBlocks(plan.blocks, { ctaUrl: brief.ctaUrl, signature: brief.signature, includeSignature: brief.includeSignature && !!brief.signature })
   if (!brief.ctaUrl) warnings.push('No has indicado un enlace principal. Puedes añadirlo en el paso Contenido y volver a generar.')
   if (brief.includeSignature && !brief.signature) warnings.push('No se añadió una firma porque no hay datos confirmados. Puedes completarlos en el paso Firma.')
