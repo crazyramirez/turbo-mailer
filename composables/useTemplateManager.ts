@@ -16,6 +16,14 @@ const {
 
 const { showToast } = useToast()
 
+// A template switch must be able to drain autosaves before persisting its own
+// snapshot. Capture the destination when each save starts, never on completion.
+const pendingSaves = new Set<Promise<void>>()
+
+async function awaitPendingSaves() {
+  while (pendingSaves.size) await Promise.allSettled([...pendingSaves])
+}
+
 async function loadTemplates() {
   try {
     const all = await $fetch<{ name: string; path: string }[]>('/api/templates')
@@ -130,10 +138,18 @@ async function renameTemplate(oldName: string) {
   })
 }
 
-async function saveTemplate(silent = false) {
+function saveTemplate(silent = false): Promise<void> {
+  const pending = performSaveTemplate(silent)
+  pendingSaves.add(pending)
+  void pending.finally(() => pendingSaves.delete(pending))
+  return pending
+}
+
+async function performSaveTemplate(silent = false) {
   // Without a template name the server rejects the POST: autosave must not
   // fire blind 400s (the localStorage draft already covers unnamed work).
   if (!currentTemplate.value) return
+  const templateName = currentTemplate.value
   if (!silent) isSaving.value = true
   try {
     // Fallback to the serialized state when the iframe is already gone
@@ -143,14 +159,14 @@ async function saveTemplate(silent = false) {
 
     await $fetch('/api/templates', {
       method: 'POST',
-      body: { name: currentTemplate.value, content: finalHtml },
+      body: { name: templateName, content: finalHtml },
     })
 
-    localStorage.setItem('last_edited_template', currentTemplate.value)
+    if (currentTemplate.value === templateName) localStorage.setItem('last_edited_template', templateName)
 
     if (typeof BroadcastChannel !== 'undefined') {
       const bc = new BroadcastChannel('TurboMailer-templates')
-      bc.postMessage({ type: 'template-saved', name: currentTemplate.value, content: finalHtml })
+      bc.postMessage({ type: 'template-saved', name: templateName, content: finalHtml })
       bc.close()
     }
 
@@ -160,7 +176,7 @@ async function saveTemplate(silent = false) {
     }
 
     const now = new Date()
-    lastSavedTime.value = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0')
+    if (currentTemplate.value === templateName) lastSavedTime.value = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0')
   } catch {
     if (!silent) showToast((useNuxtApp().$i18n as any).t('editor.template_save_error'), 'error')
   } finally {
@@ -285,6 +301,7 @@ export function useTemplateManager() {
     duplicateTemplate,
     renameTemplate,
     saveTemplate,
+    awaitPendingSaves,
     handleSave,
     createNewTemplate,
     autoCreateTemplate,
