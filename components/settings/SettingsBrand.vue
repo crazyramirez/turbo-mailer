@@ -120,7 +120,6 @@ function addTo(key: "valueProps" | "products" | "doNotSay") {
   max-height: 48px;
   max-width: 200px;
   margin-top: 6px;
-  background: #fff;
   border-radius: 6px;
   padding: 4px;
   align-self: flex-start;
