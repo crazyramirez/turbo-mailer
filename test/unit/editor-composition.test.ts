@@ -189,6 +189,9 @@ describe('module element movement', () => {
     const onChange = vi.fn()
     dragController = new AbortController()
     setupPartDragging(doc, { signal: dragController.signal, beforeChange: engine.pushToHistory, onChange, hint: 'Esc cancels' })
+    getModuleParts(block).forEach((part, index) => {
+      vi.spyOn(part, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, index * 80, 200, 40))
+    })
     return { parts: getModuleParts(block), onChange }
   }
 
@@ -200,9 +203,9 @@ describe('module element movement', () => {
     expect(doc.querySelector('.tm-part-dragging')).toBeNull()
     vi.advanceTimersByTime(1)
     expect(badge.classList.contains('tm-part-dragging')).toBe(true)
-    pointer(doc, 'pointermove', 20, 100)
+    pointer(doc, 'pointermove', 20, 110)
     expect(doc.querySelector('.tm-part-drop-guide')).not.toBeNull()
-    pointer(doc, 'pointerup', 20, 100)
+    pointer(doc, 'pointerup', 20, 110)
     expect(getModuleParts(block).slice(0, 2)).toEqual([title, badge])
     expect(onChange).toHaveBeenCalledOnce()
     expect(doc.querySelector('.tm-part-dragging, .tm-part-drop-guide, .tm-part-drag-hint')).toBeNull()
@@ -226,6 +229,45 @@ describe('module element movement', () => {
     dragController!.abort()
     vi.advanceTimersByTime(500)
     expect(doc.querySelector('.tm-part-dragging')).toBeNull()
+  })
+
+  it('shows no guide or history change for the existing position', () => {
+    const { parts: [badge, title], onChange } = dragSetup()
+    vi.spyOn(doc, 'elementFromPoint').mockReturnValue(title)
+    const history = [...state.undoStack.value]
+    pointer(badge, 'pointerdown')
+    vi.advanceTimersByTime(450)
+    pointer(doc, 'pointermove', 20, 90)
+    expect(doc.querySelector<HTMLElement>('.tm-part-drop-guide')!.style.display).toBe('none')
+    pointer(doc, 'pointerup', 20, 90)
+    expect(onChange).not.toHaveBeenCalled()
+    expect(state.undoStack.value).toEqual(history)
+  })
+
+  it('rechecks the release point instead of dropping onto a stale target', () => {
+    const { parts: [badge, title], onChange } = dragSetup()
+    const hit = vi.spyOn(doc, 'elementFromPoint').mockReturnValue(title)
+    pointer(badge, 'pointerdown')
+    vi.advanceTimersByTime(450)
+    pointer(doc, 'pointermove', 20, 110)
+    expect(doc.querySelector<HTMLElement>('.tm-part-drop-guide')!.style.display).toBe('block')
+    hit.mockReturnValue(doc.body)
+    pointer(doc, 'pointerup', 400, 400)
+    expect(onChange).not.toHaveBeenCalled()
+    expect(getModuleParts(block)[0]).toBe(badge)
+  })
+
+  it('keeps native module placeholders out of an internal drag', () => {
+    load('hero')
+    engine.setupIframeEvents(doc)
+    const [badge] = getModuleParts(block)
+    doc.body.insertAdjacentHTML('beforeend', '<div id="drop-placeholder" data-ignore-save="true"></div>')
+    pointer(badge, 'pointerdown')
+    vi.advanceTimersByTime(450)
+    expect(doc.getElementById('drop-placeholder')).toBeNull()
+    badge.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true }))
+    expect(doc.getElementById('drop-placeholder')).toBeNull()
+    expect(state.isDraggingOverIframe.value).toBe(false)
   })
 })
 

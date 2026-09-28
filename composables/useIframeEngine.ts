@@ -977,6 +977,11 @@ function setupIframeEvents(doc: Document) {
 
   doc.addEventListener('dragover', (e: DragEvent) => {
     e.preventDefault()
+    if (doc.body.classList.contains('tm-reordering')) {
+      doc.getElementById('drop-placeholder')?.remove()
+      isDraggingOverIframe.value = false
+      return
+    }
     isDraggingOverIframe.value = true
     const height = doc.documentElement.clientHeight || iframeRef.value!.clientHeight
     if (e.clientY < 100) iframeRef.value!.contentWindow?.scrollBy(0, -20)

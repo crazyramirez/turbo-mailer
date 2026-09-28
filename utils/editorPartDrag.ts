@@ -1,4 +1,5 @@
 import { getGridItems, getMovableElement, getMovePeers, moveModulePart } from './editorComposition'
+import { getPartDrop } from './editorPartDrop'
 
 interface PartDragOptions {
   signal: AbortSignal
@@ -13,8 +14,6 @@ export function setupPartDragging(doc: Document, options: PartDragOptions): void
   let pending: ReturnType<typeof setTimeout> | undefined
   let source: HTMLElement | null = null
   let block: HTMLElement | null = null
-  let target: HTMLElement | null = null
-  let after = false
   let active = false
   let pointerId = -1
   let startX = 0
@@ -32,7 +31,7 @@ export function setupPartDragging(doc: Document, options: PartDragOptions): void
     marker?.remove()
     badge?.remove()
     marker = badge = null
-    source = block = target = null
+    source = block = null
     active = false
   }
   const candidate = (el: HTMLElement, module: HTMLElement) => getMovableElement(el, module) ||
@@ -57,6 +56,7 @@ export function setupPartDragging(doc: Document, options: PartDragOptions): void
       doc.getSelection()?.removeAllRanges()
       source.classList.add('tm-part-dragging')
       doc.body.classList.add('tm-reordering')
+      doc.getElementById('drop-placeholder')?.remove()
       marker = doc.createElement('div')
       marker.className = 'tm-part-drop-guide'
       marker.dataset.ignoreSave = 'true'
@@ -77,17 +77,13 @@ export function setupPartDragging(doc: Document, options: PartDragOptions): void
       return
     }
     e.preventDefault()
-    const hit = doc.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null
-    target = getMovePeers(source, block).find(peer => peer !== source && (peer === hit || !!hit && peer.contains(hit))) || null
-    if (marker) marker.style.display = target ? 'block' : 'none'
-    if (target && marker) {
-      const rect = target.getBoundingClientRect()
-      const origin = source.getBoundingClientRect()
-      const horizontal = Math.min(rect.bottom, origin.bottom) > Math.max(rect.top, origin.top) && Math.abs(rect.left - origin.left) > 8
-      after = horizontal ? e.clientX > rect.left + rect.width / 2 : e.clientY > rect.top + rect.height / 2
-      marker.style.cssText = horizontal
-        ? `display:block;left:${after ? rect.right : rect.left}px;top:${rect.top}px;width:3px;height:${rect.height}px`
-        : `display:block;left:${rect.left}px;top:${after ? rect.bottom : rect.top}px;width:${rect.width}px;height:3px`
+    const drop = getPartDrop(block, source, e.clientX, e.clientY)
+    if (marker) {
+      if (!drop) marker.style.display = 'none'
+      else {
+        const { left, top, width, height } = drop.guide
+        marker.style.cssText = `display:block;left:${left}px;top:${top}px;width:${width}px;height:${height}px`
+      }
     }
     const height = doc.defaultView?.innerHeight || 800
     if (e.clientY < 60) doc.defaultView?.scrollBy(0, -16)
@@ -99,9 +95,10 @@ export function setupPartDragging(doc: Document, options: PartDragOptions): void
     if (active) {
       e.preventDefault()
       suppressClickUntil = Date.now() + 350
-      if (source && target && block) {
+      const drop = source && block ? getPartDrop(block, source, e.clientX, e.clientY) : null
+      if (source && block && drop) {
         options.beforeChange()
-        if (moveModulePart(block, source, target, after)) options.onChange(block, source)
+        if (moveModulePart(block, source, drop.target, drop.after)) options.onChange(block, source)
       }
     }
     reset()
