@@ -46,7 +46,10 @@ const SCALABLE_TEXT_SELECTOR = 'div, p, span, h1, h2, h3, td, b, strong, a, i, u
 // ─── Selection ───────────────────────────────────────────────────────────────
 
 function selectElement(el: HTMLElement, subEl?: HTMLElement, skipScroll = false) {
+  if (subEl && !el.contains(subEl)) subEl = undefined
   if (selectedElement.value) selectedElement.value.classList.remove('selected')
+  el.ownerDocument.querySelectorAll('.sub-selected-focus').forEach(part => part.classList.remove('sub-selected-focus'))
+  if (subEl && subEl !== el) subEl.classList.add('sub-selected-focus')
   
   selectedElement.value = el
   selectedSubElement.value = subEl || null
@@ -114,6 +117,7 @@ function selectElement(el: HTMLElement, subEl?: HTMLElement, skipScroll = false)
 
 function deselect() {
   if (selectedElement.value) selectedElement.value.classList.remove('selected')
+  selectedSubElement.value?.classList.remove('sub-selected-focus')
   selectedElement.value = null
   selectedSubElement.value = null
   activePanel.value = 'layers'

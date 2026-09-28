@@ -7,6 +7,8 @@ import { sanitizeLinkUrl } from '~/utils/editorLinks'
 import { sanitizePastedHtml, plainTextToHtml } from '~/utils/editorPaste'
 import { EDITOR_RESPONSIVE_CSS } from '~/utils/emailAssembler'
 import { annotateEmailLayout } from '~/utils/emailLayout'
+import { setupPartDragging } from '~/utils/editorPartDrag'
+import { alignSelectedText, getSelectedTextBlocks, type TextAlignment } from '~/utils/editorTextSelection'
 
 declare global {
   interface Window {
@@ -39,6 +41,7 @@ let iframeEventsController: AbortController | null = null
 let historyDebounce: ReturnType<typeof setTimeout> | null = null
 let autosaveTimeout: ReturnType<typeof setTimeout> | null = null
 let autosaveGeneration = 0
+const initializedBlocks = new WeakSet<HTMLElement>()
 
 // ─── Undo / Redo ─────────────────────────────────────────────────────────────
 
@@ -196,6 +199,7 @@ function initBlock(el: HTMLElement, doc: Document) {
   // Enable inline editing for common text elements with a smarter non-nesting logic
   const textTags = 'div, span, p, h1, h2, h3, b, td, a, i, u, strong, em, font, s, small, sub, sup'
   el.querySelectorAll(textTags).forEach((child: any) => {
+    if (child.closest('[data-ignore-save]')) return
     if (child.dataset.toggle === 'button') {
       child.contentEditable = 'false'
       return
@@ -223,6 +227,8 @@ function initBlock(el: HTMLElement, doc: Document) {
     }
   })
 
+  if (initializedBlocks.has(el)) return
+  initializedBlocks.add(el)
   el.addEventListener('dragstart', () => {
     window.draggedElement = el
     el.classList.add('dragging')
@@ -243,6 +249,9 @@ function injectFloatingToolbar(doc: Document) {
 
   const toolbar = doc.createElement('div')
   toolbar.id = 'floating-toolbar'
+  toolbar.dataset.ignoreSave = 'true'
+  toolbar.setAttribute('role', 'toolbar')
+  toolbar.setAttribute('aria-label', (useNuxtApp().$i18n as any).t('editor.text_toolbar'))
   toolbar.innerHTML = `
     <button data-cmd="bold" title="Negrita"><b>B</b></button>
     <button data-cmd="italic" title="Cursiva"><i>I</i></button>
@@ -254,18 +263,56 @@ function injectFloatingToolbar(doc: Document) {
     <div style="width:1px;height:18px;background:rgba(255,255,255,0.1);margin:auto 4px;"></div>
     <button data-cmd="createLink" title="Insertar Link">🔗</button>
   `
+  const t = (key: string) => (useNuxtApp().$i18n as any).t(`editor.${key}`)
+  const labels: Record<string, string> = { bold: 'text_bold', italic: 'text_italic', underline: 'text_underline', foreColor: 'text_color', fontSizeDec: 'text_smaller', fontSizeInc: 'text_larger', createLink: 'text_link' }
+  const separator = doc.createElement('span')
+  separator.className = 'toolbar-separator'
+  toolbar.append(separator)
+  for (const alignment of ['left', 'center', 'right', 'justify'] as const) {
+    const button = doc.createElement('button')
+    button.dataset.align = alignment
+    button.title = t(`edit_align_${alignment}`)
+    const shortStart = alignment === 'right' ? 8 : alignment === 'center' ? 5 : 2
+    const shortEnd = alignment === 'left' ? 16 : alignment === 'center' ? 19 : 22
+    button.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 4h20M${alignment === 'justify' ? 2 : shortStart} 9H${alignment === 'justify' ? 22 : shortEnd}M2 14h20M${alignment === 'justify' ? 2 : shortStart} 19H${alignment === 'justify' ? 22 : shortEnd}"/></svg>`
+    toolbar.append(button)
+  }
   doc.body.appendChild(toolbar)
 
   toolbar.querySelectorAll('button').forEach((btn) => {
-    btn.addEventListener('mousedown', (e) => {
+    btn.type = 'button'
+    if (btn.dataset.cmd && labels[btn.dataset.cmd]) btn.title = t(labels[btn.dataset.cmd])
+    btn.setAttribute('aria-label', btn.title)
+    btn.addEventListener('mousedown', e => e.preventDefault())
+    btn.addEventListener('click', (e) => {
       e.preventDefault()
+      const selection = doc.getSelection()
+      if (!selection?.rangeCount || selection.isCollapsed) return
+      const savedRange = selection.getRangeAt(0).cloneRange()
+      const restoreSelection = () => {
+        if (!savedRange.startContainer.isConnected || !savedRange.endContainer.isConnected) return false
+        doc.defaultView?.focus()
+        selection.removeAllRanges()
+        selection.addRange(savedRange)
+        return true
+      }
+      if (btn.dataset.align) {
+        pushToHistory()
+        if (alignSelectedText(doc, savedRange, btn.dataset.align as TextAlignment)) {
+          restoreSelection()
+          triggerAutosave(true)
+          doc.dispatchEvent(new Event('selectionchange'))
+        }
+        return
+      }
       const cmd = btn.dataset.cmd
       if (cmd === 'createLink') {
         if (window.parent && (window.parent as any).openLinkPrompt) {
           ;(window.parent as any).openLinkPrompt((url: string) => {
             const safeUrl = sanitizeLinkUrl(url)
             if (safeUrl) {
-              doc.body.focus()
+              if (!restoreSelection()) return
+              pushToHistory()
               doc.execCommand('createLink', false, safeUrl)
               triggerAutosave(true)
             } else if (url) {
@@ -279,8 +326,8 @@ function injectFloatingToolbar(doc: Document) {
             if (color) {
               const win = doc.defaultView
               if (!win) return
-              win.focus()
-              doc.body.focus()
+              if (!restoreSelection()) return
+              pushToHistory()
               
               const selection = win.getSelection()
               if (selection && !selection.isCollapsed) {
@@ -299,6 +346,7 @@ function injectFloatingToolbar(doc: Document) {
           })
         }
       } else if (cmd === 'fontSizeInc' || cmd === 'fontSizeDec') {
+        pushToHistory()
         const win = doc.defaultView
         if (!win) return
         const selection = win.getSelection()
@@ -315,7 +363,7 @@ function injectFloatingToolbar(doc: Document) {
         
         // Apply to the element directly if it's a small text container
         // or wrap the selection if it's part of a larger text
-        if (selection.toString().trim() === container.innerText.trim()) {
+        if (selection.toString().trim() === (container.innerText || container.textContent || '').trim()) {
           container.style.fontSize = newSize + 'px'
           container.style.lineHeight = Math.round(newSize * 1.5) + 'px'
         } else {
@@ -331,9 +379,8 @@ function injectFloatingToolbar(doc: Document) {
         }
         triggerAutosave(true)
       } else {
-        const win = doc.defaultView
-        if (win) win.focus()
-        doc.body.focus()
+        pushToHistory()
+        restoreSelection()
         doc.execCommand(cmd!, false)
         triggerAutosave(true)
       }
@@ -361,6 +408,22 @@ function setupIframeEvents(doc: Document) {
   if (iframeEventsController) iframeEventsController.abort()
   iframeEventsController = new AbortController()
   const { signal } = iframeEventsController
+  setupPartDragging(doc, {
+    signal,
+    beforeChange: pushToHistory,
+    hint: (useNuxtApp().$i18n as any).t('editor.reorder_drag_hint'),
+    onChange: (block, part) => {
+      if (selectedElement.value) selectedElement.value.classList.remove('selected')
+      doc.querySelectorAll('.sub-selected-focus').forEach(el => el.classList.remove('sub-selected-focus'))
+      selectedElement.value = block
+      selectedSubElement.value = part
+      block.classList.add('selected')
+      part.classList.add('sub-selected-focus')
+      activePanel.value = 'edit'
+      refreshLayers()
+      triggerAutosave(true)
+    },
+  })
 
   // ─── Keyboard Shortcuts ───────────────────────────────────────────────────
   doc.addEventListener('keydown', (e: any) => {
@@ -808,21 +871,54 @@ function setupIframeEvents(doc: Document) {
     const toolbar = doc.getElementById('floating-toolbar')
     if (!toolbar) return
     const selection = doc.getSelection()
-    if (!selection || selection.isCollapsed || selection.toString().trim() === '') {
+    if (!selection || !selection.rangeCount || selection.isCollapsed || selection.toString().trim() === '' || doc.body.classList.contains('tm-reordering')) {
       toolbar.style.display = 'none'
       return
     }
-    const rect = selection.getRangeAt(0).getBoundingClientRect()
+    const range = selection.getRangeAt(0)
+    const textBlocks = getSelectedTextBlocks(doc, range)
+    if (!textBlocks.length) { toolbar.style.display = 'none'; return }
+    const rect = range.getBoundingClientRect()
     toolbar.style.display = 'flex'
-    toolbar.style.top = rect.top - 50 + 'px'
-    toolbar.style.left = rect.left + 'px'
-    if (rect.top < 0 || rect.bottom > doc.documentElement.clientHeight) toolbar.style.display = 'none'
+    const width = doc.documentElement.clientWidth || doc.defaultView!.innerWidth
+    const height = doc.documentElement.clientHeight || doc.defaultView!.innerHeight
+    const bounds = toolbar.getBoundingClientRect()
+    toolbar.style.top = Math.max(6, Math.min(height - bounds.height - 6, rect.top >= bounds.height + 12 ? rect.top - bounds.height - 8 : rect.bottom + 8)) + 'px'
+    toolbar.style.left = Math.max(6, Math.min(rect.left + rect.width / 2 - bounds.width / 2, width - bounds.width - 6)) + 'px'
+    if (rect.bottom < 0 || rect.top > height) toolbar.style.display = 'none'
+    toolbar.querySelectorAll<HTMLButtonElement>('button').forEach(button => {
+      if (button.dataset.align) {
+        const active = textBlocks.every(block => {
+          const align = doc.defaultView!.getComputedStyle(block).textAlign || 'left'
+          return (align === 'start' ? 'left' : align === 'end' ? 'right' : align) === button.dataset.align
+        })
+        button.classList.toggle('active', active)
+        button.setAttribute('aria-pressed', String(active))
+      } else if (['bold', 'italic', 'underline'].includes(button.dataset.cmd || '')) {
+        const active = doc.queryCommandState?.(button.dataset.cmd!) || false
+        button.classList.toggle('active', active)
+        button.setAttribute('aria-pressed', String(active))
+      }
+    })
   }
 
   doc.addEventListener('mouseup', updateToolbar, { signal })
   doc.addEventListener('keyup', updateToolbar, { signal })
   doc.addEventListener('selectionchange', updateToolbar, { signal })
   doc.addEventListener('scroll', updateToolbar, { signal })
+  doc.defaultView?.addEventListener('resize', updateToolbar, { signal })
+
+  // Keyboard navigation keeps the inspector attached to the text being edited.
+  doc.addEventListener('focusin', e => {
+    const target = e.target as HTMLElement
+    const block = target.closest<HTMLElement>('.editable-block')
+    if (!block || !target.isContentEditable || target.closest('[data-ignore-save]')) return
+    import('~/composables/useBlockEditor').then(({ useBlockEditor }) => {
+      if (!signal.aborted && target.isConnected && doc.activeElement === target) {
+        useBlockEditor().selectElement(block, target, true)
+      }
+    })
+  }, { signal })
 
   // Los enlaces de contacto (firma) deben apuntar a lo que dice su texto:
   // regenerar el href desde el texto editado en cada cambio
@@ -1291,7 +1387,8 @@ function getSurgicalCleanHtml(): string {
   annotateEmailLayout(clone)
 
   clone.classList.remove('dark-mode-simulation')
-  clone.querySelector('body')?.classList.remove('preview-active')
+  clone.querySelector('body')?.classList.remove('preview-active', 'tm-reordering')
+  clone.querySelectorAll('.tm-part-dragging').forEach(el => el.classList.remove('tm-part-dragging'))
   clone.querySelectorAll('[data-ignore-save]').forEach(el => el.remove())
   clone.querySelectorAll('.drag-over-top, .drag-over-bottom, .ai-improving, .block-updated-glow, .module-remove-reveal').forEach(el => {
     el.classList.remove('drag-over-top', 'drag-over-bottom', 'ai-improving', 'block-updated-glow', 'module-remove-reveal')

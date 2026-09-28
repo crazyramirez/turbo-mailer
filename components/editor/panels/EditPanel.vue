@@ -24,6 +24,7 @@ import {
 import { useEditorState } from "~/composables/useEditorState";
 import { useBlockEditor } from "~/composables/useBlockEditor";
 import ButtonControls from "~/components/editor/panels/ButtonControls.vue";
+import ModuleComposition from "~/components/editor/panels/ModuleComposition.vue";
 
 const {
   selectedElement,
@@ -94,6 +95,7 @@ const editableTypes = [
 <template>
   <div v-if="selectedElement" class="edit-controls">
     <ButtonControls />
+    <ModuleComposition />
     <!-- Module Settings -->
     <div
       class="edit-section"

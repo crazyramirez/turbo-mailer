@@ -122,6 +122,10 @@ export const iframeEditorStyles = `
   }
   img { max-width: 100% !important; height: auto; cursor: pointer !important; }
   #floating-toolbar {
+    box-sizing: border-box;
+    max-width: calc(100vw - 12px);
+    width: max-content;
+    flex-wrap: wrap;
     position: fixed;
     display: none;
     background: #0f172a;
@@ -135,6 +139,7 @@ export const iframeEditorStyles = `
     backdrop-filter: blur(10px);
   }
   #floating-toolbar button {
+    flex: 0 0 28px;
     background: transparent;
     border: none;
     color: #94a3b8;
@@ -149,6 +154,13 @@ export const iframeEditorStyles = `
   }
   #floating-toolbar button:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
   #floating-toolbar button.active { color: #6366f1; background: rgba(99, 102, 241, 0.15); }
+  #floating-toolbar button:focus-visible { outline: 2px solid #a5b4fc; outline-offset: 1px; }
+  #floating-toolbar .toolbar-separator { width: 1px; height: 18px; background: #334155; margin: auto 2px; }
+  .tm-reordering, .tm-reordering * { cursor: grabbing !important; user-select: none !important; }
+  .tm-part-dragging { opacity: .45 !important; outline: 2px dashed #818cf8 !important; outline-offset: 3px; }
+  .tm-part-drop-guide { position: fixed; display: none; z-index: 10010; background: #6366f1; box-shadow: 0 0 0 2px #e0e7ff; border-radius: 3px; pointer-events: none; }
+  .tm-part-drag-hint { position: fixed; z-index: 10010; pointer-events: none; background: #312e81; color: #eef2ff; padding: 8px 12px; border-radius: 8px; font: 12px/1.4 Arial, sans-serif; max-width: 220px; box-shadow: 0 6px 20px #0f172a40; }
+  @media (prefers-reduced-motion: reduce) { .sub-selected-active, [contenteditable="true"]:focus { animation: none !important; } }
   @keyframes sub-pulse {
     0% { transform: scale(1); }
     40% { transform: scale(1.08); }

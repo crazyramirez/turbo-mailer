@@ -34,6 +34,7 @@ async function click(target: HTMLElement) {
 describe('selecting buttons inside generated modules', () => {
   beforeEach(() => {
     vi.stubGlobal('ref', ref)
+    vi.stubGlobal('useNuxtApp', () => ({ $i18n: { t: (key: string) => key } }))
     state.resetEditorState()
     state.activePanel.value = 'layers'
     state.imageModal.visible = false
