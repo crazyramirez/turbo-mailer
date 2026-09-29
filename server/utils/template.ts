@@ -102,21 +102,37 @@ function resolveConditionals(tpl: string, contact: Record<string, any>): string 
 // {{ name }}, {{ name | "amigo" }}, {{ name | default: "amigo" }}
 const VAR_RE = /\{\{\s*([\p{L}_][\p{L}\w .-]{0,60}?)\s*(?:\|\s*(?:default\s*:\s*)?"([^"]*)"\s*)?\}\}/gu
 
+// Marks a merge tag that rendered empty, so the punctuation around it can be
+// tidied: "{{company}}, ¿qué…" → "¿Qué…", "Hola {{name}}," → "Hola,".
+const EMPTY = '\u0000'
+
+function tidyEmptyTags(out: string): string {
+  if (!out.includes(EMPTY)) return out
+  return out
+    // Leading tag + separator at the start of the text (subject) or of an element's text
+    .replace(/(^|>)(\s*)\u0000\s*[,;:]\s*([¿¡]?)(\p{Ll}?)/gu, (_m, lead: string, ws: string, mark: string, letter: string) =>
+      lead + ws + mark + letter.toUpperCase())
+    .replace(/[ \t]+\u0000(?=[,.!?;:)])/g, '')
+    .replace(/([ \t])\u0000[ \t]+/g, '$1')
+    .replace(/\u0000/g, '')
+}
+
 function substitute(tpl: string, contact: Record<string, any>): string {
-  return tpl.replace(VAR_RE, (whole, rawName: string, fallback: string | undefined) => {
+  return tidyEmptyTags(tpl.replace(VAR_RE, (whole, rawName: string, fallback: string | undefined) => {
     const name = rawName.trim()
     if (SYSTEM_PLACEHOLDERS.has(name.toUpperCase())) return whole
     const value = lookupVar(contact, name)
     const str = value === null || value === undefined ? '' : String(value)
-    if (!str.trim() && fallback !== undefined) return escapeHtml(fallback)
-    return escapeHtml(str)
-  })
+    const out = !str.trim() && fallback !== undefined ? escapeHtml(fallback) : escapeHtml(str)
+    return out.trim() ? out : EMPTY
+  }))
 }
 
 /**
  * Compiles a template once for reuse across many contacts. Supports aliases,
  * conditionals and fallbacks; every contact value is HTML-escaped. Unknown
- * merge tags render empty (never a raw "{{tag}}" in someone's inbox);
+ * or empty merge tags render empty (never a raw "{{tag}}" in someone's inbox)
+ * and don't leave a dangling comma behind;
  * system placeholders (UNSUBSCRIBE_URL...) are left for the pipeline.
  */
 export function compileTemplate(tpl: string): CompiledTemplate {

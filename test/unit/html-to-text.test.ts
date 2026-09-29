@@ -19,6 +19,13 @@ describe('htmlToText', () => {
     expect(htmlToText('<img src="pixel.gif"><img src="logo.png" alt="ACME">')).toBe('ACME')
   })
 
+  it('does not repeat alt text that is already visible (card image + card title)', () => {
+    const card = '<img src="a.jpg" alt="WOMI: Photo &amp; Video"><div>WOMI: Photo &amp; Video</div><div>Descripción</div>'
+    expect(htmlToText(card + card.replace(/WOMI: Photo &amp; Video/g, 'AR/VR'))).toBe('WOMI: Photo & Video\nDescripción\nAR/VR\nDescripción')
+    // An image link keeps its alt: it is the link's only label
+    expect(htmlToText('<a href="https://x.com"><img src="l.png" alt="ACME"></a><p>ACME</p>')).toBe('ACME (https://x.com)ACME')
+  })
+
   it('removes style/script blocks entirely', () => {
     expect(htmlToText('<style>p{color:red}</style><script>alert(1)</script>Hi')).toBe('Hi')
   })

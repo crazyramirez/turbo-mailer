@@ -133,6 +133,7 @@ beforeEach(() => {
     if (url === '/api/lists') return [{ id: 3, name: 'Clientes activos', contactCount: 42 }, { id: 7, name: 'Otra lista', contactCount: 8 }]
     if (url === '/api/ai/status') return { configured: true }
     if (url === '/api/ai/generate-template') return mocks.generate(options.body)
+    if (url === '/api/email/repair') return { html: options.body.html, changes: [] }
     if (url === '/api/templates') return { success: true }
     if (url === '/api/campaigns') return { id: 91 }
     throw new Error(`Unexpected request: ${url}`)

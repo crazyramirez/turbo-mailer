@@ -444,8 +444,8 @@ export const editorBlocks: EditorBlock[] = [
     content: `<div class="unsubscribe-block editable-block email-block" data-type="Unsuscribir" style="box-sizing:border-box;word-wrap:break-word;overflow-wrap:anywhere;padding:24px 32px;background:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;">
     <div class="email-subtitle" data-toggle="subtitle" style="font-family:Arial;font-size:12px;line-height:1.8;color:#94a3b8;">
       Has recibido este email porque te suscribiste a nuestra lista.<br>
-      Si no deseas recibir más comunicaciones,
-      <a href="{{UNSUBSCRIBE_URL}}" style="color:#4f46e5;text-decoration:underline;">haz clic aquí para darte de baja</a>.
+      Si no deseas recibir más comunicaciones, puedes
+      <a href="{{UNSUBSCRIBE_URL}}" style="color:#4f46e5;text-decoration:underline;">darte de baja de esta lista</a>.
     </div>
   </div>`,
   },

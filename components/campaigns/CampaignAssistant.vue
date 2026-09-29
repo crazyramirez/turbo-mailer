@@ -2,6 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { ArrowLeft, ArrowRight, Check, CheckCircle2, ChevronRight, Copy, Loader2, Monitor, PencilLine, RefreshCw, ShieldCheck, Smartphone, Sparkles, WandSparkles, X } from 'lucide-vue-next'
 import { assembleEmail, imageRefToUrl } from '~/utils/emailAssembler'
+import { repairAssembledHtml } from '~/composables/useAiCampaign'
 import { editorStyleBases } from '~/utils/editorStyles'
 import { editorBlocks } from '~/utils/editorBlocks'
 import { nextCampaignSendDate } from '~/utils/aiCampaignDraft'
@@ -198,7 +199,7 @@ async function generate(isRefinement = false) {
     const response = await $fetch<EditorAssistantDraft>('/api/ai/generate-template', { method: 'POST', body: request, signal: controller.signal, timeout: 180_000 })
     if (seq !== generationSeq || controller.signal.aborted) return
     if (response.type !== 'template' || !Array.isArray(response.blocks) || !response.blocks.length) throw new Error(t('campaign_assistant.invalid_proposal'))
-    const html = await assembleEmail({
+    const assembled = await assembleEmail({
       blocks: response.blocks, styleId: response.styleId,
       brand: brief.useBrandKit && brandAvailable.value ? context.value?.brand : null,
       language: brief.language, title: response.subject || response.name, preheader: response.preheader,
@@ -214,6 +215,9 @@ async function generate(isRefinement = false) {
         } catch { return null }
       },
     })
+    if (seq !== generationSeq || controller.signal.aborted) return
+    // Crops/sizes images for Outlook and converts WebP before anyone sees the draft
+    const html = await repairAssembledHtml(assembled, controller.signal)
     if (seq !== generationSeq || controller.signal.aborted) return
     draft.value = response
     previewHtml.value = html

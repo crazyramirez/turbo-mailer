@@ -962,6 +962,32 @@
       "high": "High",
       "medium": "Medium",
       "low": "Low"
+    },
+    "ai_apply": "Apply",
+    "ai_apply_all": "Apply all ({count})",
+    "ai_applying": "Applying…",
+    "ai_applied": "Applied",
+    "ai_not_found": "Text not found: fix it by hand",
+    "ai_manual": "Manual fix",
+    "ai_applied_summary": "{applied} fix(es) applied",
+    "undo": "Undo",
+    "changes_saved": "Changes saved to the campaign",
+    "undone": "Changes undone",
+    "repair": {
+      "title": "Automatic repair",
+      "hint": "Can be fixed without touching your design:",
+      "run": "Repair now",
+      "running": "Repairing…",
+      "done": "Template repaired:",
+      "nothing": "Nothing needed repairing",
+      "items": {
+        "duplicate_blocks": "{count} module(s) repeated back-to-back are removed",
+        "alt_text": "{count} image alt text(s) with badly encoded symbols (&amp;amp;)",
+        "unsubscribe_text": "Vague unsubscribe link (\"click here\") → \"unsubscribe from this list\"",
+        "webp": "{count} WebP image(s) → JPG/PNG (Outlook for Windows doesn't show WebP)",
+        "image_crop": "{count} image(s) cropped to their box so they don't stretch where object-fit is ignored",
+        "image_size": "{count} image(s) given a fixed width/height for Outlook"
+      }
     }
   },
   "common": {

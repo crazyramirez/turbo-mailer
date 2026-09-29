@@ -24,7 +24,17 @@ describe('applyVars', () => {
   })
 
   it('replaces missing values with empty string', () => {
-    expect(applyVars('Hola {{name}}!', {})).toBe('Hola !')
+    expect(applyVars('Hola {{name}}!', {})).toBe('Hola!')
+  })
+
+  it('tidies the punctuation around an empty merge tag', () => {
+    expect(applyVars('{{Empresa}}, ¿qué experiencia hará que tu evento se recuerde?', {}))
+      .toBe('¿Qué experiencia hará que tu evento se recuerde?')
+    expect(applyVars('{{Empresa}}, ¿qué experiencia?', { company: 'ACME' })).toBe('ACME, ¿qué experiencia?')
+    expect(applyVars('Hola {{name}}, te escribo', {})).toBe('Hola, te escribo')
+    expect(applyVars('<p>{{name}}: novedades</p>', {})).toBe('<p>Novedades</p>')
+    expect(applyVars('Para {{name}} y su equipo', {})).toBe('Para y su equipo')
+    expect(applyVars('<a href="https://x.com/?r={{name}}&y=1">x</a>', {})).toBe('<a href="https://x.com/?r=&y=1">x</a>')
   })
 })
 

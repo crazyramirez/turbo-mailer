@@ -110,4 +110,25 @@ describe('email compile', () => {
     const issues = lintEmailHtml('<div style="display:grid"><img src="a.webp"><svg></svg></div>')
     expect(issues.map(i => i.id).sort()).toEqual(['css_grid', 'svg', 'webp'])
   })
+
+  it('lint ignores text-transform, shadows, guarded rgba() and sized object-fit images', () => {
+    const clean = lintEmailHtml(`<div style="text-transform:uppercase;border:1px solid #e2e8f0;border:1px solid rgba(0,0,0,0.2)">
+      <div style="background:linear-gradient(rgba(0,0,0,.5),#000)">x</div>
+      <img src="a.jpg" width="339" height="200" style="width:100%;height:200px;object-fit:cover"></div>`)
+    expect(clean.map(i => i.id)).toEqual([])
+    const dirty = lintEmailHtml('<div style="transition:all .3s;transform:translateX(-50%);color:rgba(0,0,0,.5)"><img src="a.jpg" style="height:200px;object-fit:cover"></div>')
+    expect(dirty.map(i => `${i.id}:${i.count}`).sort()).toEqual(['animation:2', 'object_fit:1', 'rgba:1'])
+  })
+
+  it('settles CSS email clients drop: var(), calc(), motion and rgba() without fallback', () => {
+    const out = finalizeEmailHtml(`<html><head><style>.a{height:var(--h, auto) !important;object-fit:cover}.b{max-width:calc(100% - 12px);color:red}@media (max-width:600px){.c{transition:all 1s;padding:0}}</style></head>
+      <body style="background-color:#0f172a"><div style="--h:30px;height:var(--h);width:var(--missing);transition:all .3s;border:1px solid rgba(245, 158, 11, 0.3);font-family:&quot;Segoe UI&quot;, Arial">
+      <a style="background-color:rgba(255,255,255,0.5);box-shadow:0 1px 2px rgba(0,0,0,.2)" href="https://x.com">y</a></div></body></html>`)
+    expect(out).toContain('<style>.a{object-fit:cover}.b{color:red}@media (max-width:600px){.c{padding:0}}</style>')
+    // Blended over the dark body: Outlook keeps the solid colour, others the translucent one
+    expect(out).toContain('style="height:30px;border:1px solid #544021;border:1px solid rgba(245, 158, 11, 0.3);font-family:&quot;Segoe UI&quot;, Arial"')
+    expect(out).toContain('style="background-color:#878b95;background-color:rgba(255,255,255,0.5);box-shadow:0 1px 2px rgba(0,0,0,.2)"')
+    expect(finalizeEmailHtml(out)).toBe(out)
+    expect(lintEmailHtml(out).map(i => i.id)).toEqual(['box_shadow'])
+  })
 })

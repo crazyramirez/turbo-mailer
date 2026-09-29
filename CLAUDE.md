@@ -36,6 +36,22 @@ real queue (BullMQ + Redis, pg-boss, Inngest…) behind `startCampaign()`.
   never a duplicate); campaigns left in `sending` auto-resume after boot —
   except `ab_phase = 'waiting'`, which idles until the scheduler picks the winner.
 
+## Email output quality
+
+- `finalizeEmailHtml` (email-compile.ts) runs at send/precheck time only:
+  Outlook ghost table, bulletproof buttons, and `emailSafeCss` (var()/calc()
+  out of `<style>`, inline var() resolved, no transitions, solid fallback
+  before each inline rgba()). Stored/editor HTML keeps the original CSS.
+- `repairEmailHtml` (email-repair.ts) persists fixes into the template:
+  duplicate modules, double-escaped alt, "haz clic aquí" unsubscribe, WebP →
+  JPEG/PNG, cover images cropped to their box + width/height attrs estimated
+  at Outlook's 800px. Precheck shows a dry run; `POST /campaigns/:id/repair`
+  applies it; the AI assistants call `/api/email/repair` on every draft.
+- AI review issues carry `edit` (find/replace); `POST /campaigns/:id/apply-edits`
+  applies them to visible text nodes only. Both endpoints return `previous`
+  for undo.
+- Empty merge tags tidy their punctuation (`{{Empresa}}, ¿qué…` → `¿Qué…`).
+
 ## Campaign status machine
 
 Only `draft | scheduled | paused` are writable via PUT (partial updates;

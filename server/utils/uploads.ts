@@ -2,6 +2,7 @@ import { promises as fs, existsSync } from 'node:fs'
 import path from 'node:path'
 import sharp from 'sharp'
 import { dataPath } from '~/server/utils/data-dir'
+import { assertPublicHttpUrl } from '~/server/utils/ssrf-guard'
 
 // Image library for emails.
 //
@@ -82,15 +83,20 @@ export async function saveImage(buffer: Buffer, originalName: string, prefix = '
     throw new Error(`Formato no admitido (${format ?? 'desconocido'}). Usa JPG, PNG, GIF o WebP.`)
   }
 
-  const img = sharp(buffer, { animated: format === 'gif' || format === 'webp' }).rotate()
+  // WebP becomes a still JPEG/PNG: decoding every frame would stack them into one tall image
+  const img = sharp(buffer, { animated: format === 'gif' }).rotate()
   const resized = meta.width && meta.width > MAX_WIDTH ? img.resize(MAX_WIDTH) : img
   let out: Buffer
   let ext: string
   switch (format) {
     case 'png': out = await resized.png({ compressionLevel: 9, palette: true }).toBuffer(); ext = '.png'; break
     case 'gif': out = await resized.gif().toBuffer(); ext = '.gif'; break
-    // WebP is not rendered by Outlook desktop — store email-safe JPEG
-    case 'webp': out = await resized.jpeg({ quality: 85, mozjpeg: true }).toBuffer(); ext = '.jpg'; break
+    // WebP is not rendered by Outlook desktop — store email-safe JPEG, or PNG
+    // when it has transparency (a logo would otherwise get a black box)
+    case 'webp':
+      if (meta.hasAlpha) { out = await resized.png({ compressionLevel: 9 }).toBuffer(); ext = '.png' }
+      else { out = await resized.jpeg({ quality: 85, mozjpeg: true }).toBuffer(); ext = '.jpg' }
+      break
     default: out = await resized.jpeg({ quality: 85, mozjpeg: true }).toBuffer(); ext = '.jpg'
   }
 
@@ -100,4 +106,43 @@ export async function saveImage(buffer: Buffer, originalName: string, prefix = '
   await fs.mkdir(uploadDir, { recursive: true })
   await fs.writeFile(path.join(uploadDir, name), out)
   return { name, url: `/uploads/${name}` }
+}
+
+/**
+ * Fetches a public image (SSRF-guarded, every redirect hop re-validated,
+ * 15MB cap). Returns the raw bytes; pass them to saveImage() to store them.
+ */
+export async function downloadRemoteImage(url: string): Promise<Buffer> {
+  // SSRF guard: only public http(s) hosts, no private/metadata ranges
+  let currentUrl = await assertPublicHttpUrl(url)
+  let response: Response | null = null
+  for (let hop = 0; hop < 4; hop++) {
+    response = await fetch(currentUrl.href, {
+      redirect: 'manual',
+      signal: AbortSignal.timeout(30_000),
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+      },
+    })
+    if (response.status >= 300 && response.status < 400) {
+      const loc = response.headers.get('location')
+      if (!loc) throw new Error('Redirect without Location header')
+      currentUrl = await assertPublicHttpUrl(new URL(loc, currentUrl).href)
+      continue
+    }
+    break
+  }
+  if (!response) throw new Error('Fetch failed')
+  if (response.status >= 300 && response.status < 400) throw new Error('Too many redirects')
+  if (!response.ok) throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`)
+
+  const contentType = response.headers.get('content-type')
+  if (!contentType || !contentType.startsWith('image/')) {
+    throw new Error(`URL did not return a valid image type. Type: ${contentType}`)
+  }
+  if (Number(response.headers.get('content-length') || 0) > MAX_UPLOAD_BYTES) throw new Error('Image too large (max 15MB)')
+  const buffer = Buffer.from(await response.arrayBuffer())
+  if (buffer.length > MAX_UPLOAD_BYTES) throw new Error('Image too large (max 15MB)')
+  return buffer
 }

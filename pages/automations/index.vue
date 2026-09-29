@@ -2,6 +2,7 @@
 import { Workflow, Plus, Loader2, Hand, ShoppingCart, ShoppingBag, HeartHandshake, Cake, FilePlus2, X, Zap, Trash2, Copy } from "lucide-vue-next";
 import { automationTemplates, type TemplateStep } from "~/utils/automationTemplates";
 import { assembleEmail } from "~/utils/emailAssembler";
+import { repairAssembledHtml } from "~/composables/useAiCampaign";
 import { stepId } from "~/utils/automation-types";
 
 definePageMeta({ layout: "app" });
@@ -44,7 +45,7 @@ async function materialize(steps: TemplateStep[], brand: any, lang: string): Pro
       }));
       step.subject = email.subject;
       step.preheader = email.preheader;
-      step.templateHtml = await assembleEmail({ blocks, styleId: "default", brand, language: lang });
+      step.templateHtml = await repairAssembledHtml(await assembleEmail({ blocks, styleId: "default", brand, language: lang }));
     }
     if (s.type === "condition") {
       step.yes = await materialize(yes ?? [], brand, lang);

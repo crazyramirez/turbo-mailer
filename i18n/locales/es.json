@@ -962,6 +962,32 @@
       "high": "Grave",
       "medium": "Media",
       "low": "Leve"
+    },
+    "ai_apply": "Aplicar",
+    "ai_apply_all": "Aplicar todas ({count})",
+    "ai_applying": "Aplicando…",
+    "ai_applied": "Aplicada",
+    "ai_not_found": "No se encontró el texto: corrígelo a mano",
+    "ai_manual": "Corrección manual",
+    "ai_applied_summary": "{applied} corrección(es) aplicada(s)",
+    "undo": "Deshacer",
+    "changes_saved": "Cambios guardados en la campaña",
+    "undone": "Cambios deshechos",
+    "repair": {
+      "title": "Reparación automática",
+      "hint": "Se puede arreglar sin tocar tu diseño:",
+      "run": "Reparar ahora",
+      "running": "Reparando…",
+      "done": "Plantilla reparada:",
+      "nothing": "No había nada que reparar",
+      "items": {
+        "duplicate_blocks": "{count} módulo(s) repetido(s) seguido(s) se eliminan",
+        "alt_text": "{count} texto(s) alternativo(s) de imagen con símbolos mal codificados (&amp;amp;)",
+        "unsubscribe_text": "Enlace de baja genérico («haz clic aquí») → «darte de baja de esta lista»",
+        "webp": "{count} imagen(es) WebP → JPG/PNG (Outlook Windows no muestra WebP)",
+        "image_crop": "{count} imagen(es) recortadas a su caja para que no se deformen donde se ignora object-fit",
+        "image_size": "{count} imagen(es) con ancho/alto fijados para Outlook"
+      }
     }
   },
   "common": {

@@ -13,6 +13,7 @@ import { latestBlocklistStatus } from '~/server/utils/blocklists'
 import { warmupCapForToday, sentToday } from '~/server/utils/send-limiter'
 import { lintEmailHtml } from '~/server/utils/email-lint'
 import { finalizeEmailHtml } from '~/server/utils/email-compile'
+import { repairEmailHtml, type RepairChange } from '~/server/utils/email-repair'
 
 // Pre-send health check. Every item: { id, group, status, data }.
 //   fail  blocks the send (only for hard problems: no recipients, no
@@ -82,6 +83,7 @@ export default defineEventHandler(async (event) => {
   else push('content', 'preheader', 'pass', { length: campaign.preheader.length })
 
   let score: ReturnType<typeof analyzeContent> | null = null
+  let repairable: RepairChange[] = []
   if (!html.trim()) {
     push('content', 'template', 'fail')
   } else {
@@ -135,6 +137,11 @@ export default defineEventHandler(async (event) => {
     const lint = lintEmailHtml(finalizeEmailHtml(html))
     const serious = lint.filter(l => l.severity === 'warn')
     push('content', 'compat', serious.length ? 'warn' : 'pass', { issues: lint.slice(0, 10), count: serious.length })
+
+    // What the one-click repair (POST /repair) would fix — nothing is written here
+    try {
+      repairable = (await repairEmailHtml(html, { dryRun: true, localOrigin: baseUrl || null })).changes
+    } catch {}
   }
 
   // ── Audience ─────────────────────────────────────────────────────────
@@ -258,5 +265,6 @@ export default defineEventHandler(async (event) => {
   const concurrency = Math.max(1, Math.min(10, Number(config.smtpConcurrency) || 1))
   const etaMinutes = Math.ceil((active * Math.max(pace, 150)) / concurrency / 60_000)
 
-  return { items, blocked, warnings, active, score: score?.score ?? null, etaMinutes, excluded }
+  const editable = ['draft', 'scheduled', 'paused'].includes(campaign.status)
+  return { items, blocked, warnings, active, score: score?.score ?? null, etaMinutes, excluded, repairable: editable ? repairable : [], editable }
 })

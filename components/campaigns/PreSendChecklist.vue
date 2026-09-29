@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import {
-  X, CheckCircle2, AlertTriangle, XCircle, Info, Send, Loader2, ShieldCheck, ChevronDown, Clock, Sparkles,
+  X, CheckCircle2, AlertTriangle, XCircle, Info, Send, Loader2, ShieldCheck, ChevronDown, Clock, Sparkles, Wrench, Undo2, Check,
 } from "lucide-vue-next";
 const { t, te } = useI18n();
 
 const props = defineProps<{ campaignId: number | string }>();
-const emit = defineEmits<{ confirm: []; close: [] }>();
+// updated: the campaign content changed here (repair / AI fixes / undo)
+const emit = defineEmits<{ confirm: []; close: []; updated: [] }>();
 
 type Status = "pass" | "warn" | "fail" | "info";
 interface PrecheckItem {
@@ -15,6 +16,7 @@ interface PrecheckItem {
   status: Status;
   data?: Record<string, any>;
 }
+interface RepairChange { id: string; count: number }
 interface PrecheckResult {
   items: PrecheckItem[];
   blocked: boolean;
@@ -22,6 +24,8 @@ interface PrecheckResult {
   active: number;
   score: number | null;
   etaMinutes: number;
+  repairable?: RepairChange[];
+  editable?: boolean;
 }
 
 const loading = ref(true);
@@ -48,6 +52,83 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
+// After a content change: re-check without the slow live probes (links,
+// spam filter) and keep their last results — repairs don't change links.
+const LIVE_ITEMS = new Set(["links_live", "spam_engine", "spam_engine_unreachable"]);
+const refreshing = ref(false);
+async function refreshPrecheck() {
+  refreshing.value = true;
+  try {
+    const next = await $fetch<PrecheckResult>(`/api/campaigns/${props.campaignId}/precheck`);
+    const kept = (result.value?.items ?? []).filter((i) => LIVE_ITEMS.has(i.id) && !next.items.some((n) => n.id === i.id));
+    next.items = [...next.items, ...kept];
+    next.warnings = next.items.filter((i) => i.status === "warn").length;
+    next.blocked = next.items.some((i) => i.status === "fail");
+    result.value = next;
+  } catch {
+    // The previous result stays on screen
+  } finally {
+    refreshing.value = false;
+  }
+}
+
+// Everything changed from this dialog can be undone in one go: the snapshot
+// keeps the values from before the FIRST change.
+const undoSnapshot = ref<Record<string, unknown> | null>(null);
+const actionError = ref("");
+const notice = ref("");
+async function afterChange(previous: Record<string, unknown> | null) {
+  if (!previous) return;
+  undoSnapshot.value = { ...previous, ...(undoSnapshot.value ?? {}) };
+  notice.value = "";
+  emit("updated");
+  await refreshPrecheck();
+}
+function errorText(e: any): string {
+  return e?.data?.statusMessage || e?.message || String(e);
+}
+
+const repairing = ref(false);
+const repairDone = ref<RepairChange[] | null>(null);
+async function runRepair() {
+  repairing.value = true;
+  actionError.value = "";
+  try {
+    const r = await $fetch<{ changes: RepairChange[]; previous: Record<string, unknown> | null }>(
+      `/api/campaigns/${props.campaignId}/repair`, { method: "POST" });
+    repairDone.value = r.changes;
+    await afterChange(r.previous);
+  } catch (e: any) {
+    actionError.value = errorText(e);
+  } finally {
+    repairing.value = false;
+  }
+}
+function repairLabel(c: RepairChange): string {
+  const key = `precheck.repair.items.${c.id}`;
+  return te(key) ? t(key, { count: c.count }) : c.id;
+}
+
+const undoing = ref(false);
+async function undoChanges() {
+  if (!undoSnapshot.value) return;
+  undoing.value = true;
+  actionError.value = "";
+  try {
+    await $fetch(`/api/campaigns/${props.campaignId}`, { method: "PUT", body: undoSnapshot.value });
+    undoSnapshot.value = null;
+    repairDone.value = null;
+    aiState.value = {};
+    notice.value = t("precheck.undone");
+    emit("updated");
+    await refreshPrecheck();
+  } catch (e: any) {
+    actionError.value = errorText(e);
+  } finally {
+    undoing.value = false;
+  }
+}
 
 onUnmounted(() => window.removeEventListener("keydown", onKeydown));
 
@@ -101,7 +182,8 @@ const scorePct = computed(() => Math.min(100, ((result.value?.score ?? 0) / 10) 
 
 // Optional second opinion: an AI editor reads the email like a recipient
 // would (tone, clarity, promises, broken personalisation, legal footer).
-interface AiReview { verdict: string; issues: { severity: "high" | "medium" | "low"; category: string; problem: string; fix: string }[] }
+interface AiEdit { target: "subject" | "subjectB" | "preheader" | "body" | "none"; find: string; replace: string; occurrence: number }
+interface AiReview { verdict: string; issues: { severity: "high" | "medium" | "low"; category: string; problem: string; fix: string; edit?: AiEdit }[] }
 const aiAvailable = ref(false);
 const aiReview = ref<AiReview | null>(null);
 const aiLoading = ref(false);
@@ -115,10 +197,41 @@ async function runAiReview() {
   aiError.value = "";
   try {
     aiReview.value = await $fetch<AiReview>("/api/ai/review", { method: "POST", body: { campaignId: Number(props.campaignId) } });
+    aiState.value = {};
   } catch (e: any) {
     aiError.value = e?.data?.statusMessage || e.message;
   } finally {
     aiLoading.value = false;
+  }
+}
+
+// One-click AI fixes: each issue's edit is a find → replace on the subject,
+// preheader or visible text; the server reports which ones matched.
+const aiState = ref<Record<number, "applied" | "failed">>({});
+const applying = ref(false);
+function canApply(n: number): boolean {
+  const e = aiReview.value?.issues[n]?.edit;
+  return !!e && e.target !== "none" && !!e.find && result.value?.editable !== false;
+}
+const pendingEdits = computed(() =>
+  (aiReview.value?.issues ?? []).map((_, n) => n).filter((n) => canApply(n) && !aiState.value[n]));
+async function applyAiEdits(indices: number[]) {
+  if (!indices.length || !aiReview.value) return;
+  applying.value = true;
+  actionError.value = "";
+  try {
+    const edits = indices.map((n) => aiReview.value!.issues[n].edit!);
+    const r = await $fetch<{ applied: number[]; failed: number[]; previous: Record<string, unknown> | null }>(
+      `/api/campaigns/${props.campaignId}/apply-edits`, { method: "POST", body: { edits } });
+    const next = { ...aiState.value };
+    for (const k of r.applied) next[indices[k]] = "applied";
+    for (const k of r.failed) next[indices[k]] = "failed";
+    aiState.value = next;
+    await afterChange(r.previous);
+  } catch (e: any) {
+    actionError.value = errorText(e);
+  } finally {
+    applying.value = false;
   }
 }
 </script>
@@ -153,20 +266,62 @@ async function runAiReview() {
             <p>{{ t(`precheck.score_${scoreLevel}`) }}</p>
           </div>
 
+          <div v-if="undoSnapshot || notice || actionError" class="pc-undo" :class="{ err: actionError }">
+            <span v-if="actionError">{{ actionError }}</span>
+            <span v-else-if="undoSnapshot"><Check :size="13" /> {{ t("precheck.changes_saved") }}</span>
+            <span v-else>{{ notice }}</span>
+            <Loader2 v-if="refreshing" :size="12" class="spin" />
+            <button v-if="undoSnapshot" class="pc-link-btn" :disabled="undoing || repairing || applying" @click="undoChanges">
+              <Undo2 :size="12" /> {{ t("precheck.undo") }}
+            </button>
+          </div>
+
+          <section v-if="result.editable !== false && (result.repairable?.length || repairDone)" class="pc-ai pc-repair">
+            <div class="pc-ai-head">
+              <span><Wrench :size="14" /> {{ t("precheck.repair.title") }}</span>
+              <button v-if="result.repairable?.length" class="pc-ai-btn" :disabled="repairing || applying" @click="runRepair">
+                <Loader2 v-if="repairing" :size="12" class="spin" /> {{ repairing ? t("precheck.repair.running") : t("precheck.repair.run") }}
+              </button>
+            </div>
+            <template v-if="repairDone && !result.repairable?.length">
+              <p class="pc-ai-verdict ok">{{ repairDone.length ? t("precheck.repair.done") : t("precheck.repair.nothing") }}</p>
+              <ul v-if="repairDone.length" class="pc-repair-list">
+                <li v-for="c in repairDone" :key="c.id"><Check :size="12" /> {{ repairLabel(c) }}</li>
+              </ul>
+            </template>
+            <template v-else>
+              <p class="pc-ai-verdict">{{ t("precheck.repair.hint") }}</p>
+              <ul class="pc-repair-list">
+                <li v-for="c in result.repairable" :key="c.id">{{ repairLabel(c) }}</li>
+              </ul>
+            </template>
+          </section>
+
           <section v-if="aiAvailable" class="pc-ai">
             <div class="pc-ai-head">
               <span><Sparkles :size="14" /> {{ t("precheck.ai_title") }}</span>
               <button v-if="!aiReview" class="pc-ai-btn" :disabled="aiLoading" @click="runAiReview">
                 <Loader2 v-if="aiLoading" :size="12" class="spin" /> {{ aiLoading ? t("precheck.ai_running") : t("precheck.ai_run") }}
               </button>
+              <button v-else-if="pendingEdits.length > 1" class="pc-ai-btn" :disabled="applying || repairing" @click="applyAiEdits(pendingEdits)">
+                <Loader2 v-if="applying" :size="12" class="spin" /> {{ applying ? t("precheck.ai_applying") : t("precheck.ai_apply_all", { count: pendingEdits.length }) }}
+              </button>
             </div>
             <p v-if="aiError" class="pc-ai-err">{{ aiError }}</p>
             <template v-if="aiReview">
               <p class="pc-ai-verdict">{{ aiReview.verdict }}</p>
               <ul v-if="aiReview.issues.length" class="pc-ai-list">
-                <li v-for="(i, n) in aiReview.issues" :key="n" :class="`sev-${i.severity}`">
+                <li v-for="(i, n) in aiReview.issues" :key="n" :class="[`sev-${i.severity}`, { done: aiState[n] === 'applied' }]">
                   <span class="pc-ai-sev">{{ t(`precheck.ai_sev.${i.severity}`) }}</span>
-                  <div><strong>{{ i.problem }}</strong><span class="pc-ai-fix">→ {{ i.fix }}</span></div>
+                  <div>
+                    <strong>{{ i.problem }}</strong><span class="pc-ai-fix">→ {{ i.fix }}</span>
+                    <span v-if="aiState[n] === 'applied'" class="pc-ai-state ok"><Check :size="12" /> {{ t("precheck.ai_applied") }}</span>
+                    <span v-else-if="aiState[n] === 'failed'" class="pc-ai-state miss">{{ t("precheck.ai_not_found") }}</span>
+                    <button v-else-if="canApply(n)" class="pc-ai-apply" :disabled="applying || repairing" @click="applyAiEdits([n])">
+                      {{ t("precheck.ai_apply") }}
+                    </button>
+                    <span v-else class="pc-ai-state">{{ t("precheck.ai_manual") }}</span>
+                  </div>
                 </li>
               </ul>
               <p v-else class="pc-ai-verdict ok">{{ t("precheck.ai_clean") }}</p>
@@ -554,6 +709,103 @@ async function runAiReview() {
 }
 .pc-ai-fix {
   opacity: 0.75;
+}
+.pc-ai-list li.done > div {
+  opacity: 0.6;
+}
+.pc-ai-apply {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(129, 140, 248, 0.45);
+  background: rgba(99, 102, 241, 0.14);
+  color: #e0e7ff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.pc-ai-apply:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.pc-ai-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 11px;
+  opacity: 0.7;
+}
+.pc-ai-state.ok {
+  color: #34d399;
+  opacity: 1;
+}
+.pc-ai-state.miss {
+  color: #fbbf24;
+  opacity: 1;
+}
+.pc-repair {
+  border-color: rgba(52, 211, 153, 0.3);
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.07), rgba(96, 165, 250, 0.04));
+}
+.pc-repair-list {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-dim, #c9cbe0);
+}
+.pc-repair-list li {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+.pc-repair-list li :deep(svg) {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: #34d399;
+}
+.pc-undo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  background: rgba(52, 211, 153, 0.08);
+  color: #a7f3d0;
+}
+.pc-undo > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+.pc-undo.err {
+  background: rgba(248, 113, 113, 0.08);
+  color: #fca5a5;
+}
+.pc-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.pc-link-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 .pc-ai-sev {
   flex-shrink: 0;

@@ -182,7 +182,8 @@ export async function generateCampaign(input: CampaignBrief, onProgress?: (chars
 
   const system = [
     'Eres director creativo y copywriter senior de email marketing. Diseñas campañas que llegan a la bandeja de entrada y convierten: asunto irresistible pero honesto, un único objetivo claro, jerarquía visual limpia, copy concreto (beneficios, pruebas, urgencia real solo si existe) y una llamada a la acción inequívoca.',
-    'Reglas de entregabilidad: nada de MAYÚSCULAS gritadas, ni "!!!", ni promesas exageradas, ni frases típicas de spam ("gana dinero", "100% gratis", "haz clic aquí"). Asunto ≤ 60 caracteres, preheader 40-90 que complemente (no repita) el asunto. Personaliza con {{name | "fallback"}} solo donde suene natural.',
+    'Reglas de entregabilidad: nada de MAYÚSCULAS gritadas, ni "!!!", ni promesas exageradas, ni frases típicas de spam ("gana dinero", "100% gratis", "haz clic aquí"). Asunto ≤ 60 caracteres, preheader 40-90 que complemente (no repita) el asunto. Personaliza solo donde suene natural y siempre con respaldo, p. ej. {{name | "hola"}} o {{company | "tu equipo"}} (variables: name, company, city, role).',
+    'Cada botón lleva un texto propio y concreto que dice qué ocurre al pulsar: nunca dos botones con el mismo texto ni un «Más información» genérico repetido. No repitas módulos, títulos ni tarjetas.',
     `Escribe TODO el contenido en el idioma: ${lang}.`,
     'Estructura: 4-8 bloques. Empieza por header-pro o hero, termina SIEMPRE con unsubscribe (subtitle: texto legal breve que incluya {{COMPANY_ADDRESS}}). Usa firma (signature) solo en emails personales/B2B.',
     'Campos por bloque: rellena solo los que el bloque usa (arrays vacíos para el resto); los arrays llevan un elemento por cada hueco del bloque (grid-2 → 2 títulos). En "text" el title es el cuerpo y admite <b>, <i> y <br>.',

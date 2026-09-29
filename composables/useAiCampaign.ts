@@ -69,8 +69,22 @@ async function downloadImage(url: string): Promise<string | null> {
   }
 }
 
-/** Generated plan → final HTML (images downloaded into /uploads). */
-export function assembleAiResult(
+/**
+ * Server-side finishing pass for freshly assembled HTML (see email-repair.ts):
+ * WebP → JPEG/PNG, images cropped to their boxes and sized for Outlook,
+ * clean alt text. Best effort: the unrepaired HTML is still a valid email.
+ */
+export async function repairAssembledHtml(html: string, signal?: AbortSignal): Promise<string> {
+  try {
+    const r = await $fetch<{ html: string }>('/api/email/repair', { method: 'POST', body: { html }, signal })
+    return typeof r?.html === 'string' && r.html.trim() ? r.html : html
+  } catch {
+    return html
+  }
+}
+
+/** Generated plan → final HTML (images downloaded into /uploads, then repaired). */
+export async function assembleAiResult(
   result: any,
   opts: { brand?: BrandLite | null; language?: string; aiImages?: boolean; onImage?: (n: number) => void },
 ): Promise<string> {
@@ -84,7 +98,7 @@ export function assembleAiResult(
     },
   }))
   let n = 0
-  return assembleEmail({
+  const html = await assembleEmail({
     blocks,
     styleId: c.styleId,
     brand: opts.brand ?? null,
@@ -98,4 +112,5 @@ export function assembleAiResult(
       return downloadImage(url)
     },
   })
+  return repairAssembledHtml(html)
 }

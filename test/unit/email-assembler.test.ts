@@ -26,6 +26,19 @@ describe('editable AI email assembly', () => {
     expect(doc.querySelector('a[href="#"]')).toBeNull()
   })
 
+  it('writes image alt text as plain text, even from copy the model escaped twice', async () => {
+    const doc = await assemble([{ id: 'grid-2', fields: {
+      title: ['WOMI: Photo &amp; Video <b>IA</b>', 'Gamificación &amp;amp; dinámicas'],
+      images: ['/uploads/a.png', '/uploads/b.png'],
+    } }])
+    expect([...doc.querySelectorAll('img')].map(img => img.getAttribute('alt'))).toEqual(['WOMI: Photo & Video IA', 'Gamificación & dinámicas'])
+  })
+
+  it('names the unsubscribe action in the link itself', async () => {
+    const doc = await assemble([{ id: 'unsubscribe', fields: {} }])
+    expect(doc.querySelector('a[href="{{UNSUBSCRIBE_URL}}"]')?.textContent).toBe('Darte de baja de esta lista')
+  })
+
   it('does not repeat the first grid value or move an image into a blank positional slot', async () => {
     const doc = await assemble([{ id: 'grid-3', fields: { title: ['Primero', '', 'Tercero'], subtitle: ['Solo el primero'], images: ['', '/uploads/second.png', ''] } }])
     const cells = doc.querySelectorAll('.grid-block td[valign="top"]')

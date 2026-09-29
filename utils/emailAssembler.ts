@@ -80,12 +80,25 @@ function setText(el: Element, html: string) {
   el.innerHTML = scratch.innerHTML
 }
 
+/** Model copy (may hold <b>, &amp;…) as the plain text an attribute needs: "Photo &amp; Video" → "Photo & Video". */
+function plainText(doc: Document, html: string): string {
+  const scratch = doc.createElement('div')
+  scratch.innerHTML = html
+  let text = scratch.textContent || ''
+  // Copy escaped twice ("&amp;amp;") still reads as an entity after one pass
+  if (/&(?:amp|lt|gt|quot|#\d+);/.test(text)) {
+    scratch.innerHTML = text.replace(/</g, '&lt;')
+    text = scratch.textContent || ''
+  }
+  return text.replace(/\s+/g, ' ').trim()
+}
+
 function fillFooter(el: Element, lang: string, address: string, custom?: string) {
   const en = lang.startsWith('en')
   const intro = custom?.trim() || (en ? 'You receive this email because you subscribed to our list.' : 'Recibes este email porque te suscribiste a nuestra lista.')
   setText(el, intro)
   for (const [token, label] of [
-    ['UNSUBSCRIBE_URL', en ? 'Unsubscribe' : 'Darse de baja'],
+    ['UNSUBSCRIBE_URL', en ? 'Unsubscribe from this list' : 'Darte de baja de esta lista'],
     ['PREFERENCES_URL', en ? 'Email preferences' : 'Preferencias de email'],
   ]) {
     const existing = Array.from(el.querySelectorAll('a')).filter(link => new RegExp(`^\\{\\{\\s*${token}\\s*\\}\\}$`).test(link.getAttribute('href') || ''))
@@ -296,7 +309,7 @@ export async function assembleEmail(opts: AssembleOptions): Promise<string> {
       if (resolved && img) {
         img.setAttribute('src', resolved)
         const titles = asList(f.title)
-        img.setAttribute('alt', (titles[i] ?? titles[0] ?? '').replace(/<[^>]+>/g, '').slice(0, 120))
+        img.setAttribute('alt', plainText(doc, titles[i] ?? titles[0] ?? '').slice(0, 120))
       } else el.remove()
     }
 

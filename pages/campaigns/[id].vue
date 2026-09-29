@@ -1963,6 +1963,7 @@ onUnmounted(() => {
           v-if="showPrecheck"
           :campaign-id="id"
           @confirm="doSendCampaign"
+          @updated="fetchCampaign"
           @close="showPrecheck = false"
         />
       </Transition>
