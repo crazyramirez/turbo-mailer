@@ -286,4 +286,87 @@ describe('send engine', () => {
     expect(held.length).toBe(40)
     expect(smtp.sent).toHaveLength(10)
   })
+
+  it('"send B to the rest" ends the wait at once, each contact mailed exactly once', async () => {
+    seedContacts(50)
+    const id = createCampaign({ subject_b: 'Otra {{name}}', ab_sample_pct: 20 })
+    await launch(id)
+    const { decideAbTest } = await import('~/server/utils/ab-decide')
+    const decision = decideAbTest(id, 'B')
+    expect(decision).toMatchObject({ winner: 'B', basis: 'manual', released: 40, status: 'sending' })
+    // A second click (or the scheduler at the same moment) finds nothing to do
+    expect(decideAbTest(id, 'A')).toBeNull()
+    await waitForCampaign(id)
+
+    const c = campaignRow(id)
+    expect(c).toMatchObject({ status: 'sent', ab_phase: 'final', ab_winner: 'B' })
+    const tos = smtp.sent.map(s => s.to)
+    expect(tos).toHaveLength(50)
+    expect(new Set(tos).size).toBe(50)
+    // The 40 held contacts got B; the sample keeps its own 5 A + 5 B
+    expect(smtp.sent.filter(s => s.subject.startsWith('Otra')).length).toBe(45)
+    expect(sendsOf(id).filter(s => s.variant === 'A').length).toBe(5)
+  })
+
+  it('"decide now" with no significant difference keeps A', async () => {
+    seedContacts(50)
+    const id = createCampaign({ subject_b: 'Otra {{name}}', ab_sample_pct: 20 })
+    await launch(id)
+    const { decideAbTest } = await import('~/server/utils/ab-decide')
+    expect(decideAbTest(id, 'auto')).toMatchObject({ winner: 'A', basis: 'tie', released: 40 })
+    await waitForCampaign(id)
+    expect(smtp.sent.filter(s => s.subject.startsWith('Hola')).length).toBe(45)
+  })
+
+  it('pausing and resuming during the wait keeps the holdout waiting (never closes as sent)', async () => {
+    seedContacts(50)
+    const id = createCampaign({ subject_b: 'Otra {{name}}', ab_sample_pct: 20 })
+    await launch(id)
+    const decideAt = campaignRow(id).ab_decide_at
+    sqlite.prepare(`UPDATE campaigns SET status = 'paused' WHERE id = ?`).run(id)
+    sqlite.prepare(`UPDATE campaigns SET status = 'sending' WHERE id = ?`).run(id)
+    startCampaign(id)
+    await waitForCampaign(id)
+
+    expect(campaignRow(id)).toMatchObject({ status: 'sending', ab_phase: 'waiting', ab_decide_at: decideAt })
+    expect(sendsOf(id).filter(s => s.status === 'held')).toHaveLength(40)
+    expect(smtp.sent).toHaveLength(10)
+  })
+
+  it('deciding while paused releases the holdout but waits for the resume', async () => {
+    seedContacts(50)
+    const id = createCampaign({ subject_b: 'Otra {{name}}', ab_sample_pct: 20 })
+    await launch(id)
+    sqlite.prepare(`UPDATE campaigns SET status = 'paused' WHERE id = ?`).run(id)
+    const { decideAbTest } = await import('~/server/utils/ab-decide')
+    expect(decideAbTest(id, 'A')).toMatchObject({ winner: 'A', status: 'paused', released: 40 })
+    await waitForCampaign(id)
+    expect(smtp.sent).toHaveLength(10)
+    expect(campaignRow(id).status).toBe('paused')
+
+    sqlite.prepare(`UPDATE campaigns SET status = 'sending' WHERE id = ?`).run(id)
+    startCampaign(id)
+    await waitForCampaign(id)
+    expect(campaignRow(id).status).toBe('sent')
+    expect(smtp.sent).toHaveLength(50)
+  })
+
+  it('mid-sample only "A for everyone" is accepted', async () => {
+    seedContacts(20)
+    const id = createCampaign({ subject_b: 'Otra {{name}}', ab_sample_pct: 20 })
+    const { db } = await import('~/server/db/index')
+    const { campaigns } = await import('~/server/db/schema')
+    const { eq } = await import('drizzle-orm')
+    const [row] = await db.select().from(campaigns).where(eq(campaigns.id, id))
+    const { recipients } = await resolveRecipients(row, env.cfg)
+    await setupCampaignSends(row, recipients)
+    expect(campaignRow(id).ab_phase).toBe('sample')
+    const { decideAbTest, AbDecideError } = await import('~/server/utils/ab-decide')
+    expect(() => decideAbTest(id, 'B')).toThrow(AbDecideError)
+    expect(decideAbTest(id, 'A')).toMatchObject({ winner: 'A', released: 16 })
+    await waitForCampaign(id)
+    expect(campaignRow(id)).toMatchObject({ status: 'sent', ab_phase: 'final' })
+    expect(smtp.sent).toHaveLength(20)
+    expect(smtp.sent.filter(s => s.subject.startsWith('Otra')).length).toBe(2)
+  })
 })

@@ -551,9 +551,13 @@ async function runCampaign(campaignId: number, state: RunState): Promise<void> {
   const fresh = S().campaign.get(campaignId) as Campaign | undefined
   if (!fresh || fresh.status !== 'sending') return
 
-  if (fin.held > 0 && fresh.abPhase === 'sample') {
+  // The A/B holdout waits for the decision. A campaign paused and resumed
+  // during the wait also lands here: keep its original decision time instead
+  // of closing it as 'sent' with the holdout never delivered.
+  if (fin.held > 0 && (fresh.abPhase === 'sample' || fresh.abPhase === 'waiting')) {
     const waitMinutes = Math.max(10, Number(fresh.abWaitMinutes) || 240)
-    sqlite.prepare(`UPDATE campaigns SET sent_count = ?, fail_count = ?, ab_phase = 'waiting', ab_decide_at = ? WHERE id = ?`)
+    sqlite.prepare(`UPDATE campaigns SET sent_count = ?, fail_count = ?, ab_phase = 'waiting',
+      ab_decide_at = CASE WHEN ab_phase = 'waiting' AND ab_decide_at IS NOT NULL THEN ab_decide_at ELSE ? END WHERE id = ?`)
       .run(fin.sent, fin.failed, nowSec() + waitMinutes * 60, campaignId)
     return
   }

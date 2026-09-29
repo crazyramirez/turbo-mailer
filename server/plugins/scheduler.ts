@@ -1,6 +1,6 @@
 import { db } from '~/server/db/index'
-import { campaigns, sends, trackingEvents } from '~/server/db/schema'
-import { eq, lte, and, sql, isNull, isNotNull } from 'drizzle-orm'
+import { campaigns } from '~/server/db/schema'
+import { eq, lte, and, isNull, isNotNull } from 'drizzle-orm'
 import { clearSignal } from '~/server/utils/campaign-state'
 import { setupCampaignSends, createFollowUpCampaign, getUnopenedRecipients } from '~/server/utils/send-setup'
 import { resolveRecipients } from '~/server/utils/recipients'
@@ -27,13 +27,13 @@ function housekeeping() {
   sqlite.prepare(`UPDATE placement_tests SET status = 'done', finished_at = ? WHERE status = 'running' AND created_at < ?`).run(now, now - 3600)
 }
 import { logAudit } from '~/server/utils/audit'
-import { pickAbWinner } from '~/server/utils/ab-stats'
+import { decideAbTest } from '~/server/utils/ab-decide'
 
 // A/B test decision: once abDecideAt passes, pick the winning variant among
-// the sample sends, release the holdout and resume the campaign.
+// the sample sends, release the holdout and resume the campaign (ab-decide.ts).
 async function decideAbWinners() {
   const due = await db
-    .select()
+    .select({ id: campaigns.id })
     .from(campaigns)
     .where(and(
       eq(campaigns.abPhase, 'waiting'),
@@ -43,53 +43,12 @@ async function decideAbWinners() {
     ))
 
   for (const campaign of due) {
-    // Ranked by clicks first, then confirmed (non-proxy) opens.
-    //
-    // Raw opens are unusable as a decision metric: privacy relays prefetch the
-    // pixel without a human, and their share differs per variant only by which
-    // mailboxes happened to land in each sample. Clicks cannot be faked by a
-    // relay, so they decide; confirmed opens break ties; raw opens are logged
-    // for visibility but never decide.
-    const variantStats = await db
-      .select({
-        variant: sends.variant,
-        delivered: sql<number>`COUNT(DISTINCT CASE WHEN ${sends.status} IN ('sent', 'opened') THEN ${sends.id} END)`,
-        clicks: sql<number>`COUNT(DISTINCT CASE WHEN ${trackingEvents.eventType} = 'click' THEN ${sends.id} END)`,
-        confirmedOpens: sql<number>`COUNT(DISTINCT CASE WHEN ${sends.status} = 'opened' AND COALESCE(${sends.openedByProxy}, 0) = 0 THEN ${sends.id} END)`,
-        rawOpens: sql<number>`COUNT(DISTINCT CASE WHEN ${sends.status} = 'opened' THEN ${sends.id} END)`,
-      })
-      .from(sends)
-      .leftJoin(trackingEvents, eq(trackingEvents.sendId, sends.id))
-      .where(eq(sends.campaignId, campaign.id))
-      .groupBy(sends.variant)
-
-    const statFor = (v: 'A' | 'B') => {
-      const row = variantStats.find(s => s.variant === v)
-      return {
-        delivered: Number(row?.delivered ?? 0),
-        clicks: Number(row?.clicks ?? 0),
-        confirmedOpens: Number(row?.confirmedOpens ?? 0),
-        rawOpens: Number(row?.rawOpens ?? 0),
-      }
+    try {
+      const decision = decideAbTest(campaign.id, 'auto', 'scheduler')
+      if (decision) console.log(`[scheduler] A/B campaign ${campaign.id}: winner ${decision.winner} (${decision.basis}, p=${decision.pValue ?? '—'})`)
+    } catch (err: any) {
+      console.error(`[scheduler] A/B campaign ${campaign.id}:`, err?.message || err)
     }
-    const a = statFor('A')
-    const b = statFor('B')
-    const decision = pickAbWinner(a, b)
-
-    await db.update(sends)
-      .set({ status: 'pending' })
-      .where(and(eq(sends.campaignId, campaign.id), eq(sends.status, 'held')))
-
-    await db.update(campaigns).set({
-      abPhase: 'final',
-      abWinner: decision.winner,
-      status: 'sending',
-    }).where(eq(campaigns.id, campaign.id))
-
-    clearSignal(campaign.id)
-    logAudit('campaign.ab_decided', { campaignId: campaign.id, ...decision, a, b })
-    console.log(`[scheduler] A/B campaign ${campaign.id}: winner ${decision.winner} (${decision.basis}, p=${decision.pValue ?? '—'})`)
-    startCampaign(campaign.id)
   }
 }
 

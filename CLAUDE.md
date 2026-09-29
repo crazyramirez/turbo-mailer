@@ -63,6 +63,10 @@ fields not sent are untouched). `sending` and `sent` are set by the engine.
 50/50 (`sends.variant`), holds the rest as `held`. After `abWaitMinutes` the
 scheduler picks the winner with `pickAbWinner` (ab-stats.ts): clicks first,
 then confirmed opens, only if p < 0.05 — otherwise A. Needs ≥10 recipients.
+Decision + holdout release live in `decideAbTest` (ab-decide.ts), shared by
+the scheduler and `POST /campaigns/:id/ab-decide` (`A | B | auto`: "don't
+wait" buttons; mid-sample only `A`). Conditional phase update = no double
+release. Resuming a campaign paused during the wait keeps it waiting.
 
 ## Audience
 

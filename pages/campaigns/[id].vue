@@ -549,6 +549,52 @@ const abStats = computed(() => {
   };
 });
 
+// End the A/B test now instead of waiting for the decision time: send the
+// held contacts with A, with B, or with the winner on the data so far.
+// While the sample is still going out only "A for everyone" is possible.
+const abDeciding = ref(false);
+const canDecideAb = computed(() =>
+  !!campaign.value && (
+    (campaign.value.abPhase === "waiting" && ["sending", "paused"].includes(campaign.value.status))
+    || (campaign.value.abPhase === "sample" && campaign.value.status === "sending")
+  ));
+async function decideAbNow(winner: "A" | "B" | "auto") {
+  const held = abStats.value.held;
+  const what = winner === "auto"
+    ? `Se decide ya el ganador con los datos actuales (clics y luego aperturas confirmadas; si la diferencia no es significativa gana A) y se envía a los ${held} contactos en espera.`
+    : campaign.value?.abPhase === "sample"
+      ? `Se cancela el test: los ${held} contactos en espera recibirán el asunto A. La muestra que ya está saliendo termina con su asunto.`
+      : `Los ${held} contactos en espera recibirán el asunto ${winner} sin esperar al resultado del test.`;
+  const ok = await showDialog({
+    type: "confirm",
+    title: winner === "auto" ? "Decidir el test A/B ahora" : `Enviar asunto ${winner} al resto`,
+    message: campaign.value?.status === "paused" ? `${what} La campaña está pausada: saldrán al reanudarla.` : what,
+  });
+  if (!ok) return;
+  abDeciding.value = true;
+  try {
+    const r = await $fetch<{ winner: "A" | "B"; released: number; status: string }>(`/api/campaigns/${id}/ab-decide`, {
+      method: "POST",
+      body: { winner },
+    });
+    showToast(`Asunto ${r.winner} para ${r.released} contactos en espera`, "success");
+    await Promise.all([fetchCampaign(), fetchSends()]);
+    if (campaign.value?.status === "sending") {
+      startMonitoring(id);
+      dismissOverlay.value = false;
+      setTimeout(() => {
+        dismissOverlay.value = true;
+      }, 4000);
+      startPolling();
+    }
+  } catch (e: any) {
+    showToast(`Error: ${e.data?.statusMessage || e.message}`, "error");
+    await fetchCampaign();
+  } finally {
+    abDeciding.value = false;
+  }
+}
+
 // Why the pipeline paused this campaign by itself
 const PAUSE_REASON_TEXT: Record<string, string> = {
   bounce_rate: "Pausada automáticamente: la tasa de rebotes duros es anormalmente alta. Revisa la calidad de la lista antes de reanudar.",
@@ -1327,6 +1373,16 @@ onUnmounted(() => {
                   {{ campaign.abDecideAt ? `el ${new Date(campaign.abDecideAt).toLocaleString("es-ES")}` : "pronto" }}
                   ({{ abStats.held }} contactos en espera)
                 </p>
+                <div v-if="canDecideAb && abStats.held > 0" class="ab-decide-row">
+                  <span class="ab-decide-label">No esperar:</span>
+                  <template v-if="campaign.abPhase === 'waiting'">
+                    <button class="ab-decide-btn" :disabled="abDeciding" @click="decideAbNow('A')">Enviar A al resto</button>
+                    <button class="ab-decide-btn" :disabled="abDeciding" @click="decideAbNow('B')">Enviar B al resto</button>
+                    <button class="ab-decide-btn ghost" :disabled="abDeciding" @click="decideAbNow('auto')">Decidir ya con los datos actuales</button>
+                  </template>
+                  <button v-else class="ab-decide-btn" :disabled="abDeciding" @click="decideAbNow('A')">Cancelar test y enviar A al resto</button>
+                  <Loader2 v-if="abDeciding" :size="14" class="spin" />
+                </div>
               </div>
 
               <p v-else class="field-hint">Sin test A/B en esta campaña.</p>
@@ -3376,6 +3432,36 @@ select.field-input option {
 .ab-variant-tag.b {
   color: #f97316;
   background: rgb(249 115 22 / 15%);
+}
+.ab-decide-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.ab-decide-label {
+  font-size: 12px;
+  color: var(--text-dim, #8b8fa3);
+}
+.ab-decide-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid rgb(99 102 241 / 45%);
+  background: rgb(99 102 241 / 15%);
+  color: #e0e7ff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ab-decide-btn.ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-dim, #c9cbe0);
+}
+.ab-decide-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 .ab-variant-subject {
   flex: 1;
