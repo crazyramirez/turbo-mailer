@@ -1355,35 +1355,10 @@ onUnmounted(() => {
                 </p>
               </template>
 
-              <div v-else-if="campaign.abPhase" class="ab-results">
-                <div class="ab-variant-row">
-                  <span class="ab-variant-tag">A</span>
-                  <span class="ab-variant-subject">{{ campaign.subject }}</span>
-                  <span class="ab-variant-stats">{{ abStats.A.clicks }} clics · {{ abStats.A.opens }}/{{ abStats.A.sent }} aperturas</span>
-                  <Check v-if="campaign.abWinner === 'A'" :size="14" class="ab-winner-icon" />
-                </div>
-                <div class="ab-variant-row">
-                  <span class="ab-variant-tag b">B</span>
-                  <span class="ab-variant-subject">{{ campaign.subjectB }}</span>
-                  <span class="ab-variant-stats">{{ abStats.B.clicks }} clics · {{ abStats.B.opens }}/{{ abStats.B.sent }} aperturas</span>
-                  <Check v-if="campaign.abWinner === 'B'" :size="14" class="ab-winner-icon" />
-                </div>
-                <p v-if="campaign.abPhase === 'waiting'" class="field-hint" style="margin-top: 8px">
-                  Muestra enviada · el ganador se decidirá
-                  {{ campaign.abDecideAt ? `el ${new Date(campaign.abDecideAt).toLocaleString("es-ES")}` : "pronto" }}
-                  ({{ abStats.held }} contactos en espera)
-                </p>
-                <div v-if="canDecideAb && abStats.held > 0" class="ab-decide-row">
-                  <span class="ab-decide-label">No esperar:</span>
-                  <template v-if="campaign.abPhase === 'waiting'">
-                    <button class="ab-decide-btn" :disabled="abDeciding" @click="decideAbNow('A')">Enviar A al resto</button>
-                    <button class="ab-decide-btn" :disabled="abDeciding" @click="decideAbNow('B')">Enviar B al resto</button>
-                    <button class="ab-decide-btn ghost" :disabled="abDeciding" @click="decideAbNow('auto')">Decidir ya con los datos actuales</button>
-                  </template>
-                  <button v-else class="ab-decide-btn" :disabled="abDeciding" @click="decideAbNow('A')">Cancelar test y enviar A al resto</button>
-                  <Loader2 v-if="abDeciding" :size="14" class="spin" />
-                </div>
-              </div>
+              <p v-else-if="campaign.subjectB" class="field-hint">
+                Asunto B: «{{ campaign.subjectB }}» · muestra {{ campaign.abSamplePct ?? 20 }}% · se decide
+                {{ (campaign.abWaitMinutes ?? 240) >= 60 ? `${Math.round((campaign.abWaitMinutes ?? 240) / 60)} h` : `${campaign.abWaitMinutes} min` }} después de la muestra
+              </p>
 
               <p v-else class="field-hint">Sin test A/B en esta campaña.</p>
             </div>
@@ -1735,6 +1710,45 @@ onUnmounted(() => {
                 <div class="stat-body">
                   <span class="stat-num">{{ campaign.failCount ?? 0 }}</span>
                   <span class="stat-lbl">{{ t("results.failed") }}</span>
+                </div>
+              </div>
+            </div>
+            <!-- A/B subject test: live results and "don't wait" actions -->
+            <div v-if="campaign.abPhase && campaign.subjectB" class="config-card ab-live-card">
+              <div class="cc-label ab-label-row">
+                <span>Test A/B de asunto</span>
+                <span class="ab-phase-badge" :class="`ab-${campaign.abPhase}`">{{ abPhaseLabel }}</span>
+              </div>
+              <div class="ab-results">
+                <div class="ab-variant-row">
+                  <span class="ab-variant-tag">A</span>
+                  <span class="ab-variant-subject">{{ campaign.subject }}</span>
+                  <span class="ab-variant-stats">{{ abStats.A.clicks }} clics · {{ abStats.A.opens }}/{{ abStats.A.sent }} aperturas</span>
+                  <Check v-if="campaign.abWinner === 'A'" :size="14" class="ab-winner-icon" />
+                </div>
+                <div class="ab-variant-row">
+                  <span class="ab-variant-tag b">B</span>
+                  <span class="ab-variant-subject">{{ campaign.subjectB }}</span>
+                  <span class="ab-variant-stats">{{ abStats.B.clicks }} clics · {{ abStats.B.opens }}/{{ abStats.B.sent }} aperturas</span>
+                  <Check v-if="campaign.abWinner === 'B'" :size="14" class="ab-winner-icon" />
+                </div>
+                <p v-if="campaign.abPhase === 'sample'" class="field-hint" style="margin-top: 8px">
+                  Enviando la muestra · {{ abStats.held }} contactos esperan al ganador
+                </p>
+                <p v-else-if="campaign.abPhase === 'waiting'" class="field-hint" style="margin-top: 8px">
+                  Muestra enviada · el ganador se decidirá
+                  {{ campaign.abDecideAt ? `el ${new Date(campaign.abDecideAt).toLocaleString("es-ES")}` : "pronto" }}
+                  ({{ abStats.held }} contactos en espera)
+                </p>
+                <div v-if="canDecideAb && abStats.held > 0" class="ab-decide-row">
+                  <span class="ab-decide-label">No esperar:</span>
+                  <template v-if="campaign.abPhase === 'waiting'">
+                    <button class="ab-decide-btn" :disabled="abDeciding" @click="decideAbNow('A')">Enviar A al resto</button>
+                    <button class="ab-decide-btn" :disabled="abDeciding" @click="decideAbNow('B')">Enviar B al resto</button>
+                    <button class="ab-decide-btn ghost" :disabled="abDeciding" @click="decideAbNow('auto')">Decidir ya con los datos actuales</button>
+                  </template>
+                  <button v-else class="ab-decide-btn" :disabled="abDeciding" @click="decideAbNow('A')">Cancelar test y enviar A al resto</button>
+                  <Loader2 v-if="abDeciding" :size="14" class="spin" />
                 </div>
               </div>
             </div>
